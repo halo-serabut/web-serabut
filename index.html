@@ -126,10 +126,36 @@
                     </div>
                 </div>
 
-                <!-- Right: Flash Sale card (desktop only) -->
+                <!-- Right: Flash Sale card -->
                 <template x-if="flashSale.aktif">
-                    <div class="hidden md:block flex-none w-72">
-                        <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-5 text-white shadow-xl">
+                    <div class="flex-none w-full md:w-72">
+
+                        <!-- ── Mobile horizontal banner ── -->
+                        <div class="md:hidden bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-3 text-white">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 bg-yellow-400/20 rounded-xl flex items-center justify-center flex-none">
+                                    <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 mb-0.5">
+                                        <span class="text-yellow-300 text-[9px] font-black tracking-widest">FLASH SALE</span>
+                                        <span class="bg-yellow-400 text-gray-900 text-[9px] font-black px-1.5 py-0.5 rounded-full" x-text="'-'+flashSale.diskon+'%'"></span>
+                                    </div>
+                                    <div class="font-bold text-xs leading-tight truncate" x-text="flashSale.produk"></div>
+                                    <div class="text-white/50 text-[9px] font-mono mt-0.5" x-text="'⏱ '+flashSaleCountdown"></div>
+                                </div>
+                                <div class="flex-none text-right mr-1">
+                                    <div class="text-white/40 text-[10px] line-through leading-none" x-text="formatPrice(flashSale.hargaAsli)"></div>
+                                    <div class="text-yellow-300 font-black text-sm leading-tight" x-text="formatPrice(flashSale.harga)"></div>
+                                </div>
+                                <button @click="setPage('catalog')" class="flex-none bg-yellow-400 text-gray-900 font-black text-xs px-3 py-2.5 rounded-xl active:scale-95 whitespace-nowrap">
+                                    Beli →
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- ── Desktop vertical card ── -->
+                        <div class="hidden md:block bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-5 text-white shadow-xl">
                             <div class="flex items-center gap-3 mb-4">
                                 <div class="w-9 h-9 bg-yellow-400/20 rounded-xl flex items-center justify-center flex-none">
                                     <svg class="w-5 h-5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
@@ -154,6 +180,7 @@
                                 Beli Sekarang
                             </button>
                         </div>
+
                     </div>
                 </template>
             </div>
@@ -584,44 +611,84 @@
      FOOTER
 ══════════════════════════════════════════════════════ -->
 <footer class="hidden md:block bg-gray-900 text-white">
-    <div class="max-w-6xl mx-auto px-6 py-12">
-        <div class="flex flex-col md:flex-row items-start justify-between gap-10">
-            <div class="max-w-xs">
-                <div class="flex items-center gap-2.5 mb-3">
-                    <img src="logo.png" alt="Serabut" class="w-8 h-8 rounded-lg">
-                    <span class="font-black text-base tracking-tight">Serabut Store</span>
-                </div>
-                <p class="text-gray-400 text-sm leading-relaxed">Software original terpercaya. Microsoft, Adobe, Windows & lebih banyak dengan harga terjangkau.</p>
-            </div>
-            <div>
-                <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Layanan</div>
-                <div class="space-y-2 text-sm text-gray-400">
-                    <div><a href="#" @click.prevent="setPage('catalog')" class="hover:text-white transition-colors">Semua Produk</a></div>
-                    <div><a href="#" @click.prevent="setPage('status')" class="hover:text-white transition-colors">Cek Status Akun</a></div>
-                    <div><a href="#" @click.prevent="setPage('panduan')" class="hover:text-white transition-colors">Panduan Instalasi</a></div>
+    <div class="max-w-6xl mx-auto px-5 py-8 md:py-12">
+
+        <!-- Mobile: compact stacked layout -->
+        <div class="md:hidden">
+            <div class="flex items-center gap-2.5 mb-3">
+                <img src="logo.png" alt="Serabut" class="w-8 h-8 rounded-lg">
+                <div>
+                    <div class="font-black text-sm tracking-tight">Serabut Store</div>
+                    <div class="text-gray-500 text-[10px]">PT Serabut Solusi Digital</div>
                 </div>
             </div>
-            <div>
-                <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Kontak</div>
-                <div class="space-y-2 text-sm text-gray-400">
-                    <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                        <span>halo@serabut.id</span>
+            <p class="text-gray-400 text-xs leading-relaxed mb-5">Software original terpercaya. Microsoft, Adobe, Windows & lebih banyak dengan harga terjangkau.</p>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Layanan</div>
+                    <div class="space-y-1.5 text-xs text-gray-400">
+                        <div><a href="#" @click.prevent="setPage('catalog')" class="active:text-white">Semua Produk</a></div>
+                        <div><a href="#" @click.prevent="setPage('status')" class="active:text-white">Cek Status Akun</a></div>
+                        <div><a href="#" @click.prevent="setPage('panduan')" class="active:text-white">Panduan Instalasi</a></div>
                     </div>
-                    <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex items-center gap-2 hover:text-white transition-colors">
-                        <svg class="w-4 h-4 flex-none" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        <span>0888-150-0555</span>
-                    </a>
+                </div>
+                <div>
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Kontak</div>
+                    <div class="space-y-1.5 text-xs text-gray-400">
+                        <div>halo@serabut.id</div>
+                        <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex items-center gap-1.5 active:text-white">
+                            <svg class="w-3.5 h-3.5 flex-none text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                            0888-150-0555
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-4 text-center text-[10px] text-gray-600">
+                © 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.
+            </div>
+        </div>
+
+        <!-- Desktop: full layout -->
+        <div class="hidden md:block">
+            <div class="flex flex-row items-start justify-between gap-10">
+                <div class="max-w-xs">
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <img src="logo.png" alt="Serabut" class="w-8 h-8 rounded-lg">
+                        <span class="font-black text-base tracking-tight">Serabut Store</span>
+                    </div>
+                    <p class="text-gray-400 text-sm leading-relaxed">Software original terpercaya. Microsoft, Adobe, Windows & lebih banyak dengan harga terjangkau.</p>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Layanan</div>
+                    <div class="space-y-2 text-sm text-gray-400">
+                        <div><a href="#" @click.prevent="setPage('catalog')" class="hover:text-white transition-colors">Semua Produk</a></div>
+                        <div><a href="#" @click.prevent="setPage('status')" class="hover:text-white transition-colors">Cek Status Akun</a></div>
+                        <div><a href="#" @click.prevent="setPage('panduan')" class="hover:text-white transition-colors">Panduan Instalasi</a></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Kontak</div>
+                    <div class="space-y-2 text-sm text-gray-400">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <span>halo@serabut.id</span>
+                        </div>
+                        <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex items-center gap-2 hover:text-white transition-colors">
+                            <svg class="w-4 h-4 flex-none" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                            <span>0888-150-0555</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
+                <span>© 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.</span>
+                <div class="flex gap-5">
+                    <a href="#" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</a>
+                    <a href="#" class="hover:text-gray-400 transition-colors">Kebijakan Privasi</a>
                 </div>
             </div>
         </div>
-        <div class="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
-            <span>© 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.</span>
-            <div class="flex gap-5">
-                <a href="#" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</a>
-                <a href="#" class="hover:text-gray-400 transition-colors">Kebijakan Privasi</a>
-            </div>
-        </div>
+
     </div>
 </footer>
 

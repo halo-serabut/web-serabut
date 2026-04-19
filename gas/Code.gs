@@ -7,8 +7,9 @@ const TAB_CATALOG    = 'Catalog';
 const TAB_USERS      = 'Users-web';
 const TAB_ORDERS     = 'Orders';
 
-const FONNTE_TOKEN   = ''; // isi token dari fonnte.com
-const WA_GROUP_ID    = ''; // isi ID group WA dari dashboard Fonnte
+const FONNTE_TOKEN         = 'jwTYdGg2eoSrTx3MRpcE';
+const WA_GROUP_ID          = ''; // isi ID group WA personal (untuk notif order lama)
+const WA_GROUP_ESCALATION  = '120363172991002805@g.us'; // Escalation Serabut Team
 const WA_STORE_NO    = '628881500555';
 const STORE_NAME     = 'Serabut Store';
 const OTP_EXPIRY_MIN = 10;
@@ -27,6 +28,7 @@ function doGet(e) {
     switch (action) {
       case 'getCatalog':   result = getCatalog(); break;
       case 'checkStatus':  result = checkStatus(e.parameter.type, e.parameter.query); break;
+      case 'smartSearch':  result = smartSearch(e.parameter.query); break;
       case 'register':     result = register(e.parameter); break;
       case 'verifyOTP':    result = verifyOTP(e.parameter); break;
       case 'resendOTP':    result = resendOTP(e.parameter); break;
@@ -73,6 +75,98 @@ function getCatalog() {
   }
 
   return { success: true, data: products };
+}
+
+// ────────────────────────────────────────────────────────
+//  SMART SEARCH — cari di List Account 365 + Family
+// ────────────────────────────────────────────────────────
+function smartSearch(query) {
+  if (!query || !String(query).trim()) return { success: false, error: 'Query kosong' };
+
+  const ss      = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const q       = String(query).toLowerCase().trim();
+  const results = [];
+
+  const SHEETS = ['List Account 365', 'List Account 365 Family'];
+
+  for (const sheetName of SHEETS) {
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) continue;
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) continue;
+
+    const headers = data[0].map(h => String(h).toLowerCase().trim());
+
+    // Temukan kolom secara dinamis berdasarkan header
+    const col = {
+      buyerName:    findColIdx(headers, ['buyer name', 'nama pembeli', 'nama buyer']),
+      mailActive:   findColIdx(headers, ['mailactive', '4reminder', 'mail active']),
+      emailActive:  findColIdx(headers, ['email active', 'email aktif']),
+      msa:          findColIdx(headers, ['msa']),
+      officeAcc:    findColIdx(headers, ['office account', 'office acc']),
+      wa:           findColIdx(headers, ['no whatsapp', 'no wa', 'whatsapp', 'no hp']),
+      endDate:      findColIdx(headers, ['end subs', 'end date', 'masa berlaku', 'expired date', 'end sub']),
+      startDate:    findColIdx(headers, ['creation date', 'start date', 'invitation date']),
+      status:       findColIdx(headers, ['status']),
+      duration:     findColIdx(headers, ['duration']),
+      subscription: findColIdx(headers, ['subscription']),
+    };
+
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+
+      // Kumpulkan nilai yang akan dicari
+      const searchable = [
+        getVal(row, col.buyerName),
+        getVal(row, col.mailActive),
+        getVal(row, col.emailActive),
+        getVal(row, col.msa),
+        getVal(row, col.officeAcc),
+        getVal(row, col.wa),
+      ].filter(v => v).map(v => v.toLowerCase());
+
+      if (!searchable.some(v => v.includes(q))) continue;
+
+      results.push({
+        sumber:       sheetName,
+        nama:         getVal(row, col.buyerName),
+        emailPembeli: getVal(row, col.mailActive) || getVal(row, col.emailActive),
+        officeAccount:getVal(row, col.officeAcc) || getVal(row, col.msa),
+        wa:           getVal(row, col.wa),
+        masaBerlaku:  getDateVal(row, col.endDate),
+        mulaiLangganan: getDateVal(row, col.startDate),
+        status:       getVal(row, col.status) || 'Aktif',
+        durasi:       getVal(row, col.duration),
+        tipe:         getVal(row, col.subscription) || (sheetName.includes('Family') ? 'Family' : 'Personal'),
+      });
+    }
+  }
+
+  return { success: true, data: results };
+}
+
+function findColIdx(headers, keywords) {
+  for (const kw of keywords) {
+    const idx = headers.findIndex(h => h === kw || h.includes(kw));
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function getVal(row, idx) {
+  if (idx === -1 || idx >= row.length) return '';
+  const v = row[idx];
+  if (v === null || v === undefined || v === '') return '';
+  return String(v).trim();
+}
+
+function getDateVal(row, idx) {
+  if (idx === -1 || idx >= row.length) return '';
+  const v = row[idx];
+  if (!v) return '';
+  if (v instanceof Date) return Utilities.formatDate(v, 'Asia/Jakarta', 'dd/MM/yyyy');
+  return String(v).trim();
 }
 
 // ────────────────────────────────────────────────────────
@@ -292,7 +386,7 @@ function login({ email, password }) {
 // ────────────────────────────────────────────────────────
 //  CREATE ORDER
 // ────────────────────────────────────────────────────────
-function createOrder({ userNama, userEmail, userWa, produk, varian, masaAktif, harga }) {
+function createOrder({ userNama, userEmail, userWa, produk, varian, masaAktif, harga, msNama, username, microsoftEmail, emailAktif, emailReminder }) {
   if (!userEmail || !produk || !harga) return { success: false, error: 'Data tidak lengkap' };
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -300,28 +394,68 @@ function createOrder({ userNama, userEmail, userWa, produk, varian, masaAktif, h
 
   if (!sheet) {
     sheet = ss.insertSheet(TAB_ORDERS);
-    sheet.appendRow(['Order ID', 'Tanggal', 'Nama', 'Email', 'No WA', 'Produk', 'Varian', 'Masa Aktif', 'Harga', 'Status']);
-    sheet.getRange(1, 1, 1, 10).setFontWeight('bold');
+    sheet.appendRow(['Order ID', 'Tanggal', 'Nama', 'Email', 'No WA', 'Produk', 'Varian', 'Masa Aktif', 'Harga', 'Status', 'Nama MS', 'Username', 'Email Microsoft', 'Email Aktif', 'Email Reminder']);
+    sheet.getRange(1, 1, 1, 15).setFontWeight('bold');
+  } else {
+    const existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toLowerCase());
+    if (!existingHeaders.includes('username')) {
+      const lc = sheet.getLastColumn();
+      sheet.getRange(1, lc + 1, 1, 5).setValues([['Nama MS', 'Username', 'Email Microsoft', 'Email Aktif', 'Email Reminder']]);
+      sheet.getRange(1, lc + 1, 1, 5).setFontWeight('bold');
+    }
   }
 
   const orderId  = 'SRB-' + new Date().getTime().toString().slice(-8);
   const tanggal  = formatJkt(new Date(), 'dd/MM/yyyy HH:mm');
   const hargaNum = Number(harga) || 0;
 
-  sheet.appendRow([orderId, tanggal, userNama, userEmail, userWa, produk, varian || '-', masaAktif || '-', hargaNum, 'Pending']);
+  sheet.appendRow([
+    orderId, tanggal, userNama, userEmail, userWa,
+    produk, varian || '-', masaAktif || '-', hargaNum, 'Pending',
+    msNama || '-', username || '-', microsoftEmail || '-', emailAktif || '-', emailReminder || '-'
+  ]);
 
-  const msg =
-    `🛒 *ORDER BARU — Serabut Store*\n\n` +
-    `📋 Order ID: *${orderId}*\n` +
-    `📅 Tanggal: ${tanggal}\n\n` +
-    `👤 *Data Pembeli*\n` +
-    `Nama: ${userNama}\nEmail: ${userEmail}\nNo WA: ${userWa}\n\n` +
-    `🛍️ *Detail Produk*\n` +
-    `Produk: ${produk}\nVarian: ${varian || '-'}\nDurasi: ${masaAktif || '-'}\n` +
-    `Harga: Rp${hargaNum.toLocaleString()}\n\n` +
-    `⏳ Status: *Pending*\nSegera hubungi pembeli! ✅`;
+  // ── Kirim ke WA Group Escalation ────────────────────────
+  const varLower = (varian || '').toLowerCase();
+  const isFamily = varLower.includes('family');
+  const isWeb    = varLower.includes('web');
 
-  sendWANotification(msg);
+  let groupMsg;
+  const reminderLine = emailReminder ? `\nEmail Reminder: ${emailReminder}` : '';
+  if (isFamily) {
+    groupMsg =
+      `*ORDER 365 FAMILY*\n` +
+      `Order ID: *${orderId}*\n` +
+      `Email Microsoft (invite): *${microsoftEmail || '-'}*\n` +
+      `Email Aktif: ${emailAktif || '-'}${reminderLine}\n` +
+      `Durasi: ${masaAktif || '-'}\n` +
+      `Nama Pembeli: ${userNama}\n` +
+      `No WA: ${userWa}\n` +
+      `Status: *Pending*`;
+  } else if (isWeb) {
+    groupMsg =
+      `*ORDER 365 WEB*\n` +
+      `Order ID: *${orderId}*\n` +
+      `Nama MS: ${msNama || '-'}\n` +
+      `Username Request: *${username || '-'}*\n` +
+      `Email Aktif: ${emailAktif || '-'}${reminderLine}\n` +
+      `Durasi: ${masaAktif || '-'}\n` +
+      `No WA: ${userWa}\n` +
+      `Status: *Pending*`;
+  } else {
+    groupMsg =
+      `*ORDER BARU*\n` +
+      `Order ID: *${orderId}*\n` +
+      `Produk: ${produk}\n` +
+      `Varian: ${varian || '-'}\n` +
+      `Durasi: ${masaAktif || '-'}\n` +
+      `Nama: ${userNama}\n` +
+      `Email Aktif: ${emailAktif || '-'}${reminderLine}\n` +
+      `No WA: ${userWa}\n` +
+      `Status: *Pending*`;
+  }
+
+  sendWAToGroup(groupMsg);
 
   return { success: true, orderId };
 }
@@ -628,6 +762,72 @@ function sendWANotification(message) {
   } catch (e) {
     Logger.log('WA notif error: ' + e.message);
   }
+}
+
+function sendWAToGroup(message) {
+  if (!FONNTE_TOKEN || !WA_GROUP_ESCALATION) {
+    Logger.log('sendWAToGroup: TOKEN atau GROUP_ID kosong');
+    return;
+  }
+  try {
+    const resp = UrlFetchApp.fetch('https://api.fonnte.com/send', {
+      method: 'post',
+      headers: { 'Authorization': FONNTE_TOKEN },
+      payload: { target: WA_GROUP_ESCALATION, message: message },
+      muteHttpExceptions: true,
+    });
+    Logger.log('Fonnte response [' + resp.getResponseCode() + ']: ' + resp.getContentText());
+  } catch (e) {
+    Logger.log('WA group notif error: ' + e.message);
+  }
+}
+
+// Jalankan fungsi ini manual di GAS editor untuk test koneksi Fonnte
+function testWAGroup() {
+  sendWAToGroup('Test notif order dari Serabut Store GAS - ' + new Date().toLocaleString());
+}
+
+// Dapatkan list grup setelah fetch-group
+function listFonntGroups() {
+  // Step 1: sync dulu
+  UrlFetchApp.fetch('https://api.fonnte.com/fetch-group', {
+    method: 'post', headers: { 'Authorization': FONNTE_TOKEN },
+    payload: {}, muteHttpExceptions: true,
+  });
+  Utilities.sleep(2000);
+
+  // Step 2: coba get-group dengan berbagai payload
+  const payloads = [
+    { device: WA_STORE_NO },
+    { phone: WA_STORE_NO },
+    { id: WA_STORE_NO },
+    {},
+  ];
+  payloads.forEach(function(p) {
+    const r = UrlFetchApp.fetch('https://api.fonnte.com/get-group', {
+      method: 'post', headers: { 'Authorization': FONNTE_TOKEN },
+      payload: p, muteHttpExceptions: true,
+    });
+    Logger.log('get-group payload=' + JSON.stringify(p) + ' → ' + r.getContentText().substring(0, 500));
+  });
+}
+
+// Test kirim setelah sync — coba kedua format
+function testWAGroupAfterSync() {
+  // Sync dulu
+  UrlFetchApp.fetch('https://api.fonnte.com/fetch-group', {
+    method: 'post', headers: { 'Authorization': FONNTE_TOKEN },
+    payload: {}, muteHttpExceptions: true,
+  });
+  Utilities.sleep(3000);
+
+  // Coba kirim dengan @g.us
+  const r1 = UrlFetchApp.fetch('https://api.fonnte.com/send', {
+    method: 'post', headers: { 'Authorization': FONNTE_TOKEN },
+    payload: { target: '120363172991002805@g.us', message: 'Test setelah sync - ' + new Date().toLocaleString() },
+    muteHttpExceptions: true,
+  });
+  Logger.log('@g.us → ' + r1.getContentText());
 }
 
 // ────────────────────────────────────────────────────────
