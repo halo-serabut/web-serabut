@@ -54,7 +54,7 @@
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <button @click="setPage('home')" class="flex items-center gap-2.5 group">
             <img src="logo.png" alt="Serabut" class="w-9 h-9 rounded-xl shadow-sm">
-            <div><div class="font-black text-gray-900 text-sm leading-tight">Serabut Store</div><div class="text-[10px] text-gray-400">Software Original</div></div>
+            <div class="font-black text-gray-900 text-sm">Serabut Store</div>
         </button>
 
         <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1">
@@ -317,7 +317,7 @@
                         <!-- Header -->
                         <div class="px-5 pt-5 pb-3 flex items-center gap-3">
                             <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-none overflow-hidden bg-blue-50">
-                                <img src="https://logo.clearbit.com/microsoft.com" alt="Microsoft" class="w-8 h-8 object-contain">
+                                <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" alt="Microsoft" class="w-8 h-8 object-contain">
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="font-bold text-gray-900 truncate" x-text="account.nama||'Pelanggan'"></div>
@@ -1061,27 +1061,30 @@ function serabutStore() {
             return m[cat]||'bg-gray-100 text-gray-600';
         },
         getProductLogo(cat) {
+            const sz = 64;
+            const f = d => `https://www.google.com/s2/favicons?domain=${d}&sz=${sz}`;
             const m = {
-                'Office 365':    'https://logo.clearbit.com/microsoft.com',
-                'Adobe':         'https://logo.clearbit.com/adobe.com',
-                'Windows':       'https://logo.clearbit.com/microsoft.com',
-                'Office':        'https://logo.clearbit.com/microsoft.com',
-                'Google':        'https://logo.clearbit.com/google.com',
-                'Google One':    'https://logo.clearbit.com/google.com',
-                'CorelDRAW':     'https://logo.clearbit.com/coreldraw.com',
-                'Project':       'https://logo.clearbit.com/microsoft.com',
-                'Visio':         'https://logo.clearbit.com/microsoft.com',
-                'Netflix':       'https://logo.clearbit.com/netflix.com',
-                'Canva':         'https://logo.clearbit.com/canva.com',
-                'NordVPN':       'https://logo.clearbit.com/nordvpn.com',
-                'Wattpad':       'https://logo.clearbit.com/wattpad.com',
-                'Disney+':       'https://logo.clearbit.com/disneyplus.com',
-                'Amazon Prime':  'https://logo.clearbit.com/amazon.com',
-                'iQIYI':         'https://logo.clearbit.com/iqiyi.com',
-                'Zoom':          'https://logo.clearbit.com/zoom.us',
-                'Windows Server':'https://logo.clearbit.com/microsoft.com',
+                'Office 365':    f('microsoft.com'),
+                'Adobe':         f('adobe.com'),
+                'Windows':       f('microsoft.com'),
+                'Office':        f('microsoft.com'),
+                'Google':        f('google.com'),
+                'Google One':    f('one.google.com'),
+                'CorelDRAW':     f('coreldraw.com'),
+                'Project':       f('microsoft.com'),
+                'Visio':         f('microsoft.com'),
+                'Netflix':       f('netflix.com'),
+                'Canva':         f('canva.com'),
+                'NordVPN':       f('nordvpn.com'),
+                'Wattpad':       f('wattpad.com'),
+                'Disney+':       f('disneyplus.com'),
+                'Amazon Prime':  f('amazon.com'),
+                'iQIYI':         f('iqiyi.com'),
+                'Zoom':          f('zoom.us'),
+                'Windows Server':f('microsoft.com'),
+                'Lainnya':       f('microsoft.com'),
             };
-            return m[cat] || 'https://logo.clearbit.com/microsoft.com';
+            return m[cat] || f('microsoft.com');
         },
         getCategoryBg(cat) {
             const m={'Office 365':'bg-blue-50','Adobe':'bg-red-50','Windows':'bg-sky-50','Office':'bg-orange-50','Google':'bg-green-50','CorelDRAW':'bg-yellow-50','Project':'bg-purple-50','Visio':'bg-indigo-50'};
