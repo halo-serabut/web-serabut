@@ -54,7 +54,7 @@
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <button @click="setPage('home')" class="flex items-center gap-2.5 group">
             <img src="logo.png" alt="Serabut" class="w-9 h-9 rounded-xl shadow-sm">
-            <div class="font-black text-gray-900 text-sm">Serabut Store</div>
+            <div class="font-black text-gray-900 text-lg tracking-tight">Serabut Store</div>
         </button>
 
         <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1">
@@ -112,8 +112,9 @@
     <!-- ───────── HOME ───────── -->
     <section x-show="activePage==='home'" class="page-enter">
         <div class="gradient-hero text-white">
-            <div class="max-w-6xl mx-auto px-4 py-12 md:py-20">
-                <div class="max-w-2xl">
+            <div class="max-w-6xl mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row md:items-center gap-8 md:gap-12">
+                <!-- Left: copy -->
+                <div class="flex-1 max-w-2xl">
                     <div class="inline-flex items-center gap-2 bg-white/15 text-white/90 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-5 border border-white/20">
                         <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>Aktif & Siap Melayani
                     </div>
@@ -124,6 +125,37 @@
                         <button @click="setPage('status')" class="bg-white/15 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95">Cek Status Akun</button>
                     </div>
                 </div>
+
+                <!-- Right: Flash Sale card (desktop only) -->
+                <template x-if="flashSale.aktif">
+                    <div class="hidden md:block flex-none w-72">
+                        <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-3xl p-5 text-white shadow-xl">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-9 h-9 bg-yellow-400/20 rounded-xl flex items-center justify-center flex-none">
+                                    <svg class="w-5 h-5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-yellow-300 text-xs font-black tracking-widest">FLASH SALE</div>
+                                    <div class="text-white/60 text-[10px]">Penawaran terbatas</div>
+                                </div>
+                                <div class="bg-yellow-400 text-gray-900 text-xs font-black px-2 py-0.5 rounded-full" x-text="'-'+flashSale.diskon+'%'"></div>
+                            </div>
+                            <div class="bg-black/25 rounded-2xl px-4 py-3 mb-4 text-center">
+                                <div class="text-[10px] text-white/50 mb-1">Berakhir dalam</div>
+                                <div class="font-black text-2xl font-mono tracking-widest" x-text="flashSaleCountdown"></div>
+                            </div>
+                            <div class="font-bold text-sm leading-snug mb-0.5" x-text="flashSale.produk"></div>
+                            <div class="text-white/60 text-xs mb-3" x-text="flashSale.varian"></div>
+                            <div class="flex items-baseline gap-2 mb-4">
+                                <span class="text-white/40 text-sm line-through" x-text="formatPrice(flashSale.hargaAsli)"></span>
+                                <span class="text-yellow-300 font-black text-xl" x-text="formatPrice(flashSale.harga)"></span>
+                            </div>
+                            <button @click="setPage('catalog')" class="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-black py-2.5 rounded-xl text-sm transition-all active:scale-95">
+                                Beli Sekarang
+                            </button>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
 
@@ -131,8 +163,8 @@
         <div class="bg-white border-b border-gray-100">
             <div class="max-w-6xl mx-auto px-4"><div class="grid grid-cols-3 divide-x divide-gray-100">
                 <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">40+</div><div class="text-[11px] text-gray-500">Produk</div></div>
-                <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">1K+</div><div class="text-[11px] text-gray-500">Pelanggan</div></div>
-                <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">⚡</div><div class="text-[11px] text-gray-500">Proses Cepat</div></div>
+                <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">10K+</div><div class="text-[11px] text-gray-500">Pelanggan</div></div>
+                <div class="text-center py-4"><div class="flex justify-center mb-0.5"><svg class="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><div class="text-[11px] text-gray-500">Proses Cepat</div></div>
             </div></div>
         </div>
 
@@ -195,7 +227,7 @@
         <div class="max-w-6xl mx-auto px-4 py-8">
             <div class="gradient-card rounded-2xl p-6 md:p-8 text-white flex flex-col md:flex-row items-center justify-between gap-4">
                 <div><div class="font-black text-xl mb-1">Ada pertanyaan?</div><p class="text-white/75 text-sm">Tim support kami siap membantu 24/7</p></div>
-                <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex-none bg-white text-brand-600 font-bold px-6 py-3 rounded-xl text-sm hover:bg-brand-50 transition-all shadow-lg whitespace-nowrap active:scale-95">💬 Chat WhatsApp</a>
+                <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex-none bg-white text-brand-600 font-bold px-6 py-3 rounded-xl text-sm hover:bg-brand-50 transition-all shadow-lg whitespace-nowrap active:scale-95">Chat WhatsApp</a>
             </div>
         </div>
     </section>
@@ -263,7 +295,7 @@
                                         <li class="flex gap-3"><div class="w-6 h-6 gradient-card text-white rounded-full flex items-center justify-center text-xs font-bold flex-none mt-0.5" x-text="si+1"></div><p class="text-sm text-gray-600 leading-relaxed" x-text="step"></p></li>
                                     </template>
                                 </ol>
-                                <template x-if="guide.note"><div class="mt-4 bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2"><span class="text-amber-500 flex-none">💡</span><p class="text-xs text-amber-700 leading-relaxed" x-text="guide.note"></p></div></template>
+                                <template x-if="guide.note"><div class="mt-4 bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2"><svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><p class="text-xs text-amber-700 leading-relaxed" x-text="guide.note"></p></div></template>
                             </div>
                         </div>
                     </template>
@@ -272,7 +304,7 @@
             <div class="mt-8 gradient-card rounded-2xl p-5 text-white">
                 <div class="font-bold text-lg mb-1">Butuh bantuan?</div>
                 <p class="text-white/75 text-sm mb-4">Tim support siap bantu instalasi & troubleshooting</p>
-                <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="inline-flex items-center gap-2 bg-white text-brand-600 font-bold text-sm px-5 py-2.5 rounded-xl active:scale-95">💬 Chat WhatsApp Sekarang</a>
+                <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="inline-flex items-center gap-2 bg-white text-brand-600 font-bold text-sm px-5 py-2.5 rounded-xl active:scale-95">Chat WhatsApp Sekarang</a>
             </div>
         </div>
     </section>
@@ -547,6 +579,51 @@
         </div>
 
     </section>
+
+<!-- ══════════════════════════════════════════════════════
+     FOOTER
+══════════════════════════════════════════════════════ -->
+<footer class="hidden md:block bg-gray-900 text-white">
+    <div class="max-w-6xl mx-auto px-6 py-12">
+        <div class="flex flex-col md:flex-row items-start justify-between gap-10">
+            <div class="max-w-xs">
+                <div class="flex items-center gap-2.5 mb-3">
+                    <img src="logo.png" alt="Serabut" class="w-8 h-8 rounded-lg">
+                    <span class="font-black text-base tracking-tight">Serabut Store</span>
+                </div>
+                <p class="text-gray-400 text-sm leading-relaxed">Software original terpercaya. Microsoft, Adobe, Windows & lebih banyak dengan harga terjangkau.</p>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Layanan</div>
+                <div class="space-y-2 text-sm text-gray-400">
+                    <div><a href="#" @click.prevent="setPage('catalog')" class="hover:text-white transition-colors">Semua Produk</a></div>
+                    <div><a href="#" @click.prevent="setPage('status')" class="hover:text-white transition-colors">Cek Status Akun</a></div>
+                    <div><a href="#" @click.prevent="setPage('panduan')" class="hover:text-white transition-colors">Panduan Instalasi</a></div>
+                </div>
+            </div>
+            <div>
+                <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Kontak</div>
+                <div class="space-y-2 text-sm text-gray-400">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <span>halo@serabut.id</span>
+                    </div>
+                    <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex items-center gap-2 hover:text-white transition-colors">
+                        <svg class="w-4 h-4 flex-none" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        <span>0888-150-0555</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
+            <span>© 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.</span>
+            <div class="flex gap-5">
+                <a href="#" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</a>
+                <a href="#" class="hover:text-gray-400 transition-colors">Kebijakan Privasi</a>
+            </div>
+        </div>
+    </div>
+</footer>
 
 </main>
 
@@ -901,7 +978,7 @@
         </div>
 
         <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4 flex gap-2">
-            <span class="text-amber-500 flex-none">💡</span>
+            <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <p class="text-xs text-amber-700">Setelah pesan, tim kami akan menghubungi kamu via WhatsApp untuk proses pembayaran & aktivasi.</p>
         </div>
 
@@ -922,11 +999,11 @@
 <div x-show="orderSuccess" class="fixed inset-0 z-[300] flex items-center justify-center px-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
     <div class="relative bg-white rounded-3xl p-7 max-w-sm w-full text-center shadow-2xl">
-        <div class="text-6xl mb-4">🎉</div>
+        <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4"><svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div>
         <h3 class="font-black text-gray-900 text-xl mb-2">Pesanan Diterima!</h3>
         <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-3" x-text="currentOrderId"></div>
         <p class="text-gray-500 text-sm mb-6 leading-relaxed">Tim kami akan menghubungi kamu via WhatsApp dalam waktu dekat untuk proses pembayaran & aktivasi.</p>
-        <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+currentOrderId+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full gradient-card text-white font-bold py-3.5 rounded-2xl mb-3 text-sm active:scale-95 shadow-sm">💬 Chat WhatsApp Sekarang</a>
+        <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+currentOrderId+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full gradient-card text-white font-bold py-3.5 rounded-2xl mb-3 text-sm active:scale-95 shadow-sm">Chat WhatsApp Sekarang</a>
         <button @click="orderSuccess=false; productModal=false; currentOrderId=null" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Tutup</button>
     </div>
 </div>
@@ -1017,6 +1094,18 @@ function serabutStore() {
         statusChecking:   false,
         statusResult:     null,
 
+        // Flash Sale
+        flashSale: {
+            aktif: true,
+            produk: 'Microsoft Office 365 Family',
+            varian: '1 Tahun · 5 Devices',
+            harga: 249000,
+            hargaAsli: 337000,
+            diskon: 26,
+            deadline: '2026-05-01T23:59:59',
+        },
+        flashSaleCountdown: '--:--:--',
+
         // ── Static Data ──────────────────────────────
         navItems: [
             { id:'home',    label:'Beranda',    icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
@@ -1091,6 +1180,15 @@ function serabutStore() {
             const saved = localStorage.getItem('serabutUser');
             if(saved) { try{ this.currentUser=JSON.parse(saved); }catch{} }
             await this.fetchProducts();
+            setInterval(() => {
+                if(!this.flashSale.aktif) return;
+                const diff = new Date(this.flashSale.deadline) - new Date();
+                if(diff <= 0) { this.flashSaleCountdown = 'Berakhir'; return; }
+                const h = Math.floor(diff/3600000);
+                const m = Math.floor((diff%3600000)/60000);
+                const s = Math.floor((diff%60000)/1000);
+                this.flashSaleCountdown = [h,m,s].map(v=>String(v).padStart(2,'0')).join(':');
+            }, 1000);
         },
 
         // ── Products ──────────────────────────────────
