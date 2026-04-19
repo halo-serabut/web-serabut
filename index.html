@@ -132,25 +132,29 @@
 
                         <!-- ── Mobile horizontal banner ── -->
                         <div class="md:hidden bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl p-3 text-white">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 bg-yellow-400/20 rounded-xl flex items-center justify-center flex-none">
-                                    <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-1.5 mb-0.5">
-                                        <span class="text-yellow-300 text-[9px] font-black tracking-widest">FLASH SALE</span>
-                                        <span class="bg-yellow-400 text-gray-900 text-[9px] font-black px-1.5 py-0.5 rounded-full" x-text="'-'+flashSale.diskon+'%'"></span>
+                            <!-- Row 1: badge + button -->
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-6 h-6 bg-yellow-400/20 rounded-lg flex items-center justify-center flex-none">
+                                        <svg class="w-3.5 h-3.5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                                     </div>
-                                    <div class="font-bold text-xs leading-tight truncate" x-text="flashSale.produk"></div>
-                                    <div class="text-white/50 text-[9px] font-mono mt-0.5" x-text="'⏱ '+flashSaleCountdown"></div>
+                                    <span class="text-yellow-300 text-[9px] font-black tracking-widest">FLASH SALE</span>
+                                    <span class="bg-yellow-400 text-gray-900 text-[9px] font-black px-1.5 py-0.5 rounded-full" x-text="'-'+flashSale.diskon+'%'"></span>
                                 </div>
-                                <div class="flex-none text-right mr-1">
+                                <button @click="setPage('catalog')" class="flex-none bg-yellow-400 text-gray-900 font-black text-xs px-3 py-2 rounded-xl active:scale-95 whitespace-nowrap">
+                                    Beli →
+                                </button>
+                            </div>
+                            <!-- Row 2: product name + price -->
+                            <div class="flex items-end justify-between gap-2">
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-bold text-sm leading-snug" x-text="flashSale.produk"></div>
+                                    <div class="text-white/50 text-[9px] font-mono mt-1" x-text="'⏱ '+flashSaleCountdown"></div>
+                                </div>
+                                <div class="flex-none text-right">
                                     <div class="text-white/40 text-[10px] line-through leading-none" x-text="formatPrice(flashSale.hargaAsli)"></div>
                                     <div class="text-yellow-300 font-black text-sm leading-tight" x-text="formatPrice(flashSale.harga)"></div>
                                 </div>
-                                <button @click="setPage('catalog')" class="flex-none bg-yellow-400 text-gray-900 font-black text-xs px-3 py-2.5 rounded-xl active:scale-95 whitespace-nowrap">
-                                    Beli →
-                                </button>
                             </div>
                         </div>
 
@@ -595,7 +599,7 @@
                                 <div class="font-bold text-gray-800 text-sm leading-snug" x-text="order.produk"></div>
                                 <div class="text-xs text-gray-400 mt-0.5">
                                     <span x-show="order.varian&&order.varian!=='-'" x-text="order.varian + ' · '"></span>
-                                    <span x-text="order.tanggal"></span>
+                                    <span x-text="formatOrderDate(order.tanggal)"></span>
                                 </div>
                             </div>
                             <div class="text-brand-500 font-black text-sm flex-none" x-text="formatPrice(order.harga)"></div>
@@ -1305,16 +1309,18 @@ function serabutStore() {
         getProductLogo(cat) {
             const sz = 64;
             const f = d => `https://www.google.com/s2/favicons?domain=${d}&sz=${sz}`;
+            const sp = name => `https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/svg/${name}_48x1.svg`;
             const m = {
-                'Office 365':    f('microsoft.com'),
+                'Office 365':    sp('office'),
+                'Office':        sp('office'),
+                'Visio':         sp('visio'),
+                'Project':       sp('project'),
+                'Windows':       sp('windows'),
+                'Windows Server':sp('windows'),
                 'Adobe':         f('adobe.com'),
-                'Windows':       f('microsoft.com'),
-                'Office':        f('microsoft.com'),
                 'Google':        f('google.com'),
                 'Google One':    f('one.google.com'),
                 'CorelDRAW':     f('coreldraw.com'),
-                'Project':       f('microsoft.com'),
-                'Visio':         f('microsoft.com'),
                 'Netflix':       f('netflix.com'),
                 'Canva':         f('canva.com'),
                 'NordVPN':       f('nordvpn.com'),
@@ -1323,7 +1329,6 @@ function serabutStore() {
                 'Amazon Prime':  f('amazon.com'),
                 'iQIYI':         f('iqiyi.com'),
                 'Zoom':          f('zoom.us'),
-                'Windows Server':f('microsoft.com'),
                 'Lainnya':       f('microsoft.com'),
             };
             return m[cat] || f('microsoft.com');
@@ -1551,6 +1556,13 @@ function serabutStore() {
         formatPrice(p) {
             if(!p) return 'Hubungi Kami';
             return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(p);
+        },
+        formatOrderDate(str) {
+            if(!str) return str;
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            const parts = str.split('/');
+            if(parts.length !== 3) return str;
+            return `${parts[0]} ${months[Number(parts[1])-1]} ${parts[2]}`;
         },
         setPage(page) {
             this.activePage=page;
