@@ -142,7 +142,7 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <template x-for="cat in categories" :key="cat.name">
                     <button @click="setPage('catalog'); activeCategory=cat.name" class="bg-white rounded-2xl p-4 border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all card-hover text-left group">
-                        <div class="text-2xl mb-2" x-text="cat.icon"></div>
+                        <div class="w-8 h-8 mb-2 text-brand-500" x-html="cat.icon"></div>
                         <div class="font-bold text-gray-800 text-sm group-hover:text-brand-600 transition-colors leading-tight" x-text="cat.name"></div>
                         <div class="text-[11px] text-gray-400 mt-0.5" x-text="cat.desc"></div>
                     </button>
@@ -186,7 +186,7 @@
                 <h2 class="text-lg md:text-xl font-black text-gray-900 mb-8 text-center">Kenapa Serabut Store?</h2>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <template x-for="b in benefits" :key="b.title">
-                        <div class="text-center"><div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3" x-text="b.icon"></div><div class="font-bold text-gray-800 text-sm mb-1" x-text="b.title"></div><div class="text-xs text-gray-500 leading-relaxed" x-text="b.desc"></div></div>
+                        <div class="text-center"><div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-brand-500" x-html="b.icon"></div><div class="font-bold text-gray-800 text-sm mb-1" x-text="b.title"></div><div class="text-xs text-gray-500 leading-relaxed" x-text="b.desc"></div></div>
                     </template>
                 </div>
             </div>
@@ -225,14 +225,14 @@
                             </div>
                             <h3 class="font-semibold text-gray-800 text-sm leading-snug mb-1 line-clamp-2 group-hover:text-brand-600 transition-colors" x-text="product.nama"></h3>
                             <p class="text-xs text-gray-400 mb-2 truncate" x-text="product.varian"></p>
-                            <div x-show="product.masaAktif&&product.masaAktif!=='-'" class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full mb-2"><span>⏱</span><span x-text="product.masaAktif"></span></div>
+                            <div x-show="product.masaAktif&&product.masaAktif!=='-'" class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full mb-2"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span x-text="product.masaAktif"></span></div>
                             <div class="font-black text-brand-500 text-base" x-text="formatPrice(product.harga)"></div>
                         </div>
                         <div class="px-4 pb-4"><div class="w-full text-center gradient-card text-white text-sm font-bold py-2.5 rounded-xl">Lihat Detail</div></div>
                     </div>
                 </template>
                 <div x-show="filteredProducts.length===0&&!loading" class="col-span-full text-center py-16">
-                    <div class="text-5xl mb-4">🔍</div><div class="font-bold text-gray-700 text-lg">Produk tidak ditemukan</div>
+                    <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4"><svg class="w-7 h-7 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div><div class="font-bold text-gray-700 text-lg">Produk tidak ditemukan</div>
                     <button @click="searchQuery='';activeCategory='Semua'" class="mt-4 text-brand-500 font-semibold text-sm underline underline-offset-2">Reset filter</button>
                 </div>
             </div>
@@ -246,7 +246,7 @@
             <p class="text-sm text-gray-400 mb-6">Tutorial instalasi & penggunaan software</p>
             <div class="flex gap-2 overflow-x-auto pb-2 mb-6 no-scrollbar">
                 <template x-for="tab in guideTabs" :key="tab.id">
-                    <button @click="activeGuide=tab.id" :class="activeGuide===tab.id?'bg-brand-500 text-white':'bg-white text-gray-600 border border-gray-200'" class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-1.5"><span x-text="tab.icon"></span><span x-text="tab.label"></span></button>
+                    <button @click="activeGuide=tab.id" :class="activeGuide===tab.id?'bg-brand-500 text-white':'bg-white text-gray-600 border border-gray-200'" class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-1.5"><span x-html="tab.icon"></span><span x-text="tab.label"></span></button>
                 </template>
             </div>
             <template x-for="tab in guideTabs" :key="tab.id">
@@ -827,31 +827,77 @@
 
         <!-- Dynamic extra fields -->
         <div class="mb-4 space-y-3">
+
+            <!-- ── 365 WEB ── -->
             <template x-if="orderExtraType==='web'">
                 <div class="space-y-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Nama untuk akun Microsoft <span class="text-red-500">*</span></label>
+                        <input x-model="orderExtra.nama" type="text" placeholder="Nama lengkap (contoh: Budi Santoso)" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                    </div>
                     <div>
                         <label class="text-xs font-bold text-gray-700 mb-1.5 block">Username Microsoft yang diinginkan <span class="text-red-500">*</span></label>
                         <input x-model="orderExtra.username" type="text" placeholder="contoh: budi.santoso" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                     </div>
                     <div>
-                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email aktif untuk pengiriman <span class="text-red-500">*</span></label>
-                        <input x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email untuk menerima produk <span class="text-red-500">*</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer mb-2 select-none">
+                            <input type="checkbox" x-model="orderExtra.emailSameAsProfile" @change="if(orderExtra.emailSameAsProfile) orderExtra.emailAktif=currentUser.email" class="w-4 h-4 rounded accent-red-600">
+                            <span class="text-xs text-gray-600">Gunakan email profil saya — <span class="font-semibold text-gray-800" x-text="currentUser?.email"></span></span>
+                        </label>
+                        <input x-show="!orderExtra.emailSameAsProfile" x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email reminder <span class="text-gray-400 font-normal">(opsional)</span></label>
+                        <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email di atas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                        <p class="text-[11px] text-gray-400 mt-1.5">Isi jika pesan untuk orang lain dan ingin reminder dikirim ke email berbeda</p>
                     </div>
                 </div>
             </template>
+
+            <!-- ── 365 FAMILY ── -->
             <template x-if="orderExtraType==='family'">
-                <div>
-                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email Microsoft yang akan di-invite <span class="text-red-500">*</span></label>
-                    <input x-model="orderExtra.microsoftEmail" type="email" placeholder="contoh@outlook.com atau @gmail.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email Microsoft yang akan di-invite <span class="text-red-500">*</span></label>
+                        <input x-model="orderExtra.microsoftEmail" type="email" placeholder="contoh@outlook.com atau @gmail.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email untuk menerima konfirmasi <span class="text-red-500">*</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer mb-2 select-none">
+                            <input type="checkbox" x-model="orderExtra.emailSameAsProfile" @change="if(orderExtra.emailSameAsProfile) orderExtra.emailAktif=currentUser.email" class="w-4 h-4 rounded accent-red-600">
+                            <span class="text-xs text-gray-600">Gunakan email profil saya — <span class="font-semibold text-gray-800" x-text="currentUser?.email"></span></span>
+                        </label>
+                        <input x-show="!orderExtra.emailSameAsProfile" x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email reminder <span class="text-gray-400 font-normal">(opsional)</span></label>
+                        <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email di atas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                        <p class="text-[11px] text-gray-400 mt-1.5">Isi jika pesan untuk orang lain dan ingin reminder dikirim ke email berbeda</p>
+                    </div>
                 </div>
             </template>
+
+            <!-- ── OTHER PRODUCTS ── -->
             <template x-if="orderExtraType==='other'">
-                <div>
-                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email aktif untuk pengiriman produk <span class="text-red-500">*</span></label>
-                    <input x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email untuk menerima produk <span class="text-red-500">*</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer mb-2 select-none">
+                            <input type="checkbox" x-model="orderExtra.emailSameAsProfile" @change="if(orderExtra.emailSameAsProfile) orderExtra.emailAktif=currentUser.email" class="w-4 h-4 rounded accent-red-600">
+                            <span class="text-xs text-gray-600">Gunakan email profil saya — <span class="font-semibold text-gray-800" x-text="currentUser?.email"></span></span>
+                        </label>
+                        <input x-show="!orderExtra.emailSameAsProfile" x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email reminder <span class="text-gray-400 font-normal">(opsional)</span></label>
+                        <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email di atas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                        <p class="text-[11px] text-gray-400 mt-1.5">Isi jika pesan untuk orang lain dan ingin reminder dikirim ke email berbeda</p>
+                    </div>
                 </div>
             </template>
-            <div x-show="orderExtraError" class="text-red-500 text-xs px-1" x-text="orderExtraError"></div>
+
+            <div x-show="orderExtraError" class="text-red-500 text-xs px-1 font-medium" x-text="orderExtraError"></div>
         </div>
 
         <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4 flex gap-2">
@@ -915,7 +961,7 @@ function serabutStore() {
         authModal:    false,
         orderModal:   false,
         orderSuccess: false,
-        orderExtra:   { username:'', microsoftEmail:'', emailAktif:'' },
+        orderExtra:   { nama:'', username:'', microsoftEmail:'', emailAktif:'', emailSameAsProfile:true, emailReminder:'' },
         orderExtraError: '',
 
         // Product detail
@@ -979,20 +1025,20 @@ function serabutStore() {
             { id:'status',  label:'Cek Status', icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
         ],
         categories: [
-            {name:'Office 365',icon:'📧',desc:'Family & Personal'},
-            {name:'Adobe',     icon:'🎨',desc:'Creative Cloud'},
-            {name:'Windows',   icon:'🪟',desc:'Pro License'},
-            {name:'Office',    icon:'💼',desc:'2019/2021/2024'},
-            {name:'Google',    icon:'☁️', desc:'Workspace & Suite'},
-            {name:'CorelDRAW', icon:'✏️',desc:'Graphics Suite'},
-            {name:'Project',   icon:'📊',desc:'Ms Project Pro'},
-            {name:'Visio',     icon:'📐',desc:'Ms Visio Pro'},
+            {name:'Office 365',icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,desc:'Family & Personal'},
+            {name:'Adobe',     icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`,desc:'Creative Cloud'},
+            {name:'Windows',   icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,desc:'Pro License'},
+            {name:'Office',    icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,desc:'2019/2021/2024'},
+            {name:'Google',    icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>`,desc:'Workspace & Suite'},
+            {name:'CorelDRAW', icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,desc:'Graphics Suite'},
+            {name:'Project',   icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`,desc:'Ms Project Pro'},
+            {name:'Visio',     icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,desc:'Ms Visio Pro'},
         ],
         benefits: [
-            {icon:'✅',title:'Original & Resmi',  desc:'Semua produk bergaransi keaslian dari vendor resmi'},
-            {icon:'⚡',title:'Proses Kilat',      desc:'Aktivasi dalam hitungan menit setelah pembayaran'},
-            {icon:'💬',title:'Support 24/7',      desc:'Tim siap bantu via WhatsApp kapan saja'},
-            {icon:'💰',title:'Harga Terbaik',     desc:'Hemat hingga 70% dari harga resmi'},
+            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>`,title:'Original & Resmi',  desc:'Semua produk bergaransi keaslian dari vendor resmi'},
+            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,title:'Proses Kilat',      desc:'Aktivasi dalam hitungan menit setelah pembayaran'},
+            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>`,title:'Support 24/7',      desc:'Tim siap bantu via WhatsApp kapan saja'},
+            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>`,title:'Harga Terbaik',     desc:'Hemat hingga 70% dari harga resmi'},
         ],
         statusOptions: [
             {value:'email',      label:'Email Pembelian',hint:'Email saat order',     placeholder:'contoh@email.com'},
@@ -1001,9 +1047,9 @@ function serabutStore() {
             {value:'emailAktif', label:'Email Akun',     hint:'Email akun aktifmu',   placeholder:'emailakun@outlook.com'},
         ],
         guideTabs: [
-            {id:'office365',label:'Office 365',icon:'📦'},
-            {id:'windows',  label:'Windows',   icon:'🪟'},
-            {id:'adobe',    label:'Adobe',     icon:'🎨'},
+            {id:'office365',label:'Office 365',icon:`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`},
+            {id:'windows',  label:'Windows',   icon:`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`},
+            {id:'adobe',    label:'Adobe',     icon:`<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`},
         ],
         guides: {
             office365: [
@@ -1283,17 +1329,18 @@ function serabutStore() {
         handlePesan() {
             if(!this.currentUser) { this.openAuth('login'); return; }
             this.orderError=''; this.orderExtraError='';
-            this.orderExtra = { username:'', microsoftEmail:'', emailAktif:'' };
+            this.orderExtra = { nama:'', username:'', microsoftEmail:'', emailAktif:this.currentUser?.email||'', emailSameAsProfile:true, emailReminder:'' };
             this.orderModal=true;
         },
         async submitOrder() {
             if(!this.currentUser||!this.selectedVariant) return;
             this.orderExtraError='';
             const type = this.orderExtraType;
-            if(type==='web' && !this.orderExtra.username.trim())       { this.orderExtraError='Username Microsoft wajib diisi'; return; }
-            if(type==='web' && !this.orderExtra.emailAktif.trim())     { this.orderExtraError='Email aktif wajib diisi'; return; }
-            if(type==='family' && !this.orderExtra.microsoftEmail.trim()){ this.orderExtraError='Email Microsoft wajib diisi'; return; }
-            if(type==='other' && !this.orderExtra.emailAktif.trim())   { this.orderExtraError='Email aktif wajib diisi'; return; }
+            const effectiveEmail = this.orderExtra.emailSameAsProfile ? (this.currentUser?.email||'') : this.orderExtra.emailAktif.trim();
+            if(type==='web'    && !this.orderExtra.nama.trim())            { this.orderExtraError='Nama untuk akun Microsoft wajib diisi'; return; }
+            if(type==='web'    && !this.orderExtra.username.trim())        { this.orderExtraError='Username Microsoft wajib diisi'; return; }
+            if(type==='family' && !this.orderExtra.microsoftEmail.trim())  { this.orderExtraError='Email Microsoft wajib diisi'; return; }
+            if(!effectiveEmail)                                             { this.orderExtraError='Email wajib diisi'; return; }
             this.orderLoading=true; this.orderError='';
             try {
                 const params = new URLSearchParams({
@@ -1305,9 +1352,11 @@ function serabutStore() {
                     varian:         this.selectedVariant.varian||'',
                     masaAktif:      this.selectedVariant.masaAktif||'-',
                     harga:          this.selectedVariant.harga,
+                    msNama:         this.orderExtra.nama,
                     username:       this.orderExtra.username,
                     microsoftEmail: this.orderExtra.microsoftEmail,
-                    emailAktif:     this.orderExtra.emailAktif,
+                    emailAktif:     effectiveEmail,
+                    emailReminder:  this.orderExtra.emailReminder,
                 });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
