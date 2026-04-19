@@ -793,8 +793,9 @@
                 <div><div class="text-xs text-gray-400">Total Harga</div><div class="font-black text-brand-500 text-2xl" x-text="formatPrice(selectedVariant?.harga)"></div></div>
                 <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="text-right"><div class="text-xs text-gray-400">Durasi</div><div class="font-bold text-gray-700 text-sm" x-text="selectedVariant?.masaAktif"></div></div>
             </div>
-            <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all active:scale-95 shadow-md mb-3">
-                🛒 Pesan Sekarang
+            <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all active:scale-95 shadow-md mb-3 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
+                Pesan Sekarang
             </button>
             <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener" class="block w-full text-center text-gray-400 text-sm py-2 hover:text-brand-500 transition-colors">
                 Atau beli di Shopee →
@@ -1055,9 +1056,10 @@
 
         <div x-show="orderError" class="bg-red-50 text-red-600 text-xs px-3 py-2.5 rounded-xl mb-3" x-text="orderError"></div>
 
-        <button @click="submitOrder()" :disabled="orderLoading" class="w-full gradient-card disabled:bg-gray-200 text-white disabled:text-gray-400 font-black py-4 rounded-2xl text-base transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md mb-2">
-            <svg x-show="orderLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-            <span x-text="orderLoading?'Memproses...':'Konfirmasi Pesanan ✓'"></span>
+        <button @click="!orderLoading && submitOrder()" :class="orderLoading?'opacity-75 cursor-not-allowed':'active:scale-95'" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all flex items-center justify-center gap-2 shadow-md mb-2">
+            <svg x-show="orderLoading" class="animate-spin w-4 h-4 flex-none" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            <svg x-show="!orderLoading" class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            <span x-text="orderLoading?'Memproses...':'Konfirmasi Pesanan'"></span>
         </button>
         <button @click="orderModal=false" class="w-full text-center text-gray-400 text-sm py-2.5 hover:text-gray-600 transition-colors">Batal</button>
     </div>
