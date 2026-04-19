@@ -460,6 +460,65 @@
 
 
 <!-- ══════════════════════════════════════════════════════
+     OTP VERIFICATION MODAL
+══════════════════════════════════════════════════════ -->
+<div x-show="otpModal" class="fixed inset-0 z-[210] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 py-6 modal-enter">
+        <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+
+        <!-- Icon -->
+        <div class="flex justify-center mb-4">
+            <div class="w-16 h-16 rounded-2xl bg-brand-50 flex items-center justify-center">
+                <svg class="w-8 h-8 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                </svg>
+            </div>
+        </div>
+
+        <h3 class="font-black text-gray-900 text-xl text-center mb-1">Verifikasi Email</h3>
+        <p class="text-sm text-gray-400 text-center mb-5">Kode OTP dikirim ke<br><strong class="text-gray-700" x-text="otpEmail"></strong></p>
+
+        <!-- OTP Input -->
+        <div class="mb-4">
+            <label class="text-xs font-bold text-gray-600 mb-2 block text-center">Masukkan 6 Digit Kode OTP</label>
+            <input x-model="otpCode" type="text" inputmode="numeric" maxlength="6" placeholder="------"
+                @keyup.enter="submitOTP()"
+                class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-center text-2xl font-black tracking-[12px] text-brand-600 focus:outline-none focus:border-brand-400 transition-all placeholder:tracking-normal placeholder:text-gray-300 placeholder:text-base placeholder:font-normal">
+        </div>
+
+        <!-- Timer -->
+        <div class="text-center mb-4">
+            <span x-show="otpTimer>0" class="text-xs text-gray-400">
+                Kode berlaku <span class="font-bold text-gray-700" x-text="otpTimerLabel()"></span>
+            </span>
+            <span x-show="otpTimer===0" class="text-xs text-red-500 font-semibold">Kode kadaluarsa</span>
+        </div>
+
+        <!-- Error -->
+        <div x-show="otpError" class="bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4">
+            <p class="text-sm text-red-500 text-center" x-text="otpError"></p>
+        </div>
+
+        <!-- Submit -->
+        <button @click="submitOTP()" :disabled="otpLoading||otpCode.length!==6"
+            class="w-full gradient-card text-white font-bold py-4 rounded-2xl text-base shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all mb-3">
+            <span x-text="otpLoading?'Memverifikasi...':'Verifikasi Sekarang'"></span>
+        </button>
+
+        <!-- Resend -->
+        <div class="text-center">
+            <button @click="resendOTP()" :disabled="otpResending||otpTimer>540"
+                class="text-sm text-gray-400 disabled:opacity-40 disabled:cursor-not-allowed">
+                <span x-show="!otpResending">Tidak menerima kode? <span :class="otpTimer>540?'text-gray-400':'text-brand-500 font-semibold'">Kirim Ulang</span></span>
+                <span x-show="otpResending" class="text-brand-500">Mengirim ulang...</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
      ORDER CONFIRM MODAL
 ══════════════════════════════════════════════════════ -->
 <div x-show="orderModal" class="fixed inset-0 z-[200] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
@@ -555,6 +614,16 @@ function serabutStore() {
         currentUser:  null,
         loginForm:    { email:'', password:'' },
         registerForm: { nama:'', email:'', wa:'', password:'' },
+
+        // OTP
+        otpModal:      false,
+        otpEmail:      '',
+        otpCode:       '',
+        otpLoading:    false,
+        otpError:      '',
+        otpResending:  false,
+        otpTimer:      600,
+        otpInterval:   null,
 
         // Order
         orderLoading:    false,
@@ -775,15 +844,68 @@ function serabutStore() {
                 const params = new URLSearchParams({ action:'register', nama, email, wa, password:hashed });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
-                if(data.success) {
-                    this.currentUser = data.user;
-                    localStorage.setItem('serabutUser', JSON.stringify(data.user));
+                if(data.success && data.action==='verify_otp') {
                     this.closeAuthModal();
-                    this.registerForm = {nama:'',email:'',wa:'',password:''};
-                    if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
+                    this.openOTPModal(data.email);
                 } else { this.authError = data.error||'Registrasi gagal'; }
             } catch { this.authError='Gagal terhubung ke server'; }
             this.authLoading=false;
+        },
+        openOTPModal(email) {
+            this.otpEmail   = email;
+            this.otpCode    = '';
+            this.otpError   = '';
+            this.otpModal   = true;
+            this.startOTPTimer();
+            document.body.style.overflow = 'hidden';
+        },
+        closeOTPModal() {
+            this.otpModal = false;
+            this.otpCode  = '';
+            this.otpError = '';
+            clearInterval(this.otpInterval);
+            document.body.style.overflow = '';
+        },
+        startOTPTimer() {
+            clearInterval(this.otpInterval);
+            this.otpTimer = 600;
+            this.otpInterval = setInterval(()=>{
+                if(this.otpTimer > 0) { this.otpTimer--; }
+                else { clearInterval(this.otpInterval); }
+            }, 1000);
+        },
+        otpTimerLabel() {
+            const m = String(Math.floor(this.otpTimer/60)).padStart(2,'0');
+            const s = String(this.otpTimer%60).padStart(2,'0');
+            return `${m}:${s}`;
+        },
+        async submitOTP() {
+            if(!this.otpCode||this.otpCode.length!==6){ this.otpError='Masukkan 6 digit kode OTP'; return; }
+            this.otpLoading=true; this.otpError='';
+            try {
+                const params = new URLSearchParams({ action:'verifyOTP', email:this.otpEmail, otp:this.otpCode });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) {
+                    this.currentUser = data.user;
+                    localStorage.setItem('serabutUser', JSON.stringify(data.user));
+                    this.closeOTPModal();
+                    this.registerForm = {nama:'',email:'',wa:'',password:''};
+                    if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
+                } else { this.otpError = data.error||'Verifikasi gagal'; }
+            } catch { this.otpError='Gagal terhubung ke server'; }
+            this.otpLoading=false;
+        },
+        async resendOTP() {
+            this.otpResending=true; this.otpError='';
+            try {
+                const params = new URLSearchParams({ action:'resendOTP', email:this.otpEmail });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) { this.startOTPTimer(); this.otpError=''; }
+                else { this.otpError = data.error||'Gagal kirim ulang OTP'; }
+            } catch { this.otpError='Gagal terhubung ke server'; }
+            this.otpResending=false;
         },
         logout() {
             this.currentUser = null;
