@@ -825,6 +825,35 @@
             <div><div class="font-bold text-gray-800 text-sm" x-text="currentUser?.nama"></div><div class="text-xs text-gray-500" x-text="currentUser?.email"></div><div class="text-xs text-gray-500" x-text="currentUser?.wa"></div></div>
         </div>
 
+        <!-- Dynamic extra fields -->
+        <div class="mb-4 space-y-3">
+            <template x-if="orderExtraType==='web'">
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Username Microsoft yang diinginkan <span class="text-red-500">*</span></label>
+                        <input x-model="orderExtra.username" type="text" placeholder="contoh: budi.santoso" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email aktif untuk pengiriman <span class="text-red-500">*</span></label>
+                        <input x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                    </div>
+                </div>
+            </template>
+            <template x-if="orderExtraType==='family'">
+                <div>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email Microsoft yang akan di-invite <span class="text-red-500">*</span></label>
+                    <input x-model="orderExtra.microsoftEmail" type="email" placeholder="contoh@outlook.com atau @gmail.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                </div>
+            </template>
+            <template x-if="orderExtraType==='other'">
+                <div>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email aktif untuk pengiriman produk <span class="text-red-500">*</span></label>
+                    <input x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                </div>
+            </template>
+            <div x-show="orderExtraError" class="text-red-500 text-xs px-1" x-text="orderExtraError"></div>
+        </div>
+
         <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4 flex gap-2">
             <span class="text-amber-500 flex-none">💡</span>
             <p class="text-xs text-amber-700">Setelah pesan, tim kami akan menghubungi kamu via WhatsApp untuk proses pembayaran & aktivasi.</p>
@@ -886,6 +915,8 @@ function serabutStore() {
         authModal:    false,
         orderModal:   false,
         orderSuccess: false,
+        orderExtra:   { username:'', microsoftEmail:'', emailAktif:'' },
+        orderExtraError: '',
 
         // Product detail
         selectedProductGroup: null,
@@ -1243,24 +1274,40 @@ function serabutStore() {
         },
 
         // ── Order ─────────────────────────────────────
+        get orderExtraType() {
+            const v = (this.selectedVariant?.varian || '').toLowerCase();
+            if (v.includes('family')) return 'family';
+            if (v.includes('web'))    return 'web';
+            return 'other';
+        },
         handlePesan() {
             if(!this.currentUser) { this.openAuth('login'); return; }
-            this.orderError='';
+            this.orderError=''; this.orderExtraError='';
+            this.orderExtra = { username:'', microsoftEmail:'', emailAktif:'' };
             this.orderModal=true;
         },
         async submitOrder() {
             if(!this.currentUser||!this.selectedVariant) return;
+            this.orderExtraError='';
+            const type = this.orderExtraType;
+            if(type==='web' && !this.orderExtra.username.trim())       { this.orderExtraError='Username Microsoft wajib diisi'; return; }
+            if(type==='web' && !this.orderExtra.emailAktif.trim())     { this.orderExtraError='Email aktif wajib diisi'; return; }
+            if(type==='family' && !this.orderExtra.microsoftEmail.trim()){ this.orderExtraError='Email Microsoft wajib diisi'; return; }
+            if(type==='other' && !this.orderExtra.emailAktif.trim())   { this.orderExtraError='Email aktif wajib diisi'; return; }
             this.orderLoading=true; this.orderError='';
             try {
                 const params = new URLSearchParams({
-                    action:    'createOrder',
-                    userNama:  this.currentUser.nama,
-                    userEmail: this.currentUser.email,
-                    userWa:    this.currentUser.wa,
-                    produk:    this.selectedProductGroup.nama,
-                    varian:    this.selectedVariant.varian||'',
-                    masaAktif: this.selectedVariant.masaAktif||'-',
-                    harga:     this.selectedVariant.harga,
+                    action:         'createOrder',
+                    userNama:       this.currentUser.nama,
+                    userEmail:      this.currentUser.email,
+                    userWa:         this.currentUser.wa,
+                    produk:         this.selectedProductGroup.nama,
+                    varian:         this.selectedVariant.varian||'',
+                    masaAktif:      this.selectedVariant.masaAktif||'-',
+                    harga:          this.selectedVariant.harga,
+                    username:       this.orderExtra.username,
+                    microsoftEmail: this.orderExtra.microsoftEmail,
+                    emailAktif:     this.orderExtra.emailAktif,
                 });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
