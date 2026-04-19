@@ -6,7 +6,6 @@
     <title>Serabut Store — Software Original Terpercaya</title>
     <meta name="description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat.">
     <meta name="theme-color" content="#DC2626">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -16,1048 +15,842 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        brand: {
-                            50: '#FFF5F5',
-                            100: '#FFE3E3',
-                            200: '#FFBABA',
-                            500: '#DC2626',
-                            600: '#B91C1C',
-                            700: '#991B1B',
-                        }
-                    },
+                    colors: { brand: { 50:'#FFF5F5', 100:'#FFE3E3', 200:'#FFBABA', 500:'#DC2626', 600:'#B91C1C', 700:'#991B1B' } },
                     fontFamily: { sans: ['Inter', 'sans-serif'] }
                 }
             }
         }
     </script>
-
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
         [x-cloak] { display: none !important; }
-
-        .gradient-hero {
-            background: linear-gradient(135deg, #7F1D1D 0%, #DC2626 60%, #EF4444 100%);
-        }
-        .gradient-card {
-            background: linear-gradient(135deg, #DC2626, #EF4444);
-        }
-
-        .card-hover {
-            transition: transform 0.18s ease, box-shadow 0.18s ease;
-        }
-        .card-hover:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 40px rgba(220, 38, 38, 0.12);
-        }
-        .card-hover:active {
-            transform: translateY(-1px);
-        }
-
-        /* iOS safe area */
-        .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), 0.75rem); }
-        .pt-safe { padding-top: env(safe-area-inset-top); }
-
-        /* Page transitions */
-        .page-enter {
-            animation: pageIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        @keyframes pageIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Loading skeleton */
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-        @keyframes shimmer {
-            0%   { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-
-        /* Hide horizontal scrollbar */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Smooth scroll */
-        html { scroll-behavior: smooth; }
-
-        /* Custom radio */
-        input[type="radio"] { accent-color: #DC2626; }
-
-        /* Bottom nav active indicator */
-        .nav-active::before {
-            content: '';
-            display: block;
-            width: 4px;
-            height: 4px;
-            background: #DC2626;
-            border-radius: 50%;
-            margin: 0 auto 2px;
-        }
-
-        /* Prose-like guide content */
-        .guide-step { transition: max-height 0.3s ease, opacity 0.3s ease; }
+        .gradient-hero  { background: linear-gradient(135deg, #7F1D1D 0%, #DC2626 60%, #EF4444 100%); }
+        .gradient-card  { background: linear-gradient(135deg, #DC2626, #EF4444); }
+        .card-hover     { transition: transform .18s ease, box-shadow .18s ease; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(220,38,38,.12); }
+        .card-hover:active { transform: translateY(-1px); }
+        .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), .75rem); }
+        .page-enter { animation: pageIn .22s cubic-bezier(.4,0,.2,1); }
+        @keyframes pageIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .skeleton { background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
+        @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+        .no-scrollbar::-webkit-scrollbar { display:none; }
+        .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+        .modal-enter { animation: modalUp .28s cubic-bezier(.4,0,.2,1); }
+        @keyframes modalUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+        input[type="radio"] { accent-color:#DC2626; }
     </style>
 </head>
 
 <body class="font-sans bg-gray-50 min-h-screen antialiased" x-cloak>
 
-    <!-- ═══════════════════════════════════════
-         DESKTOP NAVBAR
-    ════════════════════════════════════════ -->
-    <nav class="hidden md:block fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100 shadow-sm">
-        <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+<!-- ══════════════════════════════════════════════════════
+     DESKTOP NAVBAR
+══════════════════════════════════════════════════════ -->
+<nav class="hidden md:block fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100 shadow-sm">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <button @click="setPage('home')" class="flex items-center gap-2.5 group">
+            <div class="w-9 h-9 gradient-card rounded-xl flex items-center justify-center shadow-sm"><span class="text-white font-black text-lg">S</span></div>
+            <div><div class="font-black text-gray-900 text-sm leading-tight">Serabut Store</div><div class="text-[10px] text-gray-400">Software Original</div></div>
+        </button>
 
-            <!-- Logo -->
-            <button @click="setPage('home')" class="flex items-center gap-2.5 group">
-                <div class="w-9 h-9 gradient-card rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                    <span class="text-white font-black text-lg">S</span>
-                </div>
-                <div class="text-left">
-                    <div class="font-black text-gray-900 text-sm leading-tight">Serabut Store</div>
-                    <div class="text-[10px] text-gray-400 leading-tight">Software Original</div>
-                </div>
-            </button>
-
-            <!-- Nav Links -->
-            <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1">
-                <template x-for="item in navItems" :key="item.id">
-                    <button
-                        @click="setPage(item.id)"
-                        :class="activePage === item.id
-                            ? 'bg-white text-brand-600 shadow-sm font-semibold'
-                            : 'text-gray-500 hover:text-gray-800'"
-                        class="px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                        x-text="item.label">
-                    </button>
-                </template>
-            </div>
-
-            <!-- CTA -->
-            <button
-                @click="setPage('status')"
-                :class="activePage === 'status' ? 'bg-brand-700' : 'bg-brand-500 hover:bg-brand-600'"
-                class="text-white px-5 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Cek Status Akun
-            </button>
-        </div>
-    </nav>
-
-    <!-- ═══════════════════════════════════════
-         MOBILE HEADER
-    ════════════════════════════════════════ -->
-    <header class="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
-        <div class="px-4 h-14 flex items-center justify-between">
-            <button @click="setPage('home')" class="flex items-center gap-2">
-                <div class="w-8 h-8 gradient-card rounded-lg flex items-center justify-center shadow-sm">
-                    <span class="text-white font-black">S</span>
-                </div>
-                <span class="font-black text-gray-900">Serabut Store</span>
-            </button>
-            <div class="flex items-center gap-1.5 text-[11px] font-bold text-brand-500 bg-brand-50 px-3 py-1.5 rounded-full">
-                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                Online
-            </div>
-        </div>
-    </header>
-
-    <!-- ═══════════════════════════════════════
-         MAIN CONTENT
-    ════════════════════════════════════════ -->
-    <main class="pt-14 md:pt-16 pb-20 md:pb-0">
-
-        <!-- ─────────────────────────────────
-             HOME PAGE
-        ──────────────────────────────────── -->
-        <section x-show="activePage === 'home'" class="page-enter">
-
-            <!-- Hero -->
-            <div class="gradient-hero text-white">
-                <div class="max-w-6xl mx-auto px-4 py-12 md:py-20">
-                    <div class="max-w-2xl">
-                        <div class="inline-flex items-center gap-2 bg-white/15 backdrop-blur text-white/90 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-5 border border-white/20">
-                            <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
-                            Aktif & Siap Melayani
-                        </div>
-                        <h1 class="text-3xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
-                            Software Original,<br>
-                            <span class="text-yellow-300">Harga Terjangkau</span>
-                        </h1>
-                        <p class="text-white/75 text-base md:text-lg mb-8 leading-relaxed max-w-xl">
-                            Microsoft Office 365, Adobe Creative Cloud, Windows & lebih banyak lagi.
-                            Bergaransi resmi, proses kilat, harga hemat hingga <strong class="text-white">70%</strong>.
-                        </p>
-                        <div class="flex flex-wrap gap-3">
-                            <button
-                                @click="setPage('catalog')"
-                                class="bg-white text-brand-600 font-bold px-6 py-3 rounded-xl hover:bg-brand-50 transition-all shadow-lg hover:shadow-xl active:scale-95 text-sm md:text-base">
-                                Lihat Semua Produk →
-                            </button>
-                            <button
-                                @click="setPage('status')"
-                                class="bg-white/15 backdrop-blur text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95 text-sm md:text-base">
-                                Cek Status Akun
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Stats Bar -->
-            <div class="bg-white border-b border-gray-100 sticky top-14 md:top-16 z-10">
-                <div class="max-w-6xl mx-auto px-4">
-                    <div class="grid grid-cols-3 divide-x divide-gray-100">
-                        <div class="text-center py-4">
-                            <div class="text-xl md:text-2xl font-black text-brand-500">40+</div>
-                            <div class="text-[11px] md:text-xs text-gray-500">Produk Tersedia</div>
-                        </div>
-                        <div class="text-center py-4">
-                            <div class="text-xl md:text-2xl font-black text-brand-500">1K+</div>
-                            <div class="text-[11px] md:text-xs text-gray-500">Pelanggan Puas</div>
-                        </div>
-                        <div class="text-center py-4">
-                            <div class="text-xl md:text-2xl font-black text-brand-500">⚡</div>
-                            <div class="text-[11px] md:text-xs text-gray-500">Proses Cepat</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Categories Grid -->
-            <div class="max-w-6xl mx-auto px-4 py-8">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg md:text-xl font-black text-gray-900">Kategori Produk</h2>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <template x-for="cat in categories" :key="cat.name">
-                        <button
-                            @click="setPage('catalog'); activeCategory = cat.name"
-                            class="bg-white rounded-2xl p-4 border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all card-hover text-left group">
-                            <div class="text-2xl mb-2" x-text="cat.icon"></div>
-                            <div class="font-bold text-gray-800 text-sm group-hover:text-brand-600 transition-colors leading-tight" x-text="cat.name"></div>
-                            <div class="text-[11px] text-gray-400 mt-0.5" x-text="cat.desc"></div>
-                        </button>
-                    </template>
-                </div>
-            </div>
-
-            <!-- Featured Products -->
-            <div class="max-w-6xl mx-auto px-4 pb-8">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg md:text-xl font-black text-gray-900">Produk Populer</h2>
-                    <button @click="setPage('catalog')" class="text-brand-500 text-sm font-semibold hover:text-brand-700 transition-colors">
-                        Lihat Semua →
-                    </button>
-                </div>
-
-                <!-- Skeleton -->
-                <div x-show="loading" class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <template x-for="i in 6">
-                        <div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3">
-                            <div class="skeleton h-5 w-20 rounded-lg"></div>
-                            <div class="skeleton h-4 w-full rounded"></div>
-                            <div class="skeleton h-4 w-3/4 rounded"></div>
-                            <div class="skeleton h-6 w-28 rounded"></div>
-                            <div class="skeleton h-10 w-full rounded-xl"></div>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Products -->
-                <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <template x-for="product in featuredProducts" :key="product.linkProduk + product.varian + product.harga">
-                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden card-hover flex flex-col">
-                            <div class="p-4 flex-1">
-                                <div class="flex items-start justify-between mb-2.5">
-                                    <span class="text-[10px] font-bold px-2 py-1 rounded-lg leading-tight" :class="getCategoryColor(product.category)" x-text="product.category"></span>
-                                    <span x-show="product.masaAktif && product.masaAktif !== '-'" class="text-[10px] text-gray-400 font-medium" x-text="product.masaAktif"></span>
-                                </div>
-                                <h3 class="font-semibold text-gray-800 text-sm leading-snug mb-1 line-clamp-2" x-text="product.nama"></h3>
-                                <p class="text-xs text-gray-400 mb-3 truncate" x-text="product.varian"></p>
-                                <div class="font-black text-brand-500 text-lg" x-text="formatPrice(product.harga)"></div>
-                            </div>
-                            <div class="px-4 pb-4">
-                                <a
-                                    :href="product.linkProduk && product.linkProduk !== '#' ? product.linkProduk : 'https://wa.me/62' + WA_NUMBER"
-                                    target="_blank" rel="noopener"
-                                    class="block w-full text-center gradient-card text-white text-sm font-bold py-2.5 rounded-xl transition-all active:scale-95 shadow-sm">
-                                    Beli Sekarang
-                                </a>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
-            <!-- Why Us -->
-            <div class="bg-white border-t border-gray-100 py-10">
-                <div class="max-w-6xl mx-auto px-4">
-                    <h2 class="text-lg md:text-xl font-black text-gray-900 mb-8 text-center">Kenapa Serabut Store?</h2>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                        <template x-for="benefit in benefits" :key="benefit.title">
-                            <div class="text-center">
-                                <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3" x-text="benefit.icon"></div>
-                                <div class="font-bold text-gray-800 text-sm mb-1" x-text="benefit.title"></div>
-                                <div class="text-xs text-gray-500 leading-relaxed" x-text="benefit.desc"></div>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CTA Banner -->
-            <div class="max-w-6xl mx-auto px-4 py-8">
-                <div class="gradient-card rounded-2xl p-6 md:p-8 text-white flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div>
-                        <div class="font-black text-xl mb-1">Ada pertanyaan?</div>
-                        <p class="text-white/75 text-sm">Tim support kami siap membantu kamu 24/7 via WhatsApp</p>
-                    </div>
-                    <a
-                        :href="'https://wa.me/62' + WA_NUMBER"
-                        target="_blank"
-                        class="flex-none bg-white text-brand-600 font-bold px-6 py-3 rounded-xl text-sm hover:bg-brand-50 transition-all shadow-lg whitespace-nowrap active:scale-95">
-                        💬 Chat WhatsApp
-                    </a>
-                </div>
-            </div>
-
-        </section>
-
-
-        <!-- ─────────────────────────────────
-             CATALOG PAGE
-        ──────────────────────────────────── -->
-        <section x-show="activePage === 'catalog'" class="page-enter">
-            <div class="max-w-6xl mx-auto px-4 py-6">
-
-                <!-- Header -->
-                <div class="mb-5">
-                    <h1 class="text-2xl font-black text-gray-900">Semua Produk</h1>
-                    <p class="text-sm text-gray-400 mt-0.5" x-text="`${filteredProducts.length} produk tersedia`"></p>
-                </div>
-
-                <!-- Search -->
-                <div class="relative mb-4">
-                    <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </div>
-                    <input
-                        x-model="searchQuery"
-                        type="search"
-                        placeholder="Cari produk... (misal: Office 365, Adobe, Windows)"
-                        class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
-                </div>
-
-                <!-- Category Filter -->
-                <div class="flex gap-2 overflow-x-auto pb-3 mb-5 no-scrollbar">
-                    <button
-                        @click="activeCategory = 'Semua'"
-                        :class="activeCategory === 'Semua'
-                            ? 'bg-brand-500 text-white shadow-sm'
-                            : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-300'"
-                        class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all">
-                        Semua
-                    </button>
-                    <template x-for="cat in categoryList" :key="cat">
-                        <button
-                            @click="activeCategory = cat"
-                            :class="activeCategory === cat
-                                ? 'bg-brand-500 text-white shadow-sm'
-                                : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-300'"
-                            class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all"
-                            x-text="cat">
-                        </button>
-                    </template>
-                </div>
-
-                <!-- Skeleton -->
-                <div x-show="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    <template x-for="i in 8">
-                        <div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3">
-                            <div class="skeleton h-5 w-16 rounded-lg"></div>
-                            <div class="skeleton h-4 w-full rounded"></div>
-                            <div class="skeleton h-4 w-2/3 rounded"></div>
-                            <div class="skeleton h-6 w-24 rounded"></div>
-                            <div class="skeleton h-10 w-full rounded-xl"></div>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Product Grid -->
-                <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    <template x-for="product in filteredProducts" :key="product.linkProduk + product.varian + product.harga">
-                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden card-hover flex flex-col group">
-                            <div class="p-4 flex-1">
-                                <div class="flex items-start justify-between mb-2">
-                                    <span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(product.category)" x-text="product.category"></span>
-                                </div>
-                                <h3 class="font-semibold text-gray-800 text-sm leading-snug mb-1 line-clamp-2 group-hover:text-brand-600 transition-colors" x-text="product.nama"></h3>
-                                <p class="text-xs text-gray-400 mb-2 truncate" x-text="product.varian"></p>
-                                <div x-show="product.masaAktif && product.masaAktif !== '-'" class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full mb-2">
-                                    <span>⏱</span>
-                                    <span x-text="product.masaAktif"></span>
-                                </div>
-                                <div class="font-black text-brand-500 text-base" x-text="formatPrice(product.harga)"></div>
-                            </div>
-                            <div class="px-4 pb-4">
-                                <a
-                                    :href="product.linkProduk && product.linkProduk !== '#' ? product.linkProduk : 'https://wa.me/62' + WA_NUMBER"
-                                    target="_blank" rel="noopener"
-                                    class="block w-full text-center gradient-card text-white text-sm font-bold py-2.5 rounded-xl transition-all active:scale-95 shadow-sm">
-                                    Beli Sekarang
-                                </a>
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- Empty state -->
-                    <div x-show="filteredProducts.length === 0 && !loading" class="col-span-full text-center py-16">
-                        <div class="text-5xl mb-4">🔍</div>
-                        <div class="font-bold text-gray-700 text-lg">Produk tidak ditemukan</div>
-                        <div class="text-gray-400 text-sm mt-1">Coba kata kunci lain atau pilih kategori berbeda</div>
-                        <button @click="searchQuery = ''; activeCategory = 'Semua'" class="mt-4 text-brand-500 font-semibold text-sm underline underline-offset-2">
-                            Reset filter
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-
-        <!-- ─────────────────────────────────
-             PANDUAN PAGE
-        ──────────────────────────────────── -->
-        <section x-show="activePage === 'panduan'" class="page-enter">
-            <div class="max-w-3xl mx-auto px-4 py-6">
-
-                <div class="mb-6">
-                    <h1 class="text-2xl font-black text-gray-900">Panduan</h1>
-                    <p class="text-sm text-gray-400 mt-1">Tutorial instalasi dan penggunaan software</p>
-                </div>
-
-                <!-- Guide Tabs -->
-                <div class="flex gap-2 overflow-x-auto pb-2 mb-6 no-scrollbar">
-                    <template x-for="tab in guideTabs" :key="tab.id">
-                        <button
-                            @click="activeGuide = tab.id"
-                            :class="activeGuide === tab.id
-                                ? 'bg-brand-500 text-white shadow-sm'
-                                : 'bg-white text-gray-600 border border-gray-200'"
-                            class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-1.5">
-                            <span x-text="tab.icon"></span>
-                            <span x-text="tab.label"></span>
-                        </button>
-                    </template>
-                </div>
-
-                <!-- Guide Content -->
-                <template x-for="tab in guideTabs" :key="tab.id">
-                    <div x-show="activeGuide === tab.id" class="space-y-3">
-                        <template x-for="(guide, index) in guides[tab.id]" :key="guide.title">
-                            <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                                <button
-                                    @click="guide.open = !guide.open"
-                                    class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center font-bold text-sm flex-none" x-text="index + 1"></div>
-                                        <span class="font-semibold text-gray-800 text-sm leading-snug" x-text="guide.title"></span>
-                                    </div>
-                                    <svg :class="guide.open ? 'rotate-180' : ''" class="w-4 h-4 text-gray-400 transition-transform flex-none ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                    </svg>
-                                </button>
-                                <div x-show="guide.open" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 transform -translate-y-2" x-transition:enter-end="opacity-100 transform translate-y-0" class="px-5 pb-5 border-t border-gray-50">
-                                    <ol class="space-y-3 mt-4">
-                                        <template x-for="(step, si) in guide.steps" :key="si">
-                                            <li class="flex gap-3">
-                                                <div class="w-6 h-6 gradient-card text-white rounded-full flex items-center justify-center text-xs font-bold flex-none mt-0.5" x-text="si + 1"></div>
-                                                <p class="text-sm text-gray-600 leading-relaxed" x-text="step"></p>
-                                            </li>
-                                        </template>
-                                    </ol>
-                                    <template x-if="guide.note">
-                                        <div class="mt-4 bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2">
-                                            <span class="text-amber-500 flex-none">💡</span>
-                                            <p class="text-xs text-amber-700 leading-relaxed" x-text="guide.note"></p>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-                </template>
-
-                <!-- WA Support -->
-                <div class="mt-8 gradient-card rounded-2xl p-5 text-white">
-                    <div class="font-bold text-lg mb-1">Butuh bantuan?</div>
-                    <p class="text-white/75 text-sm mb-4">Tim support kami siap membantu instalasi & troubleshooting</p>
-                    <a
-                        :href="'https://wa.me/62' + WA_NUMBER"
-                        target="_blank"
-                        class="inline-flex items-center gap-2 bg-white text-brand-600 font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-brand-50 transition-all active:scale-95">
-                        💬 Chat WhatsApp Sekarang
-                    </a>
-                </div>
-
-            </div>
-        </section>
-
-
-        <!-- ─────────────────────────────────
-             CEK STATUS PAGE
-        ──────────────────────────────────── -->
-        <section x-show="activePage === 'status'" class="page-enter">
-            <div class="max-w-lg mx-auto px-4 py-6">
-
-                <div class="mb-6">
-                    <h1 class="text-2xl font-black text-gray-900">Cek Status Akun</h1>
-                    <p class="text-sm text-gray-400 mt-1">Masukkan informasi untuk cek status langgananmu</p>
-                </div>
-
-                <!-- Form Card -->
-                <div class="bg-white rounded-2xl border border-gray-100 p-5 mb-5">
-
-                    <!-- Search Type -->
-                    <div class="mb-5">
-                        <label class="text-sm font-bold text-gray-700 mb-3 block">Cari berdasarkan</label>
-                        <div class="grid grid-cols-2 gap-2">
-                            <template x-for="opt in statusOptions" :key="opt.value">
-                                <label
-                                    :class="statusSearchType === opt.value
-                                        ? 'border-brand-400 bg-brand-50'
-                                        : 'border-gray-200 hover:border-gray-300'"
-                                    class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all">
-                                    <input type="radio" :value="opt.value" x-model="statusSearchType" class="w-4 h-4">
-                                    <div>
-                                        <div class="text-sm font-semibold text-gray-800" x-text="opt.label"></div>
-                                        <div class="text-[10px] text-gray-400" x-text="opt.hint"></div>
-                                    </div>
-                                </label>
-                            </template>
-                        </div>
-                    </div>
-
-                    <!-- Input -->
-                    <div class="mb-5">
-                        <label class="text-sm font-bold text-gray-700 mb-2 block" x-text="currentStatusOption.label"></label>
-                        <input
-                            x-model="statusQuery"
-                            :type="statusSearchType === 'email' || statusSearchType === 'emailAktif' ? 'email' : statusSearchType === 'wa' ? 'tel' : 'text'"
-                            :placeholder="currentStatusOption.placeholder"
-                            @keyup.enter="checkStatus()"
-                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button
-                        @click="checkStatus()"
-                        :disabled="statusChecking || !statusQuery.trim()"
-                        class="w-full gradient-card disabled:bg-none disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95 shadow-sm disabled:shadow-none">
-                        <svg x-show="statusChecking" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                        </svg>
-                        <span x-text="statusChecking ? 'Memeriksa...' : 'Cek Status Akun'"></span>
-                    </button>
-
-                </div>
-
-                <!-- Results -->
-                <div x-show="statusResult !== null" x-transition>
-
-                    <!-- Not found -->
-                    <div x-show="statusResult && statusResult.length === 0" class="bg-white rounded-2xl border border-gray-100 p-6 text-center">
-                        <div class="text-5xl mb-3">😕</div>
-                        <div class="font-bold text-gray-800 mb-1">Akun tidak ditemukan</div>
-                        <div class="text-sm text-gray-400 mb-4">Pastikan informasi yang dimasukkan sudah benar</div>
-                        <a :href="'https://wa.me/62' + WA_NUMBER" target="_blank"
-                           class="inline-flex items-center gap-2 bg-brand-50 text-brand-600 font-semibold text-sm px-5 py-2.5 rounded-xl hover:bg-brand-100 transition-all">
-                            💬 Hubungi Support
-                        </a>
-                    </div>
-
-                    <!-- Found -->
-                    <template x-for="(account, idx) in statusResult" :key="idx">
-                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
-                            <!-- Header -->
-                            <div class="px-5 pt-5 pb-4 flex items-center gap-3">
-                                <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-none" :class="getStatusBg(account.status)" x-text="getStatusIcon(account.status)"></div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="font-bold text-gray-900 truncate" x-text="account.nama || 'Pelanggan'"></div>
-                                    <div class="text-sm text-gray-400 truncate" x-text="account.email || account.wa || '—'"></div>
-                                </div>
-                                <span class="text-xs font-bold px-3 py-1 rounded-full flex-none" :class="getStatusBadge(account.status)" x-text="account.status || 'Aktif'"></span>
-                            </div>
-
-                            <!-- Details -->
-                            <div class="border-t border-gray-50 mx-5"></div>
-                            <div class="px-5 py-4 space-y-2.5">
-                                <template x-if="account.produk">
-                                    <div class="flex justify-between gap-2">
-                                        <span class="text-sm text-gray-400">Produk</span>
-                                        <span class="text-sm font-semibold text-gray-800 text-right" x-text="account.produk"></span>
-                                    </div>
-                                </template>
-                                <template x-if="account.emailAktif">
-                                    <div class="flex justify-between gap-2">
-                                        <span class="text-sm text-gray-400">Email Akun</span>
-                                        <span class="text-sm font-semibold text-gray-800 text-right break-all" x-text="account.emailAktif"></span>
-                                    </div>
-                                </template>
-                                <template x-if="account.masaBerlaku">
-                                    <div class="flex justify-between gap-2">
-                                        <span class="text-sm text-gray-400">Masa Berlaku</span>
-                                        <span class="text-sm font-semibold text-gray-800" x-text="account.masaBerlaku"></span>
-                                    </div>
-                                </template>
-                                <template x-if="account.catatan">
-                                    <div class="flex justify-between gap-2">
-                                        <span class="text-sm text-gray-400">Catatan</span>
-                                        <span class="text-sm font-semibold text-gray-800 text-right" x-text="account.catatan"></span>
-                                    </div>
-                                </template>
-                            </div>
-
-                            <!-- Status Banner -->
-                            <div class="px-5 pb-5">
-                                <div class="rounded-xl px-4 py-2.5 text-sm font-medium text-center" :class="{
-                                    'bg-emerald-50 text-emerald-700': account.status === 'Aktif',
-                                    'bg-orange-50 text-orange-700': account.status === 'Expired',
-                                    'bg-red-50 text-red-700': account.status === 'Suspended',
-                                    'bg-yellow-50 text-yellow-700': account.status === 'Pending',
-                                    'bg-gray-50 text-gray-600': !account.status,
-                                }" x-text="getStatusMessage(account.status)">
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-
-                </div>
-
-            </div>
-        </section>
-
-    </main>
-
-
-    <!-- ═══════════════════════════════════════
-         MOBILE BOTTOM NAV
-    ════════════════════════════════════════ -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
-        <div class="grid grid-cols-4 h-16">
+        <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1">
             <template x-for="item in navItems" :key="item.id">
-                <button
-                    @click="setPage(item.id)"
-                    :class="activePage === item.id ? 'text-brand-500' : 'text-gray-400'"
-                    class="flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
-                    <div x-show="activePage === item.id" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
-                    <div x-html="item.icon" class="w-5 h-5"></div>
-                    <span class="text-[10px] font-semibold leading-none" x-text="item.label"></span>
-                </button>
+                <button @click="setPage(item.id)" :class="activePage===item.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" x-text="item.label"></button>
             </template>
         </div>
-    </nav>
+
+        <!-- Auth area desktop -->
+        <div class="flex items-center gap-3">
+            <template x-if="currentUser">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 gradient-card rounded-lg flex items-center justify-center text-white font-black text-sm" x-text="currentUser.nama[0].toUpperCase()"></div>
+                    <span class="text-sm font-semibold text-gray-700" x-text="currentUser.nama.split(' ')[0]"></span>
+                    <button @click="logout()" class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1">Keluar</button>
+                </div>
+            </template>
+            <template x-if="!currentUser">
+                <div class="flex items-center gap-2">
+                    <button @click="openAuth('login')" class="text-sm font-semibold text-gray-600 hover:text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all">Masuk</button>
+                    <button @click="openAuth('register')" class="gradient-card text-white text-sm font-bold px-4 py-2 rounded-xl shadow-sm hover:shadow transition-all">Daftar</button>
+                </div>
+            </template>
+        </div>
+    </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════
+     MOBILE HEADER
+══════════════════════════════════════════════════════ -->
+<header class="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
+    <div class="px-4 h-14 flex items-center justify-between">
+        <button @click="setPage('home')" class="flex items-center gap-2">
+            <div class="w-8 h-8 gradient-card rounded-lg flex items-center justify-center shadow-sm"><span class="text-white font-black">S</span></div>
+            <span class="font-black text-gray-900">Serabut Store</span>
+        </button>
+        <template x-if="currentUser">
+            <button @click="openAuth('login')" class="flex items-center gap-1.5">
+                <div class="w-7 h-7 gradient-card rounded-lg flex items-center justify-center text-white font-black text-xs" x-text="currentUser.nama[0].toUpperCase()"></div>
+            </button>
+        </template>
+        <template x-if="!currentUser">
+            <button @click="openAuth('login')" class="text-xs font-bold text-brand-500 bg-brand-50 px-3 py-1.5 rounded-full">Masuk</button>
+        </template>
+    </div>
+</header>
+
+<!-- ══════════════════════════════════════════════════════
+     MAIN CONTENT
+══════════════════════════════════════════════════════ -->
+<main class="pt-14 md:pt-16 pb-20 md:pb-0">
+
+    <!-- ───────── HOME ───────── -->
+    <section x-show="activePage==='home'" class="page-enter">
+        <div class="gradient-hero text-white">
+            <div class="max-w-6xl mx-auto px-4 py-12 md:py-20">
+                <div class="max-w-2xl">
+                    <div class="inline-flex items-center gap-2 bg-white/15 text-white/90 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-5 border border-white/20">
+                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>Aktif & Siap Melayani
+                    </div>
+                    <h1 class="text-3xl md:text-5xl font-black leading-tight mb-4 tracking-tight">Software Original,<br><span class="text-yellow-300">Harga Terjangkau</span></h1>
+                    <p class="text-white/75 text-base md:text-lg mb-8 leading-relaxed max-w-xl">Microsoft Office 365, Adobe Creative Cloud, Windows & lebih banyak. Bergaransi resmi, proses kilat, hemat hingga <strong class="text-white">70%</strong>.</p>
+                    <div class="flex flex-wrap gap-3">
+                        <button @click="setPage('catalog')" class="bg-white text-brand-600 font-bold px-6 py-3 rounded-xl hover:bg-brand-50 transition-all shadow-lg active:scale-95">Lihat Semua Produk →</button>
+                        <button @click="setPage('status')" class="bg-white/15 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95">Cek Status Akun</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="bg-white border-b border-gray-100">
+            <div class="max-w-6xl mx-auto px-4"><div class="grid grid-cols-3 divide-x divide-gray-100">
+                <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">40+</div><div class="text-[11px] text-gray-500">Produk</div></div>
+                <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">1K+</div><div class="text-[11px] text-gray-500">Pelanggan</div></div>
+                <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">⚡</div><div class="text-[11px] text-gray-500">Proses Cepat</div></div>
+            </div></div>
+        </div>
+
+        <!-- Categories -->
+        <div class="max-w-6xl mx-auto px-4 py-8">
+            <h2 class="text-lg md:text-xl font-black text-gray-900 mb-4">Kategori Produk</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <template x-for="cat in categories" :key="cat.name">
+                    <button @click="setPage('catalog'); activeCategory=cat.name" class="bg-white rounded-2xl p-4 border border-gray-100 hover:border-brand-200 hover:bg-brand-50 transition-all card-hover text-left group">
+                        <div class="text-2xl mb-2" x-text="cat.icon"></div>
+                        <div class="font-bold text-gray-800 text-sm group-hover:text-brand-600 transition-colors leading-tight" x-text="cat.name"></div>
+                        <div class="text-[11px] text-gray-400 mt-0.5" x-text="cat.desc"></div>
+                    </button>
+                </template>
+            </div>
+        </div>
+
+        <!-- Featured Products -->
+        <div class="max-w-6xl mx-auto px-4 pb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg md:text-xl font-black text-gray-900">Produk Populer</h2>
+                <button @click="setPage('catalog')" class="text-brand-500 text-sm font-semibold hover:text-brand-700">Lihat Semua →</button>
+            </div>
+            <div x-show="loading" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <template x-for="i in 6"><div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3"><div class="skeleton h-5 w-20 rounded-lg"></div><div class="skeleton h-4 w-full rounded"></div><div class="skeleton h-4 w-3/4 rounded"></div><div class="skeleton h-6 w-28 rounded"></div><div class="skeleton h-10 w-full rounded-xl"></div></div></template>
+            </div>
+            <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <template x-for="product in featuredProducts" :key="product.linkProduk+product.varian+product.harga">
+                    <div @click="openProductModal(product)" class="bg-white rounded-2xl border border-gray-100 overflow-hidden card-hover flex flex-col cursor-pointer group">
+                        <div class="p-4 flex-1">
+                            <div class="flex items-start justify-between mb-2.5">
+                                <span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(product.category)" x-text="product.category"></span>
+                                <span x-show="product.masaAktif&&product.masaAktif!=='-'" class="text-[10px] text-gray-400 font-medium" x-text="product.masaAktif"></span>
+                            </div>
+                            <h3 class="font-semibold text-gray-800 text-sm leading-snug mb-1 line-clamp-2 group-hover:text-brand-600 transition-colors" x-text="product.nama"></h3>
+                            <p class="text-xs text-gray-400 mb-3 truncate" x-text="product.varian"></p>
+                            <div class="font-black text-brand-500 text-lg" x-text="formatPrice(product.harga)"></div>
+                        </div>
+                        <div class="px-4 pb-4"><div class="w-full text-center gradient-card text-white text-sm font-bold py-2.5 rounded-xl">Lihat Detail</div></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Why Us -->
+        <div class="bg-white border-t border-gray-100 py-10">
+            <div class="max-w-6xl mx-auto px-4">
+                <h2 class="text-lg md:text-xl font-black text-gray-900 mb-8 text-center">Kenapa Serabut Store?</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <template x-for="b in benefits" :key="b.title">
+                        <div class="text-center"><div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3" x-text="b.icon"></div><div class="font-bold text-gray-800 text-sm mb-1" x-text="b.title"></div><div class="text-xs text-gray-500 leading-relaxed" x-text="b.desc"></div></div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-6xl mx-auto px-4 py-8">
+            <div class="gradient-card rounded-2xl p-6 md:p-8 text-white flex flex-col md:flex-row items-center justify-between gap-4">
+                <div><div class="font-black text-xl mb-1">Ada pertanyaan?</div><p class="text-white/75 text-sm">Tim support kami siap membantu 24/7</p></div>
+                <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex-none bg-white text-brand-600 font-bold px-6 py-3 rounded-xl text-sm hover:bg-brand-50 transition-all shadow-lg whitespace-nowrap active:scale-95">💬 Chat WhatsApp</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────── CATALOG ───────── -->
+    <section x-show="activePage==='catalog'" class="page-enter">
+        <div class="max-w-6xl mx-auto px-4 py-6">
+            <div class="mb-5"><h1 class="text-2xl font-black text-gray-900">Semua Produk</h1><p class="text-sm text-gray-400 mt-0.5" x-text="`${filteredProducts.length} produk tersedia`"></p></div>
+            <div class="relative mb-4">
+                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+                <input x-model="searchQuery" type="search" placeholder="Cari produk..." class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
+            </div>
+            <div class="flex gap-2 overflow-x-auto pb-3 mb-5 no-scrollbar">
+                <button @click="activeCategory='Semua'" :class="activeCategory==='Semua'?'bg-brand-500 text-white shadow-sm':'bg-white text-gray-600 border border-gray-200'" class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all">Semua</button>
+                <template x-for="cat in categoryList" :key="cat"><button @click="activeCategory=cat" :class="activeCategory===cat?'bg-brand-500 text-white shadow-sm':'bg-white text-gray-600 border border-gray-200'" class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all" x-text="cat"></button></template>
+            </div>
+            <div x-show="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <template x-for="i in 8"><div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3"><div class="skeleton h-5 w-16 rounded-lg"></div><div class="skeleton h-4 w-full rounded"></div><div class="skeleton h-4 w-2/3 rounded"></div><div class="skeleton h-6 w-24 rounded"></div><div class="skeleton h-10 w-full rounded-xl"></div></div></template>
+            </div>
+            <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <template x-for="product in filteredProducts" :key="product.linkProduk+product.varian+product.harga">
+                    <div @click="openProductModal(product)" class="bg-white rounded-2xl border border-gray-100 overflow-hidden card-hover flex flex-col cursor-pointer group">
+                        <div class="p-4 flex-1">
+                            <div class="flex items-start justify-between mb-2"><span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(product.category)" x-text="product.category"></span></div>
+                            <h3 class="font-semibold text-gray-800 text-sm leading-snug mb-1 line-clamp-2 group-hover:text-brand-600 transition-colors" x-text="product.nama"></h3>
+                            <p class="text-xs text-gray-400 mb-2 truncate" x-text="product.varian"></p>
+                            <div x-show="product.masaAktif&&product.masaAktif!=='-'" class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full mb-2"><span>⏱</span><span x-text="product.masaAktif"></span></div>
+                            <div class="font-black text-brand-500 text-base" x-text="formatPrice(product.harga)"></div>
+                        </div>
+                        <div class="px-4 pb-4"><div class="w-full text-center gradient-card text-white text-sm font-bold py-2.5 rounded-xl">Lihat Detail</div></div>
+                    </div>
+                </template>
+                <div x-show="filteredProducts.length===0&&!loading" class="col-span-full text-center py-16">
+                    <div class="text-5xl mb-4">🔍</div><div class="font-bold text-gray-700 text-lg">Produk tidak ditemukan</div>
+                    <button @click="searchQuery='';activeCategory='Semua'" class="mt-4 text-brand-500 font-semibold text-sm underline underline-offset-2">Reset filter</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────── PANDUAN ───────── -->
+    <section x-show="activePage==='panduan'" class="page-enter">
+        <div class="max-w-3xl mx-auto px-4 py-6">
+            <h1 class="text-2xl font-black text-gray-900 mb-1">Panduan</h1>
+            <p class="text-sm text-gray-400 mb-6">Tutorial instalasi & penggunaan software</p>
+            <div class="flex gap-2 overflow-x-auto pb-2 mb-6 no-scrollbar">
+                <template x-for="tab in guideTabs" :key="tab.id">
+                    <button @click="activeGuide=tab.id" :class="activeGuide===tab.id?'bg-brand-500 text-white':'bg-white text-gray-600 border border-gray-200'" class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-1.5"><span x-text="tab.icon"></span><span x-text="tab.label"></span></button>
+                </template>
+            </div>
+            <template x-for="tab in guideTabs" :key="tab.id">
+                <div x-show="activeGuide===tab.id" class="space-y-3">
+                    <template x-for="(guide,index) in guides[tab.id]" :key="guide.title">
+                        <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                            <button @click="guide.open=!guide.open" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors">
+                                <div class="flex items-center gap-3"><div class="w-8 h-8 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center font-bold text-sm flex-none" x-text="index+1"></div><span class="font-semibold text-gray-800 text-sm leading-snug" x-text="guide.title"></span></div>
+                                <svg :class="guide.open?'rotate-180':''" class="w-4 h-4 text-gray-400 transition-transform flex-none ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div x-show="guide.open" x-transition class="px-5 pb-5 border-t border-gray-50">
+                                <ol class="space-y-3 mt-4">
+                                    <template x-for="(step,si) in guide.steps" :key="si">
+                                        <li class="flex gap-3"><div class="w-6 h-6 gradient-card text-white rounded-full flex items-center justify-center text-xs font-bold flex-none mt-0.5" x-text="si+1"></div><p class="text-sm text-gray-600 leading-relaxed" x-text="step"></p></li>
+                                    </template>
+                                </ol>
+                                <template x-if="guide.note"><div class="mt-4 bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2"><span class="text-amber-500 flex-none">💡</span><p class="text-xs text-amber-700 leading-relaxed" x-text="guide.note"></p></div></template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+            <div class="mt-8 gradient-card rounded-2xl p-5 text-white">
+                <div class="font-bold text-lg mb-1">Butuh bantuan?</div>
+                <p class="text-white/75 text-sm mb-4">Tim support siap bantu instalasi & troubleshooting</p>
+                <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="inline-flex items-center gap-2 bg-white text-brand-600 font-bold text-sm px-5 py-2.5 rounded-xl active:scale-95">💬 Chat WhatsApp Sekarang</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ───────── CEK STATUS ───────── -->
+    <section x-show="activePage==='status'" class="page-enter">
+        <div class="max-w-lg mx-auto px-4 py-6">
+            <h1 class="text-2xl font-black text-gray-900 mb-1">Cek Status Akun</h1>
+            <p class="text-sm text-gray-400 mb-6">Masukkan informasi untuk cek status langgananmu</p>
+            <div class="bg-white rounded-2xl border border-gray-100 p-5 mb-5">
+                <div class="mb-5"><label class="text-sm font-bold text-gray-700 mb-3 block">Cari berdasarkan</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <template x-for="opt in statusOptions" :key="opt.value">
+                            <label :class="statusSearchType===opt.value?'border-brand-400 bg-brand-50':'border-gray-200'" class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all">
+                                <input type="radio" :value="opt.value" x-model="statusSearchType" class="w-4 h-4">
+                                <div><div class="text-sm font-semibold text-gray-800" x-text="opt.label"></div><div class="text-[10px] text-gray-400" x-text="opt.hint"></div></div>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+                <div class="mb-5"><label class="text-sm font-bold text-gray-700 mb-2 block" x-text="currentStatusOption.label"></label>
+                    <input x-model="statusQuery" :type="statusSearchType==='email'||statusSearchType==='emailAktif'?'email':statusSearchType==='wa'?'tel':'text'" :placeholder="currentStatusOption.placeholder" @keyup.enter="checkStatus()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
+                </div>
+                <button @click="checkStatus()" :disabled="statusChecking||!statusQuery.trim()" class="w-full gradient-card disabled:bg-none disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95">
+                    <svg x-show="statusChecking" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <span x-text="statusChecking?'Memeriksa...':'Cek Status Akun'"></span>
+                </button>
+            </div>
+            <div x-show="statusResult!==null" x-transition>
+                <div x-show="statusResult&&statusResult.length===0" class="bg-white rounded-2xl border border-gray-100 p-6 text-center">
+                    <div class="text-5xl mb-3">😕</div><div class="font-bold text-gray-800 mb-1">Akun tidak ditemukan</div>
+                    <div class="text-sm text-gray-400 mb-4">Pastikan informasi yang dimasukkan sudah benar</div>
+                    <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="inline-flex items-center gap-2 bg-brand-50 text-brand-600 font-semibold text-sm px-5 py-2.5 rounded-xl">💬 Hubungi Support</a>
+                </div>
+                <template x-for="(account,idx) in statusResult" :key="idx">
+                    <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
+                        <div class="px-5 pt-5 pb-4 flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-none" :class="getStatusBg(account.status)" x-text="getStatusIcon(account.status)"></div>
+                            <div class="flex-1 min-w-0"><div class="font-bold text-gray-900 truncate" x-text="account.nama||'Pelanggan'"></div><div class="text-sm text-gray-400 truncate" x-text="account.email||account.wa||'—'"></div></div>
+                            <span class="text-xs font-bold px-3 py-1 rounded-full flex-none" :class="getStatusBadge(account.status)" x-text="account.status||'Aktif'"></span>
+                        </div>
+                        <div class="border-t border-gray-50 mx-5"></div>
+                        <div class="px-5 py-4 space-y-2.5">
+                            <template x-if="account.produk"><div class="flex justify-between gap-2"><span class="text-sm text-gray-400">Produk</span><span class="text-sm font-semibold text-gray-800 text-right" x-text="account.produk"></span></div></template>
+                            <template x-if="account.emailAktif"><div class="flex justify-between gap-2"><span class="text-sm text-gray-400">Email Akun</span><span class="text-sm font-semibold text-gray-800 break-all" x-text="account.emailAktif"></span></div></template>
+                            <template x-if="account.masaBerlaku"><div class="flex justify-between gap-2"><span class="text-sm text-gray-400">Masa Berlaku</span><span class="text-sm font-semibold text-gray-800" x-text="account.masaBerlaku"></span></div></template>
+                        </div>
+                        <div class="px-5 pb-5"><div class="rounded-xl px-4 py-2.5 text-sm font-medium text-center" :class="{'bg-emerald-50 text-emerald-700':account.status==='Aktif','bg-orange-50 text-orange-700':account.status==='Expired','bg-red-50 text-red-700':account.status==='Suspended','bg-yellow-50 text-yellow-700':account.status==='Pending','bg-gray-50 text-gray-600':!account.status}" x-text="getStatusMessage(account.status)"></div></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- ══════════════════════════════════════════════════════
+     MOBILE BOTTOM NAV
+══════════════════════════════════════════════════════ -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
+    <div class="grid grid-cols-4 h-16">
+        <template x-for="item in navItems" :key="item.id">
+            <button @click="setPage(item.id)" :class="activePage===item.id?'text-brand-500':'text-gray-400'" class="flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
+                <div x-show="activePage===item.id" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
+                <div x-html="item.icon" class="w-5 h-5"></div>
+                <span class="text-[10px] font-semibold leading-none" x-text="item.label"></span>
+            </button>
+        </template>
+    </div>
+</nav>
 
 
-    <!-- ═══════════════════════════════════════
-         ALPINE.JS APP
-    ════════════════════════════════════════ -->
-    <script>
-        function serabutStore() {
-            return {
+<!-- ══════════════════════════════════════════════════════
+     PRODUCT DETAIL MODAL
+══════════════════════════════════════════════════════ -->
+<div x-show="productModal" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeProductModal()"></div>
+    <div class="relative bg-white w-full md:max-w-lg md:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto modal-enter">
+        <!-- Handle -->
+        <div class="md:hidden flex justify-center pt-3 pb-1 sticky top-0 bg-white z-10"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
 
-                // ── CONFIG ──────────────────────────────────
-                // Replace these with your actual values after deploying GAS
-                GAS_URL: 'https://script.google.com/macros/s/AKfycbwZ1Si24jFWn802J1BVt8eqJPzA3DFt1dYB4qkWY3K3ldpSyn4d0OteLhneVPteizvNAw/exec',
-                WA_NUMBER: '8881500555', // tanpa +62
+        <!-- Header -->
+        <div class="px-5 pt-4 pb-0 flex items-start justify-between sticky top-5 bg-white z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-none" :class="getCategoryBg(selectedProductGroup?.category)" x-text="getCategoryIcon(selectedProductGroup?.category)"></div>
+                <div>
+                    <span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(selectedProductGroup?.category)" x-text="selectedProductGroup?.category"></span>
+                    <h2 class="font-black text-gray-900 text-base leading-snug mt-1 max-w-[220px]" x-text="selectedProductGroup?.nama"></h2>
+                </div>
+            </div>
+            <button @click="closeProductModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex-none ml-2">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
 
-                // ── STATE ───────────────────────────────────
-                activePage: 'home',
-                loading: true,
-                products: [],
-                searchQuery: '',
-                activeCategory: 'Semua',
-                activeGuide: 'office365',
+        <div class="border-t border-gray-100 mx-5 mt-4"></div>
 
-                // Status check
-                statusSearchType: 'email',
-                statusQuery: '',
-                statusChecking: false,
-                statusResult: null,
+        <!-- Varian Selector -->
+        <template x-if="getUniqueVariants(selectedProductGroup).length > 1">
+            <div class="px-5 py-4">
+                <div class="text-sm font-bold text-gray-700 mb-2">Pilih Varian</div>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="v in getUniqueVariants(selectedProductGroup)" :key="v">
+                        <button @click="selectVariantByName(v)" :class="selectedVariant?.varian===v?'border-brand-500 bg-brand-50 text-brand-600':'border-gray-200 text-gray-600 hover:border-gray-300'" class="px-4 py-2 rounded-xl border text-sm font-semibold transition-all" x-text="v"></button>
+                    </template>
+                </div>
+            </div>
+        </template>
 
-                // ── DATA ────────────────────────────────────
-                navItems: [
-                    {
-                        id: 'home', label: 'Beranda',
-                        icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>`
-                    },
-                    {
-                        id: 'catalog', label: 'Produk',
-                        icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>`
-                    },
-                    {
-                        id: 'panduan', label: 'Panduan',
-                        icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>`
-                    },
-                    {
-                        id: 'status', label: 'Cek Status',
-                        icon: `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
-                    },
-                ],
+        <!-- Durasi Selector -->
+        <template x-if="getVariantDurations(selectedProductGroup, selectedVariant?.varian).length > 1">
+            <div class="px-5 pb-4">
+                <div class="text-sm font-bold text-gray-700 mb-2">Pilih Durasi</div>
+                <div class="grid grid-cols-2 gap-2">
+                    <template x-for="opt in getVariantDurations(selectedProductGroup, selectedVariant?.varian)" :key="opt.masaAktif+opt.harga">
+                        <button @click="selectedVariant=opt" :class="selectedVariant?.masaAktif===opt.masaAktif&&selectedVariant?.harga===opt.harga?'border-brand-500 bg-brand-50':'border-gray-200 hover:border-gray-300'" class="p-3 rounded-xl border text-left transition-all">
+                            <div class="text-xs text-gray-500" x-text="opt.masaAktif!=='-'?opt.masaAktif:'Seumur Hidup'"></div>
+                            <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </template>
 
-                categories: [
-                    { name: 'Office 365', icon: '📧', desc: 'Family & Personal' },
-                    { name: 'Adobe',      icon: '🎨', desc: 'Creative Cloud' },
-                    { name: 'Windows',    icon: '🪟', desc: 'Pro License' },
-                    { name: 'Office',     icon: '💼', desc: '2019 / 2021 / 2024' },
-                    { name: 'Google',     icon: '☁️', desc: 'Workspace & G Suite' },
-                    { name: 'CorelDRAW', icon: '✏️', desc: 'Graphics Suite' },
-                    { name: 'Project',    icon: '📊', desc: 'Ms Project Pro' },
-                    { name: 'Visio',      icon: '📐', desc: 'Ms Visio Pro' },
-                ],
+        <!-- Benefits -->
+        <div class="bg-gray-50 mx-5 rounded-2xl p-4 mb-4">
+            <div class="text-sm font-bold text-gray-700 mb-3">Yang kamu dapat</div>
+            <div class="space-y-2">
+                <template x-for="benefit in getProductBenefits(selectedProductGroup?.category)" :key="benefit">
+                    <div class="flex items-start gap-2">
+                        <span class="text-brand-500 flex-none mt-0.5 font-bold text-sm">✓</span>
+                        <span class="text-sm text-gray-600 leading-relaxed" x-text="benefit"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
 
-                benefits: [
-                    { icon: '✅', title: 'Original & Resmi',  desc: 'Semua produk bergaransi keaslian dari vendor resmi' },
-                    { icon: '⚡', title: 'Proses Kilat',      desc: 'Aktivasi dalam hitungan menit setelah pembayaran' },
-                    { icon: '💬', title: 'Support 24/7',      desc: 'Tim siap bantu via WhatsApp kapan saja kamu butuh' },
-                    { icon: '💰', title: 'Harga Terbaik',     desc: 'Hemat hingga 70% dari harga resmi di toko lain' },
-                ],
+        <!-- Price + CTA -->
+        <div class="px-5 pb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div><div class="text-xs text-gray-400">Total Harga</div><div class="font-black text-brand-500 text-2xl" x-text="formatPrice(selectedVariant?.harga)"></div></div>
+                <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="text-right"><div class="text-xs text-gray-400">Durasi</div><div class="font-bold text-gray-700 text-sm" x-text="selectedVariant?.masaAktif"></div></div>
+            </div>
+            <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all active:scale-95 shadow-md mb-3">
+                🛒 Pesan Sekarang
+            </button>
+            <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener" class="block w-full text-center text-gray-400 text-sm py-2 hover:text-brand-500 transition-colors">
+                Atau beli di Shopee →
+            </a>
+        </div>
+    </div>
+</div>
 
-                statusOptions: [
-                    { value: 'email',      label: 'Email Pembelian', hint: 'Email saat order',      placeholder: 'contoh@email.com' },
-                    { value: 'nama',       label: 'Nama Pembeli',    hint: 'Nama saat pembelian',   placeholder: 'Nama lengkap kamu' },
-                    { value: 'wa',         label: 'No. WhatsApp',    hint: 'Nomor WA yang dipakai', placeholder: '08xxxxxxxxxx' },
-                    { value: 'emailAktif', label: 'Email Akun',      hint: 'Email akun aktifmu',    placeholder: 'emailakun@outlook.com' },
-                ],
 
-                guideTabs: [
-                    { id: 'office365', label: 'Office 365', icon: '📦' },
-                    { id: 'windows',   label: 'Windows',    icon: '🪟' },
-                    { id: 'adobe',     label: 'Adobe',      icon: '🎨' },
-                ],
+<!-- ══════════════════════════════════════════════════════
+     AUTH MODAL (LOGIN / REGISTER)
+══════════════════════════════════════════════════════ -->
+<div x-show="authModal" class="fixed inset-0 z-[200] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeAuthModal()"></div>
+    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter">
+        <div class="md:hidden flex justify-center pt-3 pb-1"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
 
-                guides: {
-                    office365: [
-                        {
-                            title: 'Cara Install Microsoft Office 365',
-                            open: false,
-                            steps: [
-                                'Buka browser dan kunjungi office.com, lalu login menggunakan email dan password akun Office 365 yang diberikan Serabut Store.',
-                                'Setelah login, klik tombol "Install Office" di pojok kanan atas halaman.',
-                                'Pilih "Office 365 apps" untuk download installer (OfficeSetup.exe ±3MB).',
-                                'Jalankan file installer yang sudah didownload dan ikuti proses instalasi.',
-                                'Tunggu proses download & instalasi selesai (~15-30 menit tergantung kecepatan internet).',
-                                'Setelah selesai, buka salah satu aplikasi Office (Word, Excel, dll).',
-                                'Login dengan akun Office 365 yang sama — aktivasi akan berjalan otomatis.',
-                            ],
-                            note: 'Pastikan koneksi internet stabil selama proses download. Office 365 akan terupdate otomatis ke versi terbaru.'
-                        },
-                        {
-                            title: 'Menambahkan Akun ke Perangkat Baru',
-                            open: false,
-                            steps: [
-                                'Buka aplikasi Office yang sudah terinstall di perangkat baru.',
-                                'Klik "Sign In" atau "Masuk".',
-                                'Masukkan email akun Office 365 yang diberikan.',
-                                'Masukkan password akun.',
-                                'Aplikasi akan tervalidasi otomatis — selesai!',
-                            ],
-                            note: 'Office 365 Family mendukung hingga 6 pengguna & 5 perangkat per pengguna. Jangan melebihi batas device.'
-                        },
-                        {
-                            title: 'Akses OneDrive 1TB',
-                            open: false,
-                            steps: [
-                                'Login ke office.com menggunakan akun Office 365 kamu.',
-                                'Klik ikon OneDrive di menu aplikasi (grid 3x3 pojok kiri atas).',
-                                'Kamu mendapat storage 1TB untuk menyimpan file.',
-                                'Untuk akses via Windows Explorer, buka OneDrive Desktop App dan login dengan akun yang sama.',
-                                'File akan tersinkronisasi otomatis antara cloud dan komputer kamu.',
-                            ],
-                            note: 'OneDrive 1TB tersedia untuk setiap pengguna di paket Family dan Personal.'
-                        },
-                        {
-                            title: 'Troubleshooting: Office Tidak Bisa Aktivasi',
-                            open: false,
-                            steps: [
-                                'Pastikan kamu login dengan email yang benar (sesuai yang diberikan saat beli).',
-                                'Coba sign out dari semua perangkat: buka account.microsoft.com → Security → Sign out everywhere.',
-                                'Uninstall Office, lalu install ulang dari office.com.',
-                                'Pastikan tanggal & waktu di komputer sudah benar.',
-                                'Matikan sementara antivirus dan coba aktivasi lagi.',
-                                'Jika masih gagal, hubungi support kami via WhatsApp dengan screenshot error.',
-                            ],
-                            note: 'Jangan gunakan tools aktivasi pihak ketiga — bisa menyebabkan akun diblokir Microsoft secara permanen.'
-                        },
-                    ],
-                    windows: [
-                        {
-                            title: 'Aktivasi Windows 10 Pro dengan License Key',
-                            open: false,
-                            steps: [
-                                'Klik kanan tombol Start → pilih "System".',
-                                'Scroll ke bawah → klik "Change product key or upgrade your edition of Windows".',
-                                'Klik "Change product key".',
-                                'Masukkan license key 25 digit (format: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX).',
-                                'Klik "Next" dan tunggu proses aktivasi selesai.',
-                                'Restart komputer jika diminta.',
-                                'Cek di Settings → Update & Security → Activation — pastikan status "Windows is activated".',
-                            ],
-                            note: 'License key hanya untuk 1 perangkat. Jangan bagikan key ke orang lain.'
-                        },
-                        {
-                            title: 'Aktivasi Windows 11 Pro dengan License Key',
-                            open: false,
-                            steps: [
-                                'Tekan Windows + I untuk buka Settings.',
-                                'Pilih "System" → "Activation".',
-                                'Klik "Change product key".',
-                                'Masukkan license key 25 digit yang diberikan.',
-                                'Klik "Next" untuk memulai aktivasi.',
-                                'Tunggu konfirmasi "Windows is activated".',
-                                'Restart komputer untuk menyelesaikan proses.',
-                            ],
-                            note: 'Pastikan koneksi internet aktif saat aktivasi. Windows akan otomatis verifikasi key ke server Microsoft.'
-                        },
-                        {
-                            title: 'Upgrade Windows 10 ke Windows 11',
-                            open: false,
-                            steps: [
-                                'Cek kompatibilitas PC menggunakan aplikasi "PC Health Check" dari Microsoft.',
-                                'Buka Settings → Update & Security → Windows Update.',
-                                'Jika PC kompatibel, kamu akan melihat opsi "Upgrade to Windows 11".',
-                                'Klik "Download and install" dan tunggu proses download.',
-                                'Ikuti instruksi pada layar — PC akan restart beberapa kali.',
-                                'Setelah selesai, masukkan license key Windows 11 yang baru dari Serabut Store.',
-                            ],
-                            note: 'Backup data penting sebelum upgrade. Proses bisa memakan waktu 30–60 menit.'
-                        },
-                        {
-                            title: 'Troubleshooting: Error Aktivasi Windows',
-                            open: false,
-                            steps: [
-                                'Pastikan key dimasukkan benar (perhatikan huruf O vs angka 0, huruf I vs angka 1).',
-                                'Coba via Command Prompt (Admin): ketik slmgr /ipk XXXXX-XXXXX-XXXXX-XXXXX-XXXXX',
-                                'Error 0xC004F050: key tidak kompatibel dengan edisi Windows kamu.',
-                                'Error 0x803F7001: coba phone activation.',
-                                'Phone activation: ketik slmgr /dti → catat Installation ID → hubungi 0800-1-Microsoft.',
-                                'Screenshot error dan kirim ke support kami via WhatsApp untuk bantuan lebih lanjut.',
-                            ],
-                            note: 'Catat kode error yang muncul — ini sangat membantu tim kami dalam troubleshooting.'
-                        },
-                    ],
-                    adobe: [
-                        {
-                            title: 'Cara Install Adobe Creative Cloud',
-                            open: false,
-                            steps: [
-                                'Kunjungi creativecloud.adobe.com dan login dengan akun Adobe yang diberikan Serabut Store.',
-                                'Download dan install "Adobe Creative Cloud Desktop App".',
-                                'Login dengan akun yang sama di Creative Cloud Desktop.',
-                                'Pilih aplikasi yang ingin diinstall (Photoshop, Illustrator, Premiere, dll).',
-                                'Klik "Install" dan tunggu proses download selesai.',
-                                'Aplikasi siap digunakan!',
-                            ],
-                            note: 'Satu akun Adobe CC bisa digunakan di 2 perangkat secara bersamaan.'
-                        },
-                        {
-                            title: 'Cara Ganti Bahasa Aplikasi Adobe',
-                            open: false,
-                            steps: [
-                                'Buka Adobe Creative Cloud Desktop App.',
-                                'Klik ikon gear/settings di pojok kanan atas.',
-                                'Pilih "Preferences" → "Creative Cloud".',
-                                'Ubah bahasa di bagian "Default Install Language".',
-                                'Uninstall dan install ulang aplikasi Adobe yang ingin diubah bahasanya.',
-                            ],
-                            note: 'Perubahan bahasa memerlukan reinstall aplikasi Adobe yang bersangkutan.'
-                        },
-                        {
-                            title: 'Troubleshooting: Adobe Tidak Bisa Login',
-                            open: false,
-                            steps: [
-                                'Pastikan kamu menggunakan email dan password yang benar dari Serabut Store.',
-                                'Buka incognito/private browser dan coba login di creativecloud.adobe.com.',
-                                'Hapus cache browser dan coba lagi.',
-                                'Uninstall Creative Cloud Desktop App, download versi terbaru dari adobe.com.',
-                                'Jika muncul pesan "Too many sign-in attempts", tunggu 15 menit.',
-                                'Hubungi support kami jika masih gagal.',
-                            ],
-                            note: 'Jangan ganti password akun Adobe yang diberikan — ini bisa menyebabkan akun kehilangan lisensi.'
-                        },
-                    ],
-                },
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-100 mt-3 mx-5">
+            <button @click="authTab='login'; authError=''" :class="authTab==='login'?'border-b-2 border-brand-500 text-brand-600 font-bold':'text-gray-400 hover:text-gray-600'" class="flex-1 py-3 text-sm font-semibold transition-all">Masuk</button>
+            <button @click="authTab='register'; authError=''" :class="authTab==='register'?'border-b-2 border-brand-500 text-brand-600 font-bold':'text-gray-400 hover:text-gray-600'" class="flex-1 py-3 text-sm font-semibold transition-all">Daftar</button>
+        </div>
 
-                // ── COMPUTED ────────────────────────────────
-                get currentStatusOption() {
-                    return this.statusOptions.find(o => o.value === this.statusSearchType) || this.statusOptions[0];
-                },
+        <!-- Login -->
+        <div x-show="authTab==='login'" class="px-5 py-5 space-y-3">
+            <div><label class="text-xs font-bold text-gray-600 mb-1 block">Email</label><input x-model="loginForm.email" type="email" placeholder="email@kamu.com" @keyup.enter="submitLogin()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
+            <div><label class="text-xs font-bold text-gray-600 mb-1 block">Password</label><input x-model="loginForm.password" type="password" placeholder="Password" @keyup.enter="submitLogin()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
+            <div x-show="authError" class="bg-red-50 text-red-600 text-xs px-3 py-2.5 rounded-xl" x-text="authError"></div>
+            <button @click="submitLogin()" :disabled="authLoading" class="w-full gradient-card disabled:bg-none disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95">
+                <svg x-show="authLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <span x-text="authLoading?'Memproses...':'Masuk'"></span>
+            </button>
+            <p class="text-center text-xs text-gray-400 pb-2">Belum punya akun? <button @click="authTab='register'; authError=''" class="text-brand-500 font-semibold">Daftar sekarang</button></p>
+        </div>
 
-                get categoryList() {
-                    const cats = [...new Set(this.products.map(p => p.category))].filter(Boolean);
-                    return cats.sort();
-                },
+        <!-- Register -->
+        <div x-show="authTab==='register'" class="px-5 py-5 space-y-3">
+            <div><label class="text-xs font-bold text-gray-600 mb-1 block">Nama Lengkap</label><input x-model="registerForm.nama" type="text" placeholder="Nama kamu" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
+            <div><label class="text-xs font-bold text-gray-600 mb-1 block">Email</label><input x-model="registerForm.email" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
+            <div><label class="text-xs font-bold text-gray-600 mb-1 block">No. WhatsApp</label><input x-model="registerForm.wa" type="tel" placeholder="08xxxxxxxxxx" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
+            <div><label class="text-xs font-bold text-gray-600 mb-1 block">Password <span class="text-gray-400 font-normal">(min. 6 karakter)</span></label><input x-model="registerForm.password" type="password" placeholder="Buat password" @keyup.enter="submitRegister()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
+            <div x-show="authError" class="bg-red-50 text-red-600 text-xs px-3 py-2.5 rounded-xl" x-text="authError"></div>
+            <button @click="submitRegister()" :disabled="authLoading" class="w-full gradient-card disabled:bg-none disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95">
+                <svg x-show="authLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <span x-text="authLoading?'Mendaftar...':'Daftar Sekarang'"></span>
+            </button>
+            <p class="text-center text-xs text-gray-400 pb-2">Sudah punya akun? <button @click="authTab='login'; authError=''" class="text-brand-500 font-semibold">Masuk</button></p>
+        </div>
+    </div>
+</div>
 
-                get filteredProducts() {
-                    return this.products.filter(p => {
-                        const matchCat  = this.activeCategory === 'Semua' || p.category === this.activeCategory;
-                        const q = this.searchQuery.toLowerCase();
-                        const matchSearch = !q
-                            || p.nama.toLowerCase().includes(q)
-                            || (p.varian || '').toLowerCase().includes(q);
-                        return matchCat && matchSearch;
-                    });
-                },
 
-                get featuredProducts() {
-                    // Pick 1 product per category to show diversity, up to 6
-                    const seen = {};
-                    const featured = [];
-                    for (const p of this.products) {
-                        if (!seen[p.category]) {
-                            seen[p.category] = true;
-                            featured.push(p);
-                            if (featured.length >= 6) break;
-                        }
-                    }
-                    return featured.length > 0 ? featured : this.products.slice(0, 6);
-                },
+<!-- ══════════════════════════════════════════════════════
+     ORDER CONFIRM MODAL
+══════════════════════════════════════════════════════ -->
+<div x-show="orderModal" class="fixed inset-0 z-[200] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="orderModal=false"></div>
+    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl px-5 py-6 modal-enter">
+        <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+        <h3 class="font-black text-gray-900 text-lg mb-4">Konfirmasi Pesanan</h3>
 
-                // ── METHODS ─────────────────────────────────
-                async init() {
-                    await this.fetchProducts();
-                },
+        <!-- Summary -->
+        <div class="bg-gray-50 rounded-2xl p-4 mb-4 space-y-2.5">
+            <div class="flex justify-between gap-2"><span class="text-sm text-gray-400">Produk</span><span class="text-sm font-semibold text-gray-800 text-right max-w-[60%] leading-snug" x-text="selectedProductGroup?.nama"></span></div>
+            <div x-show="selectedVariant?.varian" class="flex justify-between gap-2"><span class="text-sm text-gray-400">Varian</span><span class="text-sm font-semibold text-gray-800" x-text="selectedVariant?.varian"></span></div>
+            <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="flex justify-between gap-2"><span class="text-sm text-gray-400">Durasi</span><span class="text-sm font-semibold text-gray-800" x-text="selectedVariant?.masaAktif"></span></div>
+            <div class="border-t border-gray-200 pt-2.5 flex justify-between"><span class="text-sm font-bold text-gray-700">Total</span><span class="font-black text-brand-500 text-lg" x-text="formatPrice(selectedVariant?.harga)"></span></div>
+        </div>
 
-                async fetchProducts() {
-                    this.loading = true;
-                    try {
-                        const res  = await fetch(`${this.GAS_URL}?action=getCatalog`);
-                        const data = await res.json();
-                        if (data.success && data.data) {
-                            this.products = data.data
-                                .map(p => ({ ...p, category: this.getCategory(p.nama) }));
-                        } else {
-                            this.products = this.demoProducts();
-                        }
-                    } catch {
-                        // API belum dikonfigurasi — tampilkan demo data
-                        this.products = this.demoProducts();
-                    }
-                    this.loading = false;
-                },
+        <!-- User -->
+        <div class="bg-brand-50 rounded-2xl p-4 mb-5 flex items-center gap-3">
+            <div class="w-10 h-10 gradient-card rounded-xl flex items-center justify-center text-white font-black text-lg flex-none" x-text="currentUser?.nama?.[0]?.toUpperCase()"></div>
+            <div><div class="font-bold text-gray-800 text-sm" x-text="currentUser?.nama"></div><div class="text-xs text-gray-500" x-text="currentUser?.email"></div><div class="text-xs text-gray-500" x-text="currentUser?.wa"></div></div>
+        </div>
 
-                demoProducts() {
-                    return [
-                        { nama: 'Microsoft Office 365 Family - 1 User 5 Devices', varian: 'Office 365 Family', masaAktif: '1 Tahun', harga: 337000, linkProduk: '#', category: 'Office 365' },
-                        { nama: 'Microsoft Office 365 Family - 1 User 5 Devices', varian: 'Office 365 Family', masaAktif: '1 Bulan',  harga: 99000,  linkProduk: '#', category: 'Office 365' },
-                        { nama: 'Adobe Creative Cloud All Apps',                  varian: 'Adobe CC',           masaAktif: '1 Bulan',  harga: 341000, linkProduk: '#', category: 'Adobe' },
-                        { nama: 'Adobe Creative Cloud - 1 Year Private Account',  varian: 'Adobe CC',           masaAktif: '1 Tahun',  harga: 3351000,linkProduk: '#', category: 'Adobe' },
-                        { nama: 'Windows 11 Pro Original License',                varian: 'Windows 11 Pro',     masaAktif: '-',        harga: 160000, linkProduk: '#', category: 'Windows' },
-                        { nama: 'Windows 10 Pro Original License',                varian: 'Windows 10 Pro',     masaAktif: '-',        harga: 160000, linkProduk: '#', category: 'Windows' },
-                        { nama: 'Microsoft Office 2021 Professional Plus',        varian: 'Bind Account',       masaAktif: '-',        harga: 1850000,linkProduk: '#', category: 'Office' },
-                        { nama: 'Microsoft Office 2024 Professional Plus',        varian: 'Original License',   masaAktif: '-',        harga: 800000, linkProduk: '#', category: 'Office' },
-                        { nama: 'CorelDRAW Graphics Suite 2024',                  varian: 'One time - Windows', masaAktif: '-',        harga: 5500000,linkProduk: '#', category: 'CorelDRAW' },
-                        { nama: 'Super ADMIN G Suite (Workspace)',                varian: 'Edu - New Account',  masaAktif: '-',        harga: 15000000,linkProduk: '#', category: 'Google' },
-                        { nama: 'Ms Project Pro 2021',                            varian: '1 Key 5 Devices',    masaAktif: '-',        harga: 215000, linkProduk: '#', category: 'Project' },
-                        { nama: 'Ms Visio Pro 2021',                              varian: '1 Key 5 Devices',    masaAktif: '-',        harga: 155000, linkProduk: '#', category: 'Visio' },
-                    ];
-                },
+        <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4 flex gap-2">
+            <span class="text-amber-500 flex-none">💡</span>
+            <p class="text-xs text-amber-700">Setelah pesan, tim kami akan menghubungi kamu via WhatsApp untuk proses pembayaran & aktivasi.</p>
+        </div>
 
-                getCategory(nama) {
-                    if (!nama) return 'Lainnya';
-                    const n = nama.toLowerCase();
-                    if (n.includes('office 365'))                            return 'Office 365';
-                    if (n.includes('adobe'))                                 return 'Adobe';
-                    if (n.includes('windows server'))                        return 'Windows Server';
-                    if (n.includes('windows'))                               return 'Windows';
-                    if (n.includes('office 20') && !n.includes('365'))      return 'Office';
-                    if (n.includes('ms project') || n.includes('project'))  return 'Project';
-                    if (n.includes('ms visio')  || n.includes('visio'))     return 'Visio';
-                    if (n.includes('coreldraw'))                             return 'CorelDRAW';
-                    if (n.includes('g suite') || n.includes('workspace') || n.includes('global admin')) return 'Google';
-                    return 'Lainnya';
-                },
+        <div x-show="orderError" class="bg-red-50 text-red-600 text-xs px-3 py-2.5 rounded-xl mb-3" x-text="orderError"></div>
 
-                getCategoryColor(cat) {
-                    const map = {
-                        'Office 365':     'bg-blue-100 text-blue-700',
-                        'Adobe':          'bg-red-100 text-red-700',
-                        'Windows':        'bg-sky-100 text-sky-700',
-                        'Office':         'bg-orange-100 text-orange-700',
-                        'Google':         'bg-green-100 text-green-700',
-                        'CorelDRAW':      'bg-yellow-100 text-yellow-700',
-                        'Project':        'bg-purple-100 text-purple-700',
-                        'Visio':          'bg-indigo-100 text-indigo-700',
-                        'Windows Server': 'bg-gray-100 text-gray-700',
-                    };
-                    return map[cat] || 'bg-gray-100 text-gray-600';
-                },
+        <button @click="submitOrder()" :disabled="orderLoading" class="w-full gradient-card disabled:bg-gray-200 text-white disabled:text-gray-400 font-black py-4 rounded-2xl text-base transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md mb-2">
+            <svg x-show="orderLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            <span x-text="orderLoading?'Memproses...':'Konfirmasi Pesanan ✓'"></span>
+        </button>
+        <button @click="orderModal=false" class="w-full text-center text-gray-400 text-sm py-2.5 hover:text-gray-600 transition-colors">Batal</button>
+    </div>
+</div>
 
-                formatPrice(price) {
-                    if (!price) return 'Hubungi Kami';
-                    return new Intl.NumberFormat('id-ID', {
-                        style: 'currency', currency: 'IDR', minimumFractionDigits: 0
-                    }).format(price);
-                },
 
-                setPage(page) {
-                    this.activePage = page;
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    if (page !== 'catalog') this.searchQuery = '';
-                    if (page !== 'status')  this.statusResult = null;
-                },
+<!-- ══════════════════════════════════════════════════════
+     ORDER SUCCESS MODAL
+══════════════════════════════════════════════════════ -->
+<div x-show="orderSuccess" class="fixed inset-0 z-[300] flex items-center justify-center px-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-3xl p-7 max-w-sm w-full text-center shadow-2xl">
+        <div class="text-6xl mb-4">🎉</div>
+        <h3 class="font-black text-gray-900 text-xl mb-2">Pesanan Diterima!</h3>
+        <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-3" x-text="currentOrderId"></div>
+        <p class="text-gray-500 text-sm mb-6 leading-relaxed">Tim kami akan menghubungi kamu via WhatsApp dalam waktu dekat untuk proses pembayaran & aktivasi.</p>
+        <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+currentOrderId+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full gradient-card text-white font-bold py-3.5 rounded-2xl mb-3 text-sm active:scale-95 shadow-sm">💬 Chat WhatsApp Sekarang</a>
+        <button @click="orderSuccess=false; productModal=false; currentOrderId=null" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Tutup</button>
+    </div>
+</div>
 
-                async checkStatus() {
-                    if (!this.statusQuery.trim()) return;
-                    this.statusChecking = true;
-                    this.statusResult = null;
-                    try {
-                        const params = new URLSearchParams({
-                            action: 'checkStatus',
-                            type:   this.statusSearchType,
-                            query:  this.statusQuery.trim()
-                        });
-                        const res  = await fetch(`${this.GAS_URL}?${params}`);
-                        const data = await res.json();
-                        this.statusResult = data.data || [];
-                    } catch {
-                        this.statusResult = [];
-                    }
-                    this.statusChecking = false;
-                },
 
-                getStatusIcon(s) {
-                    return { Aktif: '✅', Expired: '⏰', Suspended: '🚫', Pending: '⏳' }[s] || '❓';
-                },
-                getStatusBg(s) {
-                    return { Aktif: 'bg-emerald-100', Expired: 'bg-orange-100', Suspended: 'bg-red-100', Pending: 'bg-yellow-100' }[s] || 'bg-gray-100';
-                },
-                getStatusBadge(s) {
-                    return { Aktif: 'bg-emerald-100 text-emerald-700', Expired: 'bg-orange-100 text-orange-700', Suspended: 'bg-red-100 text-red-700', Pending: 'bg-yellow-100 text-yellow-700' }[s] || 'bg-gray-100 text-gray-600';
-                },
-                getStatusMessage(s) {
-                    return {
-                        Aktif:     '✅ Akun kamu aktif dan berjalan normal',
-                        Expired:   '⏰ Masa berlaku habis — segera perpanjang!',
-                        Suspended: '🚫 Akun dinonaktifkan — hubungi support',
-                        Pending:   '⏳ Akun sedang dalam proses aktivasi',
-                    }[s] || '❓ Status tidak diketahui — hubungi support';
-                },
+<!-- ══════════════════════════════════════════════════════
+     ALPINE.JS APP
+══════════════════════════════════════════════════════ -->
+<script>
+// ── SHA-256 client-side hash (untuk password) ──────────
+async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
 
+function serabutStore() {
+    return {
+        // Config
+        GAS_URL:   'https://script.google.com/macros/s/AKfycbwkhElJLL-s25f0M816gPxE2EdQTNWCubHvYmobG9zONE9Rsg3c5KtFOr_ir83OpjwFsA/exec',
+        WA_NUMBER: '8881500555',
+
+        // Pages
+        activePage:   'home',
+        loading:      true,
+        products:     [],
+        searchQuery:  '',
+        activeCategory: 'Semua',
+        activeGuide:  'office365',
+
+        // Modals
+        productModal: false,
+        authModal:    false,
+        orderModal:   false,
+        orderSuccess: false,
+
+        // Product detail
+        selectedProductGroup: null,
+        selectedVariant:      null,
+
+        // Auth
+        authTab:      'login',
+        authLoading:  false,
+        authError:    '',
+        currentUser:  null,
+        loginForm:    { email:'', password:'' },
+        registerForm: { nama:'', email:'', wa:'', password:'' },
+
+        // Order
+        orderLoading:    false,
+        orderError:      '',
+        currentOrderId:  null,
+
+        // Status check
+        statusSearchType: 'email',
+        statusQuery:      '',
+        statusChecking:   false,
+        statusResult:     null,
+
+        // ── Static Data ──────────────────────────────
+        navItems: [
+            { id:'home',    label:'Beranda',    icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
+            { id:'catalog', label:'Produk',     icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>` },
+            { id:'panduan', label:'Panduan',    icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>` },
+            { id:'status',  label:'Cek Status', icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
+        ],
+        categories: [
+            {name:'Office 365',icon:'📧',desc:'Family & Personal'},
+            {name:'Adobe',     icon:'🎨',desc:'Creative Cloud'},
+            {name:'Windows',   icon:'🪟',desc:'Pro License'},
+            {name:'Office',    icon:'💼',desc:'2019/2021/2024'},
+            {name:'Google',    icon:'☁️', desc:'Workspace & Suite'},
+            {name:'CorelDRAW', icon:'✏️',desc:'Graphics Suite'},
+            {name:'Project',   icon:'📊',desc:'Ms Project Pro'},
+            {name:'Visio',     icon:'📐',desc:'Ms Visio Pro'},
+        ],
+        benefits: [
+            {icon:'✅',title:'Original & Resmi',  desc:'Semua produk bergaransi keaslian dari vendor resmi'},
+            {icon:'⚡',title:'Proses Kilat',      desc:'Aktivasi dalam hitungan menit setelah pembayaran'},
+            {icon:'💬',title:'Support 24/7',      desc:'Tim siap bantu via WhatsApp kapan saja'},
+            {icon:'💰',title:'Harga Terbaik',     desc:'Hemat hingga 70% dari harga resmi'},
+        ],
+        statusOptions: [
+            {value:'email',      label:'Email Pembelian',hint:'Email saat order',     placeholder:'contoh@email.com'},
+            {value:'nama',       label:'Nama Pembeli',   hint:'Nama saat pembelian',  placeholder:'Nama lengkap kamu'},
+            {value:'wa',         label:'No. WhatsApp',   hint:'Nomor WA yang dipakai',placeholder:'08xxxxxxxxxx'},
+            {value:'emailAktif', label:'Email Akun',     hint:'Email akun aktifmu',   placeholder:'emailakun@outlook.com'},
+        ],
+        guideTabs: [
+            {id:'office365',label:'Office 365',icon:'📦'},
+            {id:'windows',  label:'Windows',   icon:'🪟'},
+            {id:'adobe',    label:'Adobe',     icon:'🎨'},
+        ],
+        guides: {
+            office365: [
+                {title:'Cara Install Microsoft Office 365',open:false,steps:['Buka browser dan kunjungi office.com, lalu login menggunakan email dan password akun Office 365 yang diberikan Serabut Store.','Setelah login, klik tombol "Install Office" di pojok kanan atas halaman.','Pilih "Office 365 apps" untuk download installer (OfficeSetup.exe).','Jalankan file installer dan ikuti proses instalasi.','Tunggu proses download & instalasi selesai (~15-30 menit).','Buka salah satu aplikasi Office — login dengan akun yang sama untuk aktivasi otomatis.'],note:'Pastikan koneksi internet stabil selama proses download.'},
+                {title:'Menambahkan Akun ke Perangkat Baru',open:false,steps:['Buka aplikasi Office di perangkat baru.','Klik "Sign In" atau "Masuk".','Masukkan email akun Office 365 yang diberikan.','Masukkan password — aktivasi berjalan otomatis.'],note:'Office 365 Family mendukung hingga 6 pengguna & 5 perangkat per pengguna.'},
+                {title:'Akses OneDrive 1TB',open:false,steps:['Login ke office.com.','Klik ikon OneDrive di menu aplikasi.','Kamu mendapat storage 1TB per pengguna.','Install OneDrive Desktop App untuk sinkronisasi otomatis.'],note:'OneDrive 1TB tersedia untuk setiap pengguna di paket Family dan Personal.'},
+                {title:'Troubleshooting: Office Tidak Bisa Aktivasi',open:false,steps:['Pastikan login dengan email yang benar.','Sign out semua perangkat: account.microsoft.com → Security → Sign out everywhere.','Uninstall Office, lalu install ulang dari office.com.','Pastikan tanggal & waktu di komputer sudah benar.','Hubungi support kami jika masih gagal.'],note:'Jangan gunakan tools aktivasi pihak ketiga — bisa menyebabkan akun diblokir Microsoft.'},
+            ],
+            windows: [
+                {title:'Aktivasi Windows 10 Pro dengan License Key',open:false,steps:['Klik kanan Start → System.','Klik "Change product key or upgrade your edition".','Masukkan license key 25 digit (XXXXX-XXXXX-XXXXX-XXXXX-XXXXX).','Klik Next dan tunggu aktivasi selesai.','Cek Settings → Update & Security → Activation.'],note:'License key hanya untuk 1 perangkat.'},
+                {title:'Aktivasi Windows 11 Pro dengan License Key',open:false,steps:['Tekan Windows + I → System → Activation.','Klik "Change product key".','Masukkan license key 25 digit.','Klik Next — tunggu konfirmasi "Windows is activated".','Restart komputer.'],note:'Pastikan koneksi internet aktif saat aktivasi.'},
+                {title:'Troubleshooting: Error Aktivasi Windows',open:false,steps:['Pastikan key dimasukkan benar (O vs 0, I vs 1).','Coba via CMD (Admin): slmgr /ipk XXXXX-XXXXX-XXXXX-XXXXX-XXXXX','Error 0xC004F050: key tidak kompatibel dengan edisi Windows.','Screenshot error dan kirim ke support kami via WhatsApp.'],note:'Catat kode error untuk mempermudah troubleshooting.'},
+            ],
+            adobe: [
+                {title:'Cara Install Adobe Creative Cloud',open:false,steps:['Login ke creativecloud.adobe.com dengan akun dari Serabut Store.','Download & install Adobe Creative Cloud Desktop App.','Login dengan akun yang sama.','Pilih aplikasi yang ingin diinstall, klik Install.'],note:'Satu akun Adobe CC bisa digunakan di 2 perangkat.'},
+                {title:'Troubleshooting: Adobe Tidak Bisa Login',open:false,steps:['Pastikan email dan password benar.','Coba di incognito browser.','Hapus cache browser.','Uninstall CC Desktop App, download versi terbaru.','Hubungi support jika masih gagal.'],note:'Jangan ganti password akun Adobe yang diberikan.'},
+            ],
+        },
+
+        // ── Computed ──────────────────────────────────
+        get currentStatusOption() { return this.statusOptions.find(o=>o.value===this.statusSearchType)||this.statusOptions[0]; },
+        get categoryList() { return [...new Set(this.products.map(p=>p.category))].filter(Boolean).sort(); },
+        get filteredProducts() {
+            return this.products.filter(p => {
+                const matchCat = this.activeCategory==='Semua'||p.category===this.activeCategory;
+                const q = this.searchQuery.toLowerCase();
+                const matchSearch = !q||p.nama.toLowerCase().includes(q)||(p.varian||'').toLowerCase().includes(q);
+                return matchCat&&matchSearch;
+            });
+        },
+        get featuredProducts() {
+            const seen={}, out=[];
+            for(const p of this.products){ if(!seen[p.category]){seen[p.category]=true;out.push(p);if(out.length>=6)break;} }
+            return out.length>0?out:this.products.slice(0,6);
+        },
+
+        // ── Init ──────────────────────────────────────
+        async init() {
+            const saved = localStorage.getItem('serabutUser');
+            if(saved) { try{ this.currentUser=JSON.parse(saved); }catch{} }
+            await this.fetchProducts();
+        },
+
+        // ── Products ──────────────────────────────────
+        async fetchProducts() {
+            this.loading=true;
+            try {
+                const res  = await fetch(`${this.GAS_URL}?action=getCatalog`);
+                const data = await res.json();
+                if(data.success&&data.data) {
+                    this.products = data.data.map(p=>({...p, category:this.getCategory(p.nama)}));
+                } else { this.products=this.demoProducts(); }
+            } catch { this.products=this.demoProducts(); }
+            this.loading=false;
+        },
+        demoProducts() {
+            return [
+                {nama:'Microsoft Office 365 Family - 1 User 5 Devices',varian:'Office 365 Family',masaAktif:'1 Tahun',harga:337000,linkProduk:'#',category:'Office 365'},
+                {nama:'Microsoft Office 365 Family - 1 User 5 Devices',varian:'Office 365 Family',masaAktif:'1 Bulan', harga:99000, linkProduk:'#',category:'Office 365'},
+                {nama:'Adobe Creative Cloud All Apps',                  varian:'Adobe CC',        masaAktif:'1 Bulan', harga:341000,linkProduk:'#',category:'Adobe'},
+                {nama:'Adobe Creative Cloud - 1 Year',                  varian:'Private Account', masaAktif:'1 Tahun', harga:3351000,linkProduk:'#',category:'Adobe'},
+                {nama:'Windows 11 Pro Original License',                varian:'Windows 11 Pro',  masaAktif:'-',       harga:160000,linkProduk:'#',category:'Windows'},
+                {nama:'Microsoft Office 2021 Professional Plus',        varian:'Bind Account',    masaAktif:'-',       harga:1850000,linkProduk:'#',category:'Office'},
+                {nama:'CorelDRAW Graphics Suite 2024',                  varian:'One time Windows',masaAktif:'-',       harga:5500000,linkProduk:'#',category:'CorelDRAW'},
+                {nama:'Ms Project Pro 2021',                            varian:'1 Key 5 Devices', masaAktif:'-',       harga:215000,linkProduk:'#',category:'Project'},
+            ];
+        },
+
+        // ── Category helpers ──────────────────────────
+        getCategory(nama) {
+            if(!nama) return 'Lainnya';
+            const n=nama.toLowerCase();
+            if(n.includes('office 365'))   return 'Office 365';
+            if(n.includes('adobe'))        return 'Adobe';
+            if(n.includes('windows server')) return 'Windows Server';
+            if(n.includes('windows'))      return 'Windows';
+            if(n.includes('office 20')&&!n.includes('365')) return 'Office';
+            if(n.includes('ms project')||n.includes('project pro')) return 'Project';
+            if(n.includes('ms visio')||n.includes('visio')) return 'Visio';
+            if(n.includes('coreldraw'))    return 'CorelDRAW';
+            if(n.includes('g suite')||n.includes('workspace')||n.includes('global admin')) return 'Google';
+            return 'Lainnya';
+        },
+        getCategoryColor(cat) {
+            const m={'Office 365':'bg-blue-100 text-blue-700','Adobe':'bg-red-100 text-red-700','Windows':'bg-sky-100 text-sky-700','Office':'bg-orange-100 text-orange-700','Google':'bg-green-100 text-green-700','CorelDRAW':'bg-yellow-100 text-yellow-700','Project':'bg-purple-100 text-purple-700','Visio':'bg-indigo-100 text-indigo-700','Windows Server':'bg-gray-100 text-gray-700'};
+            return m[cat]||'bg-gray-100 text-gray-600';
+        },
+        getCategoryBg(cat) {
+            const m={'Office 365':'bg-blue-50','Adobe':'bg-red-50','Windows':'bg-sky-50','Office':'bg-orange-50','Google':'bg-green-50','CorelDRAW':'bg-yellow-50','Project':'bg-purple-50','Visio':'bg-indigo-50'};
+            return m[cat]||'bg-gray-50';
+        },
+        getCategoryIcon(cat) {
+            const m={'Office 365':'📧','Adobe':'🎨','Windows':'🪟','Office':'💼','Google':'☁️','CorelDRAW':'✏️','Project':'📊','Visio':'📐','Windows Server':'🖥️'};
+            return m[cat]||'📦';
+        },
+        getProductBenefits(cat) {
+            const m={
+                'Office 365':['Akses semua Office apps (Word, Excel, PowerPoint, Outlook)','OneDrive 1TB cloud storage per pengguna','Support hingga 5 perangkat per akun','Update otomatis ke versi terbaru','Teams, OneNote, dan Publisher termasuk'],
+                'Adobe':     ['Akses semua aplikasi Adobe Creative Cloud','100GB cloud storage Adobe','Adobe Fonts premium','Bisa diinstall di 2 perangkat','Update rutin ke versi terbaru'],
+                'Windows':   ['Lisensi original & resmi dari Microsoft','Berlaku seumur hidup (lifetime)','Update keamanan via Windows Update','Fitur lengkap Windows Pro','Aktivasi untuk 1 perangkat'],
+                'Office':    ['Lisensi original & resmi (non-subscription)','Word, Excel, PowerPoint, Outlook','Berlaku seumur hidup','OneNote dan Publisher termasuk','Bisa diinstall sekali, pakai selamanya'],
+                'Google':    ['Admin control penuh atas semua user','Storage besar per pengguna','Google Meet, Drive, Docs, Sheets','Email dengan domain custom','Support prioritas'],
+                'CorelDRAW': ['Suite desain grafis profesional','CorelDRAW + Corel PHOTO-PAINT','Ribuan template & font premium','Support format AI, PSD, PDF','Lisensi original resmi'],
+                'Project':   ['Ms Project versi original','Manajemen proyek & timeline','Gantt chart & resource planning','Kompatibel dengan Office lainnya','Lisensi untuk 5 perangkat'],
+                'Visio':     ['Ms Visio versi original','Diagram alur & flowchart','Template profesional lengkap','Export ke PDF & Office','Lisensi untuk 5 perangkat'],
             };
-        }
-    </script>
+            return m[cat]||['Produk original & bergaransi resmi','Proses aktivasi cepat & mudah','Support 24/7 via WhatsApp','Garansi jika ada masalah aktivasi'];
+        },
 
+        // ── Product Modal ─────────────────────────────
+        openProductModal(product) {
+            const variants = this.products.filter(p=>p.nama===product.nama);
+            this.selectedProductGroup = { nama:product.nama, category:product.category, variants };
+            this.selectedVariant = variants.find(v=>v.varian===product.varian&&v.masaAktif===product.masaAktif)||variants[0];
+            this.productModal = true;
+            document.body.style.overflow = 'hidden';
+        },
+        closeProductModal() {
+            this.productModal = false;
+            document.body.style.overflow = '';
+        },
+        getUniqueVariants(group) {
+            if(!group) return [];
+            return [...new Set(group.variants.map(v=>v.varian))].filter(Boolean);
+        },
+        getVariantDurations(group, varianName) {
+            if(!group) return [];
+            const filtered = varianName ? group.variants.filter(v=>v.varian===varianName) : group.variants;
+            return filtered.length>0 ? filtered : group.variants;
+        },
+        selectVariantByName(v) {
+            const durations = this.getVariantDurations(this.selectedProductGroup, v);
+            this.selectedVariant = durations[0];
+        },
+
+        // ── Auth ──────────────────────────────────────
+        openAuth(tab) {
+            this.authTab = tab;
+            this.authError = '';
+            this.authModal = true;
+            document.body.style.overflow = 'hidden';
+        },
+        closeAuthModal() {
+            this.authModal = false;
+            this.authError = '';
+            document.body.style.overflow = '';
+        },
+        async submitLogin() {
+            if(!this.loginForm.email||!this.loginForm.password){ this.authError='Email dan password harus diisi'; return; }
+            this.authLoading=true; this.authError='';
+            try {
+                const hashed = await sha256(this.loginForm.password);
+                const params = new URLSearchParams({ action:'login', email:this.loginForm.email, password:hashed });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) {
+                    this.currentUser = data.user;
+                    localStorage.setItem('serabutUser', JSON.stringify(data.user));
+                    this.closeAuthModal();
+                    this.loginForm = {email:'',password:''};
+                    if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
+                } else { this.authError = data.error||'Login gagal'; }
+            } catch { this.authError='Gagal terhubung ke server'; }
+            this.authLoading=false;
+        },
+        async submitRegister() {
+            const {nama,email,wa,password}=this.registerForm;
+            if(!nama||!email||!wa||!password){ this.authError='Semua field harus diisi'; return; }
+            if(password.length<6){ this.authError='Password minimal 6 karakter'; return; }
+            this.authLoading=true; this.authError='';
+            try {
+                const hashed = await sha256(password);
+                const params = new URLSearchParams({ action:'register', nama, email, wa, password:hashed });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) {
+                    this.currentUser = data.user;
+                    localStorage.setItem('serabutUser', JSON.stringify(data.user));
+                    this.closeAuthModal();
+                    this.registerForm = {nama:'',email:'',wa:'',password:''};
+                    if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
+                } else { this.authError = data.error||'Registrasi gagal'; }
+            } catch { this.authError='Gagal terhubung ke server'; }
+            this.authLoading=false;
+        },
+        logout() {
+            this.currentUser = null;
+            localStorage.removeItem('serabutUser');
+        },
+
+        // ── Order ─────────────────────────────────────
+        handlePesan() {
+            if(!this.currentUser) { this.openAuth('login'); return; }
+            this.orderError='';
+            this.orderModal=true;
+        },
+        async submitOrder() {
+            if(!this.currentUser||!this.selectedVariant) return;
+            this.orderLoading=true; this.orderError='';
+            try {
+                const params = new URLSearchParams({
+                    action:    'createOrder',
+                    userNama:  this.currentUser.nama,
+                    userEmail: this.currentUser.email,
+                    userWa:    this.currentUser.wa,
+                    produk:    this.selectedProductGroup.nama,
+                    varian:    this.selectedVariant.varian||'',
+                    masaAktif: this.selectedVariant.masaAktif||'-',
+                    harga:     this.selectedVariant.harga,
+                });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) {
+                    this.currentOrderId = data.orderId;
+                    this.orderModal  = false;
+                    this.orderSuccess = true;
+                } else { this.orderError = data.error||'Gagal membuat pesanan'; }
+            } catch { this.orderError='Gagal terhubung ke server'; }
+            this.orderLoading=false;
+        },
+
+        // ── Status Check ──────────────────────────────
+        async checkStatus() {
+            if(!this.statusQuery.trim()) return;
+            this.statusChecking=true; this.statusResult=null;
+            try {
+                const params = new URLSearchParams({ action:'checkStatus', type:this.statusSearchType, query:this.statusQuery.trim() });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                this.statusResult = data.data||[];
+            } catch { this.statusResult=[]; }
+            this.statusChecking=false;
+        },
+
+        // ── Helpers ───────────────────────────────────
+        formatPrice(p) {
+            if(!p) return 'Hubungi Kami';
+            return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(p);
+        },
+        setPage(page) {
+            this.activePage=page;
+            window.scrollTo({top:0,behavior:'smooth'});
+            if(page!=='catalog') this.searchQuery='';
+            if(page!=='status')  this.statusResult=null;
+        },
+        getStatusIcon(s)    { return {Aktif:'✅',Expired:'⏰',Suspended:'🚫',Pending:'⏳'}[s]||'❓'; },
+        getStatusBg(s)      { return {Aktif:'bg-emerald-100',Expired:'bg-orange-100',Suspended:'bg-red-100',Pending:'bg-yellow-100'}[s]||'bg-gray-100'; },
+        getStatusBadge(s)   { return {Aktif:'bg-emerald-100 text-emerald-700',Expired:'bg-orange-100 text-orange-700',Suspended:'bg-red-100 text-red-700',Pending:'bg-yellow-100 text-yellow-700'}[s]||'bg-gray-100 text-gray-600'; },
+        getStatusMessage(s) { return {Aktif:'✅ Akun kamu aktif dan berjalan normal',Expired:'⏰ Masa berlaku habis — segera perpanjang!',Suspended:'🚫 Akun dinonaktifkan — hubungi support',Pending:'⏳ Akun sedang dalam proses aktivasi'}[s]||'❓ Hubungi support untuk info lebih lanjut'; },
+    };
+}
+</script>
 </body>
 </html>
