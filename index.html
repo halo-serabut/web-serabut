@@ -163,9 +163,12 @@
                 <template x-for="product in featuredProducts" :key="product.linkProduk+product.varian+product.harga">
                     <div @click="openProductModal(product)" class="bg-white rounded-2xl border border-gray-100 overflow-hidden card-hover flex flex-col cursor-pointer group">
                         <div class="p-4 flex-1">
-                            <div class="flex items-start justify-between mb-2.5">
-                                <span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(product.category)" x-text="product.category"></span>
-                                <span x-show="product.masaAktif&&product.masaAktif!=='-'" class="text-[10px] text-gray-400 font-medium" x-text="product.masaAktif"></span>
+                            <div class="flex items-center gap-2 mb-2.5">
+                                <img :src="getProductLogo(product.category)" :alt="product.category" class="w-8 h-8 rounded-lg object-contain flex-none" onerror="this.style.display='none'">
+                                <div class="flex-1 min-w-0">
+                                    <span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(product.category)" x-text="product.category"></span>
+                                </div>
+                                <span x-show="product.masaAktif&&product.masaAktif!=='-'" class="text-[10px] text-gray-400 font-medium flex-none" x-text="product.masaAktif"></span>
                             </div>
                             <h3 class="font-semibold text-gray-800 text-sm leading-snug mb-1 line-clamp-2 group-hover:text-brand-600 transition-colors" x-text="product.nama"></h3>
                             <p class="text-xs text-gray-400 mb-3 truncate" x-text="product.varian"></p>
@@ -216,7 +219,10 @@
                 <template x-for="product in filteredProducts" :key="product.linkProduk+product.varian+product.harga">
                     <div @click="openProductModal(product)" class="bg-white rounded-2xl border border-gray-100 overflow-hidden card-hover flex flex-col cursor-pointer group">
                         <div class="p-4 flex-1">
-                            <div class="flex items-start justify-between mb-2"><span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(product.category)" x-text="product.category"></span></div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <img :src="getProductLogo(product.category)" :alt="product.category" class="w-8 h-8 rounded-lg object-contain flex-none" onerror="this.style.display='none'">
+                                <span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(product.category)" x-text="product.category"></span>
+                            </div>
                             <h3 class="font-semibold text-gray-800 text-sm leading-snug mb-1 line-clamp-2 group-hover:text-brand-600 transition-colors" x-text="product.nama"></h3>
                             <p class="text-xs text-gray-400 mb-2 truncate" x-text="product.varian"></p>
                             <div x-show="product.masaAktif&&product.masaAktif!=='-'" class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full mb-2"><span>⏱</span><span x-text="product.masaAktif"></span></div>
@@ -275,46 +281,103 @@
     <section x-show="activePage==='status'" class="page-enter">
         <div class="max-w-lg mx-auto px-4 py-6">
             <h1 class="text-2xl font-black text-gray-900 mb-1">Cek Status Akun</h1>
-            <p class="text-sm text-gray-400 mb-6">Masukkan informasi untuk cek status langgananmu</p>
-            <div class="bg-white rounded-2xl border border-gray-100 p-5 mb-5">
-                <div class="mb-5"><label class="text-sm font-bold text-gray-700 mb-3 block">Cari berdasarkan</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <template x-for="opt in statusOptions" :key="opt.value">
-                            <label :class="statusSearchType===opt.value?'border-brand-400 bg-brand-50':'border-gray-200'" class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all">
-                                <input type="radio" :value="opt.value" x-model="statusSearchType" class="w-4 h-4">
-                                <div><div class="text-sm font-semibold text-gray-800" x-text="opt.label"></div><div class="text-[10px] text-gray-400" x-text="opt.hint"></div></div>
-                            </label>
-                        </template>
-                    </div>
+            <p class="text-sm text-gray-400 mb-5">Cari menggunakan nama, email, atau nomor WhatsApp</p>
+
+            <!-- Smart Search Bar -->
+            <div class="relative mb-4">
+                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                    <svg x-show="!statusChecking" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <svg x-show="statusChecking" class="animate-spin w-5 h-5 text-brand-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                 </div>
-                <div class="mb-5"><label class="text-sm font-bold text-gray-700 mb-2 block" x-text="currentStatusOption.label"></label>
-                    <input x-model="statusQuery" :type="statusSearchType==='email'||statusSearchType==='emailAktif'?'email':statusSearchType==='wa'?'tel':'text'" :placeholder="currentStatusOption.placeholder" @keyup.enter="checkStatus()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
-                </div>
-                <button @click="checkStatus()" :disabled="statusChecking||!statusQuery.trim()" class="w-full gradient-card disabled:bg-none disabled:bg-gray-200 text-white disabled:text-gray-400 font-bold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-2 active:scale-95">
-                    <svg x-show="statusChecking" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                    <span x-text="statusChecking?'Memeriksa...':'Cek Status Akun'"></span>
+                <input x-model="statusQuery" type="text"
+                    placeholder="Cari nama, email, atau No. WA..."
+                    @keyup.enter="checkStatus()"
+                    class="w-full pl-12 pr-28 py-4 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 shadow-sm transition-all placeholder:text-gray-400">
+                <button @click="checkStatus()" :disabled="statusChecking||!statusQuery.trim()"
+                    class="absolute right-2 top-2 bottom-2 gradient-card text-white text-sm font-bold px-5 rounded-xl disabled:opacity-50 transition-all">
+                    Cek
                 </button>
             </div>
+
+            <!-- Results -->
             <div x-show="statusResult!==null" x-transition>
-                <div x-show="statusResult&&statusResult.length===0" class="bg-white rounded-2xl border border-gray-100 p-6 text-center">
-                    <div class="text-5xl mb-3">😕</div><div class="font-bold text-gray-800 mb-1">Akun tidak ditemukan</div>
-                    <div class="text-sm text-gray-400 mb-4">Pastikan informasi yang dimasukkan sudah benar</div>
-                    <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="inline-flex items-center gap-2 bg-brand-50 text-brand-600 font-semibold text-sm px-5 py-2.5 rounded-xl">💬 Hubungi Support</a>
+                <!-- Not found -->
+                <div x-show="statusResult&&statusResult.length===0" class="bg-white rounded-2xl border border-gray-100 p-8 text-center shadow-sm">
+                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </div>
+                    <div class="font-bold text-gray-800 mb-1">Akun tidak ditemukan</div>
+                    <div class="text-sm text-gray-400 mb-4">Coba dengan kata kunci lain atau hubungi support</div>
+                    <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="inline-flex items-center gap-2 bg-brand-50 text-brand-600 font-semibold text-sm px-5 py-2.5 rounded-xl">Chat WhatsApp</a>
                 </div>
+
+                <!-- Result cards -->
                 <template x-for="(account,idx) in statusResult" :key="idx">
-                    <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3">
-                        <div class="px-5 pt-5 pb-4 flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-none" :class="getStatusBg(account.status)" x-text="getStatusIcon(account.status)"></div>
-                            <div class="flex-1 min-w-0"><div class="font-bold text-gray-900 truncate" x-text="account.nama||'Pelanggan'"></div><div class="text-sm text-gray-400 truncate" x-text="account.email||account.wa||'—'"></div></div>
-                            <span class="text-xs font-bold px-3 py-1 rounded-full flex-none" :class="getStatusBadge(account.status)" x-text="account.status||'Aktif'"></span>
+                    <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3 shadow-sm">
+                        <!-- Header -->
+                        <div class="px-5 pt-5 pb-3 flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-none text-xl font-black text-white gradient-card">
+                                <span x-text="(account.nama||'?')[0].toUpperCase()"></span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-gray-900 truncate" x-text="account.nama||'Pelanggan'"></div>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600" x-text="account.tipe||'Personal'"></span>
+                                    <span class="text-[10px] text-gray-400" x-text="account.sumber"></span>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold px-3 py-1.5 rounded-xl flex-none"
+                                :class="{
+                                    'bg-emerald-50 text-emerald-700': account.status==='Aktif'||account.status==='Active',
+                                    'bg-orange-50 text-orange-700': account.status==='Expired',
+                                    'bg-red-50 text-red-700': account.status==='Suspended',
+                                    'bg-yellow-50 text-yellow-700': account.status==='Pending',
+                                    'bg-gray-100 text-gray-600': !account.status
+                                }" x-text="account.status||'Aktif'"></span>
                         </div>
+
                         <div class="border-t border-gray-50 mx-5"></div>
-                        <div class="px-5 py-4 space-y-2.5">
-                            <template x-if="account.produk"><div class="flex justify-between gap-2"><span class="text-sm text-gray-400">Produk</span><span class="text-sm font-semibold text-gray-800 text-right" x-text="account.produk"></span></div></template>
-                            <template x-if="account.emailAktif"><div class="flex justify-between gap-2"><span class="text-sm text-gray-400">Email Akun</span><span class="text-sm font-semibold text-gray-800 break-all" x-text="account.emailAktif"></span></div></template>
-                            <template x-if="account.masaBerlaku"><div class="flex justify-between gap-2"><span class="text-sm text-gray-400">Masa Berlaku</span><span class="text-sm font-semibold text-gray-800" x-text="account.masaBerlaku"></span></div></template>
+
+                        <!-- Detail -->
+                        <div class="px-5 py-4 space-y-2">
+                            <template x-if="account.officeAccount">
+                                <div class="flex justify-between gap-2">
+                                    <span class="text-xs text-gray-400 shrink-0">Akun Office</span>
+                                    <span class="text-xs font-semibold text-gray-800 break-all text-right" x-text="account.officeAccount"></span>
+                                </div>
+                            </template>
+                            <template x-if="account.emailPembeli">
+                                <div class="flex justify-between gap-2">
+                                    <span class="text-xs text-gray-400 shrink-0">Email Aktif</span>
+                                    <span class="text-xs font-semibold text-gray-800 break-all text-right" x-text="account.emailPembeli"></span>
+                                </div>
+                            </template>
+                            <template x-if="account.masaBerlaku">
+                                <div class="flex justify-between gap-2">
+                                    <span class="text-xs text-gray-400 shrink-0">Masa Berlaku</span>
+                                    <span class="text-xs font-semibold text-gray-800" x-text="account.masaBerlaku"></span>
+                                </div>
+                            </template>
+                            <template x-if="account.durasi">
+                                <div class="flex justify-between gap-2">
+                                    <span class="text-xs text-gray-400 shrink-0">Durasi</span>
+                                    <span class="text-xs font-semibold text-gray-800" x-text="account.durasi + ' bulan'"></span>
+                                </div>
+                            </template>
                         </div>
-                        <div class="px-5 pb-5"><div class="rounded-xl px-4 py-2.5 text-sm font-medium text-center" :class="{'bg-emerald-50 text-emerald-700':account.status==='Aktif','bg-orange-50 text-orange-700':account.status==='Expired','bg-red-50 text-red-700':account.status==='Suspended','bg-yellow-50 text-yellow-700':account.status==='Pending','bg-gray-50 text-gray-600':!account.status}" x-text="getStatusMessage(account.status)"></div></div>
+
+                        <!-- Status bar -->
+                        <div class="px-5 pb-5">
+                            <div class="rounded-xl px-4 py-2.5 text-sm font-medium text-center"
+                                :class="{
+                                    'bg-emerald-50 text-emerald-700': account.status==='Aktif'||account.status==='Active',
+                                    'bg-orange-50 text-orange-700': account.status==='Expired',
+                                    'bg-red-50 text-red-700': account.status==='Suspended',
+                                    'bg-yellow-50 text-yellow-700': account.status==='Pending',
+                                    'bg-gray-50 text-gray-500': !account.status
+                                }"
+                                x-text="getStatusMessage(account.status)"></div>
+                        </div>
                     </div>
                 </template>
             </div>
@@ -535,7 +598,7 @@
         <!-- Header -->
         <div class="px-5 pt-4 pb-0 flex items-start justify-between sticky top-5 bg-white z-10">
             <div class="flex items-center gap-3">
-                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-none" :class="getCategoryBg(selectedProductGroup?.category)" x-text="getCategoryIcon(selectedProductGroup?.category)"></div>
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-none overflow-hidden" :class="getCategoryBg(selectedProductGroup?.category)"><img :src="getProductLogo(selectedProductGroup?.category)" :alt="selectedProductGroup?.category" class="w-10 h-10 object-contain" onerror="this.outerHTML='<span class=\'text-3xl\'>'+getCategoryIcon(selectedProductGroup?.category)+'</span>'"></div>
                 <div>
                     <span class="text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(selectedProductGroup?.category)" x-text="selectedProductGroup?.category"></span>
                     <h2 class="font-black text-gray-900 text-base leading-snug mt-1 max-w-[220px]" x-text="selectedProductGroup?.nama"></h2>
@@ -1009,6 +1072,29 @@ function serabutStore() {
             const m={'Office 365':'bg-blue-100 text-blue-700','Adobe':'bg-red-100 text-red-700','Windows':'bg-sky-100 text-sky-700','Office':'bg-orange-100 text-orange-700','Google':'bg-green-100 text-green-700','CorelDRAW':'bg-yellow-100 text-yellow-700','Project':'bg-purple-100 text-purple-700','Visio':'bg-indigo-100 text-indigo-700','Windows Server':'bg-gray-100 text-gray-700'};
             return m[cat]||'bg-gray-100 text-gray-600';
         },
+        getProductLogo(cat) {
+            const m = {
+                'Office 365':    'https://logo.clearbit.com/microsoft.com',
+                'Adobe':         'https://logo.clearbit.com/adobe.com',
+                'Windows':       'https://logo.clearbit.com/microsoft.com',
+                'Office':        'https://logo.clearbit.com/microsoft.com',
+                'Google':        'https://logo.clearbit.com/google.com',
+                'Google One':    'https://logo.clearbit.com/google.com',
+                'CorelDRAW':     'https://logo.clearbit.com/coreldraw.com',
+                'Project':       'https://logo.clearbit.com/microsoft.com',
+                'Visio':         'https://logo.clearbit.com/microsoft.com',
+                'Netflix':       'https://logo.clearbit.com/netflix.com',
+                'Canva':         'https://logo.clearbit.com/canva.com',
+                'NordVPN':       'https://logo.clearbit.com/nordvpn.com',
+                'Wattpad':       'https://logo.clearbit.com/wattpad.com',
+                'Disney+':       'https://logo.clearbit.com/disneyplus.com',
+                'Amazon Prime':  'https://logo.clearbit.com/amazon.com',
+                'iQIYI':         'https://logo.clearbit.com/iqiyi.com',
+                'Zoom':          'https://logo.clearbit.com/zoom.us',
+                'Windows Server':'https://logo.clearbit.com/microsoft.com',
+            };
+            return m[cat] || 'https://logo.clearbit.com/microsoft.com';
+        },
         getCategoryBg(cat) {
             const m={'Office 365':'bg-blue-50','Adobe':'bg-red-50','Windows':'bg-sky-50','Office':'bg-orange-50','Google':'bg-green-50','CorelDRAW':'bg-yellow-50','Project':'bg-purple-50','Visio':'bg-indigo-50'};
             return m[cat]||'bg-gray-50';
@@ -1201,7 +1287,7 @@ function serabutStore() {
             if(!this.statusQuery.trim()) return;
             this.statusChecking=true; this.statusResult=null;
             try {
-                const params = new URLSearchParams({ action:'checkStatus', type:this.statusSearchType, query:this.statusQuery.trim() });
+                const params = new URLSearchParams({ action:'smartSearch', query:this.statusQuery.trim() });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
                 this.statusResult = data.data||[];
