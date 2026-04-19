@@ -6,6 +6,8 @@
     <title>Serabut Store — Software Original Terpercaya</title>
     <meta name="description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat.">
     <meta name="theme-color" content="#DC2626">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -337,24 +339,109 @@
             <button @click="profileTab='pesanan'; loadOrders()" :class="profileTab==='pesanan'?'bg-white shadow-sm text-gray-900 font-bold':'text-gray-500'" class="flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all">Pesanan</button>
         </div>
 
-        <!-- Tab: Data Diri -->
-        <div x-show="profileTab==='diri'" class="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50 shadow-sm">
-            <div class="flex items-center justify-between px-5 py-4">
-                <span class="text-sm text-gray-400 font-medium">Nama Lengkap</span>
-                <span class="text-sm font-semibold text-gray-800" x-text="currentUser?.nama||'—'"></span>
+        <!-- Tab: Data Diri — VIEW MODE -->
+        <div x-show="profileTab==='diri' && !editMode">
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-3">
+                <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
+                    <span class="text-sm text-gray-400">Nama Lengkap</span>
+                    <span class="text-sm font-semibold text-gray-800" x-text="profileExtra.nama||currentUser?.nama||'—'"></span>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
+                    <span class="text-sm text-gray-400">Email</span>
+                    <span class="text-sm font-semibold text-gray-800 break-all" x-text="currentUser?.email||'—'"></span>
+                </div>
+                <div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
+                    <span class="text-sm text-gray-400">No. WhatsApp</span>
+                    <span class="text-sm font-semibold text-gray-800" x-text="currentUser?.wa||'—'"></span>
+                </div>
+                <div x-show="profileExtra.tanggalLahir" class="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
+                    <span class="text-sm text-gray-400">Tanggal Lahir</span>
+                    <span class="text-sm font-semibold text-gray-800" x-text="profileExtra.tanggalLahir"></span>
+                </div>
+                <div x-show="profileExtra.jenisKelamin" class="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
+                    <span class="text-sm text-gray-400">Jenis Kelamin</span>
+                    <span class="text-sm font-semibold text-gray-800" x-text="profileExtra.jenisKelamin"></span>
+                </div>
+                <div x-show="profileExtra.provinsi" class="flex items-center justify-between px-5 py-3.5 border-b border-gray-50">
+                    <span class="text-sm text-gray-400">Provinsi</span>
+                    <span class="text-sm font-semibold text-gray-800" x-text="profileExtra.provinsi"></span>
+                </div>
+                <div class="px-5 py-3.5">
+                    <button @click="openEditMode()" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-50 text-brand-600 font-semibold text-sm hover:bg-brand-100 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        Edit Profil
+                    </button>
+                </div>
             </div>
-            <div class="flex items-center justify-between px-5 py-4">
-                <span class="text-sm text-gray-400 font-medium">Email</span>
-                <span class="text-sm font-semibold text-gray-800 break-all" x-text="currentUser?.email||'—'"></span>
-            </div>
-            <div class="flex items-center justify-between px-5 py-4">
-                <span class="text-sm text-gray-400 font-medium">No. WhatsApp</span>
-                <span class="text-sm font-semibold text-gray-800" x-text="currentUser?.wa||'—'"></span>
-            </div>
-            <div class="px-5 py-4">
-                <button @click="logout(); setPage('home')" class="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-red-100 text-red-500 font-semibold text-sm hover:bg-red-50 transition-all">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                    Keluar
+            <button @click="logout(); setPage('home')" class="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-red-100 text-red-500 font-semibold text-sm hover:bg-red-50 transition-all bg-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                Keluar
+            </button>
+        </div>
+
+        <!-- Tab: Data Diri — EDIT MODE -->
+        <div x-show="profileTab==='diri' && editMode" class="space-y-4">
+            <!-- Back -->
+            <button @click="editMode=false" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors -mb-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Kembali
+            </button>
+
+            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+                <h3 class="font-bold text-gray-900">Edit Profil</h3>
+
+                <!-- Error -->
+                <div x-show="editError" class="bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                    <p class="text-sm text-red-500" x-text="editError"></p>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">Nama Lengkap</label>
+                    <input x-model="editForm.nama" type="text" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">Tanggal Lahir <span class="text-gray-400 font-normal">(opsional)</span></label>
+                    <input x-model="editForm.tanggalLahir" type="date" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">Jenis Kelamin <span class="text-gray-400 font-normal">(opsional)</span></label>
+                    <div class="flex gap-4 pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" x-model="editForm.jenisKelamin" value="Laki-laki" class="w-4 h-4">
+                            <span class="text-sm text-gray-700">Laki-laki</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" x-model="editForm.jenisKelamin" value="Perempuan" class="w-4 h-4">
+                            <span class="text-sm text-gray-700">Perempuan</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">Alamat <span class="text-gray-400 font-normal">(opsional)</span></label>
+                    <textarea x-model="editForm.alamat" rows="2" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">Provinsi <span class="text-gray-400 font-normal">(opsional)</span></label>
+                    <select x-model="editForm.provinsi" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+                        <option value="">Pilih Provinsi</option>
+                        <template x-for="prov in provinces" :key="prov"><option :value="prov" x-text="prov"></option></template>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">Email</label>
+                    <input type="email" :value="currentUser?.email" disabled class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-400 cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">No. WhatsApp</label>
+                    <input type="text" :value="currentUser?.wa" disabled class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-400 cursor-not-allowed">
+                </div>
+
+                <div class="flex justify-end pt-1">
+                    <button @click="resetPwModal=true; resetPwError=''; resetPwSuccess=false; resetPwForm={oldPassword:'',newPassword:'',konfirmasi:''}" class="text-sm text-brand-500 font-semibold hover:text-brand-700">Reset Password?</button>
+                </div>
+
+                <button @click="saveProfile()" :disabled="editLoading" class="w-full gradient-card text-white font-bold py-3.5 rounded-xl text-sm shadow-md disabled:opacity-50 transition-all">
+                    <span x-text="editLoading?'Menyimpan...':'Simpan'"></span>
                 </button>
             </div>
         </div>
@@ -562,6 +649,50 @@
 
 
 <!-- ══════════════════════════════════════════════════════
+     RESET PASSWORD MODAL
+══════════════════════════════════════════════════════ -->
+<div x-show="resetPwModal" class="fixed inset-0 z-[220] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="resetPwModal=false"></div>
+    <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 py-6 modal-enter">
+        <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+
+        <h3 class="font-black text-gray-900 text-lg mb-1">Reset Password</h3>
+        <p class="text-sm text-gray-400 mb-5">Masukkan password lama dan password baru kamu.</p>
+
+        <!-- Success -->
+        <div x-show="resetPwSuccess" class="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 mb-4 text-center">
+            <p class="text-sm text-emerald-600 font-semibold">Password berhasil diubah!</p>
+            <button @click="resetPwModal=false" class="mt-2 text-xs text-emerald-500 underline">Tutup</button>
+        </div>
+
+        <div x-show="!resetPwSuccess" class="space-y-3">
+            <!-- Error -->
+            <div x-show="resetPwError" class="bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                <p class="text-sm text-red-500" x-text="resetPwError"></p>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-gray-600 mb-1.5 block">Password Lama</label>
+                <input x-model="resetPwForm.oldPassword" type="password" placeholder="Password saat ini" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-600 mb-1.5 block">Password Baru <span class="text-gray-400 font-normal">(min. 6 karakter)</span></label>
+                <input x-model="resetPwForm.newPassword" type="password" placeholder="Password baru" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+            </div>
+            <div>
+                <label class="text-xs font-bold text-gray-600 mb-1.5 block">Konfirmasi Password Baru</label>
+                <input x-model="resetPwForm.konfirmasi" type="password" placeholder="Ulangi password baru" @keyup.enter="submitResetPw()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+            </div>
+
+            <button @click="submitResetPw()" :disabled="resetPwLoading" class="w-full gradient-card text-white font-bold py-3.5 rounded-xl text-sm shadow-md disabled:opacity-50 transition-all mt-1">
+                <span x-text="resetPwLoading?'Memproses...':'Ubah Password'"></span>
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════
      OTP VERIFICATION MODAL
 ══════════════════════════════════════════════════════ -->
 <div x-show="otpModal" class="fixed inset-0 z-[210] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
@@ -733,9 +864,24 @@ function serabutStore() {
         currentOrderId:  null,
 
         // Profile
-        profileTab:   'diri',
-        orders:       [],
+        profileTab:    'diri',
+        editMode:      false,
+        editForm:      { nama:'', tanggalLahir:'', jenisKelamin:'', alamat:'', provinsi:'' },
+        editLoading:   false,
+        editError:     '',
+        profileExtra:  {},
+        orders:        [],
         ordersLoading: false,
+
+        // Reset Password
+        resetPwModal:   false,
+        resetPwForm:    { oldPassword:'', newPassword:'', konfirmasi:'' },
+        resetPwLoading: false,
+        resetPwError:   '',
+        resetPwSuccess: false,
+
+        // Provinces
+        provinces: ['Aceh','Sumatera Utara','Sumatera Barat','Riau','Jambi','Sumatera Selatan','Bengkulu','Lampung','Kepulauan Bangka Belitung','Kepulauan Riau','DKI Jakarta','Jawa Barat','Jawa Tengah','DI Yogyakarta','Jawa Timur','Banten','Bali','Nusa Tenggara Barat','Nusa Tenggara Timur','Kalimantan Barat','Kalimantan Tengah','Kalimantan Selatan','Kalimantan Timur','Kalimantan Utara','Sulawesi Utara','Sulawesi Tengah','Sulawesi Selatan','Sulawesi Tenggara','Gorontalo','Sulawesi Barat','Maluku','Maluku Utara','Papua Barat','Papua','Papua Selatan','Papua Tengah','Papua Pegunungan','Papua Barat Daya'],
 
         // Status check
         statusSearchType: 'email',
@@ -1073,7 +1219,7 @@ function serabutStore() {
             window.scrollTo({top:0,behavior:'smooth'});
             if(page!=='catalog') this.searchQuery='';
             if(page!=='status')  this.statusResult=null;
-            if(page==='profile') { this.profileTab='diri'; }
+            if(page==='profile') { this.profileTab='diri'; this.editMode=false; this.loadProfile(); }
         },
         async loadOrders() {
             if(!this.currentUser || this.ordersLoading) return;
@@ -1085,6 +1231,67 @@ function serabutStore() {
                 this.orders = data.data || [];
             } catch { this.orders=[]; }
             this.ordersLoading=false;
+        },
+        async loadProfile() {
+            if(!this.currentUser) return;
+            try {
+                const params = new URLSearchParams({ action:'getProfile', email:this.currentUser.email });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) this.profileExtra = data.profile || {};
+            } catch {}
+        },
+        openEditMode() {
+            this.editForm = {
+                nama:         this.profileExtra.nama  || this.currentUser?.nama || '',
+                tanggalLahir: this.profileExtra.tanggalLahir || '',
+                jenisKelamin: this.profileExtra.jenisKelamin || '',
+                alamat:       this.profileExtra.alamat || '',
+                provinsi:     this.profileExtra.provinsi || '',
+            };
+            this.editError = '';
+            this.editMode  = true;
+        },
+        async saveProfile() {
+            if(!this.editForm.nama.trim()){ this.editError='Nama tidak boleh kosong'; return; }
+            this.editLoading=true; this.editError='';
+            try {
+                const params = new URLSearchParams({
+                    action:       'updateProfile',
+                    email:        this.currentUser.email,
+                    nama:         this.editForm.nama.trim(),
+                    tanggalLahir: this.editForm.tanggalLahir,
+                    jenisKelamin: this.editForm.jenisKelamin,
+                    alamat:       this.editForm.alamat,
+                    provinsi:     this.editForm.provinsi,
+                });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) {
+                    this.currentUser = data.user;
+                    localStorage.setItem('serabutUser', JSON.stringify(data.user));
+                    this.profileExtra = { ...this.profileExtra, ...this.editForm };
+                    this.editMode = false;
+                } else { this.editError = data.error||'Gagal menyimpan'; }
+            } catch { this.editError='Gagal terhubung ke server'; }
+            this.editLoading=false;
+        },
+        async submitResetPw() {
+            const {oldPassword,newPassword,konfirmasi} = this.resetPwForm;
+            if(!oldPassword||!newPassword||!konfirmasi){ this.resetPwError='Semua field harus diisi'; return; }
+            if(newPassword.length<6){ this.resetPwError='Password baru minimal 6 karakter'; return; }
+            if(newPassword!==konfirmasi){ this.resetPwError='Konfirmasi password tidak cocok'; return; }
+            this.resetPwLoading=true; this.resetPwError='';
+            try {
+                const oldHash = await sha256(oldPassword);
+                const newHash = await sha256(newPassword);
+                const params  = new URLSearchParams({ action:'changePassword', email:this.currentUser.email, oldPassword:oldHash, newPassword:newHash });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) { this.resetPwSuccess=true; }
+                else { this.resetPwError = data.error||'Gagal mengubah password'; }
+            } catch { this.resetPwError='Gagal terhubung ke server'; }
+            this.resetPwLoading=false;
         },
         getStatusIcon(s)    { return {Aktif:'✅',Expired:'⏰',Suspended:'🚫',Pending:'⏳'}[s]||'❓'; },
         getStatusBg(s)      { return {Aktif:'bg-emerald-100',Expired:'bg-orange-100',Suspended:'bg-red-100',Pending:'bg-yellow-100'}[s]||'bg-gray-100'; },

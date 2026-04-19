@@ -32,7 +32,10 @@ function doGet(e) {
       case 'resendOTP':    result = resendOTP(e.parameter); break;
       case 'login':        result = login(e.parameter); break;
       case 'createOrder':  result = createOrder(e.parameter); break;
-      case 'getOrders':    result = getOrders(e.parameter); break;
+      case 'getOrders':      result = getOrders(e.parameter); break;
+      case 'getProfile':     result = getProfile(e.parameter); break;
+      case 'updateProfile':  result = updateProfile(e.parameter); break;
+      case 'changePassword': result = changePassword(e.parameter); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -321,6 +324,81 @@ function createOrder({ userNama, userEmail, userWa, produk, varian, masaAktif, h
   sendWANotification(msg);
 
   return { success: true, orderId };
+}
+
+// ────────────────────────────────────────────────────────
+//  GET PROFILE
+// ────────────────────────────────────────────────────────
+function getProfile({ email }) {
+  if (!email) return { success: false, error: 'Email kosong' };
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_USERS);
+  if (!sheet) return { success: false, error: 'User tidak ditemukan' };
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).toLowerCase().trim() !== email.toLowerCase().trim()) continue;
+    return {
+      success: true,
+      profile: {
+        nama:         String(data[i][0]  || ''),
+        email:        String(data[i][1]  || ''),
+        wa:           String(data[i][2]  || ''),
+        tanggalLahir: String(data[i][8]  || ''),
+        jenisKelamin: String(data[i][9]  || ''),
+        alamat:       String(data[i][10] || ''),
+        provinsi:     String(data[i][11] || ''),
+      }
+    };
+  }
+  return { success: false, error: 'User tidak ditemukan' };
+}
+
+// ────────────────────────────────────────────────────────
+//  UPDATE PROFILE
+// ────────────────────────────────────────────────────────
+function updateProfile({ email, nama, tanggalLahir, jenisKelamin, alamat, provinsi }) {
+  if (!email || !nama) return { success: false, error: 'Data tidak lengkap' };
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_USERS);
+  if (!sheet) return { success: false, error: 'User tidak ditemukan' };
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).toLowerCase().trim() !== email.toLowerCase().trim()) continue;
+    const row = i + 1;
+    sheet.getRange(row, 1).setValue(nama.trim());
+    sheet.getRange(row, 9).setValue(tanggalLahir  || '');
+    sheet.getRange(row, 10).setValue(jenisKelamin || '');
+    sheet.getRange(row, 11).setValue(alamat       || '');
+    sheet.getRange(row, 12).setValue(provinsi     || '');
+    return {
+      success: true,
+      user: { nama: nama.trim(), email: String(data[i][1]), wa: String(data[i][2]) }
+    };
+  }
+  return { success: false, error: 'User tidak ditemukan' };
+}
+
+// ────────────────────────────────────────────────────────
+//  CHANGE PASSWORD
+// ────────────────────────────────────────────────────────
+function changePassword({ email, oldPassword, newPassword }) {
+  if (!email || !oldPassword || !newPassword) return { success: false, error: 'Data tidak lengkap' };
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_USERS);
+  if (!sheet) return { success: false, error: 'User tidak ditemukan' };
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).toLowerCase().trim() !== email.toLowerCase().trim()) continue;
+    if (String(data[i][3]) !== String(oldPassword)) {
+      return { success: false, error: 'Password lama salah' };
+    }
+    sheet.getRange(i + 1, 4).setValue(newPassword);
+    return { success: true };
+  }
+  return { success: false, error: 'User tidak ditemukan' };
 }
 
 // ────────────────────────────────────────────────────────
