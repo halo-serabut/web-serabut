@@ -654,8 +654,8 @@
             <!-- ── Tab: Flash Sale ── -->
             <div x-show="adminTab==='flashsale'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
                 <h2 class="font-bold text-gray-900 mb-4">Flash Sale</h2>
-                <div class="space-y-4 max-w-lg">
-                    <!-- Toggle Aktif -->
+                <!-- Global settings: toggle + periode -->
+                <div class="flex flex-wrap items-center gap-4 mb-6 pb-5 border-b border-gray-100">
                     <label class="flex items-center gap-3 cursor-pointer">
                         <div @click="adminEditFlash.aktif=!adminEditFlash.aktif"
                              :class="adminEditFlash.aktif?'bg-brand-500':'bg-gray-200'"
@@ -664,73 +664,108 @@
                         </div>
                         <span class="text-sm font-semibold text-gray-700">Flash Sale Aktif</span>
                     </label>
+                    <div class="flex gap-3 flex-1 min-w-0">
+                        <div class="flex-1">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Mulai</label>
+                            <input x-model="adminEditFlash.startDate" type="datetime-local" class="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Berakhir</label>
+                            <input x-model="adminEditFlash.deadline" type="datetime-local" class="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-brand-400">
+                        </div>
+                    </div>
+                </div>
 
+                <!-- Header + Tambah -->
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-sm text-gray-700">Produk Flash Sale <span class="text-gray-400 font-normal">(<span x-text="adminFlashItems.length"></span> item)</span></h3>
+                    <button x-show="adminFlashEditIdx===-1" @click="adminFlashAddItem()"
+                            class="flex items-center gap-1.5 text-xs font-bold text-brand-600 px-3 py-1.5 rounded-lg border border-brand-200 bg-brand-50 hover:bg-brand-100 transition-all">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                        Tambah Produk
+                    </button>
+                </div>
+
+                <!-- Empty state -->
+                <div x-show="adminFlashItems.length===0 && adminFlashEditIdx===-1"
+                     class="text-center py-8 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-xl mb-4">
+                    Belum ada produk flash sale. Klik "+ Tambah Produk" untuk mulai.
+                </div>
+
+                <!-- Scorecard Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                    <template x-for="(item, i) in adminFlashItems" :key="i">
+                        <div :class="adminFlashEditIdx===i?'ring-2 ring-brand-400 bg-brand-50':'bg-gray-50 hover:bg-white'"
+                             class="border border-gray-200 rounded-xl p-4 relative transition-all">
+                            <span class="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full" x-text="item.diskon+'% OFF'"></span>
+                            <div class="font-bold text-xs text-gray-800 pr-14 mb-0.5 leading-snug line-clamp-2" x-text="item.produk"></div>
+                            <div class="text-[11px] text-gray-500 mb-3 truncate" x-text="item.varian"></div>
+                            <div class="text-sm font-black text-brand-600" x-text="'Rp '+Number(item.harga).toLocaleString('id-ID')"></div>
+                            <div class="text-[11px] text-gray-400 line-through" x-text="'Rp '+Number(item.hargaAsli).toLocaleString('id-ID')"></div>
+                            <div x-show="adminFlashEditIdx===-1" class="flex gap-1.5 mt-3">
+                                <button @click="adminFlashEditItem(i)" class="text-[11px] text-brand-600 font-bold px-2 py-1 rounded-lg bg-white border border-brand-200 hover:bg-brand-50 transition-all">Edit</button>
+                                <button @click="adminFlashDeleteItem(i)" class="text-[11px] text-red-500 font-bold px-2 py-1 rounded-lg bg-white border border-red-100 hover:bg-red-50 transition-all">Hapus</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Add / Edit Form -->
+                <div x-show="adminFlashEditIdx !== -1" class="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3 mb-4">
+                    <h4 class="font-bold text-sm text-blue-700" x-text="adminFlashEditIdx===-2?'+ Tambah Produk Baru':'✎ Edit Produk'"></h4>
                     <!-- Cari Produk -->
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Cari Produk</label>
-                        <div class="relative" x-show="!adminEditFlash.produk">
-                            <input x-model="adminFlashSearch" @input="adminFlashFilter()" type="text"
-                                   placeholder="Ketik nama produk..."
-                                   class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                            <div x-show="adminFlashResults.length" class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Cari Produk</label>
+                        <div class="relative" x-show="!adminFlashFormItem.produk">
+                            <input x-model="adminFlashSearch" @input="adminFlashFilter()" type="text" placeholder="Ketik nama produk..."
+                                   class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 bg-white">
+                            <div x-show="adminFlashResults.length" class="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                                 <template x-for="p in adminFlashResults" :key="p.nama">
-                                    <div @click="adminFlashSelectProduct(p)"
-                                         class="px-3 py-2.5 text-sm cursor-pointer hover:bg-brand-50 hover:text-brand-700 border-b border-gray-50 last:border-0"
-                                         x-text="p.nama"></div>
+                                    <div @click="adminFlashSelectProduct(p)" class="px-3 py-2 text-sm cursor-pointer hover:bg-brand-50 hover:text-brand-700 border-b border-gray-50 last:border-0" x-text="p.nama"></div>
                                 </template>
                             </div>
                         </div>
-                        <!-- Produk terpilih -->
-                        <div x-show="adminEditFlash.produk" class="flex items-center justify-between gap-2 px-3 py-2.5 bg-brand-50 border border-brand-200 rounded-xl">
-                            <span class="text-sm font-semibold text-brand-700" x-text="adminEditFlash.produk"></span>
-                            <button @click="adminFlashClear()" class="text-gray-400 hover:text-red-500 text-lg leading-none">&times;</button>
+                        <div x-show="adminFlashFormItem.produk" class="flex items-center justify-between gap-2 px-3 py-2 bg-white border border-brand-200 rounded-xl">
+                            <span class="text-sm font-semibold text-brand-700 truncate" x-text="adminFlashFormItem.produk"></span>
+                            <button @click="adminFlashClearForm()" class="text-gray-400 hover:text-red-500 text-lg leading-none flex-none">&times;</button>
                         </div>
                     </div>
-
                     <!-- Pilih Varian -->
                     <div x-show="adminFlashVariants.length > 0">
-                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Pilih Varian</label>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Pilih Varian</label>
                         <select x-model="adminFlashVariantIdx" @change="adminFlashPickVariant($event.target.value)"
-                                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 bg-white">
+                                class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 bg-white">
                             <template x-for="(v, i) in adminFlashVariants" :key="i">
-                                <option :value="i" x-text="v.varian + (v.masaAktif&&v.masaAktif!=='-'?' · '+v.masaAktif:'') + ' — Rp' + Number(v.harga).toLocaleString('id')"></option>
+                                <option :value="i" x-text="v.varian+(v.masaAktif&&v.masaAktif!=='-'?' · '+v.masaAktif:'')+' — Rp'+Number(v.harga).toLocaleString('id-ID')"></option>
                             </template>
                         </select>
                     </div>
-
                     <!-- Harga -->
-                    <div class="grid grid-cols-3 gap-3">
+                    <div class="grid grid-cols-3 gap-2">
                         <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Harga Sale (Rp)</label>
-                            <input x-model="adminEditFlash.harga" @input="adminFlashCalcDiskon()" type="number"
-                                   class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Harga Sale (Rp)</label>
+                            <input x-model="adminFlashFormItem.harga" @input="adminFlashCalcDiskon()" type="number"
+                                   class="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400 bg-white">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Harga Asli (Rp)</label>
-                            <input x-model="adminEditFlash.hargaAsli" type="number" readonly
-                                   class="w-full px-3 py-2.5 border border-gray-100 rounded-xl text-sm bg-gray-50 text-gray-500">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Harga Asli (Rp)</label>
+                            <input x-model="adminFlashFormItem.hargaAsli" type="number" readonly class="w-full px-2.5 py-2 border border-gray-100 rounded-lg text-sm bg-gray-50 text-gray-400">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Diskon (%)</label>
-                            <input x-model="adminEditFlash.diskon" type="number" readonly
-                                   class="w-full px-3 py-2.5 border border-gray-100 rounded-xl text-sm bg-gray-50 text-gray-500">
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Diskon (%)</label>
+                            <input x-model="adminFlashFormItem.diskon" type="number" readonly class="w-full px-2.5 py-2 border border-gray-100 rounded-lg text-sm bg-gray-50 text-gray-400">
                         </div>
                     </div>
-
-                    <!-- Periode Flash Sale -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Mulai</label>
-                            <input x-model="adminEditFlash.startDate" type="datetime-local"
-                                   class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Berakhir</label>
-                            <input x-model="adminEditFlash.deadline" type="datetime-local"
-                                   class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                        </div>
+                    <!-- Form actions -->
+                    <div class="flex gap-2 pt-1">
+                        <button @click="adminFlashSaveItem()" class="gradient-card text-white font-bold px-4 py-2 rounded-xl text-sm active:scale-95 transition-all"
+                                x-text="adminFlashEditIdx===-2?'Tambah ke Flash Sale':'Update Produk'"></button>
+                        <button @click="adminFlashCancelEdit()" class="text-gray-500 font-semibold px-4 py-2 rounded-xl text-sm border border-gray-200 hover:bg-gray-50 transition-all">Batal</button>
                     </div>
+                </div>
 
+                <!-- Save all -->
+                <div class="flex items-center gap-3 pt-2 border-t border-gray-100">
                     <button @click="adminSaveFlash()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
                         <span x-show="!adminSaving">Simpan Flash Sale</span>
                         <span x-show="adminSaving">Menyimpan...</span>
@@ -1733,10 +1768,13 @@ function serabutStore() {
         adminEditProduct: null,
         adminAddMode:    false,
         adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, iconUrl:'' },
-        adminEditFlash:  {},
-        adminFlashSearch: '',
+        adminEditFlash:    {},
+        adminFlashItems:   [],
+        adminFlashEditIdx: -1,
+        adminFlashFormItem: { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0 },
+        adminFlashSearch:  '',
         adminFlashResults: [],
-        adminFlashVariants: [],
+        adminFlashVariants:[],
         adminFlashVariantIdx: 0,
         adminEditHero:   {},
         adminEditFooter: {},
@@ -1868,6 +1906,7 @@ function serabutStore() {
                     diskon:   Number(s['flashSale.diskon'])    || 0,
                     deadline:  s['flashSale.deadline']   || '',
                     startDate: s['flashSale.startDate']  || '',
+                    items: (() => { try { return JSON.parse(s['flashSale.items']||'[]'); } catch { return []; } })(),
                 };
 
                 // Hero
@@ -2247,11 +2286,14 @@ function serabutStore() {
         // ── Admin tab init ────────────────────────────
         adminInitTab(tab) {
             if(tab==='flashsale') {
-                this.adminEditFlash = { ...this.flashSale, aktif: this.flashSale.aktif };
+                this.adminEditFlash = { aktif: this.flashSale.aktif, startDate: this.flashSale.startDate||'', deadline: this.flashSale.deadline||'' };
+                this.adminFlashItems = JSON.parse(JSON.stringify(this.flashSale.items || []));
+                this.adminFlashEditIdx = -1;
+                this.adminFlashFormItem = { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0 };
                 this.adminFlashSearch = '';
                 this.adminFlashResults = [];
-                this.adminFlashVariants = this.products.filter(p => p.nama === this.flashSale.produk);
-                this.adminFlashVariantIdx = Math.max(0, this.adminFlashVariants.findIndex(v => v.varian === this.flashSale.varian));
+                this.adminFlashVariants = [];
+                this.adminFlashVariantIdx = 0;
             } else if(tab==='hero') {
                 this.adminEditHero = { ...this.siteSettings.hero };
             } else if(tab==='footer') {
@@ -2289,7 +2331,7 @@ function serabutStore() {
                 .slice(0, 6);
         },
         adminFlashSelectProduct(p) {
-            this.adminEditFlash.produk = p.nama;
+            this.adminFlashFormItem.produk = p.nama;
             this.adminFlashSearch = '';
             this.adminFlashResults = [];
             this.adminFlashVariants = this.products.filter(pr => pr.nama === p.nama);
@@ -2300,22 +2342,59 @@ function serabutStore() {
             this.adminFlashVariantIdx = Number(idx);
             const v = this.adminFlashVariants[this.adminFlashVariantIdx];
             if(v) {
-                this.adminEditFlash.varian = v.varian + (v.masaAktif && v.masaAktif !== '-' ? ' · ' + v.masaAktif : '');
-                this.adminEditFlash.hargaAsli = v.harga;
+                this.adminFlashFormItem.varian = v.varian + (v.masaAktif && v.masaAktif !== '-' ? ' · ' + v.masaAktif : '');
+                this.adminFlashFormItem.hargaAsli = v.harga;
                 this.adminFlashCalcDiskon();
             }
         },
         adminFlashCalcDiskon() {
-            const sale = Number(this.adminEditFlash.harga) || 0;
-            const asli = Number(this.adminEditFlash.hargaAsli) || 0;
+            const sale = Number(this.adminFlashFormItem.harga) || 0;
+            const asli = Number(this.adminFlashFormItem.hargaAsli) || 0;
             if(asli > 0 && sale > 0 && sale < asli)
-                this.adminEditFlash.diskon = Math.round((1 - sale/asli) * 100);
+                this.adminFlashFormItem.diskon = Math.round((1 - sale/asli) * 100);
         },
-        adminFlashClear() {
-            this.adminEditFlash.produk = '';
-            this.adminEditFlash.varian = '';
-            this.adminEditFlash.hargaAsli = 0;
-            this.adminEditFlash.diskon = 0;
+        adminFlashClearForm() {
+            this.adminFlashFormItem = { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0 };
+            this.adminFlashSearch = '';
+            this.adminFlashResults = [];
+            this.adminFlashVariants = [];
+            this.adminFlashVariantIdx = 0;
+        },
+        adminFlashAddItem() {
+            this.adminFlashEditIdx = -2;
+            this.adminFlashFormItem = { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0 };
+            this.adminFlashSearch = '';
+            this.adminFlashResults = [];
+            this.adminFlashVariants = [];
+        },
+        adminFlashEditItem(i) {
+            this.adminFlashEditIdx = i;
+            this.adminFlashFormItem = { ...this.adminFlashItems[i] };
+            this.adminFlashSearch = '';
+            this.adminFlashResults = [];
+            this.adminFlashVariants = this.products.filter(p => p.nama === this.adminFlashFormItem.produk);
+            this.adminFlashVariantIdx = 0;
+        },
+        adminFlashDeleteItem(i) {
+            this.adminFlashItems.splice(i, 1);
+        },
+        adminFlashSaveItem() {
+            const item = { ...this.adminFlashFormItem };
+            if(!item.produk) return;
+            item.harga = Number(item.harga)||0;
+            item.hargaAsli = Number(item.hargaAsli)||0;
+            item.diskon = Number(item.diskon)||0;
+            if(this.adminFlashEditIdx === -2) {
+                this.adminFlashItems.push(item);
+            } else {
+                this.adminFlashItems[this.adminFlashEditIdx] = item;
+                this.adminFlashItems = [...this.adminFlashItems];
+            }
+            this.adminFlashCancelEdit();
+        },
+        adminFlashCancelEdit() {
+            this.adminFlashEditIdx = -1;
+            this.adminFlashFormItem = { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0 };
             this.adminFlashSearch = '';
             this.adminFlashResults = [];
             this.adminFlashVariants = [];
@@ -2327,17 +2406,22 @@ function serabutStore() {
             this.adminSaving=true;
             try {
                 const f = this.adminEditFlash;
+                const items = this.adminFlashItems;
+                const first = items[0] || {};
                 await Promise.all([
                     this._adminSave('flashSale.aktif',     String(f.aktif)),
-                    this._adminSave('flashSale.produk',    f.produk||''),
-                    this._adminSave('flashSale.varian',    f.varian||''),
-                    this._adminSave('flashSale.harga',     String(f.harga||0)),
-                    this._adminSave('flashSale.hargaAsli', String(f.hargaAsli||0)),
-                    this._adminSave('flashSale.diskon',    String(f.diskon||0)),
                     this._adminSave('flashSale.startDate', f.startDate||''),
                     this._adminSave('flashSale.deadline',  f.deadline||''),
+                    this._adminSave('flashSale.items',     JSON.stringify(items)),
+                    this._adminSave('flashSale.produk',    first.produk||''),
+                    this._adminSave('flashSale.varian',    first.varian||''),
+                    this._adminSave('flashSale.harga',     String(first.harga||0)),
+                    this._adminSave('flashSale.hargaAsli', String(first.hargaAsli||0)),
+                    this._adminSave('flashSale.diskon',    String(first.diskon||0)),
                 ]);
-                this.flashSale = { ...f, harga:Number(f.harga)||0, hargaAsli:Number(f.hargaAsli)||0, diskon:Number(f.diskon)||0 };
+                this.flashSale = { ...this.flashSale, ...f, items,
+                    produk: first.produk||'', varian: first.varian||'',
+                    harga: Number(first.harga)||0, hargaAsli: Number(first.hargaAsli)||0, diskon: Number(first.diskon)||0 };
                 this._adminShowMsg('Flash Sale disimpan ✓');
             } catch { this._adminShowMsg('Gagal menyimpan'); }
             this.adminSaving=false;
