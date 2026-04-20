@@ -161,12 +161,15 @@
                             <!-- Row 2: product name + price -->
                             <div class="flex items-end justify-between gap-2">
                                 <div class="flex-1 min-w-0">
-                                    <div class="font-bold text-sm leading-snug" x-text="flashSale.produk"></div>
-                                    <div class="text-white/50 text-[9px] font-mono mt-1" x-text="'⏱ '+flashSaleCountdown"></div>
+                                    <div class="font-bold text-sm leading-snug truncate" x-text="(flashSale.items?.[0]?.produk||flashSale.produk)"></div>
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        <div class="text-white/50 text-[9px] font-mono" x-text="'⏱ '+flashSaleCountdown"></div>
+                                        <span x-show="(flashSale.items?.length||0)>1" class="bg-white/20 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full" x-text="'& '+(flashSale.items.length-1)+' lagi'"></span>
+                                    </div>
                                 </div>
                                 <div class="flex-none text-right">
-                                    <div class="text-white/40 text-[10px] line-through leading-none" x-text="formatPrice(flashSale.hargaAsli)"></div>
-                                    <div class="text-yellow-300 font-black text-sm leading-tight" x-text="formatPrice(flashSale.harga)"></div>
+                                    <div class="text-white/40 text-[10px] line-through leading-none" x-text="formatPrice(flashSale.items?.[0]?.hargaAsli||flashSale.hargaAsli)"></div>
+                                    <div class="text-yellow-300 font-black text-sm leading-tight" x-text="formatPrice(flashSale.items?.[0]?.harga||flashSale.harga)"></div>
                                 </div>
                             </div>
                         </div>
@@ -181,17 +184,27 @@
                                     <div class="text-yellow-300 text-xs font-black tracking-widest">FLASH SALE</div>
                                     <div class="text-white/60 text-[10px]">Penawaran terbatas</div>
                                 </div>
-                                <div class="bg-yellow-400 text-gray-900 text-xs font-black px-2 py-0.5 rounded-full" x-text="'-'+flashSale.diskon+'%'"></div>
+                                <div class="bg-yellow-400 text-gray-900 text-xs font-black px-2 py-0.5 rounded-full" x-text="(flashSale.items?.length||1)+' item'"></div>
                             </div>
-                            <div class="bg-black/25 rounded-2xl px-4 py-3 mb-4 text-center">
+                            <div class="bg-black/25 rounded-2xl px-4 py-3 mb-3 text-center">
                                 <div class="text-[10px] text-white/50 mb-1">Berakhir dalam</div>
                                 <div class="font-black text-2xl font-mono tracking-widest" x-text="flashSaleCountdown"></div>
                             </div>
-                            <div class="font-bold text-sm leading-snug mb-0.5" x-text="flashSale.produk"></div>
-                            <div class="text-white/60 text-xs mb-3" x-text="flashSale.varian"></div>
-                            <div class="flex items-baseline gap-2 mb-4">
-                                <span class="text-white/40 text-sm line-through" x-text="formatPrice(flashSale.hargaAsli)"></span>
-                                <span class="text-yellow-300 font-black text-xl" x-text="formatPrice(flashSale.harga)"></span>
+                            <!-- Items list -->
+                            <div class="space-y-2 max-h-40 overflow-y-auto no-scrollbar mb-3">
+                                <template x-for="item in (flashSale.items?.length ? flashSale.items : [{produk:flashSale.produk,varian:flashSale.varian,harga:flashSale.harga,hargaAsli:flashSale.hargaAsli,diskon:flashSale.diskon}])" :key="item.produk">
+                                    <div class="bg-black/20 rounded-xl p-2.5">
+                                        <div class="flex items-start justify-between gap-1.5 mb-1">
+                                            <div class="font-bold text-xs leading-snug flex-1" x-text="item.produk"></div>
+                                            <span class="flex-none bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full whitespace-nowrap" x-text="item.diskon+'% OFF'"></span>
+                                        </div>
+                                        <div class="text-white/50 text-[10px] mb-1" x-text="item.varian"></div>
+                                        <div class="flex items-baseline gap-2">
+                                            <span class="text-white/40 text-[10px] line-through" x-text="formatPrice(item.hargaAsli)"></span>
+                                            <span class="text-yellow-300 font-black text-sm" x-text="formatPrice(item.harga)"></span>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                             <button @click="setPage('catalog')" class="w-full bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-black py-2.5 rounded-xl text-sm transition-all active:scale-95">
                                 Beli Sekarang
@@ -619,7 +632,7 @@
     </section>
 
     <!-- ───────── ADMIN DASHBOARD ───────── -->
-    <section x-show="activePage==='admin'" class="page-enter">
+    <section x-show="activePage==='admin'" class="page-enter bg-white md:bg-transparent">
         <template x-if="currentUser?.role!=='admin'">
             <div class="max-w-lg mx-auto px-4 py-20 text-center">
                 <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -630,7 +643,7 @@
             </div>
         </template>
         <template x-if="currentUser?.role?.toLowerCase()==='admin'">
-        <div class="max-w-5xl mx-auto px-4 py-6">
+        <div class="max-w-5xl mx-auto px-4 py-4 md:py-6">
 
             <!-- Header Admin -->
             <div class="flex items-center justify-between mb-6">
@@ -652,7 +665,7 @@
             </div>
 
             <!-- ── Tab: Flash Sale ── -->
-            <div x-show="adminTab==='flashsale'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <div x-show="adminTab==='flashsale'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
                 <div class="flex items-center justify-between mb-5">
                     <h2 class="font-bold text-gray-900">Flash Sale</h2>
                     <label class="flex items-center gap-2.5 cursor-pointer">
@@ -798,7 +811,7 @@
             </div>
 
             <!-- ── Tab: Hero ── -->
-            <div x-show="adminTab==='hero'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <div x-show="adminTab==='hero'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
                 <h2 class="font-bold text-gray-900 mb-4">Hero Banner</h2>
                 <div class="space-y-4 max-w-lg">
                     <div>
@@ -823,7 +836,8 @@
                             <input x-model="adminEditHero.btn2" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
                         </div>
                     </div>
-                    <button @click="adminSaveHero()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
+                    <button @click="adminSaveHero()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all flex items-center gap-2">
+                        <svg x-show="adminSaving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                         <span x-show="!adminSaving">Simpan Hero</span>
                         <span x-show="adminSaving">Menyimpan...</span>
                     </button>
@@ -831,7 +845,7 @@
             </div>
 
             <!-- ── Tab: Kategori ── -->
-            <div x-show="adminTab==='kategori'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <div x-show="adminTab==='kategori'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="font-bold text-gray-900">Kategori Produk</h2>
                     <button @click="adminAddCat()" class="text-xs font-bold text-brand-500 bg-brand-50 px-3 py-1.5 rounded-lg">+ Tambah</button>
@@ -852,7 +866,8 @@
                         </div>
                     </template>
                 </div>
-                <button @click="adminSaveCats()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
+                <button @click="adminSaveCats()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all flex items-center gap-2">
+                    <svg x-show="adminSaving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                     <span x-show="!adminSaving">Simpan Kategori</span>
                     <span x-show="adminSaving">Menyimpan...</span>
                 </button>
@@ -899,7 +914,8 @@
                         <span class="text-sm text-gray-700 font-medium">Produk Aktif (tampil di katalog)</span>
                     </label>
                     <div class="flex gap-2 mt-4">
-                        <button @click="adminSaveProduct()" :disabled="adminSaving" class="gradient-card text-white font-bold px-5 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
+                        <button @click="adminSaveProduct()" :disabled="adminSaving" class="gradient-card text-white font-bold px-5 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all flex items-center gap-2">
+                            <svg x-show="adminSaving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                             <span x-show="!adminSaving" x-text="adminEditProduct ? 'Update Produk' : 'Simpan Produk'"></span>
                             <span x-show="adminSaving">Menyimpan...</span>
                         </button>
@@ -950,7 +966,7 @@
             </div>
 
             <!-- ── Tab: Panduan ── -->
-            <div x-show="adminTab==='panduan'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <div x-show="adminTab==='panduan'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="font-bold text-gray-900">Panduan Instalasi</h2>
                     <button @click="adminAddGuideMode=true; adminEditGuideIdx=-1; adminNewGuide={title:'',steps:[''],note:''}" class="text-xs font-bold text-brand-500 bg-brand-50 px-3 py-1.5 rounded-lg">+ Tambah</button>
@@ -992,7 +1008,8 @@
                             <input x-model="adminNewGuide.note" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
                         </div>
                         <div class="flex gap-2">
-                            <button @click="adminSaveGuide()" :disabled="adminSaving" class="gradient-card text-white font-bold px-5 py-2 rounded-xl text-sm disabled:opacity-60 active:scale-95">
+                            <button @click="adminSaveGuide()" :disabled="adminSaving" class="gradient-card text-white font-bold px-5 py-2 rounded-xl text-sm disabled:opacity-60 active:scale-95 flex items-center gap-2">
+                                <svg x-show="adminSaving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                                 <span x-show="!adminSaving">Simpan</span>
                                 <span x-show="adminSaving">Menyimpan...</span>
                             </button>
@@ -1020,7 +1037,7 @@
             </div>
 
             <!-- ── Tab: Footer ── -->
-            <div x-show="adminTab==='footer'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+            <div x-show="adminTab==='footer'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
                 <h2 class="font-bold text-gray-900 mb-4">Footer</h2>
                 <div class="space-y-4 max-w-lg">
                     <div>
@@ -1047,7 +1064,8 @@
                             <input x-model="adminEditFooter.copyright" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
                         </div>
                     </div>
-                    <button @click="adminSaveFooter()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
+                    <button @click="adminSaveFooter()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all flex items-center gap-2">
+                        <svg x-show="adminSaving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                         <span x-show="!adminSaving">Simpan Footer</span>
                         <span x-show="adminSaving">Menyimpan...</span>
                     </button>
