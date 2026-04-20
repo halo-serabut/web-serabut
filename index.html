@@ -42,9 +42,9 @@
         .modal-enter { animation: modalUp .28s cubic-bezier(.4,0,.2,1); }
         @keyframes modalUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
         input[type="radio"] { accent-color:#DC2626; }
-        /* CS button peek-from-wall — hanya mobile */
+        /* CS button tab peek — hanya mobile */
         @media (max-width: 767px) {
-            .cs-peek { transform: translateX(42px); }
+            .cs-tab { border-radius: 12px 0 0 12px; }
         }
     </style>
 </head>
@@ -444,7 +444,12 @@
         <div class="flex items-center gap-4 mb-6">
             <div class="w-16 h-16 gradient-card rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-md" x-text="currentUser?.nama?.[0]?.toUpperCase()||'?'"></div>
             <div>
-                <div class="font-black text-gray-900 text-lg leading-tight" x-text="currentUser?.nama||'—'"></div>
+                <div class="flex items-center gap-2">
+                    <span class="font-black text-gray-900 text-lg leading-tight" x-text="currentUser?.nama||'—'"></span>
+                    <span x-show="currentUser?.role?.toLowerCase()==='admin'"
+                          class="px-2 py-0.5 text-xs font-bold rounded border"
+                          style="background:#FFD700;color:#7B4F00;border-color:#C8A000;">★ Admin</span>
+                </div>
                 <div class="text-sm text-gray-400" x-text="currentUser?.email||''"></div>
             </div>
         </div>
@@ -1158,10 +1163,18 @@
     </div>
 </div>
 
-<!-- FAB Button: auto-hide di mobile, tempel ke dinding -->
-<div class="fixed bottom-20 md:bottom-8 right-0 md:right-8 z-[90] transition-transform duration-300"
-     :class="csHidden ? 'cs-peek' : ''">
-    <button @click="csHidden ? (csHidden=false) : (csPopup=!csPopup)"
+<!-- FAB Button: tab kecil di mobile saat hidden, FAB penuh saat unhide -->
+<!-- Tab kecil — hanya mobile, hanya saat csHidden=true -->
+<div x-show="csHidden" @click="csHidden=false"
+     class="fixed bottom-24 right-0 z-[90] md:hidden cs-tab gradient-card text-white shadow-xl flex items-center justify-center active:scale-95 transition-all relative"
+     style="width:44px;height:52px;cursor:pointer;">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white"></span>
+</div>
+<!-- FAB penuh — desktop selalu tampil, mobile saat csHidden=false -->
+<div class="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-[90]"
+     :class="csHidden ? 'hidden md:block' : 'block'">
+    <button @click="csPopup=!csPopup"
             class="w-14 h-14 gradient-card rounded-full shadow-xl flex items-center justify-center text-white active:scale-95 transition-all relative">
         <svg x-show="!csPopup" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
         <svg x-show="csPopup" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -1766,8 +1779,8 @@ function serabutStore() {
         async init() {
             const saved = localStorage.getItem('serabutUser');
             if(saved) { try{ this.currentUser=JSON.parse(saved); }catch{} }
-            // Refresh role jika sesi lama belum punya role field
-            if(this.currentUser && !this.currentUser.role) {
+            // Selalu refresh role dari GAS agar menu Admin selalu akurat
+            if(this.currentUser) {
                 await this.refreshUserRole();
             }
             await Promise.all([this.fetchProducts(), this.loadSiteSettings()]);
