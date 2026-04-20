@@ -1166,7 +1166,7 @@
 <!-- FAB Button: auto-hide di mobile, tempel ke dinding -->
 <div class="fixed bottom-20 md:bottom-8 right-0 md:right-8 z-[90] transition-transform duration-300"
      :class="csHidden ? 'cs-peek' : ''">
-    <button @click="csHidden ? (csHidden=false) : (csPopup=!csPopup)"
+    <button @click="csHidden ? (csHidden=false) : (csPopup ? (csPopup=false, csHidden=true) : (csPopup=true))"
             class="w-14 h-14 gradient-card rounded-full shadow-xl flex items-center justify-center text-white active:scale-95 transition-all relative">
         <svg x-show="!csPopup" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
         <svg x-show="csPopup" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
