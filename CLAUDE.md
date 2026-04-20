@@ -66,11 +66,18 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Jam operasional ditampilkan di header popup: 08.00–22.00 WIB
 - [2026-04-20] Selesai: Hapus banner "Ada pertanyaan?" yang flat di home
 - [2026-04-20] Selesai: Footer Kontak — tambah jam operasional 08.00–22.00 WIB (desktop & mobile)
+- [2026-04-20] Selesai: CS floating button auto-hide di mobile — tempel ke dinding (peek 14px), klik untuk unhide, lalu klik buka popup; popup dipisah jadi div terpisah
+- [2026-04-20] Selesai: Hapus banner "Butuh bantuan?" di halaman Panduan
+- [2026-04-20] Selesai: Sistem Role Admin — Code.gs v4 dengan endpoints: getSettings, saveSettings, getCatalogAdmin, addProduct, updateProduct, deleteProduct, getAllOrders, updateOrderStatus, getGuides, saveGuides, setUserRole; login/verifyOTP return field `role`
+- [2026-04-20] Selesai: Settings tab GAS — Flash Sale, Hero, Footer, Kategori, Panduan semua disimpan di Google Sheets tab "Settings" (key-value), auto-populate defaults
+- [2026-04-20] Selesai: Frontend Admin Dashboard — halaman /admin dengan 7 tab: Flash Sale, Hero, Kategori, Produk (CRUD), Panduan (CRUD), Footer, Semua Order; hanya muncul untuk role=admin
+- [2026-04-20] Selesai: Hero & Footer sekarang dynamic dari Settings GAS (bukan hardcode di HTML)
+- [2026-04-20] Selesai: Admin nav item di desktop dan mobile bottom nav (hanya muncul jika role=admin)
 
 ## Current Focus
-- **Berikutnya: Sistem Role Admin & Buyer**
-  - Admin: bisa kelola Flash Sale (aktif/nonaktif, produk, harga, deadline) dari dashboard
-  - Buyer: role default setelah register, akses fitur order & status
-  - Diskusi detail role belum dimulai — user minta bahas setelah Flash Sale selesai
+- **Sistem Role Admin sudah diimplementasi** — perlu re-deploy GAS + set Role='admin' manual di sheet untuk akun admin pertama
+- **Setelah deploy GAS**, pastikan tab `Settings` ter-populate otomatis saat pertama kali `getSettings()` dipanggil
+- **Column Role di Users-web**: harus di kolom **I** (setelah OTP Expiry di H) — index 8 (0-indexed)
+  - Jika Role sekarang di kolom G, pindah ke kolom I sebelum test register baru
 - **Fonnte note:** Jika notif WA group berhenti, jalankan `testWAGroupAfterSync()` di GAS untuk re-sync device Fonnte
 - **GAS deployment:** Setiap edit `Code.gs` perlu re-deploy manual di script.google.com (New Deployment)

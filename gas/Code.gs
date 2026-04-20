@@ -1,11 +1,12 @@
 // ═══════════════════════════════════════════════════════
-//  SERABUT STORE — Google Apps Script Backend v3
+//  SERABUT STORE — Google Apps Script Backend v4
 // ═══════════════════════════════════════════════════════
 
 const SPREADSHEET_ID = '1ZHvmuE6r-cmygFBCKSThmlevKGLcByqhmOb0WvrKZ3I';
 const TAB_CATALOG    = 'Catalog';
 const TAB_USERS      = 'Users-web';
 const TAB_ORDERS     = 'Orders';
+const TAB_SETTINGS   = 'Settings';
 
 const FONNTE_TOKEN         = 'jwTYdGg2eoSrTx3MRpcE';
 const WA_GROUP_ID          = ''; // isi ID group WA personal (untuk notif order lama)
@@ -15,7 +16,12 @@ const STORE_NAME     = 'Serabut Store';
 const OTP_EXPIRY_MIN = 10;
 
 // ── Kolom Users-web (0-indexed) ──────────────────────────
-// 0:Nama  1:Email  2:No Hp  3:Password  4:Created At  5:Status  6:OTP  7:OTP Expiry
+// 0:Nama  1:Email  2:No Hp  3:Password  4:Created At  5:Status
+// 6:OTP   7:OTP Expiry  8:Role
+// 9:TanggalLahir  10:JenisKelamin  11:Alamat  12:Provinsi
+
+// ── Kolom Catalog (0-indexed) ───────────────────────────
+// 0:Nama  1:Varian  2:MasaAktif  3:Harga  4:LinkProduk  5:Aktif  6:IconUrl
 
 // ────────────────────────────────────────────────────────
 //  MAIN HANDLER
@@ -26,18 +32,30 @@ function doGet(e) {
 
   try {
     switch (action) {
-      case 'getCatalog':   result = getCatalog(); break;
-      case 'checkStatus':  result = checkStatus(e.parameter.type, e.parameter.query); break;
-      case 'smartSearch':  result = smartSearch(e.parameter.query); break;
-      case 'register':     result = register(e.parameter); break;
-      case 'verifyOTP':    result = verifyOTP(e.parameter); break;
-      case 'resendOTP':    result = resendOTP(e.parameter); break;
-      case 'login':        result = login(e.parameter); break;
-      case 'createOrder':  result = createOrder(e.parameter); break;
-      case 'getOrders':      result = getOrders(e.parameter); break;
-      case 'getProfile':     result = getProfile(e.parameter); break;
-      case 'updateProfile':  result = updateProfile(e.parameter); break;
-      case 'changePassword': result = changePassword(e.parameter); break;
+      case 'getCatalog':        result = getCatalog(); break;
+      case 'checkStatus':       result = checkStatus(e.parameter.type, e.parameter.query); break;
+      case 'smartSearch':       result = smartSearch(e.parameter.query); break;
+      case 'register':          result = register(e.parameter); break;
+      case 'verifyOTP':         result = verifyOTP(e.parameter); break;
+      case 'resendOTP':         result = resendOTP(e.parameter); break;
+      case 'login':             result = login(e.parameter); break;
+      case 'createOrder':       result = createOrder(e.parameter); break;
+      case 'getOrders':         result = getOrders(e.parameter); break;
+      case 'getProfile':        result = getProfile(e.parameter); break;
+      case 'updateProfile':     result = updateProfile(e.parameter); break;
+      case 'changePassword':    result = changePassword(e.parameter); break;
+      // Admin actions
+      case 'getSettings':       result = getSettings(); break;
+      case 'saveSettings':      result = saveSettings(e.parameter); break;
+      case 'getCatalogAdmin':   result = getCatalogAdmin(e.parameter); break;
+      case 'addProduct':        result = addProduct(e.parameter); break;
+      case 'updateProduct':     result = updateProduct(e.parameter); break;
+      case 'deleteProduct':     result = deleteProduct(e.parameter); break;
+      case 'getAllOrders':       result = getAllOrders(e.parameter); break;
+      case 'updateOrderStatus': result = updateOrderStatus(e.parameter); break;
+      case 'getGuides':         result = getGuides(); break;
+      case 'saveGuides':        result = saveGuides(e.parameter); break;
+      case 'setUserRole':       result = setUserRole(e.parameter); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -50,7 +68,33 @@ function doGet(e) {
 }
 
 // ────────────────────────────────────────────────────────
-//  GET CATALOG
+//  ADMIN — helper cek role
+// ────────────────────────────────────────────────────────
+function isAdminUser(email) {
+  if (!email) return false;
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_USERS);
+  if (!sheet) return false;
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).toLowerCase().trim() !== email.toLowerCase().trim()) continue;
+    // Cari kolom Role secara dinamis berdasarkan header
+    const role = _getUserRole(data, i);
+    return role === 'admin';
+  }
+  return false;
+}
+
+// Cari nilai Role dari row — cek header dulu, fallback ke index 8
+function _getUserRole(data, rowIdx) {
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const roleCol = headers.findIndex(h => h === 'role');
+  const col = roleCol !== -1 ? roleCol : 8;
+  return String(data[rowIdx][col] || 'buyer').trim().toLowerCase();
+}
+
+// ────────────────────────────────────────────────────────
+//  GET CATALOG (public — hanya aktif)
 // ────────────────────────────────────────────────────────
 function getCatalog() {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
@@ -66,15 +110,327 @@ function getCatalog() {
     if (aktif !== true && String(aktif).toUpperCase() !== 'TRUE') continue;
 
     products.push({
+      rowIndex:   i + 1,
       nama:       String(row[0]).trim(),
       varian:     String(row[1] || '').trim(),
       masaAktif:  String(row[2] || '-').trim(),
       harga:      Number(row[3]) || 0,
       linkProduk: String(row[4] || '').trim(),
+      iconUrl:    String(row[6] || '').trim(),
     });
   }
 
   return { success: true, data: products };
+}
+
+// ────────────────────────────────────────────────────────
+//  GET CATALOG ADMIN (semua produk termasuk nonaktif)
+// ────────────────────────────────────────────────────────
+function getCatalogAdmin({ adminEmail }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
+  if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
+
+  const data = sheet.getDataRange().getValues();
+  const products = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[0]) continue;
+    const aktif = row[5];
+    products.push({
+      rowIndex:   i + 1,
+      nama:       String(row[0]).trim(),
+      varian:     String(row[1] || '').trim(),
+      masaAktif:  String(row[2] || '-').trim(),
+      harga:      Number(row[3]) || 0,
+      linkProduk: String(row[4] || '').trim(),
+      aktif:      (aktif === true || String(aktif).toUpperCase() === 'TRUE'),
+      iconUrl:    String(row[6] || '').trim(),
+    });
+  }
+
+  return { success: true, data: products };
+}
+
+// ────────────────────────────────────────────────────────
+//  ADD PRODUCT
+// ────────────────────────────────────────────────────────
+function addProduct({ adminEmail, nama, varian, masaAktif, harga, linkProduk, aktif, iconUrl }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+  if (!nama || !varian) return { success: false, error: 'Nama dan varian wajib diisi' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(TAB_CATALOG);
+
+  if (!sheet) {
+    sheet = ss.insertSheet(TAB_CATALOG);
+    sheet.appendRow(['Nama', 'Varian', 'Masa Aktif', 'Harga', 'Link Produk', 'Aktif', 'Icon URL']);
+    sheet.getRange(1, 1, 1, 7).setFontWeight('bold');
+  }
+
+  const isAktif = (aktif === 'true' || aktif === true);
+  sheet.appendRow([
+    String(nama).trim(),
+    String(varian).trim(),
+    String(masaAktif || '-').trim(),
+    Number(harga) || 0,
+    String(linkProduk || '').trim(),
+    isAktif,
+    String(iconUrl || '').trim(),
+  ]);
+
+  return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  UPDATE PRODUCT
+// ────────────────────────────────────────────────────────
+function updateProduct({ adminEmail, rowIndex, nama, varian, masaAktif, harga, linkProduk, aktif, iconUrl }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+  if (!rowIndex) return { success: false, error: 'rowIndex diperlukan' };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
+  if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
+
+  const row = Number(rowIndex);
+  const isAktif = (aktif === 'true' || aktif === true);
+
+  sheet.getRange(row, 1).setValue(String(nama || '').trim());
+  sheet.getRange(row, 2).setValue(String(varian || '').trim());
+  sheet.getRange(row, 3).setValue(String(masaAktif || '-').trim());
+  sheet.getRange(row, 4).setValue(Number(harga) || 0);
+  sheet.getRange(row, 5).setValue(String(linkProduk || '').trim());
+  sheet.getRange(row, 6).setValue(isAktif);
+  sheet.getRange(row, 7).setValue(String(iconUrl || '').trim());
+
+  return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  DELETE PRODUCT
+// ────────────────────────────────────────────────────────
+function deleteProduct({ adminEmail, rowIndex }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+  if (!rowIndex) return { success: false, error: 'rowIndex diperlukan' };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
+  if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
+
+  sheet.deleteRow(Number(rowIndex));
+  return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  GET ALL ORDERS (admin)
+// ────────────────────────────────────────────────────────
+function getAllOrders({ adminEmail }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: true, data: [] };
+
+  const data   = sheet.getDataRange().getValues();
+  const orders = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[0]) continue;
+    orders.push({
+      rowIndex:  i + 1,
+      orderId:   String(row[0]),
+      tanggal:   String(row[1]),
+      nama:      String(row[2]),
+      email:     String(row[3]),
+      wa:        String(row[4]),
+      produk:    String(row[5]),
+      varian:    String(row[6]),
+      masaAktif: String(row[7]),
+      harga:     Number(row[8]) || 0,
+      status:    String(row[9]),
+    });
+  }
+
+  orders.reverse();
+  return { success: true, data: orders };
+}
+
+// ────────────────────────────────────────────────────────
+//  UPDATE ORDER STATUS (admin)
+// ────────────────────────────────────────────────────────
+function updateOrderStatus({ adminEmail, rowIndex, status }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+  if (!rowIndex || !status) return { success: false, error: 'Data tidak lengkap' };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: false, error: 'Tab Orders tidak ditemukan' };
+
+  sheet.getRange(Number(rowIndex), 10).setValue(status);
+  return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  SET USER ROLE (admin)
+// ────────────────────────────────────────────────────────
+function setUserRole({ adminEmail, targetEmail, role }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+  if (!targetEmail || !role) return { success: false, error: 'Data tidak lengkap' };
+
+  const validRoles = ['buyer', 'admin'];
+  if (!validRoles.includes(role)) return { success: false, error: 'Role tidak valid' };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_USERS);
+  if (!sheet) return { success: false, error: 'User tidak ditemukan' };
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).toLowerCase().trim() !== targetEmail.toLowerCase().trim()) continue;
+    sheet.getRange(i + 1, 9).setValue(role); // col 9 = index 8 = Role
+    return { success: true };
+  }
+  return { success: false, error: 'Email tidak ditemukan' };
+}
+
+// ────────────────────────────────────────────────────────
+//  GET SETTINGS
+// ────────────────────────────────────────────────────────
+function getSettings() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(TAB_SETTINGS);
+
+  if (!sheet) {
+    sheet = ss.insertSheet(TAB_SETTINGS);
+    sheet.appendRow(['Key', 'Value']);
+    sheet.getRange(1, 1, 1, 2).setFontWeight('bold');
+    _populateDefaultSettings(sheet);
+  }
+
+  const data     = sheet.getDataRange().getValues();
+  const settings = {};
+
+  for (let i = 1; i < data.length; i++) {
+    const key = String(data[i][0] || '').trim();
+    const val = String(data[i][1] || '').trim();
+    if (key) settings[key] = val;
+  }
+
+  return { success: true, data: settings };
+}
+
+// ────────────────────────────────────────────────────────
+//  SAVE SETTINGS (admin)
+// ────────────────────────────────────────────────────────
+function saveSettings({ adminEmail, key, value }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+  if (!key) return { success: false, error: 'Key diperlukan' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(TAB_SETTINGS);
+  if (!sheet) {
+    sheet = ss.insertSheet(TAB_SETTINGS);
+    sheet.appendRow(['Key', 'Value']);
+    sheet.getRange(1, 1, 1, 2).setFontWeight('bold');
+    _populateDefaultSettings(sheet);
+  }
+
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() === key) {
+      sheet.getRange(i + 1, 2).setValue(value || '');
+      return { success: true };
+    }
+  }
+
+  // Key belum ada → tambah baris baru
+  sheet.appendRow([key, value || '']);
+  return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  GET GUIDES (public)
+// ────────────────────────────────────────────────────────
+function getGuides() {
+  const result = getSettings();
+  if (!result.success) return result;
+
+  const s = result.data;
+  return {
+    success: true,
+    data: {
+      office365: _parseJSON(s['guides.office365'], []),
+      windows:   _parseJSON(s['guides.windows'], []),
+      adobe:     _parseJSON(s['guides.adobe'], []),
+    }
+  };
+}
+
+// ────────────────────────────────────────────────────────
+//  SAVE GUIDES (admin)
+// ────────────────────────────────────────────────────────
+function saveGuides({ adminEmail, tab, guidesJson }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+  const validTabs = ['office365', 'windows', 'adobe'];
+  if (!validTabs.includes(tab)) return { success: false, error: 'Tab tidak valid' };
+
+  return saveSettings({ adminEmail, key: `guides.${tab}`, value: guidesJson });
+}
+
+// ────────────────────────────────────────────────────────
+//  HELPERS — Settings
+// ────────────────────────────────────────────────────────
+function _parseJSON(str, fallback) {
+  try { return JSON.parse(str); } catch { return fallback; }
+}
+
+function _populateDefaultSettings(sheet) {
+  const defaults = [
+    ['flashSale.aktif',    'true'],
+    ['flashSale.produk',   'Microsoft Office 365 Family'],
+    ['flashSale.varian',   '1 Tahun · 5 Devices'],
+    ['flashSale.harga',    '249000'],
+    ['flashSale.hargaAsli','337000'],
+    ['flashSale.diskon',   '26'],
+    ['flashSale.deadline', '2026-05-01T23:59:59'],
+    ['hero.tagline1',      'Software Original,'],
+    ['hero.tagline2',      'Harga Terjangkau'],
+    ['hero.subtext',       'Microsoft Office 365, Adobe Creative Cloud, Windows & lebih banyak. Bergaransi resmi, proses kilat, hemat hingga 70%.'],
+    ['hero.btn1',          'Lihat Semua Produk →'],
+    ['hero.btn2',          'Cek Status Akun'],
+    ['footer.desc',        'Software original terpercaya. Microsoft, Adobe, Windows & lebih banyak dengan harga terjangkau.'],
+    ['footer.email',       'halo@serabut.id'],
+    ['footer.phone',       '0888-150-0555'],
+    ['footer.jam',         '08.00 – 22.00 WIB'],
+    ['footer.copyright',   '© 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.'],
+    ['categories', JSON.stringify([
+      {name:'Office 365',desc:'Family & Personal',iconKey:'office365'},
+      {name:'Adobe',     desc:'Creative Cloud',   iconKey:'adobe'},
+      {name:'Windows',   desc:'Pro License',      iconKey:'windows'},
+      {name:'Office',    desc:'2019/2021/2024',   iconKey:'office'},
+      {name:'Google',    desc:'Workspace & Suite',iconKey:'google'},
+      {name:'CorelDRAW', desc:'Graphics Suite',   iconKey:'coreldraw'},
+      {name:'Project',   desc:'Ms Project Pro',   iconKey:'project'},
+      {name:'Visio',     desc:'Ms Visio Pro',     iconKey:'visio'},
+    ])],
+    ['guides.office365', JSON.stringify([
+      {title:'Cara Install Microsoft Office 365',steps:['Buka browser dan kunjungi office.com, lalu login menggunakan email dan password akun Office 365 yang diberikan Serabut Store.','Setelah login, klik tombol "Install Office" di pojok kanan atas halaman.','Pilih "Office 365 apps" untuk download installer (OfficeSetup.exe).','Jalankan file installer dan ikuti proses instalasi.','Tunggu proses download & instalasi selesai (~15-30 menit).','Buka salah satu aplikasi Office — login dengan akun yang sama untuk aktivasi otomatis.'],note:'Pastikan koneksi internet stabil selama proses download.'},
+      {title:'Menambahkan Akun ke Perangkat Baru',steps:['Buka aplikasi Office di perangkat baru.','Klik "Sign In" atau "Masuk".','Masukkan email akun Office 365 yang diberikan.','Masukkan password — aktivasi berjalan otomatis.'],note:'Office 365 Family mendukung hingga 6 pengguna & 5 perangkat per pengguna.'},
+      {title:'Akses OneDrive 1TB',steps:['Login ke office.com.','Klik ikon OneDrive di menu aplikasi.','Kamu mendapat storage 1TB per pengguna.','Install OneDrive Desktop App untuk sinkronisasi otomatis.'],note:'OneDrive 1TB tersedia untuk setiap pengguna di paket Family dan Personal.'},
+      {title:'Troubleshooting: Office Tidak Bisa Aktivasi',steps:['Pastikan login dengan email yang benar.','Sign out semua perangkat: account.microsoft.com → Security → Sign out everywhere.','Uninstall Office, lalu install ulang dari office.com.','Pastikan tanggal & waktu di komputer sudah benar.','Hubungi support kami jika masih gagal.'],note:'Jangan gunakan tools aktivasi pihak ketiga — bisa menyebabkan akun diblokir Microsoft.'},
+    ])],
+    ['guides.windows', JSON.stringify([
+      {title:'Aktivasi Windows 10 Pro dengan License Key',steps:['Klik kanan Start → System.','Klik "Change product key or upgrade your edition".','Masukkan license key 25 digit (XXXXX-XXXXX-XXXXX-XXXXX-XXXXX).','Klik Next dan tunggu aktivasi selesai.','Cek Settings → Update & Security → Activation.'],note:'License key hanya untuk 1 perangkat.'},
+      {title:'Aktivasi Windows 11 Pro dengan License Key',steps:['Tekan Windows + I → System → Activation.','Klik "Change product key".','Masukkan license key 25 digit.','Klik Next — tunggu konfirmasi "Windows is activated".','Restart komputer.'],note:'Pastikan koneksi internet aktif saat aktivasi.'},
+      {title:'Troubleshooting: Error Aktivasi Windows',steps:['Pastikan key dimasukkan benar (O vs 0, I vs 1).','Coba via CMD (Admin): slmgr /ipk XXXXX-XXXXX-XXXXX-XXXXX-XXXXX','Error 0xC004F050: key tidak kompatibel dengan edisi Windows.','Screenshot error dan kirim ke support kami via WhatsApp.'],note:'Catat kode error untuk mempermudah troubleshooting.'},
+    ])],
+    ['guides.adobe', JSON.stringify([
+      {title:'Cara Install Adobe Creative Cloud',steps:['Login ke creativecloud.adobe.com dengan akun dari Serabut Store.','Download & install Adobe Creative Cloud Desktop App.','Login dengan akun yang sama.','Pilih aplikasi yang ingin diinstall, klik Install.'],note:'Satu akun Adobe CC bisa digunakan di 2 perangkat.'},
+      {title:'Troubleshooting: Adobe Tidak Bisa Login',steps:['Pastikan email dan password benar.','Coba di incognito browser.','Hapus cache browser.','Uninstall CC Desktop App, download versi terbaru.','Hubungi support jika masih gagal.'],note:'Jangan ganti password akun Adobe yang diberikan.'},
+    ])],
+  ];
+
+  defaults.forEach(row => sheet.appendRow(row));
 }
 
 // ────────────────────────────────────────────────────────
@@ -98,7 +454,6 @@ function smartSearch(query) {
 
     const headers = data[0].map(h => String(h).toLowerCase().trim());
 
-    // Temukan kolom secara dinamis berdasarkan header
     const col = {
       buyerName:    findColIdx(headers, ['buyer name', 'nama pembeli', 'nama buyer']),
       mailActive:   findColIdx(headers, ['mailactive', '4reminder', 'mail active']),
@@ -116,7 +471,6 @@ function smartSearch(query) {
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
 
-      // Kumpulkan nilai yang akan dicari
       const searchable = [
         getVal(row, col.buyerName),
         getVal(row, col.mailActive),
@@ -242,8 +596,8 @@ function register({ nama, email, wa, password }) {
 
   if (!sheet) {
     sheet = ss.insertSheet(TAB_USERS);
-    sheet.appendRow(['Nama', 'Email', 'No Hp', 'Password', 'Created At', 'Status', 'OTP', 'OTP Expiry']);
-    sheet.getRange(1, 1, 1, 8).setFontWeight('bold');
+    sheet.appendRow(['Nama', 'Email', 'No Hp', 'Password', 'Created At', 'Status', 'OTP', 'OTP Expiry', 'Role']);
+    sheet.getRange(1, 1, 1, 9).setFontWeight('bold');
   }
 
   const data = sheet.getDataRange().getValues();
@@ -252,7 +606,6 @@ function register({ nama, email, wa, password }) {
     if (String(data[i][1]).toLowerCase().trim() === email.toLowerCase().trim()) {
       const status = String(data[i][5] || '').trim();
       if (status === 'Pending') {
-        // Email sudah ada tapi belum verifikasi → kirim ulang OTP
         return sendNewOTP(sheet, i + 1, email.toLowerCase().trim(), String(data[i][0]));
       }
       return { success: false, error: 'Email sudah terdaftar' };
@@ -272,6 +625,7 @@ function register({ nama, email, wa, password }) {
     'Pending',
     otp,
     expiry,
+    'buyer', // Role default
   ]);
 
   sendOTPEmail(email.toLowerCase().trim(), nama.trim(), otp);
@@ -297,6 +651,7 @@ function verifyOTP({ email, otp }) {
     const storedOTP = String(data[i][6] || '').trim();
     const expiryStr = String(data[i][7] || '').trim();
     const status    = String(data[i][5] || '').trim();
+    const role      = _getUserRole(data, i);
 
     if (status === 'Aktif') return { success: false, error: 'Akun sudah aktif, silakan login' };
     if (!storedOTP)         return { success: false, error: 'OTP tidak ditemukan, daftar ulang' };
@@ -308,7 +663,6 @@ function verifyOTP({ email, otp }) {
       return { success: false, error: 'Kode OTP salah' };
     }
 
-    // Aktifkan akun, hapus OTP
     const row = i + 1;
     sheet.getRange(row, 6).setValue('Aktif');
     sheet.getRange(row, 7).setValue('');
@@ -318,7 +672,12 @@ function verifyOTP({ email, otp }) {
 
     return {
       success: true,
-      user: { nama: String(data[i][0]), email: String(data[i][1]), wa: String(data[i][2]) },
+      user: {
+        nama:  String(data[i][0]),
+        email: String(data[i][1]),
+        wa:    String(data[i][2]),
+        role:  role || 'buyer',
+      },
     };
   }
 
@@ -376,7 +735,16 @@ function login({ email, password }) {
       return { success: false, error: 'Akun belum diverifikasi. Cek email kamu untuk kode OTP.' };
     }
     if (String(row[3]) === String(password)) {
-      return { success: true, user: { nama: row[0], email: row[1], wa: row[2] } };
+      const role = _getUserRole(data, i);
+      return {
+        success: true,
+        user: {
+          nama:  row[0],
+          email: row[1],
+          wa:    row[2],
+          role:  role,
+        }
+      };
     }
     return { success: false, error: 'Password salah' };
   }
@@ -415,7 +783,6 @@ function createOrder({ userNama, userEmail, userWa, produk, varian, masaAktif, h
     msNama || '-', username || '-', microsoftEmail || '-', emailAktif || '-', emailReminder || '-'
   ]);
 
-  // ── Kirim ke WA Group Escalation ────────────────────────
   const varLower = (varian || '').toLowerCase();
   const isFamily = varLower.includes('family');
   const isWeb    = varLower.includes('web');
@@ -478,10 +845,11 @@ function getProfile({ email }) {
         nama:         String(data[i][0]  || ''),
         email:        String(data[i][1]  || ''),
         wa:           String(data[i][2]  || ''),
-        tanggalLahir: String(data[i][8]  || ''),
-        jenisKelamin: String(data[i][9]  || ''),
-        alamat:       String(data[i][10] || ''),
-        provinsi:     String(data[i][11] || ''),
+        role:         _getUserRole(data, i),
+        tanggalLahir: String(data[i][9]  || ''),
+        jenisKelamin: String(data[i][10] || ''),
+        alamat:       String(data[i][11] || ''),
+        provinsi:     String(data[i][12] || ''),
       }
     };
   }
@@ -500,15 +868,16 @@ function updateProfile({ email, nama, tanggalLahir, jenisKelamin, alamat, provin
   const data = sheet.getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][1]).toLowerCase().trim() !== email.toLowerCase().trim()) continue;
-    const row = i + 1;
+    const row  = i + 1;
+    const role = _getUserRole(data, i);
     sheet.getRange(row, 1).setValue(nama.trim());
-    sheet.getRange(row, 9).setValue(tanggalLahir  || '');
-    sheet.getRange(row, 10).setValue(jenisKelamin || '');
-    sheet.getRange(row, 11).setValue(alamat       || '');
-    sheet.getRange(row, 12).setValue(provinsi     || '');
+    sheet.getRange(row, 10).setValue(tanggalLahir  || '');
+    sheet.getRange(row, 11).setValue(jenisKelamin || '');
+    sheet.getRange(row, 12).setValue(alamat       || '');
+    sheet.getRange(row, 13).setValue(provinsi     || '');
     return {
       success: true,
-      user: { nama: nama.trim(), email: String(data[i][1]), wa: String(data[i][2]) }
+      user: { nama: nama.trim(), email: String(data[i][1]), wa: String(data[i][2]), role }
     };
   }
   return { success: false, error: 'User tidak ditemukan' };
@@ -562,7 +931,7 @@ function getOrders({ email }) {
     });
   }
 
-  orders.reverse(); // terbaru di atas
+  orders.reverse();
   return { success: true, data: orders };
 }
 
@@ -587,67 +956,37 @@ function buildOTPEmailHTML(nama, otp) {
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 16px;">
 <tr><td align="center">
 <table width="100%" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.08);" cellpadding="0" cellspacing="0">
-
-  <!-- Header -->
   <tr>
     <td style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);padding:32px 40px 28px;text-align:center;">
-      <div style="width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:32px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;">
-        <img src="https://halo-serabut.github.io/web-serabut/logo.png" width="40" height="40" alt="S" style="display:block;margin:0 auto;" onerror="this.style.display='none'">
-      </div>
+      <img src="https://halo-serabut.github.io/web-serabut/logo.png" width="40" height="40" alt="S" style="display:block;margin:0 auto 14px;" onerror="this.style.display='none'">
       <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px;line-height:1;">SERABUT</div>
       <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.7);letter-spacing:5px;margin-top:3px;">STORE</div>
     </td>
   </tr>
-
-  <!-- Body -->
   <tr>
     <td style="padding:36px 40px 28px;">
       <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#111827;">Halo, ${nama}!</p>
-      <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.65;">
-        Terima kasih telah mendaftar di <strong style="color:#111827;">Serabut Store</strong>.<br>
-        Masukkan kode OTP di bawah untuk verifikasi akun kamu.
-      </p>
-
-      <!-- OTP Box -->
+      <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.65;">Masukkan kode OTP di bawah untuk verifikasi akun kamu.</p>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
         <tr>
           <td style="background:#fef2f2;border:2px dashed #fca5a5;border-radius:16px;padding:28px 24px;text-align:center;">
             <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#dc2626;letter-spacing:3px;text-transform:uppercase;">Kode OTP Kamu</p>
             <div style="font-size:48px;font-weight:900;letter-spacing:14px;color:#dc2626;font-family:'Courier New',Courier,monospace;line-height:1.1;">${otp}</div>
-            <p style="margin:12px 0 0;font-size:13px;color:#9ca3af;">Berlaku <strong style="color:#374151;">${OTP_EXPIRY_MIN} menit</strong> sejak email ini dikirim</p>
+            <p style="margin:12px 0 0;font-size:13px;color:#9ca3af;">Berlaku <strong style="color:#374151;">${OTP_EXPIRY_MIN} menit</strong></p>
           </td>
         </tr>
       </table>
-
-      <!-- Warning -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
-        <tr>
-          <td style="background:#fffbeb;border-left:4px solid #f59e0b;border-radius:0 8px 8px 0;padding:14px 18px;">
-            <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">
-              <strong>[!] Jangan bagikan kode ini</strong> kepada siapapun, termasuk tim Serabut Store. Kami tidak pernah meminta kode OTP kamu.
-            </p>
-          </td>
-        </tr>
-      </table>
-
-      <p style="margin:0;font-size:13px;color:#9ca3af;line-height:1.6;">
-        Jika kamu tidak mendaftar di Serabut Store, abaikan email ini.
-      </p>
+      <p style="margin:0;font-size:13px;color:#9ca3af;line-height:1.6;">Jika kamu tidak mendaftar di Serabut Store, abaikan email ini.</p>
     </td>
   </tr>
-
-  <!-- Footer -->
   <tr>
     <td style="background:#f9fafb;border-top:1px solid #f3f4f6;padding:20px 40px;">
       <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
         &copy; 2025 Serabut Store &nbsp;&middot;&nbsp;
         <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a>
-        &nbsp;&middot;&nbsp;
-        <a href="https://wa.me/${WA_STORE_NO}" style="color:#dc2626;text-decoration:none;">Hubungi Kami</a>
       </p>
     </td>
   </tr>
-
 </table>
 </td></tr>
 </table>
@@ -656,7 +995,7 @@ function buildOTPEmailHTML(nama, otp) {
 }
 
 // ────────────────────────────────────────────────────────
-//  EMAIL — Selamat Datang (setelah OTP berhasil)
+//  EMAIL — Selamat Datang
 // ────────────────────────────────────────────────────────
 function sendWelcomeEmail(email, nama) {
   const subject  = `Selamat Datang di Serabut Store, ${nama}!`;
@@ -676,70 +1015,36 @@ function buildWelcomeEmailHTML(nama) {
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 16px;">
 <tr><td align="center">
 <table width="100%" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.08);" cellpadding="0" cellspacing="0">
-
-  <!-- Header -->
   <tr>
     <td style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);padding:32px 40px 28px;text-align:center;">
-      <div style="width:64px;height:64px;background:rgba(255,255,255,0.2);border-radius:32px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;">
-        <img src="https://halo-serabut.github.io/web-serabut/logo.png" width="40" height="40" alt="S" style="display:block;margin:0 auto;" onerror="this.style.display='none'">
-      </div>
-      <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px;line-height:1;">SERABUT</div>
+      <img src="https://halo-serabut.github.io/web-serabut/logo.png" width="40" height="40" alt="S" style="display:block;margin:0 auto 14px;" onerror="this.style.display='none'">
+      <div style="font-size:26px;font-weight:900;color:#fff;">SERABUT</div>
       <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.7);letter-spacing:5px;margin-top:3px;">STORE</div>
-      <div style="margin-top:20px;font-size:14px;font-weight:700;color:rgba(255,255,255,0.9);letter-spacing:1px;">AKUN BERHASIL DIAKTIFKAN</div>
+      <div style="margin-top:20px;font-size:14px;font-weight:700;color:rgba(255,255,255,0.9);">AKUN BERHASIL DIAKTIFKAN</div>
     </td>
   </tr>
-
-  <!-- Body -->
   <tr>
     <td style="padding:36px 40px 28px;">
       <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#111827;">Selamat datang, ${nama}!</p>
-      <p style="margin:0 0 24px;font-size:15px;color:#6b7280;line-height:1.65;">
-        Akun kamu di <strong style="color:#111827;">Serabut Store</strong> sudah aktif dan siap digunakan.
-        Yuk mulai jelajahi produk kami!
-      </p>
-
-      <!-- Feature list -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
-        <tr>
-          <td style="background:#fef2f2;border-radius:12px;padding:24px;">
-            <p style="margin:0 0 14px;font-size:13px;font-weight:700;color:#dc2626;text-transform:uppercase;letter-spacing:1px;">Yang bisa kamu lakukan:</p>
-            <p style="margin:0 0 8px;font-size:14px;color:#374151;">&rsaquo;&nbsp; Pesan produk langsung dari website</p>
-            <p style="margin:0 0 8px;font-size:14px;color:#374151;">&rsaquo;&nbsp; Cek status akun kamu kapan saja</p>
-            <p style="margin:0;font-size:14px;color:#374151;">&rsaquo;&nbsp; Akses panduan instalasi lengkap</p>
-          </td>
-        </tr>
-      </table>
-
-      <!-- CTA Button -->
+      <p style="margin:0 0 24px;font-size:15px;color:#6b7280;line-height:1.65;">Akun kamu di <strong style="color:#111827;">Serabut Store</strong> sudah aktif. Yuk mulai jelajahi produk kami!</p>
       <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
         <tr>
           <td align="center">
-            <a href="https://serabut.id" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:12px;letter-spacing:0.3px;">
-              Mulai Belanja &rarr;
-            </a>
+            <a href="https://serabut.id" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:12px;">Mulai Belanja &rarr;</a>
           </td>
         </tr>
       </table>
-
-      <p style="margin:0;font-size:13px;color:#9ca3af;line-height:1.6;">
-        Ada pertanyaan? Chat kami di WhatsApp:
-        <a href="https://wa.me/${WA_STORE_NO}" style="color:#dc2626;text-decoration:none;font-weight:600;">0888-150-0555</a>
-      </p>
+      <p style="margin:0;font-size:13px;color:#9ca3af;">Ada pertanyaan? <a href="https://wa.me/${WA_STORE_NO}" style="color:#dc2626;font-weight:600;">Chat WhatsApp</a></p>
     </td>
   </tr>
-
-  <!-- Footer -->
   <tr>
     <td style="background:#f9fafb;border-top:1px solid #f3f4f6;padding:20px 40px;">
       <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
         &copy; 2025 Serabut Store &nbsp;&middot;&nbsp;
         <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a>
-        &nbsp;&middot;&nbsp;
-        <a href="https://wa.me/${WA_STORE_NO}" style="color:#dc2626;text-decoration:none;">Hubungi Kami</a>
       </p>
     </td>
   </tr>
-
 </table>
 </td></tr>
 </table>
@@ -759,9 +1064,7 @@ function sendWANotification(message) {
       payload: { target: WA_GROUP_ID, message: message },
       muteHttpExceptions: true,
     });
-  } catch (e) {
-    Logger.log('WA notif error: ' + e.message);
-  }
+  } catch (e) { Logger.log('WA notif error: ' + e.message); }
 }
 
 function sendWAToGroup(message) {
@@ -777,32 +1080,20 @@ function sendWAToGroup(message) {
       muteHttpExceptions: true,
     });
     Logger.log('Fonnte response [' + resp.getResponseCode() + ']: ' + resp.getContentText());
-  } catch (e) {
-    Logger.log('WA group notif error: ' + e.message);
-  }
+  } catch (e) { Logger.log('WA group notif error: ' + e.message); }
 }
 
-// Jalankan fungsi ini manual di GAS editor untuk test koneksi Fonnte
 function testWAGroup() {
   sendWAToGroup('Test notif order dari Serabut Store GAS - ' + new Date().toLocaleString());
 }
 
-// Dapatkan list grup setelah fetch-group
 function listFonntGroups() {
-  // Step 1: sync dulu
   UrlFetchApp.fetch('https://api.fonnte.com/fetch-group', {
     method: 'post', headers: { 'Authorization': FONNTE_TOKEN },
     payload: {}, muteHttpExceptions: true,
   });
   Utilities.sleep(2000);
-
-  // Step 2: coba get-group dengan berbagai payload
-  const payloads = [
-    { device: WA_STORE_NO },
-    { phone: WA_STORE_NO },
-    { id: WA_STORE_NO },
-    {},
-  ];
+  const payloads = [{ device: WA_STORE_NO }, { phone: WA_STORE_NO }, { id: WA_STORE_NO }, {}];
   payloads.forEach(function(p) {
     const r = UrlFetchApp.fetch('https://api.fonnte.com/get-group', {
       method: 'post', headers: { 'Authorization': FONNTE_TOKEN },
@@ -812,16 +1103,12 @@ function listFonntGroups() {
   });
 }
 
-// Test kirim setelah sync — coba kedua format
 function testWAGroupAfterSync() {
-  // Sync dulu
   UrlFetchApp.fetch('https://api.fonnte.com/fetch-group', {
     method: 'post', headers: { 'Authorization': FONNTE_TOKEN },
     payload: {}, muteHttpExceptions: true,
   });
   Utilities.sleep(3000);
-
-  // Coba kirim dengan @g.us
   const r1 = UrlFetchApp.fetch('https://api.fonnte.com/send', {
     method: 'post', headers: { 'Authorization': FONNTE_TOKEN },
     payload: { target: '120363172991002805@g.us', message: 'Test setelah sync - ' + new Date().toLocaleString() },
@@ -848,6 +1135,7 @@ function formatJkt(date, fmt) {
 
 // ── TEST FUNCTIONS ───────────────────────────────────────
 function testCatalog()  { Logger.log(JSON.stringify(getCatalog(), null, 2)); }
+function testSettings() { Logger.log(JSON.stringify(getSettings(), null, 2)); }
 function testRegister() { Logger.log(JSON.stringify(register({ nama:'Test', email:'test@test.com', wa:'08123', password:'abc123hash' }), null, 2)); }
 function testLogin()    { Logger.log(JSON.stringify(login({ email:'test@test.com', password:'abc123hash' }), null, 2)); }
 function testOTP()      { Logger.log(JSON.stringify(verifyOTP({ email:'test@test.com', otp:'123456' }), null, 2)); }

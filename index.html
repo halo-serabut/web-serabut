@@ -42,6 +42,10 @@
         .modal-enter { animation: modalUp .28s cubic-bezier(.4,0,.2,1); }
         @keyframes modalUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
         input[type="radio"] { accent-color:#DC2626; }
+        /* CS button peek-from-wall — hanya mobile */
+        @media (max-width: 767px) {
+            .cs-peek { transform: translateX(42px); }
+        }
     </style>
 </head>
 
@@ -60,6 +64,12 @@
         <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1">
             <template x-for="item in navItems" :key="item.id">
                 <button @click="setPage(item.id)" :class="activePage===item.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" x-text="item.label"></button>
+            </template>
+            <template x-if="currentUser?.role?.toLowerCase()==='admin'">
+                <button @click="setPage('admin')" :class="activePage==='admin'?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Admin
+                </button>
             </template>
         </div>
 
@@ -118,11 +128,14 @@
                     <div class="inline-flex items-center gap-2 bg-white/15 text-white/90 text-xs font-semibold px-3.5 py-1.5 rounded-full mb-5 border border-white/20">
                         <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>Aktif & Siap Melayani
                     </div>
-                    <h1 class="text-3xl md:text-5xl font-black leading-tight mb-4 tracking-tight">Software Original,<br><span class="text-yellow-300">Harga Terjangkau</span></h1>
-                    <p class="text-white/75 text-base md:text-lg mb-8 leading-relaxed max-w-xl">Microsoft Office 365, Adobe Creative Cloud, Windows & lebih banyak. Bergaransi resmi, proses kilat, hemat hingga <strong class="text-white">70%</strong>.</p>
+                    <h1 class="text-3xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
+                        <span x-text="siteSettings.hero.tagline1"></span><br>
+                        <span class="text-yellow-300" x-text="siteSettings.hero.tagline2"></span>
+                    </h1>
+                    <p class="text-white/75 text-base md:text-lg mb-8 leading-relaxed max-w-xl" x-text="siteSettings.hero.subtext"></p>
                     <div class="flex flex-wrap gap-3">
-                        <button @click="setPage('catalog')" class="bg-white text-brand-600 font-bold px-6 py-3 rounded-xl hover:bg-brand-50 transition-all shadow-lg active:scale-95">Lihat Semua Produk →</button>
-                        <button @click="setPage('status')" class="bg-white/15 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95">Cek Status Akun</button>
+                        <button @click="setPage('catalog')" class="bg-white text-brand-600 font-bold px-6 py-3 rounded-xl hover:bg-brand-50 transition-all shadow-lg active:scale-95" x-text="siteSettings.hero.btn1"></button>
+                        <button @click="setPage('status')" class="bg-white/15 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95" x-text="siteSettings.hero.btn2"></button>
                     </div>
                 </div>
 
@@ -326,11 +339,6 @@
                     </template>
                 </div>
             </template>
-            <div class="mt-8 gradient-card rounded-2xl p-5 text-white">
-                <div class="font-bold text-lg mb-1">Butuh bantuan?</div>
-                <p class="text-white/75 text-sm mb-4">Tim support siap bantu instalasi & troubleshooting</p>
-                <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="inline-flex items-center gap-2 bg-white text-brand-600 font-bold text-sm px-5 py-2.5 rounded-xl active:scale-95">Chat WhatsApp Sekarang</a>
-            </div>
         </div>
     </section>
 
@@ -605,6 +613,402 @@
 
     </section>
 
+    <!-- ───────── ADMIN DASHBOARD ───────── -->
+    <section x-show="activePage==='admin'" class="page-enter">
+        <template x-if="currentUser?.role!=='admin'">
+            <div class="max-w-lg mx-auto px-4 py-20 text-center">
+                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                </div>
+                <div class="font-bold text-gray-800 mb-1">Akses Ditolak</div>
+                <p class="text-sm text-gray-400">Halaman ini hanya untuk admin.</p>
+            </div>
+        </template>
+        <template x-if="currentUser?.role?.toLowerCase()==='admin'">
+        <div class="max-w-5xl mx-auto px-4 py-6">
+
+            <!-- Header Admin -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-black text-gray-900">Dashboard Admin</h1>
+                    <p class="text-sm text-gray-400 mt-0.5">Kelola konten & produk Serabut Store</p>
+                </div>
+                <div x-show="adminSaveMsg" x-transition class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full" x-text="adminSaveMsg"></div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 overflow-x-auto no-scrollbar">
+                <template x-for="tab in [{id:'flashsale',label:'Flash Sale'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'}]" :key="tab.id">
+                    <button @click="adminTab=tab.id; adminInitTab(tab.id)"
+                            :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
+                            class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
+                            x-text="tab.label"></button>
+                </template>
+            </div>
+
+            <!-- ── Tab: Flash Sale ── -->
+            <div x-show="adminTab==='flashsale'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                <h2 class="font-bold text-gray-900 mb-4">Flash Sale</h2>
+                <div class="space-y-4 max-w-lg">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <div @click="adminEditFlash.aktif=!adminEditFlash.aktif"
+                             :class="adminEditFlash.aktif?'bg-brand-500':'bg-gray-200'"
+                             class="w-11 h-6 rounded-full relative transition-colors flex-none">
+                            <div :class="adminEditFlash.aktif?'translate-x-5':'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform"></div>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700">Flash Sale Aktif</span>
+                    </label>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Nama Produk</label>
+                        <input x-model="adminEditFlash.produk" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Varian / Subtitle</label>
+                        <input x-model="adminEditFlash.varian" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Harga Sale (Rp)</label>
+                            <input x-model="adminEditFlash.harga" type="number" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Harga Asli (Rp)</label>
+                            <input x-model="adminEditFlash.hargaAsli" type="number" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Diskon (%)</label>
+                            <input x-model="adminEditFlash.diskon" type="number" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Deadline (ISO: 2026-05-01T23:59:59)</label>
+                        <input x-model="adminEditFlash.deadline" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                    </div>
+                    <button @click="adminSaveFlash()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
+                        <span x-show="!adminSaving">Simpan Flash Sale</span>
+                        <span x-show="adminSaving">Menyimpan...</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── Tab: Hero ── -->
+            <div x-show="adminTab==='hero'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                <h2 class="font-bold text-gray-900 mb-4">Hero Banner</h2>
+                <div class="space-y-4 max-w-lg">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Tagline Baris 1</label>
+                        <input x-model="adminEditHero.tagline1" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Tagline Baris 2 <span class="text-yellow-500">(kuning)</span></label>
+                        <input x-model="adminEditHero.tagline2" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Subtext</label>
+                        <textarea x-model="adminEditHero.subtext" rows="3" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 resize-none"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Tombol 1 (putih)</label>
+                            <input x-model="adminEditHero.btn1" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Tombol 2 (transparan)</label>
+                            <input x-model="adminEditHero.btn2" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                    </div>
+                    <button @click="adminSaveHero()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
+                        <span x-show="!adminSaving">Simpan Hero</span>
+                        <span x-show="adminSaving">Menyimpan...</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── Tab: Kategori ── -->
+            <div x-show="adminTab==='kategori'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-bold text-gray-900">Kategori Produk</h2>
+                    <button @click="adminAddCat()" class="text-xs font-bold text-brand-500 bg-brand-50 px-3 py-1.5 rounded-lg">+ Tambah</button>
+                </div>
+                <div class="space-y-2 mb-4">
+                    <template x-for="(cat, ci) in adminEditCats" :key="ci">
+                        <div class="flex items-center gap-2 bg-gray-50 rounded-xl p-3">
+                            <select x-model="cat.iconKey" class="px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-brand-400 bg-white">
+                                <template x-for="ik in ['office365','adobe','windows','office','google','coreldraw','project','visio','other']" :key="ik">
+                                    <option :value="ik" x-text="ik"></option>
+                                </template>
+                            </select>
+                            <input x-model="cat.name" type="text" placeholder="Nama" class="flex-1 min-w-0 px-2.5 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400">
+                            <input x-model="cat.desc" type="text" placeholder="Deskripsi" class="flex-1 min-w-0 px-2.5 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400">
+                            <button @click="adminEditCats.splice(ci,1)" class="text-red-400 hover:text-red-600 flex-none">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <button @click="adminSaveCats()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
+                    <span x-show="!adminSaving">Simpan Kategori</span>
+                    <span x-show="adminSaving">Menyimpan...</span>
+                </button>
+            </div>
+
+            <!-- ── Tab: Produk ── -->
+            <div x-show="adminTab==='produk'">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-bold text-gray-900">Manajemen Produk</h2>
+                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,iconUrl:''}" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
+                </div>
+
+                <!-- Form tambah/edit produk -->
+                <div x-show="adminAddMode || adminEditProduct" x-transition class="bg-white rounded-2xl border border-brand-100 p-5 shadow-sm mb-4">
+                    <h3 class="font-bold text-gray-800 mb-4" x-text="adminEditProduct ? 'Edit Produk' : 'Tambah Produk Baru'"></h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Produk *</label>
+                            <input x-model="adminFormProduct.nama" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Varian *</label>
+                            <input x-model="adminFormProduct.varian" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Masa Aktif</label>
+                            <input x-model="adminFormProduct.masaAktif" type="text" placeholder="1 Tahun" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Harga (Rp)</label>
+                            <input x-model="adminFormProduct.harga" type="number" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Link Shopee</label>
+                            <input x-model="adminFormProduct.linkProduk" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Icon URL (opsional)</label>
+                            <input x-model="adminFormProduct.iconUrl" type="text" placeholder="https://..." class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                    </div>
+                    <label class="flex items-center gap-2 mt-3 cursor-pointer">
+                        <input x-model="adminFormProduct.aktif" type="checkbox" class="w-4 h-4 rounded accent-brand-500">
+                        <span class="text-sm text-gray-700 font-medium">Produk Aktif (tampil di katalog)</span>
+                    </label>
+                    <div class="flex gap-2 mt-4">
+                        <button @click="adminSaveProduct()" :disabled="adminSaving" class="gradient-card text-white font-bold px-5 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
+                            <span x-show="!adminSaving" x-text="adminEditProduct ? 'Update Produk' : 'Simpan Produk'"></span>
+                            <span x-show="adminSaving">Menyimpan...</span>
+                        </button>
+                        <button @click="adminAddMode=false; adminEditProduct=null" class="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all">Batal</button>
+                    </div>
+                </div>
+
+                <!-- Tabel produk -->
+                <div x-show="adminProductsLoading" class="text-center py-10 text-gray-400 text-sm">Memuat produk...</div>
+                <div x-show="!adminProductsLoading" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Produk</th>
+                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Varian</th>
+                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Masa</th>
+                                    <th class="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Harga</th>
+                                    <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(p, pi) in adminProducts" :key="p.rowIndex">
+                                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                        <td class="px-4 py-3 font-medium text-gray-800 max-w-[180px] truncate" x-text="p.nama"></td>
+                                        <td class="px-4 py-3 text-gray-500 text-xs" x-text="p.varian"></td>
+                                        <td class="px-4 py-3 text-gray-500 text-xs" x-text="p.masaAktif"></td>
+                                        <td class="px-4 py-3 text-right font-semibold text-gray-800" x-text="formatPrice(p.harga)"></td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span :class="p.aktif?'bg-emerald-100 text-emerald-700':'bg-gray-100 text-gray-500'" class="text-xs font-semibold px-2 py-0.5 rounded-full" x-text="p.aktif?'Aktif':'Nonaktif'"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button @click="adminStartEditProduct(p)" class="text-xs text-brand-500 font-bold hover:underline">Edit</button>
+                                                <button @click="adminDeleteProduct(p)" class="text-xs text-red-400 font-bold hover:underline">Hapus</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr x-show="adminProducts.length===0">
+                                    <td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Belum ada produk</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Tab: Panduan ── -->
+            <div x-show="adminTab==='panduan'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="font-bold text-gray-900">Panduan Instalasi</h2>
+                    <button @click="adminAddGuideMode=true; adminEditGuideIdx=-1; adminNewGuide={title:'',steps:[''],note:''}" class="text-xs font-bold text-brand-500 bg-brand-50 px-3 py-1.5 rounded-lg">+ Tambah</button>
+                </div>
+
+                <!-- Guide tab selector -->
+                <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4 w-fit">
+                    <template x-for="gt in [{id:'office365',label:'Office 365'},{id:'windows',label:'Windows'},{id:'adobe',label:'Adobe'}]" :key="gt.id">
+                        <button @click="adminGuideTab=gt.id" :class="adminGuideTab===gt.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'" class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all" x-text="gt.label"></button>
+                    </template>
+                </div>
+
+                <!-- Guide loading -->
+                <div x-show="adminGuidesLoading" class="text-center py-8 text-gray-400 text-sm">Memuat panduan...</div>
+
+                <!-- Form tambah/edit guide -->
+                <div x-show="!adminGuidesLoading && (adminAddGuideMode || adminEditGuideIdx>=0)" x-transition class="bg-brand-50 rounded-2xl p-4 mb-4 border border-brand-100">
+                    <h3 class="font-bold text-gray-800 text-sm mb-3" x-text="adminEditGuideIdx>=0 ? 'Edit Panduan' : 'Tambah Panduan Baru'"></h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Judul Panduan *</label>
+                            <input x-model="adminNewGuide.title" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Langkah-langkah</label>
+                            <template x-for="(step, si) in adminNewGuide.steps" :key="si">
+                                <div class="flex gap-2 mb-2">
+                                    <span class="w-6 h-6 gradient-card text-white rounded-full flex items-center justify-center text-xs font-bold flex-none mt-2" x-text="si+1"></span>
+                                    <input x-model="adminNewGuide.steps[si]" type="text" :placeholder="'Langkah '+(si+1)" class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                                    <button x-show="adminNewGuide.steps.length>1" @click="adminNewGuide.steps.splice(si,1)" class="text-red-400 mt-1 flex-none">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                </div>
+                            </template>
+                            <button @click="adminNewGuide.steps.push('')" class="text-xs text-brand-500 font-bold mt-1">+ Tambah Langkah</button>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Catatan (opsional)</label>
+                            <input x-model="adminNewGuide.note" type="text" class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div class="flex gap-2">
+                            <button @click="adminSaveGuide()" :disabled="adminSaving" class="gradient-card text-white font-bold px-5 py-2 rounded-xl text-sm disabled:opacity-60 active:scale-95">
+                                <span x-show="!adminSaving">Simpan</span>
+                                <span x-show="adminSaving">Menyimpan...</span>
+                            </button>
+                            <button @click="adminAddGuideMode=false; adminEditGuideIdx=-1" class="px-5 py-2 rounded-xl text-sm font-bold text-gray-600 bg-gray-100">Batal</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daftar guide -->
+                <div x-show="!adminGuidesLoading" class="space-y-2">
+                    <template x-for="(guide, gi) in adminGuides[adminGuideTab]" :key="gi">
+                        <div class="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-gray-800 text-sm" x-text="guide.title"></div>
+                                <div class="text-xs text-gray-400 mt-0.5" x-text="guide.steps.length + ' langkah' + (guide.note ? ' · ada catatan' : '')"></div>
+                            </div>
+                            <div class="flex gap-2 flex-none">
+                                <button @click="adminStartEditGuide(gi)" class="text-xs text-brand-500 font-bold hover:underline">Edit</button>
+                                <button @click="adminDeleteGuide(gi)" class="text-xs text-red-400 font-bold hover:underline">Hapus</button>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="!adminGuides[adminGuideTab]?.length" class="text-center py-8 text-gray-400 text-sm">Belum ada panduan untuk tab ini.</div>
+                </div>
+            </div>
+
+            <!-- ── Tab: Footer ── -->
+            <div x-show="adminTab==='footer'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                <h2 class="font-bold text-gray-900 mb-4">Footer</h2>
+                <div class="space-y-4 max-w-lg">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Deskripsi</label>
+                        <textarea x-model="adminEditFooter.desc" rows="2" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 resize-none"></textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Email</label>
+                            <input x-model="adminEditFooter.email" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">No. WhatsApp</label>
+                            <input x-model="adminEditFooter.phone" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Jam Operasional</label>
+                            <input x-model="adminEditFooter.jam" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Copyright</label>
+                            <input x-model="adminEditFooter.copyright" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                    </div>
+                    <button @click="adminSaveFooter()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
+                        <span x-show="!adminSaving">Simpan Footer</span>
+                        <span x-show="adminSaving">Menyimpan...</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── Tab: Semua Order ── -->
+            <div x-show="adminTab==='orders'">
+                <div class="flex flex-wrap items-center gap-2 mb-4">
+                    <h2 class="font-bold text-gray-900 flex-1">Semua Order</h2>
+                    <div class="flex gap-1 bg-gray-100 rounded-xl p-1">
+                        <template x-for="f in ['Semua','Pending','Selesai','Dibatalkan']" :key="f">
+                            <button @click="adminOrderFilter=f" :class="adminOrderFilter===f?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" x-text="f"></button>
+                        </template>
+                    </div>
+                </div>
+                <div x-show="adminOrdersLoading" class="text-center py-10 text-gray-400 text-sm">Memuat order...</div>
+                <div x-show="!adminOrdersLoading" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead class="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Order ID</th>
+                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Pembeli</th>
+                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Produk</th>
+                                    <th class="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Harga</th>
+                                    <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Ubah Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="o in adminFilteredOrders" :key="o.rowIndex">
+                                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                        <td class="px-4 py-3 font-mono text-xs text-gray-600" x-text="o.orderId"></td>
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium text-gray-800 text-xs" x-text="o.nama"></div>
+                                            <div class="text-gray-400 text-[11px]" x-text="formatOrderDate(o.tanggal)"></div>
+                                        </td>
+                                        <td class="px-4 py-3 text-xs text-gray-600 max-w-[140px] truncate" x-text="o.produk + (o.varian&&o.varian!=='-'?' · '+o.varian:'')"></td>
+                                        <td class="px-4 py-3 text-right font-semibold text-gray-800 text-xs" x-text="formatPrice(o.harga)"></td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span :class="getStatusBadge(o.status)" class="text-xs font-semibold px-2 py-0.5 rounded-full" x-text="o.status"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <select @change="adminUpdateOrderStatus(o, $event.target.value); $event.target.value=o.status"
+                                                    class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-brand-400 bg-white">
+                                                <option value="">Ubah...</option>
+                                                <template x-for="st in ['Pending','Proses','Selesai','Dibatalkan']" :key="st">
+                                                    <option :value="st" x-text="st"></option>
+                                                </template>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <tr x-show="adminFilteredOrders.length===0">
+                                    <td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Tidak ada order</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        </template>
+    </section>
+
 <!-- ══════════════════════════════════════════════════════
      FOOTER
 ══════════════════════════════════════════════════════ -->
@@ -620,7 +1024,7 @@
                     <div class="text-gray-500 text-[10px]">PT Serabut Solusi Digital</div>
                 </div>
             </div>
-            <p class="text-gray-400 text-xs leading-relaxed mb-5">Software original terpercaya. Microsoft, Adobe, Windows & lebih banyak dengan harga terjangkau.</p>
+            <p class="text-gray-400 text-xs leading-relaxed mb-5" x-text="siteSettings.footer.desc"></p>
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div>
                     <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Layanan</div>
@@ -633,21 +1037,19 @@
                 <div>
                     <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Kontak</div>
                     <div class="space-y-1.5 text-xs text-gray-400">
-                        <div>halo@serabut.id</div>
+                        <div x-text="siteSettings.footer.email"></div>
                         <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex items-center gap-1.5 active:text-white">
                             <svg class="w-3.5 h-3.5 flex-none text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                            0888-150-0555
+                            <span x-text="siteSettings.footer.phone"></span>
                         </a>
                         <div class="flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            08.00 – 22.00 WIB
+                            <span x-text="siteSettings.footer.jam"></span>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="border-t border-gray-800 pt-4 text-center text-[10px] text-gray-600">
-                © 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.
-            </div>
+            <div class="border-t border-gray-800 pt-4 text-center text-[10px] text-gray-600" x-text="siteSettings.footer.copyright"></div>
         </div>
 
         <!-- Desktop: full layout -->
@@ -658,7 +1060,7 @@
                         <img src="logo.png" alt="Serabut" class="w-8 h-8 rounded-lg">
                         <span class="font-black text-base tracking-tight">Serabut Store</span>
                     </div>
-                    <p class="text-gray-400 text-sm leading-relaxed">Software original terpercaya. Microsoft, Adobe, Windows & lebih banyak dengan harga terjangkau.</p>
+                    <p class="text-gray-400 text-sm leading-relaxed" x-text="siteSettings.footer.desc"></p>
                 </div>
                 <div>
                     <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Layanan</div>
@@ -673,21 +1075,21 @@
                     <div class="space-y-2 text-sm text-gray-400">
                         <div class="flex items-center gap-2">
                             <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            <span>halo@serabut.id</span>
+                            <span x-text="siteSettings.footer.email"></span>
                         </div>
                         <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex items-center gap-2 hover:text-white transition-colors">
                             <svg class="w-4 h-4 flex-none" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                            <span>0888-150-0555</span>
+                            <span x-text="siteSettings.footer.phone"></span>
                         </a>
                         <div class="flex items-center gap-2">
                             <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span>08.00 – 22.00 WIB</span>
+                            <span x-text="siteSettings.footer.jam"></span>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
-                <span>© 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.</span>
+                <span x-text="siteSettings.footer.copyright"></span>
                 <div class="flex gap-5">
                     <a href="#" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</a>
                     <a href="#" class="hover:text-gray-400 transition-colors">Kebijakan Privasi</a>
@@ -703,10 +1105,18 @@
 <!-- ══════════════════════════════════════════════════════
      FLOATING CS BUTTON
 ══════════════════════════════════════════════════════ -->
-<div class="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-[90] flex flex-col items-end gap-3">
 
-    <!-- Popup card -->
-    <div x-show="csPopup" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 scale-95" class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-72 overflow-hidden" @click.outside="csPopup=false">
+<!-- Popup card: posisi terpisah agar tidak ikut translate -->
+<div class="fixed bottom-[88px] md:bottom-28 right-4 md:right-8 z-[91]"
+     x-show="csPopup"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
+     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0 scale-95"
+     @click.outside="csPopup=false">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-72 overflow-hidden">
         <!-- Header -->
         <div class="gradient-card px-4 py-3 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
@@ -722,24 +1132,20 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
-
         <!-- Body -->
         <div class="px-4 py-4">
-            <!-- Logged in -->
             <template x-if="currentUser">
                 <div>
-                    <p class="text-sm text-gray-600 mb-4 leading-relaxed">Halo, <strong x-text="currentUser.nama"></strong>! 👋<br>Ada yang bisa kami bantu hari ini?</p>
+                    <p class="text-sm text-gray-600 mb-4 leading-relaxed">Halo, <strong x-text="currentUser.nama"></strong>!<br>Ada yang bisa kami bantu hari ini?</p>
                     <button @click="openCSChat()" class="w-full gradient-card text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                         Chat WhatsApp Sekarang
                     </button>
                 </div>
             </template>
-
-            <!-- Guest -->
             <template x-if="!currentUser">
                 <div>
-                    <p class="text-sm text-gray-500 mb-3 leading-relaxed">Siapa nama kamu? Kami akan siapkan chat yang personal. 😊</p>
+                    <p class="text-sm text-gray-500 mb-3 leading-relaxed">Siapa nama kamu? Kami siapkan chat yang personal.</p>
                     <label class="text-xs font-bold text-gray-700 mb-1.5 block">Nama kamu <span class="text-brand-500">*</span></label>
                     <input x-model="csGuestName" type="text" placeholder="Contoh: Budi Santoso" @keydown.enter="openCSChat(csGuestName)" class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all mb-3">
                     <button @click="openCSChat(csGuestName)" :disabled="!csGuestName.trim()" class="w-full gradient-card disabled:opacity-40 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
@@ -750,27 +1156,37 @@
             </template>
         </div>
     </div>
+</div>
 
-    <!-- FAB Button -->
-    <button @click="csPopup=!csPopup" class="w-14 h-14 gradient-card rounded-full shadow-xl flex items-center justify-center text-white active:scale-95 transition-all relative">
+<!-- FAB Button: auto-hide di mobile, tempel ke dinding -->
+<div class="fixed bottom-20 md:bottom-8 right-0 md:right-8 z-[90] transition-transform duration-300"
+     :class="csHidden ? 'cs-peek' : ''">
+    <button @click="csHidden ? (csHidden=false) : (csPopup=!csPopup)"
+            class="w-14 h-14 gradient-card rounded-full shadow-xl flex items-center justify-center text-white active:scale-95 transition-all relative">
         <svg x-show="!csPopup" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
         <svg x-show="csPopup" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        <!-- Green dot indicator -->
         <span class="absolute top-0.5 right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></span>
     </button>
-
 </div>
 
 <!-- ══════════════════════════════════════════════════════
      MOBILE BOTTOM NAV
 ══════════════════════════════════════════════════════ -->
 <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
-    <div class="grid grid-cols-5 h-16">
+    <div :class="currentUser?.role?.toLowerCase()==='admin' ? 'grid-cols-6' : 'grid-cols-5'" class="grid h-16">
         <template x-for="item in navItems" :key="item.id">
             <button @click="setPage(item.id)" :class="activePage===item.id?'text-brand-500':'text-gray-400'" class="flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
                 <div x-show="activePage===item.id" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
                 <div x-html="item.icon" class="w-5 h-5"></div>
                 <span class="text-[10px] font-semibold leading-none" x-text="item.label"></span>
+            </button>
+        </template>
+        <!-- Admin tab — hanya muncul jika role=admin -->
+        <template x-if="currentUser?.role?.toLowerCase()==='admin'">
+            <button @click="setPage('admin')" :class="activePage==='admin'?'text-brand-500':'text-gray-400'" class="flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
+                <div x-show="activePage==='admin'" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span class="text-[10px] font-semibold leading-none">Admin</span>
             </button>
         </template>
         <!-- Akun tab -->
@@ -1158,11 +1574,12 @@ async function sha256(str) {
 function serabutStore() {
     return {
         // Config
-        GAS_URL:   'https://script.google.com/macros/s/AKfycbwkhElJLL-s25f0M816gPxE2EdQTNWCubHvYmobG9zONE9Rsg3c5KtFOr_ir83OpjwFsA/exec',
+        GAS_URL:   'https://script.google.com/macros/s/AKfycbzYsltjVoiuVCFjGk1dExX4QjPp77lRwIwSAEznir-mbS8KTGWCY-vzmmEQKCbbVCdK9w/exec',
         WA_NUMBER: '8881500555',
 
         // CS Floating Button
         csPopup:    false,
+        csHidden:   true,
         csGuestName: '',
 
         // Pages
@@ -1236,15 +1653,45 @@ function serabutStore() {
 
         // Flash Sale
         flashSale: {
-            aktif: true,
-            produk: 'Microsoft Office 365 Family',
-            varian: '1 Tahun · 5 Devices',
-            harga: 249000,
-            hargaAsli: 337000,
-            diskon: 26,
-            deadline: '2026-05-01T23:59:59',
+            aktif: false,
+            produk: '',
+            varian: '',
+            harga: 0,
+            hargaAsli: 0,
+            diskon: 0,
+            deadline: '',
         },
         flashSaleCountdown: '--:--:--',
+
+        // Site Settings (dari GAS Settings tab)
+        siteSettings: {
+            hero:   { tagline1:'Software Original,', tagline2:'Harga Terjangkau', subtext:'Microsoft Office 365, Adobe Creative Cloud, Windows & lebih banyak. Bergaransi resmi, proses kilat, hemat hingga 70%.', btn1:'Lihat Semua Produk →', btn2:'Cek Status Akun' },
+            footer: { desc:'Software original terpercaya. Microsoft, Adobe, Windows & lebih banyak dengan harga terjangkau.', email:'halo@serabut.id', phone:'0888-150-0555', jam:'08.00 – 22.00 WIB', copyright:'© 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.' },
+        },
+        settingsLoaded: false,
+
+        // Admin
+        adminTab:        'flashsale',
+        adminSaving:     false,
+        adminSaveMsg:    '',
+        adminProducts:   [],
+        adminProductsLoading: false,
+        adminOrders:     [],
+        adminOrdersLoading: false,
+        adminOrderFilter: 'Semua',
+        adminEditProduct: null,
+        adminAddMode:    false,
+        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, iconUrl:'' },
+        adminEditFlash:  {},
+        adminEditHero:   {},
+        adminEditFooter: {},
+        adminEditCats:   [],
+        adminGuideTab:   'office365',
+        adminGuides:     { office365:[], windows:[], adobe:[] },
+        adminGuidesLoading: false,
+        adminNewGuide:   { title:'', steps:[''], note:'' },
+        adminAddGuideMode: false,
+        adminEditGuideIdx: -1,
 
         // ── Static Data ──────────────────────────────
         navItems: [
@@ -1319,7 +1766,11 @@ function serabutStore() {
         async init() {
             const saved = localStorage.getItem('serabutUser');
             if(saved) { try{ this.currentUser=JSON.parse(saved); }catch{} }
-            await this.fetchProducts();
+            // Refresh role jika sesi lama belum punya role field
+            if(this.currentUser && !this.currentUser.role) {
+                await this.refreshUserRole();
+            }
+            await Promise.all([this.fetchProducts(), this.loadSiteSettings()]);
             setInterval(() => {
                 if(!this.flashSale.aktif) return;
                 const diff = new Date(this.flashSale.deadline) - new Date();
@@ -1329,6 +1780,82 @@ function serabutStore() {
                 const s = Math.floor((diff%60000)/1000);
                 this.flashSaleCountdown = [h,m,s].map(v=>String(v).padStart(2,'0')).join(':');
             }, 1000);
+        },
+
+        // ── Refresh role dari GAS (sesi lama) ─────────
+        async refreshUserRole() {
+            try {
+                const params = new URLSearchParams({ action:'getProfile', email:this.currentUser.email });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success && data.profile?.role) {
+                    this.currentUser = { ...this.currentUser, role: data.profile.role };
+                    localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
+                }
+            } catch {}
+        },
+
+        // ── Load Site Settings dari GAS ───────────────
+        async loadSiteSettings() {
+            try {
+                const res  = await fetch(`${this.GAS_URL}?action=getSettings`);
+                const data = await res.json();
+                if(!data.success) return;
+                const s = data.data;
+
+                // Flash Sale
+                this.flashSale = {
+                    aktif:    s['flashSale.aktif'] === 'true',
+                    produk:   s['flashSale.produk']    || '',
+                    varian:   s['flashSale.varian']    || '',
+                    harga:    Number(s['flashSale.harga'])     || 0,
+                    hargaAsli:Number(s['flashSale.hargaAsli']) || 0,
+                    diskon:   Number(s['flashSale.diskon'])    || 0,
+                    deadline: s['flashSale.deadline']  || '',
+                };
+
+                // Hero
+                this.siteSettings.hero = {
+                    tagline1: s['hero.tagline1'] || this.siteSettings.hero.tagline1,
+                    tagline2: s['hero.tagline2'] || this.siteSettings.hero.tagline2,
+                    subtext:  s['hero.subtext']  || this.siteSettings.hero.subtext,
+                    btn1:     s['hero.btn1']     || this.siteSettings.hero.btn1,
+                    btn2:     s['hero.btn2']     || this.siteSettings.hero.btn2,
+                };
+
+                // Footer
+                this.siteSettings.footer = {
+                    desc:      s['footer.desc']      || this.siteSettings.footer.desc,
+                    email:     s['footer.email']     || this.siteSettings.footer.email,
+                    phone:     s['footer.phone']     || this.siteSettings.footer.phone,
+                    jam:       s['footer.jam']       || this.siteSettings.footer.jam,
+                    copyright: s['footer.copyright'] || this.siteSettings.footer.copyright,
+                };
+
+                // Categories
+                try {
+                    const cats = JSON.parse(s['categories'] || '[]');
+                    if(cats.length) this.categories = cats.map(c => ({
+                        ...c,
+                        icon: this.getCategoryIconSVG(c.iconKey || c.name),
+                    }));
+                } catch {}
+
+                // Guides
+                try {
+                    if(s['guides.office365']) this.guides.office365 = JSON.parse(s['guides.office365']);
+                    if(s['guides.windows'])   this.guides.windows   = JSON.parse(s['guides.windows']);
+                    if(s['guides.adobe'])     this.guides.adobe     = JSON.parse(s['guides.adobe']);
+                    // Reset open state
+                    ['office365','windows','adobe'].forEach(k =>
+                        this.guides[k] = this.guides[k].map(g => ({...g, open:false}))
+                    );
+                } catch {}
+
+                this.settingsLoaded = true;
+            } catch(e) {
+                this.settingsLoaded = true;
+            }
         },
 
         // ── Products ──────────────────────────────────
@@ -1556,6 +2083,7 @@ function serabutStore() {
         logout() {
             this.currentUser = null;
             localStorage.removeItem('serabutUser');
+            if(this.activePage === 'admin') this.setPage('home');
         },
 
         // ── Order ─────────────────────────────────────
@@ -1650,6 +2178,264 @@ function serabutStore() {
             if(page!=='catalog') this.searchQuery='';
             if(page!=='status')  this.statusResult=null;
             if(page==='profile') { this.profileTab='diri'; this.editMode=false; this.loadProfile(); }
+            if(page==='admin')   { this.adminTab='flashsale'; this.adminInitTab('flashsale'); }
+        },
+
+        // ── Admin computed ────────────────────────────
+        get adminFormProduct() { return this.adminNewProduct; },
+        get adminFilteredOrders() {
+            if(this.adminOrderFilter==='Semua') return this.adminOrders;
+            return this.adminOrders.filter(o=>o.status===this.adminOrderFilter);
+        },
+
+        // ── Admin tab init ────────────────────────────
+        adminInitTab(tab) {
+            if(tab==='flashsale') {
+                this.adminEditFlash = { ...this.flashSale, aktif: this.flashSale.aktif };
+            } else if(tab==='hero') {
+                this.adminEditHero = { ...this.siteSettings.hero };
+            } else if(tab==='footer') {
+                this.adminEditFooter = { ...this.siteSettings.footer };
+            } else if(tab==='kategori') {
+                this.adminEditCats = this.categories.map(c=>({ name:c.name, desc:c.desc, iconKey:c.iconKey||'other' }));
+            } else if(tab==='produk') {
+                this.adminLoadProducts();
+            } else if(tab==='panduan') {
+                this.adminLoadGuides();
+            } else if(tab==='orders') {
+                this.adminLoadOrders();
+            }
+        },
+
+        // ── Admin save helper ─────────────────────────
+        async _adminSave(key, value) {
+            const params = new URLSearchParams({ action:'saveSettings', adminEmail:this.currentUser.email, key, value });
+            const res  = await fetch(`${this.GAS_URL}?${params}`);
+            return res.json();
+        },
+        _adminShowMsg(msg) {
+            this.adminSaveMsg = msg;
+            setTimeout(()=>{ this.adminSaveMsg=''; }, 3000);
+        },
+
+        // ── Admin: Flash Sale ─────────────────────────
+        async adminSaveFlash() {
+            this.adminSaving=true;
+            try {
+                const f = this.adminEditFlash;
+                await Promise.all([
+                    this._adminSave('flashSale.aktif',    String(f.aktif)),
+                    this._adminSave('flashSale.produk',   f.produk||''),
+                    this._adminSave('flashSale.varian',   f.varian||''),
+                    this._adminSave('flashSale.harga',    String(f.harga||0)),
+                    this._adminSave('flashSale.hargaAsli',String(f.hargaAsli||0)),
+                    this._adminSave('flashSale.diskon',   String(f.diskon||0)),
+                    this._adminSave('flashSale.deadline', f.deadline||''),
+                ]);
+                this.flashSale = { ...f, harga:Number(f.harga)||0, hargaAsli:Number(f.hargaAsli)||0, diskon:Number(f.diskon)||0 };
+                this._adminShowMsg('Flash Sale disimpan ✓');
+            } catch { this._adminShowMsg('Gagal menyimpan'); }
+            this.adminSaving=false;
+        },
+
+        // ── Admin: Hero ───────────────────────────────
+        async adminSaveHero() {
+            this.adminSaving=true;
+            try {
+                const h = this.adminEditHero;
+                await Promise.all([
+                    this._adminSave('hero.tagline1', h.tagline1||''),
+                    this._adminSave('hero.tagline2', h.tagline2||''),
+                    this._adminSave('hero.subtext',  h.subtext||''),
+                    this._adminSave('hero.btn1',     h.btn1||''),
+                    this._adminSave('hero.btn2',     h.btn2||''),
+                ]);
+                this.siteSettings.hero = { ...h };
+                this._adminShowMsg('Hero disimpan ✓');
+            } catch { this._adminShowMsg('Gagal menyimpan'); }
+            this.adminSaving=false;
+        },
+
+        // ── Admin: Categories ─────────────────────────
+        adminAddCat() {
+            this.adminEditCats.push({ name:'', desc:'', iconKey:'other' });
+        },
+        async adminSaveCats() {
+            this.adminSaving=true;
+            try {
+                const json = JSON.stringify(this.adminEditCats);
+                await this._adminSave('categories', json);
+                this.categories = this.adminEditCats.map(c=>({ ...c, icon:this.getCategoryIconSVG(c.iconKey) }));
+                this._adminShowMsg('Kategori disimpan ✓');
+            } catch { this._adminShowMsg('Gagal menyimpan'); }
+            this.adminSaving=false;
+        },
+
+        // ── Admin: Products ───────────────────────────
+        async adminLoadProducts() {
+            this.adminProductsLoading=true;
+            try {
+                const params = new URLSearchParams({ action:'getCatalogAdmin', adminEmail:this.currentUser.email });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                this.adminProducts = data.success ? data.data : [];
+            } catch { this.adminProducts=[]; }
+            this.adminProductsLoading=false;
+        },
+        adminStartEditProduct(p) {
+            this.adminEditProduct = p;
+            this.adminAddMode     = false;
+            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, iconUrl:p.iconUrl||'' };
+        },
+        async adminSaveProduct() {
+            if(!this.adminNewProduct.nama||!this.adminNewProduct.varian) {
+                this._adminShowMsg('Nama dan varian wajib diisi'); return;
+            }
+            this.adminSaving=true;
+            try {
+                const action = this.adminEditProduct ? 'updateProduct' : 'addProduct';
+                const params = new URLSearchParams({
+                    action, adminEmail:this.currentUser.email,
+                    nama:      this.adminNewProduct.nama,
+                    varian:    this.adminNewProduct.varian,
+                    masaAktif: this.adminNewProduct.masaAktif,
+                    harga:     this.adminNewProduct.harga,
+                    linkProduk:this.adminNewProduct.linkProduk,
+                    aktif:     String(this.adminNewProduct.aktif),
+                    iconUrl:   this.adminNewProduct.iconUrl||'',
+                });
+                if(this.adminEditProduct) params.append('rowIndex', this.adminEditProduct.rowIndex);
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) {
+                    this._adminShowMsg(this.adminEditProduct ? 'Produk diupdate ✓' : 'Produk ditambahkan ✓');
+                    this.adminEditProduct=null; this.adminAddMode=false;
+                    await this.adminLoadProducts();
+                    await this.fetchProducts();
+                } else { this._adminShowMsg(data.error||'Gagal menyimpan'); }
+            } catch { this._adminShowMsg('Gagal terhubung'); }
+            this.adminSaving=false;
+        },
+        async adminDeleteProduct(p) {
+            if(!confirm(`Hapus produk "${p.nama} — ${p.varian}"?`)) return;
+            try {
+                const params = new URLSearchParams({ action:'deleteProduct', adminEmail:this.currentUser.email, rowIndex:p.rowIndex });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) { this._adminShowMsg('Produk dihapus ✓'); await this.adminLoadProducts(); await this.fetchProducts(); }
+                else { this._adminShowMsg(data.error||'Gagal hapus'); }
+            } catch { this._adminShowMsg('Gagal terhubung'); }
+        },
+
+        // ── Admin: Guides ─────────────────────────────
+        async adminLoadGuides() {
+            this.adminGuidesLoading=true;
+            try {
+                const res  = await fetch(`${this.GAS_URL}?action=getGuides`);
+                const data = await res.json();
+                if(data.success) this.adminGuides = data.data;
+            } catch {}
+            this.adminGuidesLoading=false;
+        },
+        adminStartEditGuide(gi) {
+            this.adminEditGuideIdx = gi;
+            this.adminAddGuideMode = false;
+            const g = this.adminGuides[this.adminGuideTab][gi];
+            this.adminNewGuide = { title:g.title, steps:[...g.steps], note:g.note||'' };
+        },
+        async adminSaveGuide() {
+            if(!this.adminNewGuide.title.trim()) { this._adminShowMsg('Judul wajib diisi'); return; }
+            this.adminSaving=true;
+            try {
+                const tabGuides = [...(this.adminGuides[this.adminGuideTab]||[])];
+                const entry = { title:this.adminNewGuide.title, steps:this.adminNewGuide.steps.filter(s=>s.trim()), note:this.adminNewGuide.note };
+                if(this.adminEditGuideIdx>=0) tabGuides[this.adminEditGuideIdx]=entry;
+                else tabGuides.push(entry);
+                const params = new URLSearchParams({ action:'saveGuides', adminEmail:this.currentUser.email, tab:this.adminGuideTab, guidesJson:JSON.stringify(tabGuides) });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) {
+                    this.adminGuides[this.adminGuideTab] = tabGuides;
+                    this.guides[this.adminGuideTab] = tabGuides.map(g=>({...g,open:false}));
+                    this.adminAddGuideMode=false; this.adminEditGuideIdx=-1;
+                    this._adminShowMsg('Panduan disimpan ✓');
+                } else { this._adminShowMsg(data.error||'Gagal'); }
+            } catch { this._adminShowMsg('Gagal terhubung'); }
+            this.adminSaving=false;
+        },
+        async adminDeleteGuide(gi) {
+            const g = this.adminGuides[this.adminGuideTab][gi];
+            if(!confirm(`Hapus panduan "${g.title}"?`)) return;
+            try {
+                const tabGuides = [...this.adminGuides[this.adminGuideTab]];
+                tabGuides.splice(gi,1);
+                const params = new URLSearchParams({ action:'saveGuides', adminEmail:this.currentUser.email, tab:this.adminGuideTab, guidesJson:JSON.stringify(tabGuides) });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) {
+                    this.adminGuides[this.adminGuideTab]=tabGuides;
+                    this.guides[this.adminGuideTab]=tabGuides.map(g=>({...g,open:false}));
+                    this._adminShowMsg('Panduan dihapus ✓');
+                }
+            } catch {}
+        },
+
+        // ── Admin: Footer ─────────────────────────────
+        async adminSaveFooter() {
+            this.adminSaving=true;
+            try {
+                const f = this.adminEditFooter;
+                await Promise.all([
+                    this._adminSave('footer.desc',      f.desc||''),
+                    this._adminSave('footer.email',     f.email||''),
+                    this._adminSave('footer.phone',     f.phone||''),
+                    this._adminSave('footer.jam',       f.jam||''),
+                    this._adminSave('footer.copyright', f.copyright||''),
+                ]);
+                this.siteSettings.footer = { ...f };
+                this._adminShowMsg('Footer disimpan ✓');
+            } catch { this._adminShowMsg('Gagal menyimpan'); }
+            this.adminSaving=false;
+        },
+
+        // ── Admin: Orders ─────────────────────────────
+        async adminLoadOrders() {
+            this.adminOrdersLoading=true;
+            try {
+                const params = new URLSearchParams({ action:'getAllOrders', adminEmail:this.currentUser.email });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                this.adminOrders = data.success ? data.data : [];
+            } catch { this.adminOrders=[]; }
+            this.adminOrdersLoading=false;
+        },
+        async adminUpdateOrderStatus(order, newStatus) {
+            if(!newStatus) return;
+            try {
+                const params = new URLSearchParams({ action:'updateOrderStatus', adminEmail:this.currentUser.email, rowIndex:order.rowIndex, status:newStatus });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) {
+                    order.status = newStatus;
+                    this._adminShowMsg(`Status ${order.orderId} → ${newStatus} ✓`);
+                }
+            } catch {}
+        },
+
+        // ── getCategoryIconSVG (icon preset) ──────────
+        getCategoryIconSVG(key) {
+            const icons = {
+                office365: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
+                adobe:     `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`,
+                windows:   `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
+                office:    `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
+                google:    `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>`,
+                coreldraw: `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,
+                project:   `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`,
+                visio:     `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,
+                other:     `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`,
+            };
+            return icons[key] || icons['other'];
         },
         async loadOrders() {
             if(!this.currentUser || this.ordersLoading) return;
