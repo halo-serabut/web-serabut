@@ -2889,7 +2889,7 @@ function serabutStore() {
         },
         adminFeaturedAdd(p) {
             if(this.adminFeaturedItems.length >= 10) { this._adminShowMsg('Maksimal 10 produk'); return; }
-            if(this.adminFeaturedItems.some(f => f.nama===p.nama && f.varian===p.varian)) return;
+            if(this.adminFeaturedItems.some(f => f.nama===p.nama && f.varian===p.varian && (f.masaAktif||'-')===(p.masaAktif||'-'))) return;
             this.adminFeaturedItems.push(p);
             this.adminFeaturedSearch = ''; this.adminFeaturedResults = [];
         },
