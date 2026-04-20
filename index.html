@@ -653,31 +653,20 @@
 
             <!-- ── Tab: Flash Sale ── -->
             <div x-show="adminTab==='flashsale'" class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
-                <h2 class="font-bold text-gray-900 mb-4">Flash Sale</h2>
-                <!-- Global settings: toggle + periode -->
-                <div class="flex flex-wrap items-center gap-4 mb-6 pb-5 border-b border-gray-100">
-                    <label class="flex items-center gap-3 cursor-pointer">
+                <div class="flex items-center justify-between mb-5">
+                    <h2 class="font-bold text-gray-900">Flash Sale</h2>
+                    <label class="flex items-center gap-2.5 cursor-pointer">
                         <div @click="adminEditFlash.aktif=!adminEditFlash.aktif"
                              :class="adminEditFlash.aktif?'bg-brand-500':'bg-gray-200'"
-                             class="w-11 h-6 rounded-full relative transition-colors flex-none">
-                            <div :class="adminEditFlash.aktif?'translate-x-5':'translate-x-1'" class="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform"></div>
+                             class="w-10 h-5 rounded-full relative transition-colors flex-none">
+                            <div :class="adminEditFlash.aktif?'translate-x-5':'translate-x-0.5'" class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"></div>
                         </div>
-                        <span class="text-sm font-semibold text-gray-700">Flash Sale Aktif</span>
+                        <span class="text-sm font-semibold text-gray-700">Aktif</span>
                     </label>
-                    <div class="flex gap-3 flex-1 min-w-0">
-                        <div class="flex-1">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Mulai</label>
-                            <input x-model="adminEditFlash.startDate" type="datetime-local" class="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-brand-400">
-                        </div>
-                        <div class="flex-1">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 block">Berakhir</label>
-                            <input x-model="adminEditFlash.deadline" type="datetime-local" class="w-full px-2.5 py-2 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-brand-400">
-                        </div>
-                    </div>
                 </div>
 
                 <!-- Header + Tambah -->
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center justify-between mb-3">
                     <h3 class="font-bold text-sm text-gray-700">Produk Flash Sale <span class="text-gray-400 font-normal">(<span x-text="adminFlashItems.length"></span> item)</span></h3>
                     <button x-show="adminFlashEditIdx===-1" @click="adminFlashAddItem()"
                             class="flex items-center gap-1.5 text-xs font-bold text-brand-600 px-3 py-1.5 rounded-lg border border-brand-200 bg-brand-50 hover:bg-brand-100 transition-all">
@@ -696,13 +685,24 @@
                 <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
                     <template x-for="(item, i) in adminFlashItems" :key="i">
                         <div :class="adminFlashEditIdx===i?'ring-2 ring-brand-400 bg-brand-50':'bg-gray-50 hover:bg-white'"
-                             class="border border-gray-200 rounded-xl p-4 relative transition-all">
+                             class="border border-gray-200 rounded-xl p-3.5 relative transition-all">
                             <span class="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full" x-text="item.diskon+'% OFF'"></span>
                             <div class="font-bold text-xs text-gray-800 pr-14 mb-0.5 leading-snug line-clamp-2" x-text="item.produk"></div>
-                            <div class="text-[11px] text-gray-500 mb-3 truncate" x-text="item.varian"></div>
+                            <div class="text-[11px] text-gray-500 mb-2 truncate" x-text="item.varian"></div>
                             <div class="text-sm font-black text-brand-600" x-text="'Rp '+Number(item.harga).toLocaleString('id-ID')"></div>
-                            <div class="text-[11px] text-gray-400 line-through" x-text="'Rp '+Number(item.hargaAsli).toLocaleString('id-ID')"></div>
-                            <div x-show="adminFlashEditIdx===-1" class="flex gap-1.5 mt-3">
+                            <div class="text-[11px] text-gray-400 line-through mb-2" x-text="'Rp '+Number(item.hargaAsli).toLocaleString('id-ID')"></div>
+                            <!-- Periode per-item -->
+                            <div class="border-t border-gray-200 pt-2 mt-1 text-[10px] text-gray-400 space-y-0.5">
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-3 h-3 flex-none text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    <span x-text="item.startDate ? formatDT(item.startDate) : '—'"></span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-3 h-3 flex-none text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span x-text="item.deadline ? formatDT(item.deadline) : '—'"></span>
+                                </div>
+                            </div>
+                            <div x-show="adminFlashEditIdx===-1" class="flex gap-1.5 mt-2.5">
                                 <button @click="adminFlashEditItem(i)" class="text-[11px] text-brand-600 font-bold px-2 py-1 rounded-lg bg-white border border-brand-200 hover:bg-brand-50 transition-all">Edit</button>
                                 <button @click="adminFlashDeleteItem(i)" class="text-[11px] text-red-500 font-bold px-2 py-1 rounded-lg bg-white border border-red-100 hover:bg-red-50 transition-all">Hapus</button>
                             </div>
@@ -756,17 +756,40 @@
                             <input x-model="adminFlashFormItem.diskon" type="number" readonly class="w-full px-2.5 py-2 border border-gray-100 rounded-lg text-sm bg-gray-50 text-gray-400">
                         </div>
                     </div>
+                    <!-- Periode per-item -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">
+                                Mulai <span class="text-red-400">*</span>
+                            </label>
+                            <input x-model="adminFlashFormItem.startDate" type="datetime-local"
+                                   :class="!adminFlashFormItem.startDate?'border-red-300':'border-gray-200'"
+                                   class="w-full px-2.5 py-2 border rounded-lg text-xs focus:outline-none focus:border-brand-400 bg-white">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">
+                                Berakhir <span class="text-red-400">*</span>
+                            </label>
+                            <input x-model="adminFlashFormItem.deadline" type="datetime-local"
+                                   :class="!adminFlashFormItem.deadline?'border-red-300':'border-gray-200'"
+                                   class="w-full px-2.5 py-2 border rounded-lg text-xs focus:outline-none focus:border-brand-400 bg-white">
+                        </div>
+                    </div>
                     <!-- Form actions -->
                     <div class="flex gap-2 pt-1">
-                        <button @click="adminFlashSaveItem()" class="gradient-card text-white font-bold px-4 py-2 rounded-xl text-sm active:scale-95 transition-all"
+                        <button @click="adminFlashSaveItem()"
+                                :disabled="!adminFlashFormItem.produk||!adminFlashFormItem.startDate||!adminFlashFormItem.deadline"
+                                class="gradient-card text-white font-bold px-4 py-2 rounded-xl text-sm active:scale-95 transition-all disabled:opacity-50"
                                 x-text="adminFlashEditIdx===-2?'Tambah ke Flash Sale':'Update Produk'"></button>
                         <button @click="adminFlashCancelEdit()" class="text-gray-500 font-semibold px-4 py-2 rounded-xl text-sm border border-gray-200 hover:bg-gray-50 transition-all">Batal</button>
                     </div>
                 </div>
 
                 <!-- Save all -->
-                <div class="flex items-center gap-3 pt-2 border-t border-gray-100">
-                    <button @click="adminSaveFlash()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all">
+                <div class="flex items-center gap-3 pt-3 border-t border-gray-100">
+                    <button @click="adminSaveFlash()" :disabled="adminSaving||adminFlashItems.length===0"
+                            class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all flex items-center gap-2">
+                        <svg x-show="adminSaving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                         <span x-show="!adminSaving">Simpan Flash Sale</span>
                         <span x-show="adminSaving">Menyimpan...</span>
                     </button>
@@ -1771,7 +1794,7 @@ function serabutStore() {
         adminEditFlash:    {},
         adminFlashItems:   [],
         adminFlashEditIdx: -1,
-        adminFlashFormItem: { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0 },
+        adminFlashFormItem: { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0, startDate:'', deadline:'' },
         adminFlashSearch:  '',
         adminFlashResults: [],
         adminFlashVariants:[],
@@ -2354,7 +2377,7 @@ function serabutStore() {
                 this.adminFlashFormItem.diskon = Math.round((1 - sale/asli) * 100);
         },
         adminFlashClearForm() {
-            this.adminFlashFormItem = { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0 };
+            this.adminFlashFormItem = { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0, startDate:'', deadline:'' };
             this.adminFlashSearch = '';
             this.adminFlashResults = [];
             this.adminFlashVariants = [];
@@ -2362,7 +2385,7 @@ function serabutStore() {
         },
         adminFlashAddItem() {
             this.adminFlashEditIdx = -2;
-            this.adminFlashFormItem = { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0 };
+            this.adminFlashFormItem = { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0, startDate:'', deadline:'' };
             this.adminFlashSearch = '';
             this.adminFlashResults = [];
             this.adminFlashVariants = [];
@@ -2394,15 +2417,25 @@ function serabutStore() {
         },
         adminFlashCancelEdit() {
             this.adminFlashEditIdx = -1;
-            this.adminFlashFormItem = { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0 };
+            this.adminFlashFormItem = { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0, startDate:'', deadline:'' };
             this.adminFlashSearch = '';
             this.adminFlashResults = [];
             this.adminFlashVariants = [];
             this.adminFlashVariantIdx = 0;
         },
+        formatDT(dt) {
+            if(!dt) return '—';
+            const [date, time] = dt.split('T');
+            if(!date) return dt;
+            const [y,m,d] = date.split('-');
+            const mo = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Ags','Sep','Okt','Nov','Des'];
+            return `${d} ${mo[parseInt(m)-1]} ${y}${time ? ', '+time.slice(0,5) : ''}`;
+        },
 
         // ── Admin: Flash Sale ─────────────────────────
         async adminSaveFlash() {
+            const missing = this.adminFlashItems.find(i => !i.startDate || !i.deadline);
+            if(missing) { this._adminShowMsg('⚠ Isi tanggal mulai & berakhir untuk semua produk'); return; }
             this.adminSaving=true;
             try {
                 const f = this.adminEditFlash;
@@ -2410,16 +2443,17 @@ function serabutStore() {
                 const first = items[0] || {};
                 await Promise.all([
                     this._adminSave('flashSale.aktif',     String(f.aktif)),
-                    this._adminSave('flashSale.startDate', f.startDate||''),
-                    this._adminSave('flashSale.deadline',  f.deadline||''),
                     this._adminSave('flashSale.items',     JSON.stringify(items)),
+                    this._adminSave('flashSale.deadline',  first.deadline||''),
+                    this._adminSave('flashSale.startDate', first.startDate||''),
                     this._adminSave('flashSale.produk',    first.produk||''),
                     this._adminSave('flashSale.varian',    first.varian||''),
                     this._adminSave('flashSale.harga',     String(first.harga||0)),
                     this._adminSave('flashSale.hargaAsli', String(first.hargaAsli||0)),
                     this._adminSave('flashSale.diskon',    String(first.diskon||0)),
                 ]);
-                this.flashSale = { ...this.flashSale, ...f, items,
+                this.flashSale = { ...this.flashSale, aktif: f.aktif, items,
+                    deadline: first.deadline||'', startDate: first.startDate||'',
                     produk: first.produk||'', varian: first.varian||'',
                     harga: Number(first.harga)||0, hargaAsli: Number(first.hargaAsli)||0, diskon: Number(first.diskon)||0 };
                 this._adminShowMsg('Flash Sale disimpan ✓');
