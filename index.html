@@ -1018,7 +1018,7 @@
      FOOTER
 ══════════════════════════════════════════════════════ -->
 <footer class="hidden md:block bg-gray-900 text-white">
-    <div class="max-w-6xl mx-auto px-5 py-8 md:py-12">
+    <div class="max-w-6xl mx-auto px-5 py-5 md:py-6">
 
         <!-- Mobile: compact stacked layout -->
         <div class="md:hidden">
@@ -1059,25 +1059,25 @@
 
         <!-- Desktop: full layout -->
         <div class="hidden md:block">
-            <div class="flex flex-row items-start justify-between gap-10">
+            <div class="flex flex-row items-center justify-between gap-10">
                 <div class="max-w-xs">
-                    <div class="flex items-center gap-2.5 mb-3">
-                        <img src="logo.png" alt="Serabut" class="w-8 h-8 rounded-lg">
-                        <span class="font-black text-base tracking-tight">Serabut Store</span>
+                    <div class="flex items-center gap-2.5 mb-2">
+                        <img src="logo.png" alt="Serabut" class="w-7 h-7 rounded-lg">
+                        <span class="font-black text-sm tracking-tight">Serabut Store</span>
                     </div>
-                    <p class="text-gray-400 text-sm leading-relaxed" x-text="siteSettings.footer.desc"></p>
+                    <p class="text-gray-500 text-xs leading-relaxed" x-text="siteSettings.footer.desc"></p>
                 </div>
                 <div>
-                    <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Layanan</div>
-                    <div class="space-y-2 text-sm text-gray-400">
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Layanan</div>
+                    <div class="space-y-1 text-xs text-gray-400">
                         <div><a href="#" @click.prevent="setPage('catalog')" class="hover:text-white transition-colors">Semua Produk</a></div>
                         <div><a href="#" @click.prevent="setPage('status')" class="hover:text-white transition-colors">Cek Status Akun</a></div>
                         <div><a href="#" @click.prevent="setPage('panduan')" class="hover:text-white transition-colors">Panduan Instalasi</a></div>
                     </div>
                 </div>
                 <div>
-                    <div class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Kontak</div>
-                    <div class="space-y-2 text-sm text-gray-400">
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Kontak</div>
+                    <div class="space-y-1 text-xs text-gray-400">
                         <div class="flex items-center gap-2">
                             <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             <span x-text="siteSettings.footer.email"></span>
@@ -1093,7 +1093,7 @@
                     </div>
                 </div>
             </div>
-            <div class="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
+            <div class="border-t border-gray-800 mt-5 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-600">
                 <span x-text="siteSettings.footer.copyright"></span>
                 <div class="flex gap-5">
                     <a href="#" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</a>
