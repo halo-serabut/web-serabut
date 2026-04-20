@@ -8,6 +8,13 @@
     <meta name="theme-color" content="#DC2626">
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
+    <link rel="manifest" href="manifest.json">
+
+    <!-- PWA / Add to Home Screen -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Serabut Store">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -1271,49 +1278,90 @@
                     </div>
                 </div>
                 <div x-show="adminOrdersLoading" class="text-center py-10 text-gray-400 text-sm">Memuat order...</div>
-                <div x-show="!adminOrdersLoading" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Order ID</th>
-                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Pembeli</th>
-                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Produk</th>
-                                    <th class="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Harga</th>
-                                    <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Ubah Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="o in adminFilteredOrders" :key="o.rowIndex">
-                                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                        <td class="px-4 py-3 font-mono text-xs text-gray-600" x-text="o.orderId"></td>
-                                        <td class="px-4 py-3">
-                                            <div class="font-medium text-gray-800 text-xs" x-text="o.nama"></div>
-                                            <div class="text-gray-400 text-[11px]" x-text="formatOrderDate(o.tanggal)"></div>
-                                        </td>
-                                        <td class="px-4 py-3 text-xs text-gray-600 max-w-[140px] truncate" x-text="o.produk + (o.varian&&o.varian!=='-'?' · '+o.varian:'')"></td>
-                                        <td class="px-4 py-3 text-right font-semibold text-gray-800 text-xs" x-text="formatPrice(o.harga)"></td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span :class="getStatusBadge(o.status)" class="text-xs font-semibold px-2 py-0.5 rounded-full" x-text="o.status"></span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <select @change="adminUpdateOrderStatus(o, $event.target.value); $event.target.value=o.status"
-                                                    class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-brand-400 bg-white">
-                                                <option value="">Ubah...</option>
-                                                <template x-for="st in ['Pending','Proses','Selesai','Dibatalkan']" :key="st">
-                                                    <option :value="st" x-text="st"></option>
-                                                </template>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="adminFilteredOrders.length===0">
-                                    <td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Tidak ada order</td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+                <div x-show="!adminOrdersLoading">
+
+                    <!-- Mobile: card list -->
+                    <div class="md:hidden space-y-3">
+                        <template x-for="o in adminFilteredOrders" :key="o.rowIndex">
+                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                                <!-- Row 1: Order ID + Status badge -->
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-mono text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded-lg" x-text="o.orderId"></span>
+                                    <span :class="getStatusBadge(o.status)" class="text-xs font-semibold px-2.5 py-0.5 rounded-full" x-text="o.status"></span>
+                                </div>
+                                <!-- Row 2: Nama + tanggal -->
+                                <div class="flex items-center gap-2 mb-2.5">
+                                    <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 text-xs font-bold flex items-center justify-center flex-shrink-0" x-text="o.nama?.charAt(0)?.toUpperCase()||'?'"></div>
+                                    <div>
+                                        <div class="font-semibold text-gray-800 text-sm" x-text="o.nama"></div>
+                                        <div class="text-gray-400 text-xs" x-text="formatOrderDate(o.tanggal)"></div>
+                                    </div>
+                                </div>
+                                <!-- Row 3: Produk + Harga -->
+                                <div class="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2 mb-3">
+                                    <div class="text-xs text-gray-600 truncate max-w-[60%]" x-text="o.produk + (o.varian&&o.varian!=='-'?' · '+o.varian:'')"></div>
+                                    <div class="font-bold text-brand-600 text-sm flex-shrink-0" x-text="formatPrice(o.harga)"></div>
+                                </div>
+                                <!-- Row 4: Ubah status -->
+                                <select @change="adminUpdateOrderStatus(o, $event.target.value); $event.target.value=o.status"
+                                        class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-brand-400 bg-white text-gray-700">
+                                    <option value="">Ubah Status...</option>
+                                    <template x-for="st in ['Pending','Proses','Selesai','Dibatalkan']" :key="st">
+                                        <option :value="st" x-text="st"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </template>
+                        <div x-show="adminFilteredOrders.length===0" class="text-center py-10 text-gray-400 text-sm">Tidak ada order</div>
                     </div>
+
+                    <!-- Desktop: tabel -->
+                    <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Order ID</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Pembeli</th>
+                                        <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Produk</th>
+                                        <th class="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Harga</th>
+                                        <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Ubah Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="o in adminFilteredOrders" :key="o.rowIndex">
+                                        <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                            <td class="px-4 py-3 font-mono text-xs text-gray-600" x-text="o.orderId"></td>
+                                            <td class="px-4 py-3">
+                                                <div class="font-medium text-gray-800 text-xs" x-text="o.nama"></div>
+                                                <div class="text-gray-400 text-[11px]" x-text="formatOrderDate(o.tanggal)"></div>
+                                            </td>
+                                            <td class="px-4 py-3 text-xs text-gray-600 max-w-[140px] truncate" x-text="o.produk + (o.varian&&o.varian!=='-'?' · '+o.varian:'')"></td>
+                                            <td class="px-4 py-3 text-right font-semibold text-gray-800 text-xs" x-text="formatPrice(o.harga)"></td>
+                                            <td class="px-4 py-3 text-center">
+                                                <span :class="getStatusBadge(o.status)" class="text-xs font-semibold px-2 py-0.5 rounded-full" x-text="o.status"></span>
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <select @change="adminUpdateOrderStatus(o, $event.target.value); $event.target.value=o.status"
+                                                        class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-brand-400 bg-white">
+                                                    <option value="">Ubah...</option>
+                                                    <template x-for="st in ['Pending','Proses','Selesai','Dibatalkan']" :key="st">
+                                                        <option :value="st" x-text="st"></option>
+                                                    </template>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <tr x-show="adminFilteredOrders.length===0">
+                                        <td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Tidak ada order</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -1899,6 +1947,11 @@ function serabutStore() {
         GAS_URL:   'https://script.google.com/macros/s/AKfycbzYsltjVoiuVCFjGk1dExX4QjPp77lRwIwSAEznir-mbS8KTGWCY-vzmmEQKCbbVCdK9w/exec',
         WA_NUMBER: '8881500555',
 
+        // PWA Install
+        pwaPopup:       false,
+        pwaIsIos:       false,
+        pwaPromptEvent: null,
+
         // CS Floating Button
         csPopup:    false,
         csHidden:   true,
@@ -2115,6 +2168,32 @@ function serabutStore() {
 
         // ── Init ──────────────────────────────────────
         async init() {
+            // ── PWA Service Worker ─────────────────────────
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            }
+
+            // ── PWA Install Prompt ─────────────────────────
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true;
+            const dismissed = localStorage.getItem('pwa_dismissed');
+            const dismissedRecently = dismissed && (Date.now() - Number(dismissed)) < 7 * 24 * 60 * 60 * 1000;
+
+            if (!isStandalone && !dismissedRecently) {
+                const ua = navigator.userAgent.toLowerCase();
+                this.pwaIsIos = /iphone|ipad|ipod/.test(ua) && !window.MSStream;
+
+                if (this.pwaIsIos) {
+                    setTimeout(() => { this.pwaPopup = true; }, 3000);
+                } else {
+                    window.addEventListener('beforeinstallprompt', e => {
+                        e.preventDefault();
+                        this.pwaPromptEvent = e;
+                        setTimeout(() => { this.pwaPopup = true; }, 3000);
+                    });
+                }
+            }
+
             const saved = localStorage.getItem('serabutUser');
             if(saved) { try{ this.currentUser=JSON.parse(saved); }catch{} }
             // Selalu refresh role dari GAS agar menu Admin selalu akurat
@@ -3083,6 +3162,20 @@ function serabutStore() {
             } catch { this.resetPwError='Gagal terhubung ke server'; }
             this.resetPwLoading=false;
         },
+        async pwaInstall() {
+            if (this.pwaPromptEvent) {
+                this.pwaPromptEvent.prompt();
+                const { outcome } = await this.pwaPromptEvent.userChoice;
+                if (outcome === 'accepted') localStorage.setItem('pwa_dismissed', Date.now());
+                this.pwaPromptEvent = null;
+            }
+            this.pwaPopup = false;
+        },
+        pwaDismiss() {
+            localStorage.setItem('pwa_dismissed', Date.now());
+            this.pwaPopup = false;
+        },
+
         getStatusIcon(s)    { return {Aktif:'✅',Expired:'⏰',Suspended:'🚫',Pending:'⏳'}[s]||'❓'; },
         getStatusBg(s)      { return {Aktif:'bg-emerald-100',Expired:'bg-orange-100',Suspended:'bg-red-100',Pending:'bg-yellow-100'}[s]||'bg-gray-100'; },
         getStatusBadge(s)   { return {Aktif:'bg-emerald-100 text-emerald-700',Expired:'bg-orange-100 text-orange-700',Suspended:'bg-red-100 text-red-700',Pending:'bg-yellow-100 text-yellow-700'}[s]||'bg-gray-100 text-gray-600'; },
@@ -3098,5 +3191,121 @@ function serabutStore() {
     };
 }
 </script>
+
+<!-- ══════════════════════════════════════════════════════
+     PWA INSTALL POPUP
+══════════════════════════════════════════════════════ -->
+<div x-show="pwaPopup"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0 translate-y-8"
+     x-transition:enter-end="opacity-100 translate-y-0"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100 translate-y-0"
+     x-transition:leave-end="opacity-0 translate-y-8"
+     class="fixed inset-0 z-[9999] flex items-end justify-center"
+     style="display:none">
+
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="pwaDismiss()"></div>
+
+    <!-- Sheet -->
+    <div class="relative w-full max-w-lg bg-white rounded-t-3xl shadow-2xl pb-safe overflow-hidden">
+
+        <!-- Pull handle -->
+        <div class="flex justify-center pt-3 pb-1">
+            <div class="w-10 h-1 bg-gray-200 rounded-full"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="px-6 pt-2 pb-6">
+
+            <!-- App info row -->
+            <div class="flex items-center gap-4 mb-5">
+                <img src="logo.png" alt="Serabut Store" class="w-16 h-16 rounded-2xl shadow-md border border-gray-100">
+                <div>
+                    <div class="font-bold text-gray-900 text-lg leading-tight">Serabut Store</div>
+                    <div class="text-sm text-gray-500 mt-0.5">serabut.id</div>
+                    <div class="flex items-center gap-1 mt-1">
+                        <svg class="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <span class="text-xs text-gray-400 ml-0.5">5.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Headline -->
+            <div class="mb-2">
+                <h3 class="text-gray-900 font-bold text-base">Pasang di HP kamu!</h3>
+                <p class="text-sm text-gray-500 mt-0.5">Akses lebih cepat, tampilan full-screen, tanpa perlu buka browser.</p>
+            </div>
+
+            <!-- Benefit chips -->
+            <div class="flex flex-wrap gap-2 mb-5">
+                <span class="inline-flex items-center gap-1.5 bg-red-50 text-brand-600 text-xs font-medium px-2.5 py-1 rounded-full">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Buka instan
+                </span>
+                <span class="inline-flex items-center gap-1.5 bg-red-50 text-brand-600 text-xs font-medium px-2.5 py-1 rounded-full">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    Full-screen
+                </span>
+                <span class="inline-flex items-center gap-1.5 bg-red-50 text-brand-600 text-xs font-medium px-2.5 py-1 rounded-full">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Gratis, tanpa Play Store
+                </span>
+            </div>
+
+            <!-- Android: Install button -->
+            <template x-if="!pwaIsIos">
+                <div class="flex gap-3">
+                    <button @click="pwaDismiss()" class="flex-1 py-3 rounded-2xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors">
+                        Nanti
+                    </button>
+                    <button @click="pwaInstall()" class="flex-[2] py-3 rounded-2xl bg-brand-500 text-white text-sm font-bold hover:bg-brand-600 active:scale-95 transition-all shadow-lg shadow-red-200">
+                        Install Sekarang
+                    </button>
+                </div>
+            </template>
+
+            <!-- iOS: Step-by-step instructions -->
+            <template x-if="pwaIsIos">
+                <div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Cara install di iPhone / iPad</p>
+                    <div class="space-y-3 mb-5">
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
+                            <div class="text-sm text-gray-700">
+                                Ketuk ikon <span class="inline-flex items-center gap-0.5 font-semibold text-blue-600">
+                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                    Bagikan
+                                </span> di toolbar bawah Safari
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</div>
+                            <div class="text-sm text-gray-700">
+                                Scroll ke bawah, pilih <span class="font-semibold text-gray-900">"Tambahkan ke Layar Utama"</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="w-7 h-7 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</div>
+                            <div class="text-sm text-gray-700">
+                                Ketuk <span class="font-semibold text-gray-900">"Tambahkan"</span> — selesai!
+                            </div>
+                        </div>
+                    </div>
+                    <button @click="pwaDismiss()" class="w-full py-3 rounded-2xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition-colors">
+                        Nanti saja
+                    </button>
+                </div>
+            </template>
+
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
