@@ -2043,8 +2043,8 @@ function serabutStore() {
 
         // Site Settings (dari GAS Settings tab)
         siteSettings: {
-            hero:   { tagline1:'Software Original,', tagline2:'Harga Terjangkau', subtext:'Microsoft Office 365, Adobe Creative Cloud, Windows & lebih banyak. Bergaransi resmi, proses kilat, hemat hingga 70%.', btn1:'Lihat Semua Produk →', btn2:'Cek Status Akun' },
-            footer: { desc:'Software original terpercaya. Microsoft, Adobe, Windows & lebih banyak dengan harga terjangkau.', email:'halo@serabut.id', phone:'0888-150-0555', jam:'08.00 – 22.00 WIB', copyright:'© 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.' },
+            hero:   { tagline1:'', tagline2:'', subtext:'', btn1:'Lihat Semua Produk →', btn2:'Cek Status Akun' },
+            footer: { desc:'', email:'', phone:'', jam:'', copyright:'' },
             benefits: {},
             featured: [],
         },
@@ -2168,6 +2168,16 @@ function serabutStore() {
 
         // ── Init ──────────────────────────────────────
         async init() {
+            // ── Load site settings dari cache dulu (instant) ──
+            try {
+                const cached = localStorage.getItem('serabutSettings');
+                if (cached) {
+                    const c = JSON.parse(cached);
+                    if (c.hero)   this.siteSettings.hero   = { ...this.siteSettings.hero,   ...c.hero };
+                    if (c.footer) this.siteSettings.footer = { ...this.siteSettings.footer, ...c.footer };
+                }
+            } catch {}
+
             // ── PWA Service Worker ─────────────────────────
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/sw.js').catch(() => {});
@@ -2299,6 +2309,14 @@ function serabutStore() {
                     }
                 });
                 if(Object.keys(benefits).length) this.siteSettings.benefits = benefits;
+
+                // Simpan hero & footer ke localStorage buat load instant di visit berikutnya
+                try {
+                    localStorage.setItem('serabutSettings', JSON.stringify({
+                        hero:   this.siteSettings.hero,
+                        footer: this.siteSettings.footer,
+                    }));
+                } catch {}
 
                 this.settingsLoaded = true;
             } catch(e) {
