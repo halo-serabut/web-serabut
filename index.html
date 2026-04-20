@@ -33,6 +33,9 @@
         .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(220,38,38,.12); }
         .card-hover:active { transform: translateY(-1px); }
         .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), .75rem); }
+        @supports (-webkit-touch-callout: none) {
+            input, select, textarea { font-size: 16px; }
+        }
         .page-enter { animation: pageIn .22s cubic-bezier(.4,0,.2,1); }
         @keyframes pageIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         .skeleton { background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
@@ -730,7 +733,7 @@
                     </label>
                 </div>
                 <!-- Campaign schedule -->
-                <div class="bg-gray-50 rounded-xl p-3 mb-5 grid grid-cols-2 gap-2">
+                <div class="bg-gray-50 rounded-xl p-3 mb-5 grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                         <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Mulai Campaign <span class="text-red-400">*</span></label>
                         <input x-model="adminEditFlash.startDate" type="datetime-local"
@@ -1008,45 +1011,71 @@
                     </div>
                 </div>
 
-                <!-- Tabel produk -->
+                <!-- Produk: loading -->
                 <div x-show="adminProductsLoading" class="text-center py-10 text-gray-400 text-sm">Memuat produk...</div>
-                <div x-show="!adminProductsLoading" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-sm">
-                            <thead class="bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Produk</th>
-                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Varian</th>
-                                    <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Masa</th>
-                                    <th class="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Harga</th>
-                                    <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
+
+                <!-- Produk: Mobile cards (hidden di md+) -->
+                <div x-show="!adminProductsLoading" class="md:hidden space-y-2">
+                    <template x-for="(p, pi) in adminProducts" :key="p.rowIndex">
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-3.5">
+                            <div class="flex items-start justify-between gap-2 mb-2">
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-semibold text-gray-800 text-sm leading-snug" x-text="p.nama"></div>
+                                    <div class="text-xs text-gray-400 mt-0.5">
+                                        <span x-text="p.varian"></span>
+                                        <span x-show="p.masaAktif && p.masaAktif!=='-'"> · <span x-text="p.masaAktif"></span></span>
+                                    </div>
+                                </div>
+                                <span :class="p.aktif?'bg-emerald-100 text-emerald-700':'bg-gray-100 text-gray-500'" class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-none" x-text="p.aktif?'Aktif':'Nonaktif'"></span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="font-black text-brand-500 text-sm" x-text="formatPrice(p.harga)"></div>
+                                <div class="flex gap-3">
+                                    <button @click="adminStartEditProduct(p)" class="text-xs text-brand-500 font-bold">Edit</button>
+                                    <button @click="adminDeleteProduct(p)" class="text-xs text-red-400 font-bold">Hapus</button>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <div x-show="adminProducts.length===0" class="text-center py-8 text-gray-400 text-sm">Belum ada produk</div>
+                </div>
+
+                <!-- Produk: Desktop table (hidden di mobile) -->
+                <div x-show="!adminProductsLoading" class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Produk</th>
+                                <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Varian</th>
+                                <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Masa</th>
+                                <th class="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Harga</th>
+                                <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="(p, pi) in adminProducts" :key="p.rowIndex">
+                                <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                                    <td class="px-4 py-3 font-medium text-gray-800 max-w-[180px] truncate" x-text="p.nama"></td>
+                                    <td class="px-4 py-3 text-gray-500 text-xs" x-text="p.varian"></td>
+                                    <td class="px-4 py-3 text-gray-500 text-xs" x-text="p.masaAktif"></td>
+                                    <td class="px-4 py-3 text-right font-semibold text-gray-800" x-text="formatPrice(p.harga)"></td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span :class="p.aktif?'bg-emerald-100 text-emerald-700':'bg-gray-100 text-gray-500'" class="text-xs font-semibold px-2 py-0.5 rounded-full" x-text="p.aktif?'Aktif':'Nonaktif'"></span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button @click="adminStartEditProduct(p)" class="text-xs text-brand-500 font-bold hover:underline">Edit</button>
+                                            <button @click="adminDeleteProduct(p)" class="text-xs text-red-400 font-bold hover:underline">Hapus</button>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                <template x-for="(p, pi) in adminProducts" :key="p.rowIndex">
-                                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                                        <td class="px-4 py-3 font-medium text-gray-800 max-w-[180px] truncate" x-text="p.nama"></td>
-                                        <td class="px-4 py-3 text-gray-500 text-xs" x-text="p.varian"></td>
-                                        <td class="px-4 py-3 text-gray-500 text-xs" x-text="p.masaAktif"></td>
-                                        <td class="px-4 py-3 text-right font-semibold text-gray-800" x-text="formatPrice(p.harga)"></td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span :class="p.aktif?'bg-emerald-100 text-emerald-700':'bg-gray-100 text-gray-500'" class="text-xs font-semibold px-2 py-0.5 rounded-full" x-text="p.aktif?'Aktif':'Nonaktif'"></span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <div class="flex items-center justify-center gap-2">
-                                                <button @click="adminStartEditProduct(p)" class="text-xs text-brand-500 font-bold hover:underline">Edit</button>
-                                                <button @click="adminDeleteProduct(p)" class="text-xs text-red-400 font-bold hover:underline">Hapus</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </template>
-                                <tr x-show="adminProducts.length===0">
-                                    <td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Belum ada produk</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                            </template>
+                            <tr x-show="adminProducts.length===0">
+                                <td colspan="6" class="px-4 py-8 text-center text-gray-400 text-sm">Belum ada produk</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -1384,7 +1413,7 @@
      MOBILE BOTTOM NAV
 ══════════════════════════════════════════════════════ -->
 <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
-    <div :class="currentUser?.role?.toLowerCase()==='admin' ? 'grid-cols-6' : 'grid-cols-5'" class="grid h-16">
+    <div class="grid grid-cols-5 h-16">
         <template x-for="item in navItems" :key="item.id">
             <button @click="setPage(item.id)" :class="activePage===item.id?'text-brand-500':'text-gray-400'" class="flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
                 <div x-show="activePage===item.id" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
@@ -1400,8 +1429,9 @@
                 <span class="text-[10px] font-semibold leading-none">Admin</span>
             </button>
         </template>
-        <!-- Akun tab -->
-        <button @click="currentUser?setPage('profile'):openAuth('login')"
+        <!-- Akun tab — hidden jika admin (akses profil via avatar kanan atas) -->
+        <button x-show="currentUser?.role?.toLowerCase()!=='admin'"
+            @click="currentUser?setPage('profile'):openAuth('login')"
             :class="activePage==='profile'?'text-brand-500':'text-gray-400'"
             class="flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
             <div x-show="activePage==='profile'" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
