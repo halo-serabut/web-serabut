@@ -789,55 +789,43 @@
                         <p class="text-xs mt-1">Klik "Campaign Baru" untuk membuat flash sale pertama</p>
                     </div>
 
-                    <!-- Campaign cards — 1 col mobile, 2 col desktop -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Campaign cards — 1 col mobile, 3 col desktop -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <template x-for="(camp, ci) in adminFlashCampaigns.filter(c=>!adminCampSearch||c.nama.toLowerCase().includes(adminCampSearch.toLowerCase()))" :key="camp.id || ci">
                             <div class="rounded-2xl border overflow-hidden"
                                  :class="camp.aktif ? 'border-brand-200' : 'border-gray-200'">
-                                <!-- Color bar -->
-                                <div class="h-1.5" :class="camp.aktif ? 'bg-brand-500' : 'bg-gray-200'"></div>
-                                <div class="p-4 space-y-3" :class="camp.aktif ? 'bg-red-50/30' : 'bg-white'">
-                                    <!-- Row 1: toggle + nama + status badge -->
-                                    <div class="flex items-center gap-3">
+                                <div class="h-1" :class="camp.aktif ? 'bg-brand-500' : 'bg-gray-200'"></div>
+                                <div class="p-3 space-y-2.5" :class="camp.aktif ? 'bg-red-50/30' : 'bg-white'">
+                                    <!-- Toggle + nama + badge -->
+                                    <div class="flex items-center gap-2">
                                         <button @click="camp.aktif=!camp.aktif; adminSaveFlashCampaigns()" class="flex-none">
-                                            <div class="relative w-10 h-6 rounded-full transition-colors duration-300"
+                                            <div class="relative w-9 h-5 rounded-full transition-colors duration-300"
                                                  :class="camp.aktif ? 'bg-brand-500' : 'bg-gray-300'">
-                                                <div class="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-300"
-                                                     :class="camp.aktif ? 'left-5' : 'left-1'"></div>
+                                                <div class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-300"
+                                                     :class="camp.aktif ? 'left-4' : 'left-0.5'"></div>
                                             </div>
                                         </button>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="font-bold text-gray-900 text-sm leading-snug truncate" x-text="camp.nama || 'Campaign tanpa nama'"></p>
-                                        </div>
-                                        <span class="flex-none text-[10px] font-black px-2 py-0.5 rounded-full"
+                                        <p class="flex-1 font-bold text-gray-900 text-xs leading-snug truncate" x-text="camp.nama || 'Campaign tanpa nama'"></p>
+                                        <span class="flex-none text-[9px] font-black px-1.5 py-0.5 rounded-full"
                                               :class="camp.aktif ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-500'"
                                               x-text="camp.aktif ? '● Aktif' : '○ Off'"></span>
                                     </div>
-                                    <!-- Row 2: tanggal -->
-                                    <div class="bg-white rounded-xl px-3 py-2.5 border border-gray-100 space-y-1">
-                                        <div class="flex items-center justify-between text-xs">
-                                            <span class="text-gray-400 font-medium w-10">Mulai</span>
-                                            <span class="font-semibold text-gray-700" x-text="formatDT(camp.startDate) || '—'"></span>
+                                    <!-- Tanggal compact -->
+                                    <div class="rounded-lg bg-white border border-gray-100 px-2.5 py-2 text-xs space-y-1">
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-400">Mulai</span>
+                                            <span class="font-semibold text-gray-700 text-right" x-text="formatDT(camp.startDate)||'—'"></span>
                                         </div>
-                                        <div class="h-px bg-gray-100"></div>
-                                        <div class="flex items-center justify-between text-xs">
-                                            <span class="text-gray-400 font-medium w-10">Akhir</span>
-                                            <span class="font-semibold text-gray-700" x-text="formatDT(camp.endDate) || '—'"></span>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-400">Akhir</span>
+                                            <span class="font-semibold text-gray-700 text-right" x-text="formatDT(camp.endDate)||'—'"></span>
                                         </div>
                                     </div>
-                                    <!-- Row 3: jumlah produk + tombol aksi -->
-                                    <div class="flex items-center gap-2">
-                                        <span class="flex-1 text-xs text-gray-400">
-                                            <span class="font-bold text-gray-700" x-text="camp.items?.length||0"></span> produk
-                                        </span>
-                                        <button @click="adminFlashEditCampaign(ci)"
-                                                class="flex-1 text-xs font-bold text-brand-600 py-2 rounded-xl bg-brand-50 hover:bg-brand-100 active:scale-95 transition-all text-center">
-                                            Edit
-                                        </button>
-                                        <button @click="adminFlashDeleteCampaign(ci)"
-                                                class="flex-none text-xs font-bold text-red-500 py-2 px-3 rounded-xl bg-red-50 hover:bg-red-100 active:scale-95 transition-all">
-                                            Hapus
-                                        </button>
+                                    <!-- Aksi -->
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="flex-1 text-[10px] text-gray-400"><span class="font-bold text-gray-600" x-text="camp.items?.length||0"></span> produk</span>
+                                        <button @click="adminFlashEditCampaign(ci)" class="text-[11px] font-bold text-brand-600 px-3 py-1.5 rounded-lg bg-brand-50 hover:bg-brand-100 active:scale-95 transition-all">Edit</button>
+                                        <button @click="adminFlashDeleteCampaign(ci)" class="text-[11px] font-bold text-red-500 px-2.5 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 active:scale-95 transition-all">Hapus</button>
                                     </div>
                                 </div>
                             </div>
@@ -988,9 +976,9 @@
             </div>
 
             <!-- ── Tab: Hero ── -->
-            <div x-show="adminTab==='hero'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm md:max-w-2xl">
+            <div x-show="adminTab==='hero'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-6 md:shadow-sm">
                 <h2 class="font-bold text-gray-900 mb-4">Hero Banner</h2>
-                <div class="space-y-4 max-w-lg">
+                <div class="space-y-4 md:max-w-xl">
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Tagline Baris 1</label>
                         <input x-model="adminEditHero.tagline1" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
@@ -1443,9 +1431,9 @@
             </div>
 
             <!-- ── Tab: Footer ── -->
-            <div x-show="adminTab==='footer'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm md:max-w-2xl">
+            <div x-show="adminTab==='footer'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-6 md:shadow-sm">
                 <h2 class="font-bold text-gray-900 mb-4">Footer</h2>
-                <div class="space-y-4 max-w-lg">
+                <div class="space-y-4 md:max-w-xl">
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Deskripsi</label>
                         <textarea x-model="adminEditFooter.desc" rows="2" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 resize-none"></textarea>
