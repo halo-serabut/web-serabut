@@ -81,9 +81,18 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 - [2026-04-20] Selesai: Sticky search bar di navbar — muncul saat scroll > 140px (desktop) / 100px (mobile), bind ke searchQuery
 - [2026-04-20] Selesai: Tab Admin "Populer" — CRUD curated featured products (max 10), search & add, drag-reorder, simpan ke Settings GAS sebagai `featured.items` JSON
 - [2026-04-20] Selesai: Fix adminFeaturedAdd duplicate check — tambah masaAktif ke kondisi agar produk sama nama+varian tapi beda masaAktif bisa di-add
+- [2026-04-21] Selesai: Campaign scorecard admin mobile — redesign jadi 3 baris terpisah (toggle+nama+badge, tanggal card, aksi)
+- [2026-04-21] Selesai: Google SSO aman — tombol hidden via x-if jika GOOGLE_CLIENT_ID kosong; script GSI load dinamis di init() saja; googleSignIn() pakai this.GOOGLE_CLIENT_ID
+- [2026-04-21] Selesai: Flash Sale desktop scroll — max-h-[264px] overflow-y-auto, max 3 item visible
+- [2026-04-21] Selesai: Cache produk stale-while-revalidate — localStorage TTL 5 menit, tampil instan dari cache lalu refresh background
+- [2026-04-21] Selesai: Harga flash sale di konfirmasi pesanan — Total modal pakai harga flash sale + badge diskon + harga asli dicoret
+- [2026-04-22] Selesai: Campaign warna merah (hapus emerald), grid 2→3 kolom desktop, search campaign by nama
+- [2026-04-22] Selesai: Catalog x-for key fix — ganti linkProduk+varian+harga → nama|varian|masaAktif (root cause: duplicate key Alpine → produk tidak render)
+- [2026-04-22] Selesai: Hero & Footer admin full-width field, Flash Sale campaign card 3-col compact di desktop
 
 ## Current Focus
-- **Semua fitur admin sudah lengkap** — Benefits CRUD, Produk CRUD, Tab Populer, Flash Sale, Hero, Footer, Kategori, Panduan, Semua Order
+- **Semua fitur admin sudah lengkap** — Benefits CRUD, Produk CRUD, Tab Populer, Flash Sale (multi-campaign), Hero, Footer, Kategori, Panduan, Semua Order
+- **Google SSO:** Siap diaktifkan — isi `GOOGLE_CLIENT_ID: 'xxxx.apps.googleusercontent.com'` di Alpine config; buat di Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID → authorized origin: `https://serabut.id`
 - **Fonnte note:** Jika notif WA group berhenti, jalankan `testWAGroupAfterSync()` di GAS untuk re-sync device Fonnte
 - **GAS deployment:** Setiap edit `Code.gs` perlu re-deploy manual di script.google.com (New Deployment)
 - **Column Role di Users-web**: harus di kolom **I** (setelah OTP Expiry di H) — index 8 (0-indexed)
