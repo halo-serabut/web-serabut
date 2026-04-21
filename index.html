@@ -1087,9 +1087,19 @@
                                         <span x-show="p.masaAktif&&p.masaAktif!=='-'" x-text="' · '+p.masaAktif"></span>
                                     </div>
                                 </div>
-                                <div class="flex-none text-right">
+                                <div class="flex-none text-right flex flex-col items-end gap-1.5">
                                     <div class="font-black text-brand-500 text-sm" x-text="formatPrice(p.harga)"></div>
-                                    <span :class="p.aktif?'bg-emerald-100 text-emerald-700':'bg-gray-100 text-gray-500'" class="text-[10px] font-bold px-2 py-0.5 rounded-full" x-text="p.aktif?'Aktif':'Nonaktif'"></span>
+                                    <!-- Toggle aktif/nonaktif -->
+                                    <button @click.stop="adminToggleAktif(p)"
+                                            :title="p.aktif ? 'Klik untuk nonaktifkan' : 'Klik untuk aktifkan'"
+                                            class="flex items-center gap-1.5 group">
+                                        <span class="text-[10px] font-semibold" :class="p.aktif?'text-emerald-600':'text-gray-400'" x-text="p.aktif?'Aktif':'Nonaktif'"></span>
+                                        <div class="relative w-8 h-4 rounded-full transition-colors duration-200 flex-none"
+                                             :class="p.aktif?'bg-emerald-500':'bg-gray-300'">
+                                            <div class="absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-all duration-200"
+                                                 :class="p.aktif?'left-[18px]':'left-0.5'"></div>
+                                        </div>
+                                    </button>
                                 </div>
                             </div>
                             <!-- Baris 2: stok inline + tombol aksi -->
@@ -2998,6 +3008,17 @@ function serabutStore() {
                 } else { this._adminShowMsg(data.error||'Gagal menyimpan'); }
             } catch { this._adminShowMsg('Gagal terhubung'); }
             this.adminSaving=false;
+        },
+        async adminToggleAktif(p) {
+            const newAktif = !p.aktif;
+            p.aktif = newAktif;
+            try {
+                const params = new URLSearchParams({ action:'updateProductAktif', adminEmail:this.currentUser.email, rowIndex:p.rowIndex, aktif:String(newAktif) });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if (!data.success) { p.aktif = !newAktif; this._adminShowMsg(data.error||'Gagal update'); }
+                else { this._adminShowMsg(newAktif ? 'Produk diaktifkan ✓' : 'Produk dinonaktifkan ✓'); await this.fetchProducts(); }
+            } catch { p.aktif = !newAktif; this._adminShowMsg('Gagal terhubung'); }
         },
         async adminUpdateStock(p, val) {
             const stok = val===''?'':Number(val);

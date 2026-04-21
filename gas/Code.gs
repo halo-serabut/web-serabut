@@ -57,6 +57,7 @@ function doGet(e) {
       case 'saveGuides':        result = saveGuides(e.parameter); break;
       case 'setUserRole':         result = setUserRole(e.parameter); break;
       case 'updateProductStock':  result = updateProductStock(e.parameter); break;
+      case 'updateProductAktif':  result = updateProductAktif(e.parameter); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -231,6 +232,21 @@ function updateProductStock({ adminEmail, rowIndex, stok }) {
 
   const stokVal = (stok === '' || stok === null || stok === undefined) ? '' : Number(stok);
   sheet.getRange(Number(rowIndex), 7).setValue(stokVal);
+
+  return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  UPDATE PRODUCT AKTIF (quick toggle dari admin)
+// ────────────────────────────────────────────────────────
+function updateProductAktif({ adminEmail, rowIndex, aktif }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+  if (!rowIndex) return { success: false, error: 'rowIndex diperlukan' };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
+  if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
+
+  sheet.getRange(Number(rowIndex), 6).setValue(aktif === 'true' || aktif === true);
 
   return { success: true };
 }
