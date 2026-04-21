@@ -58,6 +58,7 @@ function doGet(e) {
       case 'setUserRole':         result = setUserRole(e.parameter); break;
       case 'updateProductStock':  result = updateProductStock(e.parameter); break;
       case 'updateProductAktif':  result = updateProductAktif(e.parameter); break;
+      case 'googleLogin':         result = googleLogin(e.parameter); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -234,6 +235,48 @@ function updateProductStock({ adminEmail, rowIndex, stok }) {
   sheet.getRange(Number(rowIndex), 7).setValue(stokVal);
 
   return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  GOOGLE LOGIN / AUTO-REGISTER
+// ────────────────────────────────────────────────────────
+function googleLogin({ email, nama }) {
+  if (!email) return { success: false, error: 'Email diperlukan' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(TAB_USERS);
+
+  if (!sheet) {
+    sheet = ss.insertSheet(TAB_USERS);
+    sheet.appendRow(['Nama', 'Email', 'No Hp', 'Password', 'Created At', 'Status', 'OTP', 'OTP Expiry', 'Role']);
+    sheet.getRange(1, 1, 1, 9).setFontWeight('bold');
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const emailNorm = email.toLowerCase().trim();
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).toLowerCase().trim() !== emailNorm) continue;
+    // Jika Pending → auto-aktifkan
+    if (String(data[i][5]).trim() === 'Pending') {
+      sheet.getRange(i + 1, 6).setValue('Aktif');
+    }
+    const role = _getUserRole(data, i);
+    return {
+      success: true,
+      user: { nama: String(data[i][0]), email: String(data[i][1]), wa: String(data[i][2]), role: role || 'buyer' }
+    };
+  }
+
+  // Buat user baru (Google SSO = auto aktif, tanpa password)
+  const displayNama = (nama || emailNorm.split('@')[0]).trim();
+  const createdAt   = formatJkt(new Date(), 'yyyy-MM-dd HH:mm:ss');
+  sheet.appendRow([displayNama, emailNorm, '', '', createdAt, 'Aktif', '', '', 'buyer']);
+
+  return {
+    success: true,
+    user: { nama: displayNama, email: emailNorm, wa: '', role: 'buyer' }
+  };
 }
 
 // ────────────────────────────────────────────────────────
