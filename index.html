@@ -782,19 +782,19 @@
                         <p class="text-xs mt-1">Klik "Campaign Baru" untuk membuat flash sale pertama</p>
                     </div>
 
-                    <!-- Campaign cards -->
-                    <div class="space-y-3">
+                    <!-- Campaign cards — 1 col mobile, 2 col desktop -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <template x-for="(camp, ci) in adminFlashCampaigns" :key="camp.id || ci">
                             <div class="rounded-2xl border overflow-hidden"
-                                 :class="camp.aktif ? 'border-emerald-200' : 'border-gray-200'">
+                                 :class="camp.aktif ? 'border-brand-200' : 'border-gray-200'">
                                 <!-- Color bar -->
-                                <div class="h-1.5" :class="camp.aktif ? 'bg-emerald-400' : 'bg-gray-200'"></div>
-                                <div class="p-4 space-y-3" :class="camp.aktif ? 'bg-emerald-50/40' : 'bg-white'">
+                                <div class="h-1.5" :class="camp.aktif ? 'bg-brand-500' : 'bg-gray-200'"></div>
+                                <div class="p-4 space-y-3" :class="camp.aktif ? 'bg-red-50/30' : 'bg-white'">
                                     <!-- Row 1: toggle + nama + status badge -->
                                     <div class="flex items-center gap-3">
                                         <button @click="camp.aktif=!camp.aktif; adminSaveFlashCampaigns()" class="flex-none">
                                             <div class="relative w-10 h-6 rounded-full transition-colors duration-300"
-                                                 :class="camp.aktif ? 'bg-emerald-500' : 'bg-gray-300'">
+                                                 :class="camp.aktif ? 'bg-brand-500' : 'bg-gray-300'">
                                                 <div class="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-300"
                                                      :class="camp.aktif ? 'left-5' : 'left-1'"></div>
                                             </div>
@@ -803,7 +803,7 @@
                                             <p class="font-bold text-gray-900 text-sm leading-snug truncate" x-text="camp.nama || 'Campaign tanpa nama'"></p>
                                         </div>
                                         <span class="flex-none text-[10px] font-black px-2 py-0.5 rounded-full"
-                                              :class="camp.aktif ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'"
+                                              :class="camp.aktif ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-500'"
                                               x-text="camp.aktif ? '● Aktif' : '○ Off'"></span>
                                     </div>
                                     <!-- Row 2: tanggal -->
