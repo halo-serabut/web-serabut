@@ -20,7 +20,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
         tailwind.config = {
             theme: {
@@ -2427,6 +2426,15 @@ function serabutStore() {
                     if (c.footer) this.siteSettings.footer = { ...this.siteSettings.footer, ...c.footer };
                 }
             } catch {}
+
+            // ── Google SSO — load script hanya jika Client ID dikonfigurasi ──
+            if (this.GOOGLE_CLIENT_ID) {
+                const gsiScript = document.createElement('script');
+                gsiScript.src = 'https://accounts.google.com/gsi/client';
+                gsiScript.async = true;
+                gsiScript.defer = true;
+                document.head.appendChild(gsiScript);
+            }
 
             // ── PWA Service Worker ─────────────────────────
             if ('serviceWorker' in navigator) {
