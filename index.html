@@ -244,8 +244,8 @@
                                     <span class="font-mono text-xs font-bold text-gray-700 tabular-nums" x-text="flashSaleCountdown"></span>
                                 </div>
                             </div>
-                            <!-- Items — produk jadi bintang -->
-                            <div class="divide-y divide-gray-100">
+                            <!-- Items — max 3 visible, sisanya scroll -->
+                            <div class="divide-y divide-gray-100 max-h-[264px] overflow-y-auto">
                                 <template x-for="(item, idx) in (flashSale.items?.length ? flashSale.items : [{produk:flashSale.produk,varian:flashSale.varian,harga:flashSale.harga,hargaAsli:flashSale.hargaAsli,diskon:flashSale.diskon}])" :key="idx">
                                     <div class="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors">
                                         <div class="flex-1 min-w-0">
@@ -1884,17 +1884,21 @@
 
         <!-- Login -->
         <div x-show="authTab==='login'" class="px-5 py-5 space-y-3">
-            <!-- Google SSO -->
-            <button @click="googleSignIn()" :disabled="authLoading"
-                    class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-50">
-                <svg class="w-5 h-5 flex-none" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                <span class="text-sm font-semibold text-gray-700" x-text="authLoading?'Memproses...':'Lanjutkan dengan Google'"></span>
-            </button>
-            <div class="flex items-center gap-3">
-                <div class="flex-1 h-px bg-gray-100"></div>
-                <span class="text-xs text-gray-400 font-medium">atau</span>
-                <div class="flex-1 h-px bg-gray-100"></div>
-            </div>
+            <!-- Google SSO — hanya tampil jika GOOGLE_CLIENT_ID diisi -->
+            <template x-if="GOOGLE_CLIENT_ID">
+                <div class="space-y-3">
+                    <button @click="googleSignIn()" :disabled="authLoading"
+                            class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-50">
+                        <svg class="w-5 h-5 flex-none" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                        <span class="text-sm font-semibold text-gray-700" x-text="authLoading?'Memproses...':'Lanjutkan dengan Google'"></span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 h-px bg-gray-100"></div>
+                        <span class="text-xs text-gray-400 font-medium">atau</span>
+                        <div class="flex-1 h-px bg-gray-100"></div>
+                    </div>
+                </div>
+            </template>
             <div><label class="text-xs font-bold text-gray-600 mb-1 block">Email</label><input x-model="loginForm.email" type="email" placeholder="email@kamu.com" @keyup.enter="submitLogin()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
             <div><label class="text-xs font-bold text-gray-600 mb-1 block">Password</label><input x-model="loginForm.password" type="password" placeholder="Password" @keyup.enter="submitLogin()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
             <div x-show="authError" class="bg-red-50 text-red-600 text-xs px-3 py-2.5 rounded-xl" x-text="authError"></div>
@@ -1907,17 +1911,21 @@
 
         <!-- Register -->
         <div x-show="authTab==='register'" class="px-5 py-5 space-y-3">
-            <!-- Google SSO -->
-            <button @click="googleSignIn()" :disabled="authLoading"
-                    class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-50">
-                <svg class="w-5 h-5 flex-none" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84z"/></svg>
-                <span class="text-sm font-semibold text-gray-700" x-text="authLoading?'Memproses...':'Daftar dengan Google'"></span>
-            </button>
-            <div class="flex items-center gap-3">
-                <div class="flex-1 h-px bg-gray-100"></div>
-                <span class="text-xs text-gray-400 font-medium">atau daftar manual</span>
-                <div class="flex-1 h-px bg-gray-100"></div>
-            </div>
+            <!-- Google SSO — hanya tampil jika GOOGLE_CLIENT_ID diisi -->
+            <template x-if="GOOGLE_CLIENT_ID">
+                <div class="space-y-3">
+                    <button @click="googleSignIn()" :disabled="authLoading"
+                            class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-50">
+                        <svg class="w-5 h-5 flex-none" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84z"/></svg>
+                        <span class="text-sm font-semibold text-gray-700" x-text="authLoading?'Memproses...':'Daftar dengan Google'"></span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 h-px bg-gray-100"></div>
+                        <span class="text-xs text-gray-400 font-medium">atau daftar manual</span>
+                        <div class="flex-1 h-px bg-gray-100"></div>
+                    </div>
+                </div>
+            </template>
             <div><label class="text-xs font-bold text-gray-600 mb-1 block">Nama Lengkap</label><input x-model="registerForm.nama" type="text" placeholder="Nama kamu" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
             <div><label class="text-xs font-bold text-gray-600 mb-1 block">Email</label><input x-model="registerForm.email" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
             <div><label class="text-xs font-bold text-gray-600 mb-1 block">No. WhatsApp</label><input x-model="registerForm.wa" type="tel" placeholder="08xxxxxxxxxx" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
@@ -2180,8 +2188,9 @@ async function sha256(str) {
 function serabutStore() {
     return {
         // Config
-        GAS_URL:   'https://script.google.com/macros/s/AKfycbzYsltjVoiuVCFjGk1dExX4QjPp77lRwIwSAEznir-mbS8KTGWCY-vzmmEQKCbbVCdK9w/exec',
-        WA_NUMBER: '8881500555',
+        GAS_URL:          'https://script.google.com/macros/s/AKfycbzYsltjVoiuVCFjGk1dExX4QjPp77lRwIwSAEznir-mbS8KTGWCY-vzmmEQKCbbVCdK9w/exec',
+        WA_NUMBER:        '8881500555',
+        GOOGLE_CLIENT_ID: '', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
 
         // PWA Install
         pwaPopup:       false,
@@ -2592,14 +2601,37 @@ function serabutStore() {
         },
 
         // ── Products ──────────────────────────────────
-        async fetchProducts() {
-            this.loading=true;
-            try {
+        async fetchProducts(force=false) {
+            const CACHE_KEY = 'serabut_catalog_cache';
+            const TTL = 5 * 60 * 1000; // 5 menit
+            const _mapProducts = (list) => list.map(p=>({...p, category:this.getCategory(p.nama)}));
+            const _fetchFresh  = async () => {
                 const res  = await fetch(`${this.GAS_URL}?action=getCatalog`);
                 const data = await res.json();
                 if(data.success&&data.data) {
-                    this.products = data.data.map(p=>({...p, category:this.getCategory(p.nama)}));
-                } else { this.products=this.demoProducts(); }
+                    const mapped = _mapProducts(data.data);
+                    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: data.data })); } catch {}
+                    return mapped;
+                }
+                return null;
+            };
+            // Coba load dari cache dulu → tampil instan
+            if(!force) {
+                try {
+                    const cached = JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+                    if(cached?.data?.length && (Date.now()-cached.ts) < TTL) {
+                        this.products = _mapProducts(cached.data);
+                        this.loading  = false;
+                        // Refresh di background tanpa blocking UI
+                        _fetchFresh().then(p=>{ if(p) this.products=p; }).catch(()=>{});
+                        return;
+                    }
+                } catch {}
+            }
+            this.loading=true;
+            try {
+                const fresh = await _fetchFresh();
+                this.products = fresh || this.demoProducts();
             } catch { this.products=this.demoProducts(); }
             this.loading=false;
         },
@@ -3087,7 +3119,8 @@ function serabutStore() {
 
         // ── Google SSO ───────────────────────────────
         googleSignIn() {
-            const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Ganti dengan Client ID dari Google Cloud Console
+            const CLIENT_ID = this.GOOGLE_CLIENT_ID;
+            if(!CLIENT_ID) { this.authError = 'Login Google belum dikonfigurasi.'; return; }
             if(!window.google?.accounts?.id) {
                 this.authError = 'Google Sign-In belum siap, coba beberapa saat lagi.'; return;
             }
