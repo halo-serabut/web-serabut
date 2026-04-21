@@ -305,22 +305,35 @@
             </div>
             <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <template x-for="product in featuredProducts" :key="product.linkProduk+product.varian+product.harga">
-                    <div @click="openProductModal(product)" class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand-200 active:scale-[0.99] transition-all duration-150 cursor-pointer flex items-center gap-3 px-3.5 py-3">
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-none" :class="getCategoryBg(product.category)">
+                    <div @click="product.stok!==0 && openProductModal(product)"
+                         :class="product.stok===0?'opacity-60 cursor-not-allowed':'cursor-pointer hover:shadow-md hover:border-brand-200 active:scale-[0.99]'"
+                         class="bg-white rounded-2xl border border-gray-100 shadow-sm transition-all duration-150 flex items-center gap-3 px-3.5 py-3">
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-none relative" :class="getCategoryBg(product.category)">
                             <img :src="getProductLogo(product.category)" :alt="product.category" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
+                            <div x-show="product.stok===0" class="absolute inset-0 bg-gray-900/40 rounded-2xl flex items-center justify-center">
+                                <span class="text-white text-[8px] font-black">HABIS</span>
+                            </div>
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-1 mb-0.5">
                                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md" :class="getCategoryColor(product.category)" x-text="product.category"></span>
-                                <span x-show="flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full" x-text="(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'% OFF'"></span>
+                                <span x-show="product.stok===0" class="text-[9px] font-black bg-gray-400 text-white px-1.5 py-0.5 rounded-full">Stok Habis</span>
+                                <span x-show="product.stok!==0 && flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full" x-text="(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'% OFF'"></span>
                             </div>
                             <h3 class="font-bold text-gray-800 text-sm leading-snug line-clamp-1" x-text="product.nama"></h3>
                             <p class="text-xs text-gray-400 truncate"><span x-text="product.varian"></span><span x-show="product.masaAktif&&product.masaAktif!=='-'" x-text="' · '+product.masaAktif"></span></p>
                         </div>
                         <div class="flex-none text-right">
-                            <div x-show="flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-[10px] text-gray-400 line-through leading-none" x-text="formatPrice(product.harga)"></div>
-                            <div class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga ?? product.harga)"></div>
-                            <div class="text-[10px] text-gray-400 mt-0.5">Detail →</div>
+                            <template x-if="product.stok===0">
+                                <div class="text-xs font-bold text-gray-400">Tidak tersedia</div>
+                            </template>
+                            <template x-if="product.stok!==0">
+                                <div>
+                                    <div x-show="flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-[10px] text-gray-400 line-through leading-none" x-text="formatPrice(product.harga)"></div>
+                                    <div class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga ?? product.harga)"></div>
+                                    <div class="text-[10px] text-gray-400 mt-0.5">Detail →</div>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </template>
@@ -358,14 +371,18 @@
             </div>
             <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 <template x-for="product in filteredProducts" :key="product.linkProduk+product.varian+product.harga">
-                    <div @click="openProductModal(product)" class="bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-pointer group flex flex-col">
+                    <div @click="product.stok!==0 && openProductModal(product)"
+                         :class="product.stok===0?'opacity-70 cursor-not-allowed':'cursor-pointer hover:shadow-xl hover:-translate-y-1'"
+                         class="bg-white rounded-3xl overflow-hidden shadow-md transition-all duration-200 group flex flex-col">
                         <!-- Header: logo hero -->
                         <div class="relative flex flex-col items-center pt-4 pb-3 px-4" :class="getCategoryBg(product.category)">
                             <span class="absolute top-2.5 left-2.5 text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(product.category)" x-text="product.category"></span>
-                            <span x-show="flashSaleItem(product.nama, product.varian, product.masaAktif)"
+                            <span x-show="product.stok===0"
+                                  class="absolute top-2.5 right-2.5 bg-gray-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">Habis</span>
+                            <span x-show="product.stok!==0 && flashSaleItem(product.nama, product.varian, product.masaAktif)"
                                   class="absolute top-2.5 right-2.5 bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full"
                                   x-text="(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'% OFF'"></span>
-                            <img :src="getProductLogo(product.category)" :alt="product.category" class="w-14 h-14 object-contain mt-5" onerror="this.style.display='none'">
+                            <img :src="getProductLogo(product.category)" :alt="product.category" class="w-14 h-14 object-contain mt-5" :class="product.stok===0?'grayscale opacity-50':''" onerror="this.style.display='none'">
                         </div>
                         <!-- Body -->
                         <div class="p-3.5 flex-1 flex flex-col">
@@ -376,9 +393,16 @@
                                 <span x-text="product.masaAktif"></span>
                             </span>
                             <div class="mt-auto pt-2">
-                                <div x-show="flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-xs text-gray-400 line-through leading-none mb-0.5" x-text="formatPrice(product.harga)"></div>
-                                <div class="font-black text-brand-500 text-base mb-3" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga ?? product.harga)"></div>
-                                <div class="w-full text-center gradient-card text-white text-sm font-bold py-2.5 rounded-2xl">Lihat Detail</div>
+                                <template x-if="product.stok===0">
+                                    <div class="w-full text-center bg-gray-100 text-gray-400 text-sm font-bold py-2.5 rounded-2xl">Stok Habis</div>
+                                </template>
+                                <template x-if="product.stok!==0">
+                                    <div>
+                                        <div x-show="flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-xs text-gray-400 line-through leading-none mb-0.5" x-text="formatPrice(product.harga)"></div>
+                                        <div class="font-black text-brand-500 text-base mb-3" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga ?? product.harga)"></div>
+                                        <div class="w-full text-center gradient-card text-white text-sm font-bold py-2.5 rounded-2xl">Lihat Detail</div>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -931,7 +955,7 @@
             <div x-show="adminTab==='produk'">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="font-bold text-gray-900">Manajemen Produk</h2>
-                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,iconUrl:''}; adminBenefitItems=[]; adminBenefitNewItem=''" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
+                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,stok:'',iconUrl:''}; adminBenefitItems=[]; adminBenefitNewItem=''" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
                 </div>
 
                 <!-- Form tambah/edit produk -->
@@ -953,6 +977,13 @@
                         <div>
                             <label class="text-xs font-bold text-gray-500 mb-1 block">Harga (Rp)</label>
                             <input x-model="adminFormProduct.harga" type="number" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">
+                                Stok
+                                <span class="text-gray-400 font-normal">(kosong = tidak terbatas, 0 = habis)</span>
+                            </label>
+                            <input x-model="adminFormProduct.stok" type="number" min="0" placeholder="Kosongkan jika tidak terbatas" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-500 mb-1 block">Link Shopee</label>
@@ -1043,21 +1074,42 @@
                 <!-- Produk: scorecard grid (semua ukuran layar) -->
                 <div x-show="!adminProductsLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                     <template x-for="(p, pi) in adminFilteredProducts" :key="p.rowIndex">
-                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-brand-100 transition-all p-3.5 flex items-center gap-3">
-                            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-none" :class="getCategoryBg(getCategory(p.nama))">
-                                <img :src="getProductLogo(getCategory(p.nama))" class="w-7 h-7 object-contain" onerror="this.style.display='none'">
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="font-semibold text-gray-800 text-sm leading-snug line-clamp-1" x-text="p.nama"></div>
-                                <div class="text-xs text-gray-400 truncate mt-0.5">
-                                    <span x-text="p.varian"></span>
-                                    <span x-show="p.masaAktif&&p.masaAktif!=='-'" x-text="' · '+p.masaAktif"></span>
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-3.5">
+                            <!-- Baris 1: logo + nama + harga -->
+                            <div class="flex items-center gap-3 mb-2.5">
+                                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none" :class="getCategoryBg(getCategory(p.nama))">
+                                    <img :src="getProductLogo(getCategory(p.nama))" class="w-6 h-6 object-contain" onerror="this.style.display='none'">
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-semibold text-gray-800 text-sm leading-snug line-clamp-1" x-text="p.nama"></div>
+                                    <div class="text-xs text-gray-400 truncate">
+                                        <span x-text="p.varian"></span>
+                                        <span x-show="p.masaAktif&&p.masaAktif!=='-'" x-text="' · '+p.masaAktif"></span>
+                                    </div>
+                                </div>
+                                <div class="flex-none text-right">
+                                    <div class="font-black text-brand-500 text-sm" x-text="formatPrice(p.harga)"></div>
+                                    <span :class="p.aktif?'bg-emerald-100 text-emerald-700':'bg-gray-100 text-gray-500'" class="text-[10px] font-bold px-2 py-0.5 rounded-full" x-text="p.aktif?'Aktif':'Nonaktif'"></span>
                                 </div>
                             </div>
-                            <div class="flex-none flex flex-col items-end gap-1">
-                                <div class="font-black text-brand-500 text-sm" x-text="formatPrice(p.harga)"></div>
-                                <span :class="p.aktif?'bg-emerald-100 text-emerald-700':'bg-gray-100 text-gray-500'" class="text-[10px] font-bold px-2 py-0.5 rounded-full" x-text="p.aktif?'Aktif':'Nonaktif'"></span>
-                                <div class="flex gap-2.5">
+                            <!-- Baris 2: stok inline + tombol aksi -->
+                            <div class="flex items-center gap-2 pt-2.5 border-t border-gray-50">
+                                <!-- Stok inline edit -->
+                                <div class="flex items-center gap-1.5 flex-1">
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide whitespace-nowrap">Stok</span>
+                                    <input
+                                        type="number" min="0"
+                                        :value="p.stok===null||p.stok===undefined?'':p.stok"
+                                        @change="adminUpdateStock(p, $event.target.value)"
+                                        placeholder="∞"
+                                        class="w-16 text-xs px-2 py-1 border rounded-lg focus:outline-none focus:border-brand-400 text-center tabular-nums"
+                                        :class="p.stok===0?'border-red-300 bg-red-50 text-red-600 font-bold':'border-gray-200'"
+                                    >
+                                    <span x-show="p.stok===0" class="text-[10px] font-bold text-red-500">Habis</span>
+                                    <span x-show="p.stok===null||p.stok===undefined" class="text-[10px] text-gray-400">tidak terbatas</span>
+                                    <span x-show="p.stok!==null&&p.stok!==undefined&&p.stok>0" class="text-[10px] text-emerald-600 font-semibold" x-text="'tersedia'"></span>
+                                </div>
+                                <div class="flex gap-2.5 flex-none">
                                     <button @click="adminStartEditProduct(p)" class="text-xs text-brand-500 font-bold hover:underline">Edit</button>
                                     <button @click="adminDeleteProduct(p)" class="text-xs text-red-400 font-bold hover:underline">Hapus</button>
                                 </div>
@@ -1623,10 +1675,15 @@
                 </div>
                 <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="text-right"><div class="text-xs text-gray-400">Durasi</div><div class="font-bold text-gray-700 text-sm" x-text="selectedVariant?.masaAktif"></div></div>
             </div>
-            <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all active:scale-95 shadow-md mb-3 flex items-center justify-center gap-2">
-                <svg class="w-5 h-5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
-                Pesan Sekarang
-            </button>
+            <template x-if="selectedVariant?.stok===0">
+                <div class="w-full bg-gray-100 text-gray-400 font-black py-4 rounded-2xl text-base text-center mb-3">Stok Habis</div>
+            </template>
+            <template x-if="selectedVariant?.stok!==0">
+                <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all active:scale-95 shadow-md mb-3 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
+                    Pesan Sekarang
+                </button>
+            </template>
             <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener" class="block w-full text-center text-gray-400 text-sm py-2 hover:text-brand-500 transition-colors">
                 Atau beli di Shopee →
             </a>
@@ -2043,7 +2100,7 @@ function serabutStore() {
         adminOrderFilter: 'Semua',
         adminEditProduct: null,
         adminAddMode:    false,
-        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, iconUrl:'' },
+        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, stok:'', iconUrl:'' },
         adminEditFlash:    {},
         adminFlashItems:   [],
         adminFlashEditIdx: -1,
@@ -2873,7 +2930,7 @@ function serabutStore() {
         adminStartEditProduct(p) {
             this.adminEditProduct = p;
             this.adminAddMode     = false;
-            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, iconUrl:p.iconUrl||'' };
+            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'' };
             this.adminBenefitCat  = p.category || this.getCategory(p.nama);
             this.adminBenefitItems = [...(this.siteSettings.benefits[this.adminBenefitCat] || this.getProductBenefits(this.adminBenefitCat))];
             this.adminBenefitNewItem = '';
@@ -2893,6 +2950,7 @@ function serabutStore() {
                     harga:     this.adminNewProduct.harga,
                     linkProduk:this.adminNewProduct.linkProduk,
                     aktif:     String(this.adminNewProduct.aktif),
+                    stok:      this.adminNewProduct.stok===''?'':Number(this.adminNewProduct.stok),
                     iconUrl:   this.adminNewProduct.iconUrl||'',
                 });
                 if(this.adminEditProduct) params.append('rowIndex', this.adminEditProduct.rowIndex);
@@ -2906,6 +2964,16 @@ function serabutStore() {
                 } else { this._adminShowMsg(data.error||'Gagal menyimpan'); }
             } catch { this._adminShowMsg('Gagal terhubung'); }
             this.adminSaving=false;
+        },
+        async adminUpdateStock(p, val) {
+            const stok = val===''?'':Number(val);
+            try {
+                const params = new URLSearchParams({ action:'updateProductStock', adminEmail:this.currentUser.email, rowIndex:p.rowIndex, stok });
+                await fetch(`${this.GAS_URL}?${params}`);
+                p.stok = val===''?null:Number(val);
+                this._adminShowMsg('Stok diperbarui ✓');
+                await this.fetchProducts();
+            } catch { this._adminShowMsg('Gagal update stok'); }
         },
         async adminDeleteProduct(p) {
             if(!confirm(`Hapus produk "${p.nama} — ${p.varian}"?`)) return;

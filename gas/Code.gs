@@ -21,7 +21,7 @@ const OTP_EXPIRY_MIN = 10;
 // 9:TanggalLahir  10:JenisKelamin  11:Alamat  12:Provinsi
 
 // ── Kolom Catalog (0-indexed) ───────────────────────────
-// 0:Nama  1:Varian  2:MasaAktif  3:Harga  4:LinkProduk  5:Aktif  6:IconUrl
+// 0:Nama  1:Varian  2:MasaAktif  3:Harga  4:LinkProduk  5:Aktif  6:Stok  7:IconUrl
 
 // ────────────────────────────────────────────────────────
 //  MAIN HANDLER
@@ -55,7 +55,8 @@ function doGet(e) {
       case 'updateOrderStatus': result = updateOrderStatus(e.parameter); break;
       case 'getGuides':         result = getGuides(); break;
       case 'saveGuides':        result = saveGuides(e.parameter); break;
-      case 'setUserRole':       result = setUserRole(e.parameter); break;
+      case 'setUserRole':         result = setUserRole(e.parameter); break;
+      case 'updateProductStock':  result = updateProductStock(e.parameter); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -109,6 +110,8 @@ function getCatalog() {
     const aktif = row[5];
     if (aktif !== true && String(aktif).toUpperCase() !== 'TRUE') continue;
 
+    const rawStok = row[6];
+    const stok = (rawStok === '' || rawStok === null || rawStok === undefined) ? null : Number(rawStok);
     products.push({
       rowIndex:   i + 1,
       nama:       String(row[0]).trim(),
@@ -116,7 +119,8 @@ function getCatalog() {
       masaAktif:  String(row[2] || '-').trim(),
       harga:      Number(row[3]) || 0,
       linkProduk: String(row[4] || '').trim(),
-      iconUrl:    String(row[6] || '').trim(),
+      stok:       stok,
+      iconUrl:    String(row[7] || '').trim(),
     });
   }
 
@@ -138,7 +142,9 @@ function getCatalogAdmin({ adminEmail }) {
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row[0]) continue;
-    const aktif = row[5];
+    const aktif   = row[5];
+    const rawStok = row[6];
+    const stok    = (rawStok === '' || rawStok === null || rawStok === undefined) ? null : Number(rawStok);
     products.push({
       rowIndex:   i + 1,
       nama:       String(row[0]).trim(),
@@ -147,7 +153,8 @@ function getCatalogAdmin({ adminEmail }) {
       harga:      Number(row[3]) || 0,
       linkProduk: String(row[4] || '').trim(),
       aktif:      (aktif === true || String(aktif).toUpperCase() === 'TRUE'),
-      iconUrl:    String(row[6] || '').trim(),
+      stok:       stok,
+      iconUrl:    String(row[7] || '').trim(),
     });
   }
 
@@ -157,7 +164,7 @@ function getCatalogAdmin({ adminEmail }) {
 // ────────────────────────────────────────────────────────
 //  ADD PRODUCT
 // ────────────────────────────────────────────────────────
-function addProduct({ adminEmail, nama, varian, masaAktif, harga, linkProduk, aktif, iconUrl }) {
+function addProduct({ adminEmail, nama, varian, masaAktif, harga, linkProduk, aktif, stok, iconUrl }) {
   if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
   if (!nama || !varian) return { success: false, error: 'Nama dan varian wajib diisi' };
 
@@ -166,11 +173,12 @@ function addProduct({ adminEmail, nama, varian, masaAktif, harga, linkProduk, ak
 
   if (!sheet) {
     sheet = ss.insertSheet(TAB_CATALOG);
-    sheet.appendRow(['Nama', 'Varian', 'Masa Aktif', 'Harga', 'Link Produk', 'Aktif', 'Icon URL']);
-    sheet.getRange(1, 1, 1, 7).setFontWeight('bold');
+    sheet.appendRow(['Nama Produk', 'Varian', 'Masa Aktif', 'Harga', 'Link Produk', 'Aktif', 'Stok', 'Icon URL']);
+    sheet.getRange(1, 1, 1, 8).setFontWeight('bold');
   }
 
-  const isAktif = (aktif === 'true' || aktif === true);
+  const isAktif  = (aktif === 'true' || aktif === true);
+  const stokVal  = (stok === '' || stok === null || stok === undefined) ? '' : Number(stok);
   sheet.appendRow([
     String(nama).trim(),
     String(varian).trim(),
@@ -178,6 +186,7 @@ function addProduct({ adminEmail, nama, varian, masaAktif, harga, linkProduk, ak
     Number(harga) || 0,
     String(linkProduk || '').trim(),
     isAktif,
+    stokVal,
     String(iconUrl || '').trim(),
   ]);
 
@@ -187,15 +196,16 @@ function addProduct({ adminEmail, nama, varian, masaAktif, harga, linkProduk, ak
 // ────────────────────────────────────────────────────────
 //  UPDATE PRODUCT
 // ────────────────────────────────────────────────────────
-function updateProduct({ adminEmail, rowIndex, nama, varian, masaAktif, harga, linkProduk, aktif, iconUrl }) {
+function updateProduct({ adminEmail, rowIndex, nama, varian, masaAktif, harga, linkProduk, aktif, stok, iconUrl }) {
   if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
   if (!rowIndex) return { success: false, error: 'rowIndex diperlukan' };
 
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
   if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
 
-  const row = Number(rowIndex);
+  const row     = Number(rowIndex);
   const isAktif = (aktif === 'true' || aktif === true);
+  const stokVal = (stok === '' || stok === null || stok === undefined) ? '' : Number(stok);
 
   sheet.getRange(row, 1).setValue(String(nama || '').trim());
   sheet.getRange(row, 2).setValue(String(varian || '').trim());
@@ -203,7 +213,24 @@ function updateProduct({ adminEmail, rowIndex, nama, varian, masaAktif, harga, l
   sheet.getRange(row, 4).setValue(Number(harga) || 0);
   sheet.getRange(row, 5).setValue(String(linkProduk || '').trim());
   sheet.getRange(row, 6).setValue(isAktif);
-  sheet.getRange(row, 7).setValue(String(iconUrl || '').trim());
+  sheet.getRange(row, 7).setValue(stokVal);
+  sheet.getRange(row, 8).setValue(String(iconUrl || '').trim());
+
+  return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  UPDATE PRODUCT STOCK (quick update dari admin)
+// ────────────────────────────────────────────────────────
+function updateProductStock({ adminEmail, rowIndex, stok }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+  if (!rowIndex) return { success: false, error: 'rowIndex diperlukan' };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
+  if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
+
+  const stokVal = (stok === '' || stok === null || stok === undefined) ? '' : Number(stok);
+  sheet.getRange(Number(rowIndex), 7).setValue(stokVal);
 
   return { success: true };
 }
