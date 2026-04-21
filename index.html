@@ -786,56 +786,52 @@
                     <!-- Campaign cards -->
                     <div class="space-y-3">
                         <template x-for="(camp, ci) in adminFlashCampaigns" :key="camp.id || ci">
-                            <div class="border rounded-2xl overflow-hidden transition-all"
-                                 :class="camp.aktif ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-100 bg-white'">
-                                <!-- Status strip -->
-                                <div class="h-1" :class="camp.aktif ? 'bg-emerald-400' : 'bg-gray-200'"></div>
-                                <div class="p-4">
-                                    <div class="flex items-start gap-3">
-                                        <!-- Toggle aktif -->
-                                        <button @click="camp.aktif=!camp.aktif; adminSaveFlashCampaigns()"
-                                                class="flex flex-col items-center gap-0.5 flex-none mt-0.5">
-                                            <div class="relative w-9 h-5 rounded-full transition-colors duration-300"
+                            <div class="rounded-2xl border overflow-hidden"
+                                 :class="camp.aktif ? 'border-emerald-200' : 'border-gray-200'">
+                                <!-- Color bar -->
+                                <div class="h-1.5" :class="camp.aktif ? 'bg-emerald-400' : 'bg-gray-200'"></div>
+                                <div class="p-4 space-y-3" :class="camp.aktif ? 'bg-emerald-50/40' : 'bg-white'">
+                                    <!-- Row 1: toggle + nama + status badge -->
+                                    <div class="flex items-center gap-3">
+                                        <button @click="camp.aktif=!camp.aktif; adminSaveFlashCampaigns()" class="flex-none">
+                                            <div class="relative w-10 h-6 rounded-full transition-colors duration-300"
                                                  :class="camp.aktif ? 'bg-emerald-500' : 'bg-gray-300'">
-                                                <div class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all duration-300"
-                                                     :class="camp.aktif ? 'left-[18px]' : 'left-0.5'"></div>
+                                                <div class="absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-300"
+                                                     :class="camp.aktif ? 'left-5' : 'left-1'"></div>
                                             </div>
-                                            <span class="text-[9px] font-black" :class="camp.aktif?'text-emerald-500':'text-gray-400'" x-text="camp.aktif?'ON':'OFF'"></span>
                                         </button>
-                                        <!-- Info -->
                                         <div class="flex-1 min-w-0">
-                                            <div class="font-bold text-gray-900 text-sm" x-text="camp.nama || 'Campaign tanpa nama'"></div>
-                                            <!-- Date range -->
-                                            <div class="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
-                                                <svg class="w-3.5 h-3.5 text-gray-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                <span x-text="formatDT(camp.startDate)"></span>
-                                                <span class="text-gray-300">→</span>
-                                                <span x-text="formatDT(camp.endDate)"></span>
-                                            </div>
-                                            <!-- Stats -->
-                                            <div class="flex items-center gap-2 mt-1.5">
-                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                      :class="camp.aktif ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'"
-                                                      x-text="camp.aktif ? 'Aktif' : 'Nonaktif'"></span>
-                                                <span class="text-[10px] text-gray-400" x-text="(camp.items?.length||0)+' produk'"></span>
-                                            </div>
+                                            <p class="font-bold text-gray-900 text-sm leading-snug truncate" x-text="camp.nama || 'Campaign tanpa nama'"></p>
                                         </div>
-                                        <!-- Actions -->
-                                        <div class="flex gap-2 flex-none">
-                                            <button @click="adminFlashEditCampaign(ci)"
-                                                    class="text-xs font-bold text-brand-600 px-3 py-1.5 rounded-xl bg-brand-50 hover:bg-brand-100 transition-all">Edit</button>
-                                            <button @click="adminFlashDeleteCampaign(ci)"
-                                                    class="text-xs font-bold text-red-500 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 transition-all">Hapus</button>
+                                        <span class="flex-none text-[10px] font-black px-2 py-0.5 rounded-full"
+                                              :class="camp.aktif ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'"
+                                              x-text="camp.aktif ? '● Aktif' : '○ Off'"></span>
+                                    </div>
+                                    <!-- Row 2: tanggal -->
+                                    <div class="bg-white rounded-xl px-3 py-2.5 border border-gray-100 space-y-1">
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="text-gray-400 font-medium w-10">Mulai</span>
+                                            <span class="font-semibold text-gray-700" x-text="formatDT(camp.startDate) || '—'"></span>
+                                        </div>
+                                        <div class="h-px bg-gray-100"></div>
+                                        <div class="flex items-center justify-between text-xs">
+                                            <span class="text-gray-400 font-medium w-10">Akhir</span>
+                                            <span class="font-semibold text-gray-700" x-text="formatDT(camp.endDate) || '—'"></span>
                                         </div>
                                     </div>
-                                    <!-- Product preview pills -->
-                                    <div x-show="camp.items?.length" class="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-gray-100">
-                                        <template x-for="(item, ii) in (camp.items||[]).slice(0,4)" :key="ii">
-                                            <span class="text-[10px] font-semibold px-2 py-0.5 bg-white border border-gray-200 rounded-full text-gray-600 truncate max-w-[140px]"
-                                                  x-text="item.produk + (item.diskon?' ('+item.diskon+'% OFF)':'')"></span>
-                                        </template>
-                                        <span x-show="(camp.items?.length||0)>4" class="text-[10px] text-gray-400 px-2 py-0.5"
-                                              x-text="'+'+(camp.items.length-4)+' lainnya'"></span>
+                                    <!-- Row 3: jumlah produk + tombol aksi -->
+                                    <div class="flex items-center gap-2">
+                                        <span class="flex-1 text-xs text-gray-400">
+                                            <span class="font-bold text-gray-700" x-text="camp.items?.length||0"></span> produk
+                                        </span>
+                                        <button @click="adminFlashEditCampaign(ci)"
+                                                class="flex-1 text-xs font-bold text-brand-600 py-2 rounded-xl bg-brand-50 hover:bg-brand-100 active:scale-95 transition-all text-center">
+                                            Edit
+                                        </button>
+                                        <button @click="adminFlashDeleteCampaign(ci)"
+                                                class="flex-none text-xs font-bold text-red-500 py-2 px-3 rounded-xl bg-red-50 hover:bg-red-100 active:scale-95 transition-all">
+                                            Hapus
+                                        </button>
                                     </div>
                                 </div>
                             </div>
