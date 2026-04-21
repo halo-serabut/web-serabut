@@ -1094,25 +1094,57 @@
                             </div>
                             <!-- Baris 2: stok inline + tombol aksi -->
                             <div class="flex items-center gap-2 pt-2.5 border-t border-gray-50">
-                                <!-- Stok inline edit -->
-                                <div class="flex items-center gap-1.5 flex-1">
+                                <!-- Stok -->
+                                <div class="flex items-center gap-1.5 flex-1 min-w-0">
                                     <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide whitespace-nowrap">Stok</span>
-                                    <input
-                                        type="number" min="0"
-                                        :value="p.stok===null||p.stok===undefined?'':p.stok"
-                                        @change="adminUpdateStock(p, $event.target.value)"
-                                        placeholder="∞"
-                                        class="w-16 text-xs px-2 py-1 border rounded-lg focus:outline-none focus:border-brand-400 text-center tabular-nums"
-                                        :class="p.stok===0?'border-red-300 bg-red-50 text-red-600 font-bold':'border-gray-200'"
-                                    >
-                                    <span x-show="p.stok===0" class="text-[10px] font-bold text-red-500">Habis</span>
-                                    <span x-show="p.stok===null||p.stok===undefined" class="text-[10px] text-gray-400">tidak terbatas</span>
-                                    <span x-show="p.stok!==null&&p.stok!==undefined&&p.stok>0" class="text-[10px] text-emerald-600 font-semibold" x-text="'tersedia'"></span>
+
+                                    <!-- Mode view -->
+                                    <template x-if="adminStokEditRow !== p.rowIndex">
+                                        <div class="flex items-center gap-1.5 cursor-pointer"
+                                             @click="adminStokEditRow=p.rowIndex; adminStokDraft=(p.stok===null||p.stok===undefined)?'':String(p.stok)">
+                                            <span class="text-xs px-2 py-0.5 rounded-lg border font-mono tabular-nums"
+                                                  :class="p.stok===0?'border-red-200 bg-red-50 text-red-600 font-bold':'border-gray-200 text-gray-500'"
+                                                  x-text="(p.stok===null||p.stok===undefined)?'∞':p.stok"></span>
+                                            <span x-show="p.stok===0" class="text-[10px] font-bold text-red-500">Stok Kosong</span>
+                                            <span x-show="p.stok===null||p.stok===undefined" class="text-[10px] text-gray-400">tidak terbatas</span>
+                                            <span x-show="p.stok!==null&&p.stok!==undefined&&p.stok>0" class="text-[10px] text-emerald-600 font-semibold" x-text="p.stok+' pcs'"></span>
+                                            <svg class="w-3 h-3 text-gray-300 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                        </div>
+                                    </template>
+
+                                    <!-- Mode edit -->
+                                    <template x-if="adminStokEditRow === p.rowIndex">
+                                        <div class="flex items-center gap-1">
+                                            <input type="number" min="0" x-model="adminStokDraft"
+                                                   placeholder="kosong=∞"
+                                                   @keydown.enter="adminUpdateStock(p, adminStokDraft); adminStokEditRow=null"
+                                                   @keydown.escape="adminStokEditRow=null"
+                                                   x-ref="stokInput"
+                                                   class="w-20 text-xs px-2 py-1 border border-brand-400 rounded-lg focus:outline-none text-center tabular-nums bg-white">
+                                            <button @click="adminUpdateStock(p, adminStokDraft); adminStokEditRow=null"
+                                                    title="Simpan"
+                                                    class="w-6 h-6 rounded-md bg-emerald-100 text-emerald-700 flex items-center justify-center hover:bg-emerald-200 transition-colors flex-none">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                            </button>
+                                            <button @click="adminStokEditRow=null"
+                                                    title="Batal"
+                                                    class="w-6 h-6 rounded-md bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors flex-none">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            </button>
+                                        </div>
+                                    </template>
                                 </div>
+
                                 <div class="flex gap-2.5 flex-none">
                                     <button @click="adminStartEditProduct(p)" class="text-xs text-brand-500 font-bold hover:underline">Edit</button>
                                     <button @click="adminDeleteProduct(p)" class="text-xs text-red-400 font-bold hover:underline">Hapus</button>
                                 </div>
+                            </div>
+
+                            <!-- Banner Stok Kosong -->
+                            <div x-show="p.stok===0" class="mt-2 bg-red-50 border border-red-100 rounded-xl px-3 py-1.5 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-red-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                <span class="text-[11px] font-bold text-red-500">Stok kosong — produk tidak bisa dibeli</span>
                             </div>
                         </div>
                     </template>
@@ -2092,6 +2124,8 @@ function serabutStore() {
         adminTab:        'flashsale',
         adminSaving:     false,
         adminSaveMsg:    '',
+        adminStokEditRow: null,
+        adminStokDraft:  '',
         adminProducts:   [],
         adminProductsLoading: false,
         adminProductSearch: '',
