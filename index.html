@@ -370,7 +370,7 @@
                 <template x-for="i in 8"><div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3"><div class="skeleton h-20 w-full rounded-xl mb-2"></div><div class="skeleton h-5 w-16 rounded-lg"></div><div class="skeleton h-4 w-full rounded"></div><div class="skeleton h-4 w-2/3 rounded"></div><div class="skeleton h-6 w-24 rounded"></div><div class="skeleton h-10 w-full rounded-xl"></div></div></template>
             </div>
             <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                <template x-for="product in filteredProducts" :key="product.linkProduk+product.varian+product.harga">
+                <template x-for="product in filteredProducts" :key="product.nama+'|'+product.varian+'|'+product.masaAktif">
                     <div @click="product.stok!==0 && openProductModal(product)"
                          :class="product.stok===0?'opacity-70 cursor-not-allowed':'cursor-pointer hover:shadow-xl hover:-translate-y-1'"
                          class="bg-white rounded-3xl overflow-hidden shadow-md transition-all duration-200 group flex flex-col">
@@ -774,6 +774,13 @@
                         </button>
                     </div>
 
+                    <!-- Search campaigns -->
+                    <div x-show="adminFlashCampaigns.length > 0" class="relative mb-4">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <input x-model="adminCampSearch" type="search" placeholder="Cari campaign..."
+                               class="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+                    </div>
+
                     <!-- Empty state -->
                     <div x-show="adminFlashCampaigns.length===0"
                          class="text-center py-12 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-2xl">
@@ -784,7 +791,7 @@
 
                     <!-- Campaign cards — 1 col mobile, 2 col desktop -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <template x-for="(camp, ci) in adminFlashCampaigns" :key="camp.id || ci">
+                        <template x-for="(camp, ci) in adminFlashCampaigns.filter(c=>!adminCampSearch||c.nama.toLowerCase().includes(adminCampSearch.toLowerCase()))" :key="camp.id || ci">
                             <div class="rounded-2xl border overflow-hidden"
                                  :class="camp.aktif ? 'border-brand-200' : 'border-gray-200'">
                                 <!-- Color bar -->
@@ -981,7 +988,7 @@
             </div>
 
             <!-- ── Tab: Hero ── -->
-            <div x-show="adminTab==='hero'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+            <div x-show="adminTab==='hero'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm md:max-w-2xl">
                 <h2 class="font-bold text-gray-900 mb-4">Hero Banner</h2>
                 <div class="space-y-4 max-w-lg">
                     <div>
@@ -1436,7 +1443,7 @@
             </div>
 
             <!-- ── Tab: Footer ── -->
-            <div x-show="adminTab==='footer'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+            <div x-show="adminTab==='footer'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm md:max-w-2xl">
                 <h2 class="font-bold text-gray-900 mb-4">Footer</h2>
                 <div class="space-y-4 max-w-lg">
                     <div>
@@ -2332,6 +2339,7 @@ function serabutStore() {
         adminFlashItems:   [],
         adminFlashEditIdx: -1,
         adminFlashFormItem: { produk:'', varian:'', harga:0, hargaAsli:0, diskon:0 },
+        adminCampSearch:   '',
         adminFlashSearch:  '',
         adminFlashResults: [],
         adminFlashVariants:[],
