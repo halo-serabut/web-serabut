@@ -2053,7 +2053,25 @@
             <div class="flex justify-between gap-2"><span class="text-sm text-gray-400">Produk</span><span class="text-sm font-semibold text-gray-800 text-right max-w-[60%] leading-snug" x-text="selectedProductGroup?.nama"></span></div>
             <div x-show="selectedVariant?.varian" class="flex justify-between gap-2"><span class="text-sm text-gray-400">Varian</span><span class="text-sm font-semibold text-gray-800" x-text="selectedVariant?.varian"></span></div>
             <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="flex justify-between gap-2"><span class="text-sm text-gray-400">Durasi</span><span class="text-sm font-semibold text-gray-800" x-text="selectedVariant?.masaAktif"></span></div>
-            <div class="border-t border-gray-200 pt-2.5 flex justify-between"><span class="text-sm font-bold text-gray-700">Total</span><span class="font-black text-brand-500 text-lg" x-text="formatPrice(selectedVariant?.harga)"></span></div>
+            <div class="border-t border-gray-200 pt-2.5 flex justify-between items-end">
+                <span class="text-sm font-bold text-gray-700">Total</span>
+                <div class="text-right">
+                    <template x-if="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                        <div>
+                            <span class="text-xs text-gray-400 line-through block" x-text="formatPrice(selectedVariant?.harga)"></span>
+                            <div class="flex items-center gap-1.5 justify-end">
+                                <span class="text-[10px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full"
+                                      x-text="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon+'% OFF'"></span>
+                                <span class="font-black text-brand-500 text-lg"
+                                      x-text="formatPrice(flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></span>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="!flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                        <span class="font-black text-brand-500 text-lg" x-text="formatPrice(selectedVariant?.harga)"></span>
+                    </template>
+                </div>
+            </div>
         </div>
 
         <!-- User -->
