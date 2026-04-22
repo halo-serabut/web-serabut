@@ -708,14 +708,42 @@
                                 }" x-text="order.status"></span>
                         </div>
                         <div class="px-4 py-3 flex items-center justify-between gap-3">
-                            <div>
+                            <div class="flex-1 min-w-0">
                                 <div class="font-bold text-gray-800 text-sm leading-snug" x-text="order.produk"></div>
                                 <div class="text-xs text-gray-400 mt-0.5">
                                     <span x-show="order.varian&&order.varian!=='-'" x-text="order.varian + ' · '"></span>
                                     <span x-text="formatOrderDate(order.tanggal)"></span>
                                 </div>
+                                <!-- Expiry info -->
+                                <template x-if="calcExpiry(order.tanggal, order.masaAktif)">
+                                    <div class="mt-1.5 flex items-center gap-1.5">
+                                        <template x-if="isExpired(calcExpiry(order.tanggal, order.masaAktif))">
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                Expired <span x-text="formatOrderDate(calcExpiry(order.tanggal, order.masaAktif))"></span>
+                                            </span>
+                                        </template>
+                                        <template x-if="!isExpired(calcExpiry(order.tanggal, order.masaAktif))">
+                                            <span class="inline-flex items-center gap-1 text-[10px] font-semibold"
+                                                  :class="isExpiringSoon(calcExpiry(order.tanggal, order.masaAktif)) ? 'text-orange-500 bg-orange-50' : 'text-emerald-600 bg-emerald-50'"
+                                                  class="px-2 py-0.5 rounded-full">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                Aktif s/d <span x-text="formatOrderDate(calcExpiry(order.tanggal, order.masaAktif))"></span>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
-                            <div class="text-brand-500 font-black text-sm flex-none" x-text="formatPrice(order.harga)"></div>
+                            <div class="flex flex-col items-end gap-2 flex-none">
+                                <div class="text-brand-500 font-black text-sm" x-text="formatPrice(order.harga)"></div>
+                                <!-- Perpanjang button: show jika Selesai/Aktif dan ada expiry -->
+                                <template x-if="(order.status==='Selesai'||order.status==='Aktif') && calcExpiry(order.tanggal, order.masaAktif) && (isExpired(calcExpiry(order.tanggal, order.masaAktif)) || isExpiringSoon(calcExpiry(order.tanggal, order.masaAktif)))">
+                                    <button @click="renewOrder(order)"
+                                            class="text-[10px] font-black px-2.5 py-1 rounded-lg bg-brand-500 text-white active:scale-95 transition-all whitespace-nowrap">
+                                        🔄 Perpanjang
+                                    </button>
+                                </template>
+                            </div>
                         </div>
                     </div>
                 </template>
@@ -1871,13 +1899,23 @@
 
         <!-- Price + CTA -->
         <div class="px-5 pb-6">
+            <!-- Renewal banner -->
+            <div x-show="renewalMode" class="mb-3 flex items-center gap-2 bg-brand-50 border border-brand-200 rounded-xl px-3 py-2.5">
+                <svg class="w-4 h-4 text-brand-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <div class="flex-1 text-xs">
+                    <span class="font-black text-brand-600">Diskon Renewal!</span>
+                    <span class="text-brand-500"> Hemat </span>
+                    <span class="font-bold text-brand-600" x-text="formatPrice(getRenewalDiscount(flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga ?? selectedVariant?.harga))"></span>
+                </div>
+            </div>
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <div class="text-xs text-gray-400">Total Harga</div>
-                    <div x-show="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="text-sm text-gray-400 line-through leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
+                    <div x-show="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif) || renewalMode" class="text-sm text-gray-400 line-through leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
                     <div class="flex items-center gap-2">
                         <span x-show="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full" x-text="(flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
-                        <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga ?? selectedVariant?.harga)"></div>
+                        <span x-show="renewalMode && !flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="bg-brand-500 text-white text-xs font-black px-2 py-0.5 rounded-full">RENEWAL</span>
+                        <div class="font-black text-brand-500 text-2xl" x-text="formatPrice((() => { const base = flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga ?? selectedVariant?.harga; return renewalMode ? base - getRenewalDiscount(base) : base; })())"></div>
                     </div>
                 </div>
                 <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="text-right"><div class="text-xs text-gray-400">Durasi</div><div class="font-bold text-gray-700 text-sm" x-text="selectedVariant?.masaAktif"></div></div>
@@ -1938,6 +1976,13 @@
                 <span x-text="authLoading?'Memproses...':'Masuk'"></span>
             </button>
             <p class="text-center text-xs text-gray-400 pb-2">Belum punya akun? <button @click="authTab='register'; authError=''" class="text-brand-500 font-semibold">Daftar sekarang</button></p>
+            <div class="flex items-center gap-3 pb-1"><div class="flex-1 h-px bg-gray-100"></div><span class="text-xs text-gray-300">atau</span><div class="flex-1 h-px bg-gray-100"></div></div>
+            <button @click="loginAsGuest()"
+                    class="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 rounded-2xl bg-gray-50 hover:bg-gray-100 active:scale-95 transition-all text-sm text-gray-500 font-semibold mb-1">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                Lanjutkan sebagai Tamu
+            </button>
+            <p class="text-center text-[10px] text-gray-300 pb-2">Tamu tidak mendapat harga Flash Sale & promo</p>
         </div>
 
         <!-- Register -->
@@ -2219,7 +2264,7 @@
         <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-3" x-text="currentOrderId"></div>
         <p class="text-gray-500 text-sm mb-6 leading-relaxed">Tim kami akan menghubungi kamu via WhatsApp dalam waktu dekat untuk proses pembayaran & aktivasi.</p>
         <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+currentOrderId+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full gradient-card text-white font-bold py-3.5 rounded-2xl mb-3 text-sm active:scale-95 shadow-sm">Chat WhatsApp Sekarang</a>
-        <button @click="orderSuccess=false; productModal=false; currentOrderId=null" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Tutup</button>
+        <button @click="orderSuccess=false; productModal=false; currentOrderId=null; renewalMode=false" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Tutup</button>
     </div>
 </div>
 
@@ -2345,11 +2390,13 @@ function serabutStore() {
 
         // Site Settings (dari GAS Settings tab)
         siteSettings: {
-            hero:   { tagline1:'', tagline2:'', subtext:'', btn1:'Lihat Semua Produk →', btn2:'Cek Status Akun' },
-            footer: { desc:'', email:'', phone:'', jam:'', copyright:'' },
+            hero:     { tagline1:'', tagline2:'', subtext:'', btn1:'Lihat Semua Produk →', btn2:'Cek Status Akun' },
+            footer:   { desc:'', email:'', phone:'', jam:'', copyright:'' },
             benefits: {},
             featured: [],
+            renewal:  { discountPct: 10, discountMax: 10000 },
         },
+        renewalMode: false,
         settingsLoaded: false,
 
         // Admin
@@ -2615,6 +2662,12 @@ function serabutStore() {
                     copyright: s['footer.copyright'] || this.siteSettings.footer.copyright,
                 };
 
+                // Renewal discount
+                this.siteSettings.renewal = {
+                    discountPct: Number(s['renewal.discountPct']) || 10,
+                    discountMax: Number(s['renewal.discountMax']) || 10000,
+                };
+
                 // Categories
                 try {
                     const cats = JSON.parse(s['categories'] || '[]');
@@ -2784,6 +2837,9 @@ function serabutStore() {
 
         // ── Product Modal ─────────────────────────────
         flashSaleBeli(item) {
+            if (this.currentUser?.isGuest) {
+                this.authModal = true; this.authTab = 'login'; return;
+            }
             const product = this.products.find(p =>
                 p.nama === item.produk && (
                     !item.varian || item.varian === '-' ||
@@ -2806,7 +2862,8 @@ function serabutStore() {
             document.body.style.overflow = 'hidden';
         },
         closeProductModal() {
-            this.productModal = false;
+            this.productModal  = false;
+            this.renewalMode   = false;
             document.body.style.overflow = '';
         },
         getUniqueVariants(group) {
@@ -2927,9 +2984,14 @@ function serabutStore() {
             this.otpResending=false;
         },
         logout() {
+            this.setPage('home');
             this.currentUser = null;
             localStorage.removeItem('serabutUser');
-            if(this.activePage === 'admin') this.setPage('home');
+            this.renewalMode   = false;
+            this.csStarted     = false;
+            this.csMessages    = [];
+            this.csSessionId   = null;
+            this.csEscalate    = false;
         },
 
         // ── Order ─────────────────────────────────────
@@ -2964,7 +3026,10 @@ function serabutStore() {
                     produk:         this.selectedProductGroup.nama,
                     varian:         this.selectedVariant.varian||'',
                     masaAktif:      this.selectedVariant.masaAktif||'-',
-                    harga:          this.flashSaleItem(this.selectedProductGroup.nama, this.selectedVariant.varian, this.selectedVariant.masaAktif)?.harga ?? this.selectedVariant.harga,
+                    harga:          (() => {
+                        const base = this.flashSaleItem(this.selectedProductGroup.nama, this.selectedVariant.varian, this.selectedVariant.masaAktif)?.harga ?? this.selectedVariant.harga;
+                        return this.renewalMode ? base - this.getRenewalDiscount(base) : base;
+                    })(),
                     msNama:         this.orderExtra.nama,
                     username:       this.orderExtra.username,
                     microsoftEmail: this.orderExtra.microsoftEmail,
@@ -3000,6 +3065,63 @@ function serabutStore() {
             if(!p) return 'Hubungi Kami';
             return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(p);
         },
+        // ── Guest Login ───────────────────────────────
+        loginAsGuest() {
+            this.currentUser = { nama: 'Tamu', role: 'guest', isGuest: true };
+            this.authModal = false;
+            this.authError = '';
+        },
+
+        // ── Expiry Helpers ────────────────────────────
+        calcExpiry(tanggal, masaAktif) {
+            if (!tanggal || !masaAktif || masaAktif === '-' || masaAktif === '') return null;
+            const lower = masaAktif.toLowerCase();
+            if (lower.includes('lifetime') || lower.includes('seumur')) return null;
+            // Parse tanggal "dd/MM/yyyy HH:mm"
+            const parts = tanggal.split(' ')[0].split('/');
+            if (parts.length < 3) return null;
+            const base = new Date(parts[2], parts[1] - 1, parts[0]);
+            if (isNaN(base)) return null;
+            // Parse masa aktif
+            const num = parseInt(masaAktif) || 1;
+            if (lower.includes('tahun') || lower.includes('year')) base.setFullYear(base.getFullYear() + num);
+            else if (lower.includes('bulan') || lower.includes('month')) base.setMonth(base.getMonth() + num);
+            else if (lower.includes('hari') || lower.includes('day')) base.setDate(base.getDate() + num);
+            else return null;
+            // Return as dd/MM/yyyy for formatOrderDate
+            const d = String(base.getDate()).padStart(2,'0');
+            const m = String(base.getMonth()+1).padStart(2,'0');
+            return `${d}/${m}/${base.getFullYear()}`;
+        },
+        isExpired(expiryStr) {
+            if (!expiryStr) return false;
+            const parts = expiryStr.split('/');
+            if (parts.length < 3) return false;
+            return new Date(parts[2], parts[1]-1, parts[0]) < new Date();
+        },
+        isExpiringSoon(expiryStr, days = 30) {
+            if (!expiryStr) return false;
+            const parts = expiryStr.split('/');
+            if (parts.length < 3) return false;
+            const exp = new Date(parts[2], parts[1]-1, parts[0]);
+            const now = new Date();
+            return exp >= now && (exp - now) / 86400000 <= days;
+        },
+
+        // ── Renewal ───────────────────────────────────
+        renewOrder(order) {
+            const product = this.products.find(p => p.nama === order.produk)
+                || this.products.find(p => order.produk?.startsWith(p.nama));
+            if (!product) { this.setPage('catalog'); this.searchQuery = order.produk; return; }
+            this.renewalMode = true;
+            this.openProductModal(product);
+        },
+        getRenewalDiscount(harga) {
+            const pct = this.siteSettings.renewal?.discountPct || 10;
+            const max = this.siteSettings.renewal?.discountMax || 10000;
+            return Math.min(Math.round(harga * pct / 100), max);
+        },
+
         openCSChat(guestName) {
             const nama = this.currentUser ? this.currentUser.nama : (guestName || '').trim();
             if (!nama) return;

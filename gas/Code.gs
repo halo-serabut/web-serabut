@@ -516,6 +516,8 @@ function _populateDefaultSettings(sheet) {
     ['footer.phone',       '0888-150-0555'],
     ['footer.jam',         '08.00 – 22.00 WIB'],
     ['footer.copyright',   '© 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.'],
+    ['renewal.discountPct', '10'],
+    ['renewal.discountMax', '10000'],
     ['categories', JSON.stringify([
       {name:'Office 365',desc:'Family & Personal',iconKey:'office365'},
       {name:'Adobe',     desc:'Creative Cloud',   iconKey:'adobe'},
