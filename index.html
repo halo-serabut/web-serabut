@@ -660,7 +660,7 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-600 mb-1.5 block">No. WhatsApp</label>
-                    <input type="text" :value="currentUser?.wa" disabled class="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-400 cursor-not-allowed">
+                    <input type="tel" x-model="editForm.wa" placeholder="08xxxxxxxxxx" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
                 </div>
 
                 <div class="flex justify-end pt-1">
@@ -2225,7 +2225,7 @@
                         </label>
                         <input x-show="!orderExtra.emailSameAsProfile" x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                     </div>
-                    <div>
+                    <div x-show="!isOneTimeProduct">
                         <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email reminder <span class="text-gray-400 font-normal">(opsional)</span></label>
                         <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email di atas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                         <p class="text-[11px] text-gray-400 mt-1.5">Isi jika pesan untuk orang lain dan ingin reminder dikirim ke email berbeda</p>
@@ -2248,10 +2248,34 @@
                         </label>
                         <input x-show="!orderExtra.emailSameAsProfile" x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                     </div>
-                    <div>
+                    <div x-show="!isOneTimeProduct">
                         <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email reminder <span class="text-gray-400 font-normal">(opsional)</span></label>
                         <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email di atas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                         <p class="text-[11px] text-gray-400 mt-1.5">Isi jika pesan untuk orang lain dan ingin reminder dikirim ke email berbeda</p>
+                    </div>
+                </div>
+            </template>
+
+            <!-- ── ADOBE ── -->
+            <template x-if="orderExtraType==='adobe'">
+                <div class="space-y-3">
+                    <!-- Warning box -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2.5">
+                        <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                        <p class="text-xs text-amber-700 leading-relaxed">Kami perlu login ke akun Adobe kamu untuk membeli langsung atas namamu. <span class="font-bold">Disarankan ganti password setelah aktivasi selesai.</span></p>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email akun Adobe kamu <span class="text-red-500">*</span></label>
+                        <input x-model="orderExtra.adobeEmail" type="email" placeholder="email@adobe.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Password akun Adobe kamu <span class="text-red-500">*</span></label>
+                        <input x-model="orderExtra.adobePass" type="password" placeholder="Password akun Adobe" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                        <p class="text-[11px] text-amber-600 mt-1.5 font-medium">⚠ Segera ganti password setelah aktivasi selesai</p>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email untuk menerima bukti pembelian <span class="text-gray-400 font-normal">(opsional)</span></label>
+                        <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email Adobe" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                     </div>
                 </div>
             </template>
@@ -2267,7 +2291,7 @@
                         </label>
                         <input x-show="!orderExtra.emailSameAsProfile" x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                     </div>
-                    <div>
+                    <div x-show="!isOneTimeProduct">
                         <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email reminder <span class="text-gray-400 font-normal">(opsional)</span></label>
                         <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email di atas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                         <p class="text-[11px] text-gray-400 mt-1.5">Isi jika pesan untuk orang lain dan ingin reminder dikirim ke email berbeda</p>
@@ -2361,7 +2385,7 @@ function serabutStore() {
         guestNameInput: '',
         orderModal:   false,
         orderSuccess: false,
-        orderExtra:   { nama:'', username:'', microsoftEmail:'', emailAktif:'', emailSameAsProfile:true, emailReminder:'' },
+        orderExtra:   { nama:'', username:'', microsoftEmail:'', emailAktif:'', emailSameAsProfile:true, emailReminder:'', adobeEmail:'', adobePass:'' },
         orderExtraError: '',
 
         // Product detail
@@ -2865,6 +2889,10 @@ function serabutStore() {
             return m[cat]||'📦';
         },
         getProductBenefits(cat) {
+            // Prioritas 1: dari catalog (products array)
+            const fromCatalog = this.products.find(p => p.category === cat && p.benefits?.length);
+            if(fromCatalog?.benefits?.length) return fromCatalog.benefits;
+            // Prioritas 2: dari siteSettings cache
             if(this.siteSettings.benefits?.[cat]?.length) return this.siteSettings.benefits[cat];
             const m={
                 'Office 365':['Akses semua Office apps (Word, Excel, PowerPoint, Outlook)','OneDrive 1TB cloud storage per pengguna','Support hingga 5 perangkat per akun','Update otomatis ke versi terbaru','Teams, OneNote, dan Publisher termasuk'],
@@ -3040,15 +3068,21 @@ function serabutStore() {
 
         // ── Order ─────────────────────────────────────
         get orderExtraType() {
-            const v = (this.selectedVariant?.varian || '').toLowerCase();
+            const cat = (this.selectedProductGroup?.category || '').toLowerCase();
+            const v   = (this.selectedVariant?.varian || '').toLowerCase();
+            if (cat === 'adobe')      return 'adobe';
             if (v.includes('family')) return 'family';
             if (v.includes('web'))    return 'web';
             return 'other';
         },
+        get isOneTimeProduct() {
+            const ma = (this.selectedVariant?.masaAktif || '').toLowerCase();
+            return !ma.includes('bulan') && !ma.includes('tahun') && !ma.includes('month') && !ma.includes('year');
+        },
         handlePesan() {
             if(!this.currentUser) { this.openAuth('login'); return; }
             this.orderError=''; this.orderExtraError='';
-            this.orderExtra = { nama:'', username:'', microsoftEmail:'', emailAktif:this.currentUser?.email||'', emailSameAsProfile:true, emailReminder:'' };
+            this.orderExtra = { nama:'', username:'', microsoftEmail:'', emailAktif:this.currentUser?.email||'', emailSameAsProfile:true, emailReminder:'', adobeEmail:'', adobePass:'' };
             this.orderModal=true;
         },
         async submitOrder() {
@@ -3059,7 +3093,9 @@ function serabutStore() {
             if(type==='web'    && !this.orderExtra.nama.trim())            { this.orderExtraError='Nama untuk akun Microsoft wajib diisi'; return; }
             if(type==='web'    && !this.orderExtra.username.trim())        { this.orderExtraError='Username Microsoft wajib diisi'; return; }
             if(type==='family' && !this.orderExtra.microsoftEmail.trim())  { this.orderExtraError='Email Microsoft wajib diisi'; return; }
-            if(!effectiveEmail)                                             { this.orderExtraError='Email wajib diisi'; return; }
+            if(type==='adobe'  && !this.orderExtra.adobeEmail.trim())      { this.orderExtraError='Email akun Adobe wajib diisi'; return; }
+            if(type==='adobe'  && !this.orderExtra.adobePass.trim())       { this.orderExtraError='Password akun Adobe wajib diisi'; return; }
+            if(type!=='adobe'  && !effectiveEmail)                          { this.orderExtraError='Email wajib diisi'; return; }
             this.orderLoading=true; this.orderError='';
             try {
                 const params = new URLSearchParams({
@@ -3078,8 +3114,10 @@ function serabutStore() {
                     msNama:         this.orderExtra.nama,
                     username:       this.orderExtra.username,
                     microsoftEmail: this.orderExtra.microsoftEmail,
-                    emailAktif:     effectiveEmail,
+                    emailAktif:     this.orderExtraType==='adobe' ? this.orderExtra.adobeEmail : effectiveEmail,
                     emailReminder:  this.orderExtra.emailReminder,
+                    adobeEmail:     this.orderExtra.adobeEmail,
+                    adobePass:      this.orderExtra.adobePass,
                 });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
@@ -3596,7 +3634,7 @@ function serabutStore() {
             this.adminAddMode     = false;
             this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'' };
             this.adminBenefitCat  = p.category || this.getCategory(p.nama);
-            this.adminBenefitItems = [...(this.siteSettings.benefits[this.adminBenefitCat] || this.getProductBenefits(this.adminBenefitCat))];
+            this.adminBenefitItems = [...this.getProductBenefits(this.adminBenefitCat)];
             this.adminBenefitNewItem = '';
         },
         async adminSaveProduct() {
@@ -3755,7 +3793,7 @@ function serabutStore() {
 
         // ── Admin: Benefits ───────────────────────────
         adminBenefitLoadCat() {
-            this.adminBenefitItems = [...(this.siteSettings.benefits[this.adminBenefitCat] || this.getProductBenefits(this.adminBenefitCat))];
+            this.adminBenefitItems = [...this.getProductBenefits(this.adminBenefitCat)];
             this.adminBenefitNewItem = '';
         },
         adminBenefitAdd() {
@@ -3780,12 +3818,25 @@ function serabutStore() {
         async adminSaveBenefits() {
             this.adminSaving = true;
             try {
-                const res = await this._adminSave(`benefits.${this.adminBenefitCat}`, JSON.stringify(this.adminBenefitItems));
-                if(res.success) {
+                const benefitsJson = JSON.stringify(this.adminBenefitItems);
+                const params = new URLSearchParams({
+                    action:    'saveCategoryBenefits',
+                    adminEmail: this.currentUser.email,
+                    category:  this.adminBenefitCat,
+                    benefits:  benefitsJson,
+                });
+                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                const data = await res.json();
+                if(data.success) {
+                    // Update lokal di products array
+                    this.products = this.products.map(p =>
+                        (p.category === this.adminBenefitCat) ? { ...p, benefits: [...this.adminBenefitItems] } : p
+                    );
+                    // Juga simpan di siteSettings sebagai cache
                     if(!this.siteSettings.benefits) this.siteSettings.benefits = {};
                     this.siteSettings.benefits[this.adminBenefitCat] = [...this.adminBenefitItems];
-                    this._adminShowMsg('Deskripsi disimpan ✓');
-                } else { this._adminShowMsg(res.error||'Gagal'); }
+                    this._adminShowMsg('Deskripsi disimpan di Catalog ✓');
+                } else { this._adminShowMsg(data.error||'Gagal'); }
             } catch { this._adminShowMsg('Gagal terhubung'); }
             this.adminSaving = false;
         },
@@ -3870,6 +3921,7 @@ function serabutStore() {
         openEditMode() {
             this.editForm = {
                 nama:         this.profileExtra.nama  || this.currentUser?.nama || '',
+                wa:           this.currentUser?.wa || '',
                 tanggalLahir: this.profileExtra.tanggalLahir || '',
                 jenisKelamin: this.profileExtra.jenisKelamin || '',
                 alamat:       this.profileExtra.alamat || '',
@@ -3886,6 +3938,7 @@ function serabutStore() {
                     action:       'updateProfile',
                     email:        this.currentUser.email,
                     nama:         this.editForm.nama.trim(),
+                    wa:           this.editForm.wa || '',
                     tanggalLahir: this.editForm.tanggalLahir,
                     jenisKelamin: this.editForm.jenisKelamin,
                     alamat:       this.editForm.alamat,
