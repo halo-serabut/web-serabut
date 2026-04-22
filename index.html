@@ -2275,9 +2275,17 @@
                         <p class="text-[11px] text-amber-600 mt-1.5 font-medium">⚠ Segera ganti password setelah aktivasi selesai</p>
                     </div>
                     <div>
-                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email untuk reminder & pengiriman produk <span class="text-gray-400 font-normal">(opsional)</span></label>
-                        <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email Adobe di atas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
-                        <p class="text-[11px] text-gray-400 mt-1.5">Isi jika ingin notifikasi & produk dikirim ke email lain</p>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email untuk menerima produk <span class="text-red-500">*</span></label>
+                        <label class="flex items-center gap-2 cursor-pointer mb-2 select-none">
+                            <input type="checkbox" x-model="orderExtra.emailSameAsProfile" @change="if(orderExtra.emailSameAsProfile) orderExtra.emailAktif=currentUser.email" class="w-4 h-4 rounded accent-red-600">
+                            <span class="text-xs text-gray-600">Gunakan email profil saya — <span class="font-semibold text-gray-800" x-text="currentUser?.email"></span></span>
+                        </label>
+                        <input x-show="!orderExtra.emailSameAsProfile" x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                    </div>
+                    <div x-show="!isOneTimeProduct">
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email reminder <span class="text-gray-400 font-normal">(opsional)</span></label>
+                        <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email di atas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                        <p class="text-[11px] text-gray-400 mt-1.5">Isi jika pesan untuk orang lain dan ingin reminder dikirim ke email berbeda</p>
                     </div>
                 </div>
             </template>
@@ -3116,7 +3124,7 @@ function serabutStore() {
                     msNama:         this.orderExtra.nama,
                     username:       this.orderExtra.username,
                     microsoftEmail: this.orderExtra.microsoftEmail,
-                    emailAktif:     this.orderExtraType==='adobe' ? this.orderExtra.adobeEmail : effectiveEmail,
+                    emailAktif:     effectiveEmail,
                     emailReminder:  this.orderExtra.emailReminder,
                     adobeEmail:     this.orderExtra.adobeEmail,
                     adobePass:      this.orderExtra.adobePass,
