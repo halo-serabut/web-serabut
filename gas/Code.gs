@@ -15,6 +15,10 @@ const WA_STORE_NO    = '628881500555';
 const STORE_NAME     = 'Serabut Store';
 const OTP_EXPIRY_MIN = 10;
 
+const TAB_CS         = 'CS-Sessions';
+const OPENROUTER_KEY = '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';
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
 // ── Kolom Users-web (0-indexed) ──────────────────────────
 // 0:Nama  1:Email  2:No Hp  3:Password  4:Created At  5:Status
 // 6:OTP   7:OTP Expiry  8:Role
@@ -59,6 +63,28 @@ function doGet(e) {
       case 'updateProductStock':  result = updateProductStock(e.parameter); break;
       case 'updateProductAktif':  result = updateProductAktif(e.parameter); break;
       case 'googleLogin':         result = googleLogin(e.parameter); break;
+      default: result = { success: false, error: 'Unknown action' };
+    }
+  } catch (err) {
+    result = { success: false, error: err.message };
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ────────────────────────────────────────────────────────
+//  POST HANDLER (CS Agent)
+// ────────────────────────────────────────────────────────
+function doPost(e) {
+  let params;
+  try { params = JSON.parse(e.postData.contents); } catch(_) { params = {}; }
+
+  let result;
+  try {
+    switch (params.action) {
+      case 'csChat': result = handleCSChat(params); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -1201,6 +1227,151 @@ function testWAGroupAfterSync() {
     muteHttpExceptions: true,
   });
   Logger.log('@g.us → ' + r1.getContentText());
+}
+
+// ════════════════════════════════════════════════════════
+//  CS AGENT — AI Customer Service
+// ════════════════════════════════════════════════════════
+
+function handleCSChat({ sessionId, message, userName, userEmail }) {
+  if (!sessionId || !message) return { success: false, error: 'sessionId dan message wajib' };
+
+  const sheet   = getOrCreateCSSheet();
+  const history = getChatHistory(sheet, sessionId);
+
+  const messages = [
+    { role: 'system', content: buildCSSystemPrompt() },
+    ...history,
+    { role: 'user', content: String(message).trim() },
+  ];
+
+  const aiResponse = callOpenRouter(messages);
+  if (!aiResponse || !aiResponse.choices) {
+    return { success: false, error: 'AI tidak merespons' };
+  }
+
+  let reply      = (aiResponse.choices[0].message.content || '').trim();
+  const escalate = shouldEscalate(message, reply);
+  reply          = reply.replace('[ESCALATE]', '').trim();
+
+  const ts = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss');
+  sheet.appendRow([sessionId, ts, 'user',      String(message).trim(), userName || '', userEmail || '', false]);
+  sheet.appendRow([sessionId, ts, 'assistant', reply,                   userName || '', userEmail || '', escalate]);
+
+  return { success: true, reply, escalate };
+}
+
+function getChatHistory(sheet, sessionId) {
+  const data    = sheet.getDataRange().getValues();
+  const history = [];
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) !== String(sessionId)) continue;
+    const role = String(data[i][2]);
+    if (role === 'user' || role === 'assistant') {
+      history.push({ role, content: String(data[i][3]) });
+    }
+  }
+  return history.slice(-10);
+}
+
+function getOrCreateCSSheet() {
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let   sheet = ss.getSheetByName(TAB_CS);
+  if (!sheet) {
+    sheet = ss.insertSheet(TAB_CS);
+    sheet.appendRow(['Session ID', 'Timestamp', 'Role', 'Message', 'User Name', 'User Email', 'Escalated']);
+    sheet.getRange(1, 1, 1, 7).setFontWeight('bold');
+  }
+  return sheet;
+}
+
+function callOpenRouter(messages) {
+  const payload = {
+    model:       'deepseek/deepseek-chat',
+    messages,
+    max_tokens:  512,
+    temperature: 0.7,
+  };
+  const options = {
+    method:             'post',
+    contentType:        'application/json',
+    headers: {
+      'Authorization': 'Bearer ' + OPENROUTER_KEY,
+      'HTTP-Referer':  'https://serabut.id',
+      'X-Title':       'Serabut CS Agent',
+    },
+    payload:            JSON.stringify(payload),
+    muteHttpExceptions: true,
+  };
+  return JSON.parse(UrlFetchApp.fetch(OPENROUTER_URL, options).getContentText());
+}
+
+function shouldEscalate(userMsg, aiReply) {
+  const lower    = String(userMsg).toLowerCase();
+  const keywords = ['chat cs', 'cs manusia', ' cs ', 'bicara cs', 'hubungi cs', 'minta cs', 'cs aja', 'cs saja', 'ke cs'];
+  if (keywords.some(k => lower.includes(k))) return true;
+  if (String(aiReply).includes('[ESCALATE]'))  return true;
+  return false;
+}
+
+function buildCSSystemPrompt() {
+  return `Kamu adalah Sera, AI Customer Service Serabut Store (serabut.id) — toko digital license software terpercaya di Indonesia.
+
+IDENTITAS:
+- Nama: Sera
+- Bahasa: Indonesia (santai tapi profesional)
+- Nada: hangat, to the point, tidak bertele-tele
+- Tanda tangan: _— Sera, CS Serabut Store_ (tambahkan di akhir setiap balasan)
+
+PRODUK & HARGA:
+1. Microsoft Office 365 Personal (1 device) — 1 tahun: Rp 59.000
+2. Microsoft Office 365 Family (5 devices) — 1 tahun: Rp 99.000
+3. Adobe Creative Cloud All Apps — bulanan/tahunan: Rp 269.000–3.351.000
+4. Windows 10/11 Pro (lifetime): Rp 160.000
+5. Microsoft Office 2024 Professional Plus: Rp 800.000
+6. Microsoft Office 2021 Professional Plus: Rp 650.000
+7. Microsoft Project Pro, Visio, CorelDRAW, G Suite Admin — tersedia, harga tanya CS
+
+CARA INSTALL OFFICE 365:
+1. Cek email dari halo@serabut.com (cek folder spam juga)
+2. Klik "Accept Invitation" di email tersebut
+3. Buat password baru di halaman Microsoft yang muncul
+4. Login ke office.com dengan akun yang dikirim
+5. Download Office di office.com/install
+6. Install, lalu masuk dengan akun Microsoft yang dikirim
+Akun aktif 5–15 menit setelah konfirmasi pembayaran
+
+CARA AKTIVASI WINDOWS:
+1. Klik kanan Start → Settings → System → Activation
+2. Klik "Change product key"
+3. Masukkan key yang dikirim via WhatsApp
+4. Tunggu verifikasi online otomatis
+
+CARA INSTALL ADOBE CC:
+1. Download Adobe Creative Cloud App di creativecloud.adobe.com/apps/download
+2. Login dengan akun yang diberikan Serabut
+3. Install aplikasi yang diinginkan dari dalam CC App
+
+TROUBLESHOOT UMUM:
+- Email undangan tidak masuk → Cek folder spam/junk, tunggu 5 menit, lalu minta resend ke CS
+- Office tidak bisa install → Uninstall Office versi lama dulu via Control Panel, restart PC, coba lagi
+- Windows key invalid → Screenshot error dan kirim ke CS WA, kami proses ganti dalam 1 jam
+- Adobe login gagal → Clear cache browser, coba mode incognito, atau reinstall CC App
+- Akun expired → Hubungi CS WA untuk perpanjang dengan harga spesial pelanggan lama
+
+FAQ:
+- Kapan akun dikirim? → Setelah pembayaran dikonfirmasi, 5–15 menit di jam 08.00–22.00 WIB
+- Garansi? → Garansi penuh selama masa aktif yang dibeli
+- Metode bayar? → Transfer bank, QRIS, dompet digital — konfirmasi via WA setelah transfer
+- Cek status akun? → Gunakan menu "Cek Status Akun" di serabut.id
+
+ATURAN PENTING:
+- Jawab MAKSIMAL 3–4 kalimat. Singkat, jelas, helpful.
+- Jika pertanyaan di luar produk/layanan Serabut → arahkan ke CS WA, akhiri dengan [ESCALATE]
+- Jika user komplain soal pembayaran yang belum selesai → akhiri dengan [ESCALATE]
+- Jika user marah atau frustrasi → simpati dulu, lalu akhiri dengan [ESCALATE]
+- Jika kamu benar-benar tidak tahu jawaban → akhiri dengan [ESCALATE]
+- JANGAN mengarang informasi atau harga yang tidak ada di atas`;
 }
 
 // ────────────────────────────────────────────────────────
