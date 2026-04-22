@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Serabut.id — Platform Produk Digital</title>
+    <title>Serabut Store — Software Original Terpercaya</title>
     <meta name="description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat.">
     <meta name="theme-color" content="#DC2626">
     <link rel="icon" type="image/png" href="logo.png">
@@ -709,7 +709,7 @@
                         </div>
                         <div class="px-4 py-3 flex items-center justify-between gap-3">
                             <div class="flex-1 min-w-0">
-                                <div class="font-bold text-gray-800 text-sm leading-snug" x-text="order.produk"></div>
+                                <button @click="reorderProduct(order)" class="font-bold text-gray-800 text-sm leading-snug text-left hover:text-brand-500 transition-colors" x-text="order.produk"></button>
                                 <div class="text-xs text-gray-400 mt-0.5">
                                     <span x-show="order.varian&&order.varian!=='-'" x-text="order.varian + ' · '"></span>
                                     <span x-text="formatOrderDate(order.tanggal)"></span>
@@ -1976,12 +1976,29 @@
                 <span x-text="authLoading?'Memproses...':'Masuk'"></span>
             </button>
             <p class="text-center text-xs text-gray-400 pb-2">Belum punya akun? <button @click="authTab='register'; authError=''" class="text-brand-500 font-semibold">Daftar sekarang</button></p>
-            <div class="flex items-center gap-3 pb-1"><div class="flex-1 h-px bg-gray-100"></div><span class="text-xs text-gray-300">atau</span><div class="flex-1 h-px bg-gray-100"></div></div>
-            <button @click="loginAsGuest()"
-                    class="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 rounded-2xl bg-gray-50 hover:bg-gray-100 active:scale-95 transition-all text-sm text-gray-500 font-semibold mb-1">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                Lanjutkan sebagai Tamu
-            </button>
+            <div class="flex items-center gap-3"><div class="flex-1 h-px bg-gray-100"></div><span class="text-xs text-gray-300">atau</span><div class="flex-1 h-px bg-gray-100"></div></div>
+            <!-- Guest step 1: tombol -->
+            <div x-show="!guestStep">
+                <button @click="guestStep=true; $nextTick(()=>$refs.guestNameField?.focus())"
+                        class="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-200 rounded-2xl bg-gray-50 hover:bg-gray-100 active:scale-95 transition-all text-sm text-gray-500 font-semibold">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    Lanjutkan sebagai Tamu
+                </button>
+            </div>
+            <!-- Guest step 2: input nama -->
+            <div x-show="guestStep" class="space-y-2">
+                <label class="text-xs font-bold text-gray-600 block">Nama kamu</label>
+                <input x-ref="guestNameField" x-model="guestNameInput" type="text"
+                       placeholder="Contoh: Budi Santoso"
+                       @keydown.enter="guestNameInput.trim() && loginAsGuest(guestNameInput)"
+                       class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+                <div class="flex gap-2">
+                    <button @click="guestStep=false; guestNameInput=''"
+                            class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm text-gray-400 hover:bg-gray-50 transition-all">Batal</button>
+                    <button @click="loginAsGuest(guestNameInput)" :disabled="!guestNameInput.trim()"
+                            class="flex-1 py-2.5 rounded-xl bg-gray-700 disabled:opacity-40 text-white text-sm font-bold transition-all active:scale-95">Lanjut →</button>
+                </div>
+            </div>
             <p class="text-center text-[10px] text-gray-300 pb-2">Tamu tidak mendapat harga Flash Sale & promo</p>
         </div>
 
@@ -2137,7 +2154,12 @@
             <div class="border-t border-gray-200 pt-2.5 flex justify-between items-end">
                 <span class="text-sm font-bold text-gray-700">Total</span>
                 <div class="text-right">
-                    <template x-if="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                    <!-- Guest: selalu harga penuh -->
+                    <template x-if="currentUser?.isGuest">
+                        <span class="font-black text-brand-500 text-lg" x-text="formatPrice(selectedVariant?.harga)"></span>
+                    </template>
+                    <!-- Member: flash sale price jika ada -->
+                    <template x-if="!currentUser?.isGuest && flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
                         <div>
                             <span class="text-xs text-gray-400 line-through block" x-text="formatPrice(selectedVariant?.harga)"></span>
                             <div class="flex items-center gap-1.5 justify-end">
@@ -2148,12 +2170,32 @@
                             </div>
                         </div>
                     </template>
-                    <template x-if="!flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                    <template x-if="!currentUser?.isGuest && !flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
                         <span class="font-black text-brand-500 text-lg" x-text="formatPrice(selectedVariant?.harga)"></span>
                     </template>
                 </div>
             </div>
         </div>
+
+        <!-- Banner member promo untuk guest -->
+        <template x-if="currentUser?.isGuest && flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+            <div class="bg-gradient-to-r from-brand-500 to-red-400 rounded-2xl p-4 mb-4">
+                <div class="flex items-start gap-3">
+                    <div class="text-2xl flex-none">🎁</div>
+                    <div class="flex-1">
+                        <div class="text-white font-black text-sm leading-snug">
+                            Hemat <span x-text="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon+'%'"></span>
+                            = <span x-text="formatPrice((selectedVariant?.harga||0) - (flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga||0))"></span> untuk Member!
+                        </div>
+                        <div class="text-white/80 text-xs mt-0.5 mb-2">Daftar gratis & nikmati harga Flash Sale + promo eksklusif</div>
+                        <button @click="orderModal=false; authModal=true; authTab='register'"
+                                class="bg-white text-brand-600 font-black text-xs px-4 py-2 rounded-xl active:scale-95 transition-all">
+                            Daftar Sekarang →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </template>
 
         <!-- User -->
         <div class="bg-brand-50 rounded-2xl p-4 mb-5 flex items-center gap-3">
@@ -2315,6 +2357,8 @@ function serabutStore() {
         // Modals
         productModal: false,
         authModal:    false,
+        guestStep:    false,
+        guestNameInput: '',
         orderModal:   false,
         orderSuccess: false,
         orderExtra:   { nama:'', username:'', microsoftEmail:'', emailAktif:'', emailSameAsProfile:true, emailReminder:'' },
@@ -3027,6 +3071,7 @@ function serabutStore() {
                     varian:         this.selectedVariant.varian||'',
                     masaAktif:      this.selectedVariant.masaAktif||'-',
                     harga:          (() => {
+                        if (this.currentUser?.isGuest) return this.selectedVariant.harga;
                         const base = this.flashSaleItem(this.selectedProductGroup.nama, this.selectedVariant.varian, this.selectedVariant.masaAktif)?.harga ?? this.selectedVariant.harga;
                         return this.renewalMode ? base - this.getRenewalDiscount(base) : base;
                     })(),
@@ -3066,10 +3111,13 @@ function serabutStore() {
             return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(p);
         },
         // ── Guest Login ───────────────────────────────
-        loginAsGuest() {
-            this.currentUser = { nama: 'Tamu', role: 'guest', isGuest: true };
-            this.authModal = false;
-            this.authError = '';
+        loginAsGuest(nama) {
+            const name = (nama || '').trim() || 'Tamu';
+            this.currentUser  = { nama: name, role: 'guest', isGuest: true };
+            this.authModal    = false;
+            this.authError    = '';
+            this.guestStep    = false;
+            this.guestNameInput = '';
         },
 
         // ── Expiry Helpers ────────────────────────────
@@ -3109,6 +3157,13 @@ function serabutStore() {
         },
 
         // ── Renewal ───────────────────────────────────
+        reorderProduct(order) {
+            const product = this.products.find(p => p.nama === order.produk)
+                || this.products.find(p => order.produk?.startsWith(p.nama));
+            if (!product) { this.setPage('catalog'); this.searchQuery = order.produk; return; }
+            this.renewalMode = false;
+            this.openProductModal(product);
+        },
         renewOrder(order) {
             const product = this.products.find(p => p.nama === order.produk)
                 || this.products.find(p => order.produk?.startsWith(p.nama));
