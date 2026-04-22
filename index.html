@@ -3845,8 +3845,9 @@ function serabutStore() {
                     // Juga simpan di siteSettings sebagai cache
                     if(!this.siteSettings.benefits) this.siteSettings.benefits = {};
                     this.siteSettings.benefits[this.adminBenefitCat] = [...this.adminBenefitItems];
-                    this._adminShowMsg('Deskripsi disimpan di Catalog ✓');
-                } else { this._adminShowMsg(data.error||'Gagal'); }
+                    const rows = data.updated || 0;
+                    this._adminShowMsg(`Deskripsi disimpan ✓ (${rows} baris diupdate, col ${data.col})`);
+                } else { this._adminShowMsg('❌ ' + (data.error||'Gagal')); }
             } catch { this._adminShowMsg('Gagal terhubung'); }
             this.adminSaving = false;
         },
