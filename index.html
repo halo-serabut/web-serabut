@@ -3027,17 +3027,14 @@ function serabutStore() {
             this.csSending = true;
             this.$nextTick(() => this.scrollCSToBottom());
             try {
-                const res  = await fetch(this.GAS_URL, {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body:    JSON.stringify({
-                        action:    'csChat',
-                        sessionId: this.csSessionId,
-                        message:   msg,
-                        userName:  this.currentUser ? this.currentUser.nama  : this.csGuestName,
-                        userEmail: this.currentUser ? this.currentUser.email : '',
-                    }),
+                const qs  = new URLSearchParams({
+                    action:    'csChat',
+                    sessionId: this.csSessionId,
+                    message:   msg,
+                    userName:  this.currentUser ? this.currentUser.nama  : this.csGuestName,
+                    userEmail: this.currentUser ? this.currentUser.email : '',
                 });
+                const res  = await fetch(this.GAS_URL + '?' + qs.toString());
                 const data = await res.json();
                 if (data.success) {
                     this.csMessages.push({ id: Date.now() + 1, role: 'assistant', content: data.reply });

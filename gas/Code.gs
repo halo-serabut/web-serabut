@@ -63,6 +63,7 @@ function doGet(e) {
       case 'updateProductStock':  result = updateProductStock(e.parameter); break;
       case 'updateProductAktif':  result = updateProductAktif(e.parameter); break;
       case 'googleLogin':         result = googleLogin(e.parameter); break;
+      case 'csChat':              result = handleCSChat(e.parameter); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -1238,9 +1239,10 @@ function handleCSChat({ sessionId, message, userName, userEmail }) {
 
   const sheet   = getOrCreateCSSheet();
   const history = getChatHistory(sheet, sessionId);
+  const guides  = loadGuidesText();
 
   const messages = [
-    { role: 'system', content: buildCSSystemPrompt() },
+    { role: 'system', content: buildCSSystemPrompt(guides) },
     ...history,
     { role: 'user', content: String(message).trim() },
   ];
@@ -1314,7 +1316,30 @@ function shouldEscalate(userMsg, aiReply) {
   return false;
 }
 
-function buildCSSystemPrompt() {
+function loadGuidesText() {
+  try {
+    const result = getGuides();
+    if (!result.success || !result.data) return '';
+    const cats   = { office365: 'Microsoft Office 365', windows: 'Windows', adobe: 'Adobe Creative Cloud' };
+    let   text   = '';
+    for (const [key, label] of Object.entries(cats)) {
+      const list = result.data[key] || [];
+      if (!list.length) continue;
+      text += `\n=== ${label} ===\n`;
+      for (const g of list) {
+        text += `\n[${g.title}]\n`;
+        if (Array.isArray(g.steps)) g.steps.forEach((s, i) => { text += `${i + 1}. ${s}\n`; });
+        if (g.note) text += `Catatan: ${g.note}\n`;
+      }
+    }
+    return text;
+  } catch (_) { return ''; }
+}
+
+function buildCSSystemPrompt(guidesText) {
+  const panduanSection = guidesText
+    ? `\n\nPANDUAN RESMI SERABUT STORE (wajib jadikan referensi utama sebelum menjawab):\n${guidesText}`
+    : '';
   return `Kamu adalah Sera, AI Customer Service Serabut Store (serabut.id) — toko digital license software terpercaya di Indonesia.
 
 IDENTITAS:
@@ -1367,11 +1392,12 @@ FAQ:
 
 ATURAN PENTING:
 - Jawab MAKSIMAL 3–4 kalimat. Singkat, jelas, helpful.
+- SELALU cek PANDUAN RESMI dulu sebelum menjawab. Panduan adalah sumber kebenaran utama.
 - Jika pertanyaan di luar produk/layanan Serabut → arahkan ke CS WA, akhiri dengan [ESCALATE]
 - Jika user komplain soal pembayaran yang belum selesai → akhiri dengan [ESCALATE]
 - Jika user marah atau frustrasi → simpati dulu, lalu akhiri dengan [ESCALATE]
-- Jika kamu benar-benar tidak tahu jawaban → akhiri dengan [ESCALATE]
-- JANGAN mengarang informasi atau harga yang tidak ada di atas`;
+- Jika kamu benar-benar tidak tahu jawaban meski sudah cek panduan → akhiri dengan [ESCALATE]
+- JANGAN mengarang informasi atau harga yang tidak ada${panduanSection}`;
 }
 
 // ────────────────────────────────────────────────────────
