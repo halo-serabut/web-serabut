@@ -3830,25 +3830,33 @@ function serabutStore() {
             try {
                 const benefitsJson = JSON.stringify(this.adminBenefitItems);
                 const params = new URLSearchParams({
-                    action:    'saveCategoryBenefits',
+                    action:     'saveCategoryBenefits',
                     adminEmail: this.currentUser.email,
-                    category:  this.adminBenefitCat,
-                    benefits:  benefitsJson,
+                    category:   this.adminBenefitCat,
+                    benefits:   benefitsJson,
                 });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
+                console.log('[adminSaveBenefits] GAS response:', data);
                 if(data.success) {
+                    if(data.updated === 0) {
+                        alert(`⚠️ GAS menjawab success tapi 0 baris diupdate.\n\nCategory: ${this.adminBenefitCat}\nCol: ${data.col}\nRows: ${JSON.stringify(data.rows)}\n\nCek console untuk detail.`);
+                    }
                     // Update lokal di products array
                     this.products = this.products.map(p =>
                         (p.category === this.adminBenefitCat) ? { ...p, benefits: [...this.adminBenefitItems] } : p
                     );
-                    // Juga simpan di siteSettings sebagai cache
                     if(!this.siteSettings.benefits) this.siteSettings.benefits = {};
                     this.siteSettings.benefits[this.adminBenefitCat] = [...this.adminBenefitItems];
-                    const rows = data.updated || 0;
-                    this._adminShowMsg(`Deskripsi disimpan ✓ (${rows} baris diupdate, col ${data.col})`);
-                } else { this._adminShowMsg('❌ ' + (data.error||'Gagal')); }
-            } catch { this._adminShowMsg('Gagal terhubung'); }
+                    this._adminShowMsg(`✓ Disimpan ${data.updated} baris di col ${data.col} (${this.adminBenefitCat})`);
+                } else {
+                    alert('❌ GAS Error: ' + (data.error || 'Unknown error'));
+                    this._adminShowMsg('❌ ' + (data.error||'Gagal'));
+                }
+            } catch(err) {
+                alert('Network error: ' + err.message);
+                this._adminShowMsg('Gagal terhubung');
+            }
             this.adminSaving = false;
         },
 
