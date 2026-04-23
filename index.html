@@ -1121,8 +1121,8 @@
                             <div>
                                 <div class="text-sm font-bold text-gray-800">Yang kamu dapat</div>
                                 <div class="text-xs text-gray-400 mt-0.5">
-                                    Berlaku untuk semua produk kategori
-                                    <span class="font-semibold text-brand-500" x-text="adminBenefitCat||'—'"></span>
+                                    Deskripsi spesifik untuk:
+                                    <span class="font-semibold text-brand-500" x-text="adminEditProduct ? (adminNewProduct.nama + (adminNewProduct.varian ? ' · ' + adminNewProduct.varian : '')) : '(produk baru)'"></span>
                                 </div>
                             </div>
                         </div>
@@ -1155,7 +1155,7 @@
                                 + Tambah
                             </button>
                         </div>
-                        <button @click="adminSaveBenefits()" :disabled="adminSaving || !adminBenefitCat"
+                        <button @click="adminSaveBenefits()" :disabled="adminSaving || !adminEditProduct"
                                 class="px-4 py-2 border border-brand-300 text-brand-600 rounded-xl text-sm font-semibold hover:bg-brand-50 transition-colors flex items-center gap-1.5 disabled:opacity-40">
                             <svg x-show="adminSaving" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
                             <span x-text="adminSaving ? 'Menyimpan...' : 'Simpan Deskripsi'"></span>
@@ -1889,7 +1889,7 @@
         <div class="bg-gray-50 mx-5 rounded-2xl p-4 mb-4">
             <div class="text-sm font-bold text-gray-700 mb-3">Yang kamu dapat</div>
             <div class="space-y-2">
-                <template x-for="benefit in getProductBenefits(selectedProductGroup?.category)" :key="benefit">
+                <template x-for="benefit in getProductBenefits(selectedVariant || selectedProductGroup?.category)" :key="benefit">
                     <div class="flex items-start gap-2">
                         <span class="text-brand-500 flex-none mt-0.5 font-bold text-sm">✓</span>
                         <span class="text-sm text-gray-600 leading-relaxed" x-text="benefit"></span>
@@ -2878,11 +2878,17 @@ function serabutStore() {
             const m={'Office 365':'📧','Adobe':'🎨','Windows':'🪟','Office':'💼','Google':'☁️','CorelDRAW':'✏️','Project':'📊','Visio':'📐','Windows Server':'🖥️'};
             return m[cat]||'📦';
         },
-        getProductBenefits(cat) {
-            // Prioritas 1: dari catalog (products array)
+        getProductBenefits(catOrProduct) {
+            // Prioritas 1: object produk langsung (per-produk benefits)
+            if(catOrProduct && typeof catOrProduct === 'object') {
+                if(catOrProduct.benefits?.length) return catOrProduct.benefits;
+                catOrProduct = catOrProduct.category;
+            }
+            const cat = catOrProduct;
+            // Prioritas 2: dari catalog (products array, cari yg punya benefits)
             const fromCatalog = this.products.find(p => p.category === cat && p.benefits?.length);
             if(fromCatalog?.benefits?.length) return fromCatalog.benefits;
-            // Prioritas 2: dari siteSettings cache
+            // Prioritas 3: dari siteSettings cache
             if(this.siteSettings.benefits?.[cat]?.length) return this.siteSettings.benefits[cat];
             const m={
                 'Office 365':['Akses semua Office apps (Word, Excel, PowerPoint, Outlook)','OneDrive 1TB cloud storage per pengguna','Support hingga 5 perangkat per akun','Update otomatis ke versi terbaru','Teams, OneNote, dan Publisher termasuk'],
@@ -3629,7 +3635,7 @@ function serabutStore() {
             this.adminAddMode     = false;
             this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'' };
             this.adminBenefitCat  = p.category || this.getCategory(p.nama);
-            this.adminBenefitItems = [...this.getProductBenefits(this.adminBenefitCat)];
+            this.adminBenefitItems = Array.isArray(p.benefits) ? [...p.benefits] : [];
             this.adminBenefitNewItem = '';
             // Scroll ke form (hanya setelah render selesai)
             this.$nextTick(() => {
@@ -3653,33 +3659,19 @@ function serabutStore() {
                     aktif:     String(this.adminNewProduct.aktif),
                     stok:      this.adminNewProduct.stok===''?'':Number(this.adminNewProduct.stok),
                     iconUrl:   this.adminNewProduct.iconUrl||'',
+                    benefits:  JSON.stringify(this.adminBenefitItems),
                 });
                 if(this.adminEditProduct) params.append('rowIndex', this.adminEditProduct.rowIndex);
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
                 if(data.success) {
-                    // Simpan benefits sekaligus (sebelum reset state)
-                    if(this.adminBenefitCat && this.adminBenefitItems.length > 0) {
-                        try {
-                            const bParams = new URLSearchParams({
-                                action:     'saveCategoryBenefits',
-                                adminEmail: this.currentUser.email,
-                                category:   this.adminBenefitCat,
-                                benefits:   JSON.stringify(this.adminBenefitItems),
-                            });
-                            const bRes  = await fetch(`${this.GAS_URL}?${bParams}`);
-                            const bData = await bRes.json();
-                            if(bData.success) {
-                                const saved = [...this.adminBenefitItems];
-                                if(!this.siteSettings.benefits) this.siteSettings.benefits = {};
-                                this.siteSettings.benefits[this.adminBenefitCat] = saved;
-                                for(let i=0;i<this.products.length;i++) {
-                                    if(this.products[i].category===this.adminBenefitCat)
-                                        this.products[i] = {...this.products[i], benefits: saved};
-                                }
-                                this.products = [...this.products];
-                            }
-                        } catch {}
+                    if(this.adminEditProduct) {
+                        const saved = [...this.adminBenefitItems];
+                        const idx = this.products.findIndex(p => p.rowIndex == this.adminEditProduct.rowIndex);
+                        if(idx >= 0) {
+                            this.products[idx] = { ...this.products[idx], benefits: saved };
+                            this.products = [...this.products];
+                        }
                     }
                     this._adminShowMsg(this.adminEditProduct ? 'Produk & deskripsi diupdate ✓' : 'Produk ditambahkan ✓');
                     this.adminEditProduct=null; this.adminAddMode=false;
@@ -3814,10 +3806,6 @@ function serabutStore() {
         },
 
         // ── Admin: Benefits ───────────────────────────
-        adminBenefitLoadCat() {
-            this.adminBenefitItems = [...this.getProductBenefits(this.adminBenefitCat)];
-            this.adminBenefitNewItem = '';
-        },
         adminBenefitAdd() {
             const v = this.adminBenefitNewItem.trim();
             if(!v) return;
@@ -3838,34 +3826,26 @@ function serabutStore() {
             this.adminBenefitItems = [...this.adminBenefitItems];
         },
         async adminSaveBenefits() {
+            const rowIndex = this.adminEditProduct?.rowIndex;
+            if(!rowIndex) { this._adminShowMsg('Pilih produk terlebih dahulu'); return; }
             this.adminSaving = true;
             try {
-                const benefitsJson = JSON.stringify(this.adminBenefitItems);
                 const params = new URLSearchParams({
-                    action:     'saveCategoryBenefits',
+                    action:     'saveProductBenefits',
                     adminEmail: this.currentUser.email,
-                    category:   this.adminBenefitCat,
-                    benefits:   benefitsJson,
+                    rowIndex:   rowIndex,
+                    benefits:   JSON.stringify(this.adminBenefitItems),
                 });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
                 if(data.success) {
-                    // Update lokal di products (in-place, hindari replace array yg bisa rusak reactivity)
                     const saved = [...this.adminBenefitItems];
-                    for(let i=0;i<this.products.length;i++) {
-                        if(this.products[i].category === this.adminBenefitCat) {
-                            this.products[i] = { ...this.products[i], benefits: saved };
-                        }
+                    const idx = this.products.findIndex(p => p.rowIndex == rowIndex);
+                    if(idx >= 0) {
+                        this.products[idx] = { ...this.products[idx], benefits: saved };
+                        this.products = [...this.products];
                     }
-                    this.products = [...this.products]; // trigger reactivity minimal
-                    if(!this.siteSettings.benefits) this.siteSettings.benefits = {};
-                    this.siteSettings.benefits[this.adminBenefitCat] = saved;
-                    const rows = data.updated ?? 0;
-                    if(rows === 0) {
-                        this._adminShowMsg(`⚠ 0 baris diupdate — pastikan kategori cocok (${this.adminBenefitCat})`);
-                    } else {
-                        this._adminShowMsg(`✓ Disimpan ${rows} baris (${this.adminBenefitCat})`);
-                    }
+                    this._adminShowMsg('Deskripsi disimpan ✓');
                 } else {
                     this._adminShowMsg('❌ ' + (data.error||'Gagal'));
                 }
