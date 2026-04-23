@@ -3322,8 +3322,6 @@ function serabutStore() {
             } else if(tab==='produk') {
                 this.adminLoadProducts();
             } else if(tab==='populer') {
-                // Load adminProducts jika belum ada (agar semua produk termasuk nonaktif bisa dicari)
-                if(!this.adminProducts.length) this.adminLoadProducts();
                 // Map saved references ke product objects yang ada
                 this.adminFeaturedItems = (this.siteSettings.featured||[]).map(f =>
                     this.products.find(p => p.nama===f.nama && p.varian===f.varian && (p.masaAktif||'-')===(f.masaAktif||'-'))
@@ -3772,8 +3770,7 @@ function serabutStore() {
         adminFeaturedFilter() {
             const q = this.adminFeaturedSearch.toLowerCase().trim();
             if(!q) { this.adminFeaturedResults = []; return; }
-            const pool = this.adminProducts.length ? this.adminProducts : this.products;
-            this.adminFeaturedResults = pool.filter(p =>
+            this.adminFeaturedResults = this.products.filter(p =>
                 (p.nama.toLowerCase().includes(q) || (p.varian||'').toLowerCase().includes(q) || (p.masaAktif||'').toLowerCase().includes(q)) &&
                 !this.adminFeaturedItems.some(f => f.nama===p.nama && f.varian===p.varian && (f.masaAktif||'-')===(p.masaAktif||'-'))
             ).slice(0, 10);
