@@ -25,7 +25,7 @@ const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 // 9:TanggalLahir  10:JenisKelamin  11:Alamat  12:Provinsi
 
 // ── Kolom Catalog (0-indexed) ───────────────────────────
-// 0:Nama  1:Varian  2:MasaAktif  3:Harga  4:LinkProduk  5:Aktif  6:Stok  7:IconUrl  8:Benefits(JSON)
+// 0:Nama  1:Varian  2:MasaAktif  3:Harga  4:LinkProduk  5:Aktif  6:Stok  7:IconUrl
 
 // ────────────────────────────────────────────────────────
 //  MAIN HANDLER
@@ -60,12 +60,11 @@ function doGet(e) {
       case 'getGuides':         result = getGuides(); break;
       case 'saveGuides':        result = saveGuides(e.parameter); break;
       case 'setUserRole':         result = setUserRole(e.parameter); break;
-      case 'updateProductStock':  result = updateProductStock(e.parameter); break;
-      case 'updateProductAktif':  result = updateProductAktif(e.parameter); break;
+      case 'updateProductStock':    result = updateProductStock(e.parameter); break;
+      case 'updateProductAktif':    result = updateProductAktif(e.parameter); break;
+      case 'saveProductBenefits':   result = saveProductBenefits(e.parameter); break;
       case 'googleLogin':         result = googleLogin(e.parameter); break;
       case 'csChat':              result = handleCSChat(e.parameter); break;
-      case 'saveCategoryBenefits':  result = saveCategoryBenefits(e.parameter); break;
-      case 'saveProductBenefits':   result = saveProductBenefits(e.parameter); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -125,63 +124,51 @@ function _getUserRole(data, rowIdx) {
   return String(data[rowIdx][col] || 'buyer').trim().toLowerCase();
 }
 
-// ────────────────────────────────────────────────────────
-//  GET CATALOG (public — hanya aktif)
-// ────────────────────────────────────────────────────────
-// Helper: cari index kolom dari header row (0-indexed)
-function _colIndex(headers, name) {
-  return headers.findIndex(h => String(h).toLowerCase().trim() === name.toLowerCase());
-}
-// Helper: cari index kolom — cek beberapa nama sekaligus (ambil yg pertama ditemukan)
-function _colIndexAny(headers, ...names) {
+// Cari index kolom berdasarkan nama header (case-insensitive, trim)
+function _colIndex(headers, ...names) {
   for (const name of names) {
-    const idx = headers.findIndex(h => String(h).toLowerCase().trim() === name.toLowerCase());
-    if (idx >= 0) return idx;
+    const n = name.toLowerCase();
+    const idx = headers.findIndex(h => String(h).toLowerCase().trim() === n);
+    if (idx !== -1) return idx;
   }
   return -1;
 }
 
+// ────────────────────────────────────────────────────────
+//  GET CATALOG (public — hanya aktif)
+// ────────────────────────────────────────────────────────
 function getCatalog() {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
   if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
 
-  const data = sheet.getDataRange().getValues();
-  if (data.length < 2) return { success: true, data: [] };
-
-  const headers     = data[0];
-  const iNama       = _colIndex(headers, 'nama produk');
-  const iVarian     = _colIndex(headers, 'varian');
-  const iMasaAktif  = _colIndex(headers, 'masa aktif');
-  const iHarga      = _colIndex(headers, 'harga');
-  const iLink       = _colIndex(headers, 'link produk');
-  const iAktif      = _colIndex(headers, 'aktif');
-  const iStok       = _colIndex(headers, 'stok');
-  const iIconUrl    = _colIndex(headers, 'icon url');
-  const iBenefits   = _colIndexAny(headers, 'benefits', 'deskripsi');
-
+  const data     = sheet.getDataRange().getValues();
+  const headers  = data[0].map(h => String(h).toLowerCase().trim());
+  const cKat     = _colIndex(headers, 'kategori', 'category');
+  const cIcon    = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
+  const cBen     = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
   const products = [];
+
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (!row[iNama < 0 ? 0 : iNama]) continue;
-    const aktif = iAktif >= 0 ? row[iAktif] : row[5];
+    if (!row[0]) continue;
+    const aktif = row[5];
     if (aktif !== true && String(aktif).toUpperCase() !== 'TRUE') continue;
 
-    const rawStok = iStok >= 0 ? row[iStok] : row[6];
-    const stok = (rawStok === '' || rawStok === null || rawStok === undefined) ? null : Number(rawStok);
-    let benefits = [];
-    if (iBenefits >= 0) {
-      const raw = String(row[iBenefits] || '').trim();
-      if (raw.startsWith('[')) { try { benefits = JSON.parse(raw); } catch {} }
-    }
+    const rawStok = row[6];
+    const stok    = (rawStok === '' || rawStok === null || rawStok === undefined) ? null : Number(rawStok);
+    let benefits  = [];
+    try { benefits = JSON.parse(String(cBen >= 0 ? row[cBen] : row[14]) || '[]'); } catch (_) { benefits = []; }
+    if (!Array.isArray(benefits)) benefits = [];
     products.push({
       rowIndex:   i + 1,
-      nama:       String(iNama >= 0 ? row[iNama] : row[0]).trim(),
-      varian:     String(iVarian >= 0 ? row[iVarian] : (row[1]||'')).trim(),
-      masaAktif:  String(iMasaAktif >= 0 ? row[iMasaAktif] : (row[2]||'-')).trim(),
-      harga:      Number(iHarga >= 0 ? row[iHarga] : row[3]) || 0,
-      linkProduk: String(iLink >= 0 ? row[iLink] : (row[4]||'')).trim(),
+      nama:       String(row[0]).trim(),
+      varian:     String(row[1] || '').trim(),
+      masaAktif:  String(row[2] || '-').trim(),
+      harga:      Number(row[3]) || 0,
+      linkProduk: String(row[4] || '').trim(),
       stok:       stok,
-      iconUrl:    String(iIconUrl >= 0 ? row[iIconUrl] : (row[7]||'')).trim(),
+      category:   cKat  >= 0 ? String(row[cKat]  || '').trim() : '',
+      iconUrl:    cIcon >= 0 ? String(row[cIcon] || '').trim() : String(row[7] || '').trim(),
       benefits:   benefits,
     });
   }
@@ -198,42 +185,33 @@ function getCatalogAdmin({ adminEmail }) {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
   if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
 
-  const data = sheet.getDataRange().getValues();
-  if (data.length < 2) return { success: true, data: [] };
-
-  const headers     = data[0];
-  const iNama       = _colIndex(headers, 'nama produk');
-  const iVarian     = _colIndex(headers, 'varian');
-  const iMasaAktif  = _colIndex(headers, 'masa aktif');
-  const iHarga      = _colIndex(headers, 'harga');
-  const iLink       = _colIndex(headers, 'link produk');
-  const iAktif      = _colIndex(headers, 'aktif');
-  const iStok       = _colIndex(headers, 'stok');
-  const iIconUrl    = _colIndex(headers, 'icon url');
-  const iBenefits   = _colIndexAny(headers, 'benefits', 'deskripsi');
-
+  const data     = sheet.getDataRange().getValues();
+  const headers  = data[0].map(h => String(h).toLowerCase().trim());
+  const cKat     = _colIndex(headers, 'kategori', 'category');
+  const cIcon    = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
+  const cBen     = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
   const products = [];
+
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (!row[iNama < 0 ? 0 : iNama]) continue;
-    const aktif   = iAktif >= 0 ? row[iAktif] : row[5];
-    const rawStok = iStok >= 0 ? row[iStok] : row[6];
+    if (!row[0]) continue;
+    const aktif   = row[5];
+    const rawStok = row[6];
     const stok    = (rawStok === '' || rawStok === null || rawStok === undefined) ? null : Number(rawStok);
-    let benefits = [];
-    if (iBenefits >= 0) {
-      const raw = String(row[iBenefits] || '').trim();
-      if (raw.startsWith('[')) { try { benefits = JSON.parse(raw); } catch {} }
-    }
+    let benefits  = [];
+    try { benefits = JSON.parse(String(cBen >= 0 ? row[cBen] : row[14]) || '[]'); } catch (_) { benefits = []; }
+    if (!Array.isArray(benefits)) benefits = [];
     products.push({
       rowIndex:   i + 1,
-      nama:       String(iNama >= 0 ? row[iNama] : row[0]).trim(),
-      varian:     String(iVarian >= 0 ? row[iVarian] : (row[1]||'')).trim(),
-      masaAktif:  String(iMasaAktif >= 0 ? row[iMasaAktif] : (row[2]||'-')).trim(),
-      harga:      Number(iHarga >= 0 ? row[iHarga] : row[3]) || 0,
-      linkProduk: String(iLink >= 0 ? row[iLink] : (row[4]||'')).trim(),
+      nama:       String(row[0]).trim(),
+      varian:     String(row[1] || '').trim(),
+      masaAktif:  String(row[2] || '-').trim(),
+      harga:      Number(row[3]) || 0,
+      linkProduk: String(row[4] || '').trim(),
       aktif:      (aktif === true || String(aktif).toUpperCase() === 'TRUE'),
       stok:       stok,
-      iconUrl:    String(iIconUrl >= 0 ? row[iIconUrl] : (row[7]||'')).trim(),
+      category:   cKat  >= 0 ? String(row[cKat]  || '').trim() : '',
+      iconUrl:    cIcon >= 0 ? String(row[cIcon] || '').trim() : String(row[7] || '').trim(),
       benefits:   benefits,
     });
   }
@@ -244,7 +222,7 @@ function getCatalogAdmin({ adminEmail }) {
 // ────────────────────────────────────────────────────────
 //  ADD PRODUCT
 // ────────────────────────────────────────────────────────
-function addProduct({ adminEmail, nama, varian, masaAktif, harga, linkProduk, aktif, stok, iconUrl, benefits }) {
+function addProduct({ adminEmail, nama, varian, masaAktif, harga, linkProduk, aktif, stok, iconUrl, kategori, benefits }) {
   if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
   if (!nama || !varian) return { success: false, error: 'Nama dan varian wajib diisi' };
 
@@ -253,23 +231,36 @@ function addProduct({ adminEmail, nama, varian, masaAktif, harga, linkProduk, ak
 
   if (!sheet) {
     sheet = ss.insertSheet(TAB_CATALOG);
-    sheet.appendRow(['Nama Produk', 'Varian', 'Masa Aktif', 'Harga', 'Link Produk', 'Aktif', 'Stok', 'Icon URL', 'Benefits']);
+    sheet.appendRow(['Nama Produk', 'Varian', 'Masa Aktif', 'Harga', 'Link Produk', 'Aktif', 'Stok', 'Kategori', 'Icon URL']);
     sheet.getRange(1, 1, 1, 9).setFontWeight('bold');
   }
 
-  const isAktif  = (aktif === 'true' || aktif === true);
-  const stokVal  = (stok === '' || stok === null || stok === undefined) ? '' : Number(stok);
-  sheet.appendRow([
-    String(nama).trim(),
-    String(varian).trim(),
-    String(masaAktif || '-').trim(),
-    Number(harga) || 0,
-    String(linkProduk || '').trim(),
-    isAktif,
-    stokVal,
-    String(iconUrl || '').trim(),
-    String(benefits || '[]').trim(),
-  ]);
+  const headers  = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const cKat     = _colIndex(headers, 'kategori', 'category');
+  const cIcon    = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
+  const cBen     = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
+  const numCols  = Math.max(headers.length, cBen >= 0 ? cBen + 1 : 15);
+
+  const row      = new Array(numCols).fill('');
+  row[0] = String(nama).trim();
+  row[1] = String(varian).trim();
+  row[2] = String(masaAktif || '-').trim();
+  row[3] = Number(harga) || 0;
+  row[4] = String(linkProduk || '').trim();
+  row[5] = (aktif === 'true' || aktif === true);
+  row[6] = (stok === '' || stok === null || stok === undefined) ? '' : Number(stok);
+  if (cKat  >= 0) row[cKat]  = String(kategori || '').trim();
+  if (cIcon >= 0) row[cIcon] = String(iconUrl  || '').trim();
+  if (benefits !== undefined && benefits !== null && benefits !== '') {
+    if (cBen >= 0) row[cBen] = String(benefits).trim();
+  }
+
+  sheet.appendRow(row);
+
+  // Fallback: tulis benefits ke col O (15) jika header tidak ditemukan
+  if (benefits !== undefined && benefits !== null && benefits !== '' && cBen < 0) {
+    sheet.getRange(sheet.getLastRow(), 15).setValue(String(benefits).trim());
+  }
 
   return { success: true };
 }
@@ -277,7 +268,7 @@ function addProduct({ adminEmail, nama, varian, masaAktif, harga, linkProduk, ak
 // ────────────────────────────────────────────────────────
 //  UPDATE PRODUCT
 // ────────────────────────────────────────────────────────
-function updateProduct({ adminEmail, rowIndex, nama, varian, masaAktif, harga, linkProduk, aktif, stok, iconUrl, benefits }) {
+function updateProduct({ adminEmail, rowIndex, nama, varian, masaAktif, harga, linkProduk, aktif, stok, iconUrl, kategori, benefits }) {
   if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
   if (!rowIndex) return { success: false, error: 'rowIndex diperlukan' };
 
@@ -287,6 +278,10 @@ function updateProduct({ adminEmail, rowIndex, nama, varian, masaAktif, harga, l
   const row     = Number(rowIndex);
   const isAktif = (aktif === 'true' || aktif === true);
   const stokVal = (stok === '' || stok === null || stok === undefined) ? '' : Number(stok);
+  const headers = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 15)).getValues()[0];
+  const cKat    = _colIndex(headers, 'kategori', 'category');
+  const cIcon   = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
+  const cBen    = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
 
   sheet.getRange(row, 1).setValue(String(nama || '').trim());
   sheet.getRange(row, 2).setValue(String(varian || '').trim());
@@ -295,103 +290,11 @@ function updateProduct({ adminEmail, rowIndex, nama, varian, masaAktif, harga, l
   sheet.getRange(row, 5).setValue(String(linkProduk || '').trim());
   sheet.getRange(row, 6).setValue(isAktif);
   sheet.getRange(row, 7).setValue(stokVal);
-  sheet.getRange(row, 8).setValue(String(iconUrl || '').trim());
+  if (cKat  >= 0 && kategori !== undefined) sheet.getRange(row, cKat  + 1).setValue(String(kategori || '').trim());
+  if (cIcon >= 0)                           sheet.getRange(row, cIcon + 1).setValue(String(iconUrl  || '').trim());
   if (benefits !== undefined && benefits !== null && benefits !== '') {
-    const headers   = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 15)).getValues()[0];
-    const bCol      = _colIndexAny(headers, 'benefits', 'deskripsi', 'benefit');
-    const benefitsCol = bCol >= 0 ? bCol + 1 : 15;
-    sheet.getRange(row, benefitsCol).setValue(String(benefits).trim());
+    sheet.getRange(row, cBen >= 0 ? cBen + 1 : 15).setValue(String(benefits).trim());
   }
-
-  return { success: true };
-}
-
-// ────────────────────────────────────────────────────────
-//  SAVE CATEGORY BENEFITS → Catalog col 9
-// ────────────────────────────────────────────────────────
-function _getCategoryFromName(nama) {
-  if (!nama) return 'Lainnya';
-  const n = nama.toLowerCase();
-  if (n.includes('office 365'))  return 'Office 365';
-  if (n.includes('adobe'))       return 'Adobe';
-  if (n.includes('windows server')) return 'Windows Server';
-  if (n.includes('windows'))     return 'Windows';
-  if ((n.includes('office 20') || n.includes('office pro')) && !n.includes('365')) return 'Office';
-  if (n.includes('ms project') || n.includes('project pro')) return 'Project';
-  if (n.includes('ms visio') || n.includes('visio')) return 'Visio';
-  if (n.includes('coreldraw'))   return 'CorelDRAW';
-  if (n.includes('g suite') || n.includes('workspace') || n.includes('global admin')) return 'Google';
-  return 'Lainnya';
-}
-
-function saveCategoryBenefits({ adminEmail, category, benefits }) {
-  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak - email: ' + adminEmail };
-  if (!category) return { success: false, error: 'Category tidak boleh kosong' };
-
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
-  if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
-
-  // ── Cari kolom Benefits/Deskripsi via TextFinder (paling reliable) ──
-  const BENEFIT_VARIANTS = ['Benefits', 'Deskripsi', 'Benefit', 'Yang kamu dapat'];
-  let benefitsCol = -1; // 1-based
-  const scanMax = Math.max(sheet.getLastColumn(), 30);
-  const headerRange = sheet.getRange(1, 1, 1, scanMax);
-  for (const name of BENEFIT_VARIANTS) {
-    const found = headerRange.createTextFinder(name)
-      .matchEntireCell(true)
-      .matchCase(false)
-      .findAll();
-    if (found.length > 0) {
-      benefitsCol = found[0].getColumn();
-      break;
-    }
-  }
-  // Tidak ditemukan → buat kolom baru
-  if (benefitsCol === -1) {
-    benefitsCol = sheet.getLastColumn() + 1;
-    const hdr = sheet.getRange(1, benefitsCol);
-    hdr.setValue('Benefits');
-    hdr.setFontWeight('bold');
-  }
-
-  // ── Tulis JSON ke setiap baris sesuai kategori ──
-  const benefitsStr = String(benefits || '[]');
-  const allData = sheet.getDataRange().getValues();
-  const rowsToUpdate = [];
-  for (let i = 1; i < allData.length; i++) {
-    if (!allData[i][0]) continue;
-    if (_getCategoryFromName(String(allData[i][0])) === category) {
-      rowsToUpdate.push(i + 1); // 1-based sheet row
-    }
-  }
-  // Batch-write satu per satu (GAS tidak support batch setValues untuk non-contiguous)
-  rowsToUpdate.forEach(r => sheet.getRange(r, benefitsCol).setValue(benefitsStr));
-  SpreadsheetApp.flush(); // pastikan perubahan langsung disimpan ke cloud
-
-  return {
-    success: true,
-    updated: rowsToUpdate.length,
-    category,
-    col: benefitsCol,
-    rows: rowsToUpdate,
-    sample: benefitsStr.substring(0, 80)
-  };
-}
-
-// ────────────────────────────────────────────────────────
-//  SAVE PRODUCT BENEFITS (per baris, by rowIndex)
-// ────────────────────────────────────────────────────────
-function saveProductBenefits({ adminEmail, rowIndex, benefits }) {
-  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
-  if (!rowIndex) return { success: false, error: 'rowIndex diperlukan' };
-
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
-  if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
-
-  const headers     = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 15)).getValues()[0];
-  const bCol        = _colIndexAny(headers, 'benefits', 'deskripsi', 'benefit');
-  const benefitsCol = bCol >= 0 ? bCol + 1 : 15;
-  sheet.getRange(Number(rowIndex), benefitsCol).setValue(String(benefits || '[]').trim());
 
   return { success: true };
 }
@@ -465,6 +368,21 @@ function updateProductAktif({ adminEmail, rowIndex, aktif }) {
   if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
 
   sheet.getRange(Number(rowIndex), 6).setValue(aktif === 'true' || aktif === true);
+
+  return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  SAVE PRODUCT BENEFITS (simpan deskripsi per-baris)
+// ────────────────────────────────────────────────────────
+function saveProductBenefits({ adminEmail, rowIndex, benefits }) {
+  if (!isAdminUser(adminEmail)) return { success: false, error: 'Akses ditolak' };
+  if (!rowIndex) return { success: false, error: 'rowIndex diperlukan' };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
+  if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
+
+  sheet.getRange(Number(rowIndex), 15).setValue(String(benefits || '[]').trim());
 
   return { success: true };
 }
@@ -1017,7 +935,7 @@ function login({ email, password }) {
 // ────────────────────────────────────────────────────────
 //  CREATE ORDER
 // ────────────────────────────────────────────────────────
-function createOrder({ userNama, userEmail, userWa, produk, varian, masaAktif, harga, msNama, username, microsoftEmail, emailAktif, emailReminder, adobeEmail, adobePass }) {
+function createOrder({ userNama, userEmail, userWa, produk, varian, masaAktif, harga, msNama, username, microsoftEmail, emailAktif, emailReminder }) {
   if (!userEmail || !produk || !harga) return { success: false, error: 'Data tidak lengkap' };
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -1025,18 +943,14 @@ function createOrder({ userNama, userEmail, userWa, produk, varian, masaAktif, h
 
   if (!sheet) {
     sheet = ss.insertSheet(TAB_ORDERS);
-    sheet.appendRow(['Order ID', 'Tanggal', 'Nama', 'Email', 'No WA', 'Produk', 'Varian', 'Masa Aktif', 'Harga', 'Status', 'Nama MS', 'Username', 'Email Microsoft', 'Email Aktif', 'Email Reminder', 'Adobe Email', 'Adobe Pass']);
-    sheet.getRange(1, 1, 1, 17).setFontWeight('bold');
+    sheet.appendRow(['Order ID', 'Tanggal', 'Nama', 'Email', 'No WA', 'Produk', 'Varian', 'Masa Aktif', 'Harga', 'Status', 'Nama MS', 'Username', 'Email Microsoft', 'Email Aktif', 'Email Reminder']);
+    sheet.getRange(1, 1, 1, 15).setFontWeight('bold');
   } else {
     const existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toLowerCase());
     if (!existingHeaders.includes('username')) {
       const lc = sheet.getLastColumn();
-      sheet.getRange(1, lc + 1, 1, 7).setValues([['Nama MS', 'Username', 'Email Microsoft', 'Email Aktif', 'Email Reminder', 'Adobe Email', 'Adobe Pass']]);
-      sheet.getRange(1, lc + 1, 1, 7).setFontWeight('bold');
-    } else if (!existingHeaders.includes('adobe email')) {
-      const lc = sheet.getLastColumn();
-      sheet.getRange(1, lc + 1, 1, 2).setValues([['Adobe Email', 'Adobe Pass']]);
-      sheet.getRange(1, lc + 1, 1, 2).setFontWeight('bold');
+      sheet.getRange(1, lc + 1, 1, 5).setValues([['Nama MS', 'Username', 'Email Microsoft', 'Email Aktif', 'Email Reminder']]);
+      sheet.getRange(1, lc + 1, 1, 5).setFontWeight('bold');
     }
   }
 
@@ -1047,34 +961,16 @@ function createOrder({ userNama, userEmail, userWa, produk, varian, masaAktif, h
   sheet.appendRow([
     orderId, tanggal, userNama, userEmail, userWa,
     produk, varian || '-', masaAktif || '-', hargaNum, 'Pending',
-    msNama || '-', username || '-', microsoftEmail || '-', emailAktif || '-', emailReminder || '-',
-    adobeEmail || '-', adobePass || '-'
+    msNama || '-', username || '-', microsoftEmail || '-', emailAktif || '-', emailReminder || '-'
   ]);
 
-  const produkLower = (produk || '').toLowerCase();
-  const varLower    = (varian || '').toLowerCase();
-  const isAdobe  = produkLower.includes('adobe');
+  const varLower = (varian || '').toLowerCase();
   const isFamily = varLower.includes('family');
   const isWeb    = varLower.includes('web');
 
   let groupMsg;
   const reminderLine = emailReminder ? `\nEmail Reminder: ${emailReminder}` : '';
-
-  if (isAdobe) {
-    groupMsg =
-      `*ORDER ADOBE*\n` +
-      `Order ID: *${orderId}*\n` +
-      `Produk: ${produk}\n` +
-      `Varian: ${varian || '-'}\n` +
-      `Durasi: ${masaAktif || '-'}\n` +
-      `─────────────────\n` +
-      `Email Adobe: *${adobeEmail || '-'}*\n` +
-      `Password Adobe: *${adobePass || '-'}*\n` +
-      `─────────────────\n` +
-      `Nama Pembeli: ${userNama}\n` +
-      `No WA: ${userWa}${reminderLine}\n` +
-      `Status: *Pending*`;
-  } else if (isFamily) {
+  if (isFamily) {
     groupMsg =
       `*ORDER 365 FAMILY*\n` +
       `Order ID: *${orderId}*\n` +
@@ -1144,7 +1040,7 @@ function getProfile({ email }) {
 // ────────────────────────────────────────────────────────
 //  UPDATE PROFILE
 // ────────────────────────────────────────────────────────
-function updateProfile({ email, nama, wa, tanggalLahir, jenisKelamin, alamat, provinsi }) {
+function updateProfile({ email, nama, tanggalLahir, jenisKelamin, alamat, provinsi }) {
   if (!email || !nama) return { success: false, error: 'Data tidak lengkap' };
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(TAB_USERS);
@@ -1156,15 +1052,13 @@ function updateProfile({ email, nama, wa, tanggalLahir, jenisKelamin, alamat, pr
     const row  = i + 1;
     const role = _getUserRole(data, i);
     sheet.getRange(row, 1).setValue(nama.trim());
-    if (wa !== undefined && wa !== null) sheet.getRange(row, 3).setValue(String(wa).trim());
     sheet.getRange(row, 10).setValue(tanggalLahir  || '');
     sheet.getRange(row, 11).setValue(jenisKelamin || '');
     sheet.getRange(row, 12).setValue(alamat       || '');
     sheet.getRange(row, 13).setValue(provinsi     || '');
-    const updatedWa = (wa !== undefined && wa !== null) ? String(wa).trim() : String(data[i][2]);
     return {
       success: true,
-      user: { nama: nama.trim(), email: String(data[i][1]), wa: updatedWa, role }
+      user: { nama: nama.trim(), email: String(data[i][1]), wa: String(data[i][2]), role }
     };
   }
   return { success: false, error: 'User tidak ditemukan' };

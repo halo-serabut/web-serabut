@@ -1071,7 +1071,7 @@
             <div x-show="adminTab==='produk'">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="font-bold text-gray-900">Manajemen Produk</h2>
-                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,stok:'',iconUrl:''}; adminBenefitItems=[]; adminBenefitNewItem=''" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
+                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,stok:'',iconUrl:'',kategori:''}; adminBenefitItems=[]; adminBenefitNewItem=''" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
                 </div>
 
                 <!-- Form tambah/edit produk -->
@@ -1108,6 +1108,15 @@
                         <div>
                             <label class="text-xs font-bold text-gray-500 mb-1 block">Icon URL (opsional)</label>
                             <input x-model="adminFormProduct.iconUrl" type="text" placeholder="https://..." class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Kategori</label>
+                            <input x-model="adminFormProduct.kategori" type="text" list="adminKategoriList" placeholder="cth: Office 365, Adobe, Windows..." class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                            <datalist id="adminKategoriList">
+                                <template x-for="k in [...new Set(adminProducts.map(p=>p.category).filter(Boolean))].sort()" :key="k">
+                                    <option :value="k"></option>
+                                </template>
+                            </datalist>
                         </div>
                     </div>
                     <label class="flex items-center gap-2 mt-3 cursor-pointer">
@@ -2338,7 +2347,7 @@ async function sha256(str) {
 function serabutStore() {
     return {
         // Config
-        GAS_URL:          'https://script.google.com/macros/s/AKfycbxyCMZn2LG_sgdbw57BVkBuVN7z0gB8Hhir5wXTVgW5QtstsYlJL4WpdZaxKC22VMOvxg/exec',
+        GAS_URL:          'https://script.google.com/macros/s/AKfycbzYsltjVoiuVCFjGk1dExX4QjPp77lRwIwSAEznir-mbS8KTGWCY-vzmmEQKCbbVCdK9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
 
@@ -2471,7 +2480,7 @@ function serabutStore() {
         adminOrderFilter: 'Semua',
         adminEditProduct: null,
         adminAddMode:    false,
-        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, stok:'', iconUrl:'' },
+        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, stok:'', iconUrl:'', kategori:'' },
         adminEditFlash:    {},
         adminFlashCampaigns: [],
         adminFlashCampIdx: -1,
@@ -2509,16 +2518,19 @@ function serabutStore() {
             { id:'panduan', label:'Panduan',    icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>` },
             { id:'status',  label:'Cek Status', icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
         ],
-        categories: [
-            {name:'Office 365',icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,desc:'Family & Personal'},
-            {name:'Adobe',     icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`,desc:'Creative Cloud'},
-            {name:'Windows',   icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,desc:'Pro License'},
-            {name:'Office',    icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,desc:'2019/2021/2024'},
-            {name:'Google',    icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>`,desc:'Workspace & Suite'},
-            {name:'CorelDRAW', icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,desc:'Graphics Suite'},
-            {name:'Project',   icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`,desc:'Ms Project Pro'},
-            {name:'Visio',     icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,desc:'Ms Visio Pro'},
-        ],
+        _categoryIconMap: {
+            'Office 365':    `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
+            'Microsoft 365': `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
+            'Adobe':         `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>`,
+            'Windows':       `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
+            'Windows Server':`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>`,
+            'Office':        `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
+            'Google':        `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>`,
+            'CorelDRAW':     `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,
+            'CorelDraw':     `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,
+            'Project':       `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>`,
+            'Visio':         `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,
+        },
         benefits: [
             {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>`,title:'Original & Resmi',  desc:'Semua produk bergaransi keaslian dari vendor resmi'},
             {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,title:'Proses Kilat',      desc:'Aktivasi dalam hitungan menit setelah pembayaran'},
@@ -2557,6 +2569,14 @@ function serabutStore() {
         // ── Computed ──────────────────────────────────
         get currentStatusOption() { return this.statusOptions.find(o=>o.value===this.statusSearchType)||this.statusOptions[0]; },
         get categoryList() { return [...new Set(this.products.map(p=>p.category))].filter(Boolean).sort(); },
+        get categories() {
+            const defaultIcon = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`;
+            const seen = new Set();
+            return this.products
+                .map(p => p.category).filter(c => c && !seen.has(c) && seen.add(c))
+                .sort()
+                .map(name => ({ name, icon: this._categoryIconMap[name] || defaultIcon, desc: '', iconKey: name.toLowerCase().replace(/\s+/g,'') }));
+        },
         get filteredProducts() {
             return this.products.filter(p => {
                 const matchCat = this.activeCategory==='Semua'||p.category===this.activeCategory;
@@ -2780,7 +2800,7 @@ function serabutStore() {
         async fetchProducts(force=false) {
             const CACHE_KEY = 'serabut_catalog_cache';
             const TTL = 5 * 60 * 1000; // 5 menit
-            const _mapProducts = (list) => list.map(p=>({...p, category:this.getCategory(p.nama)}));
+            const _mapProducts = (list) => list.map(p=>({...p, category: p.category || this.getCategory(p.nama)}));
             const _fetchFresh  = async () => {
                 const res  = await fetch(`${this.GAS_URL}?action=getCatalog`);
                 const data = await res.json();
@@ -3633,7 +3653,7 @@ function serabutStore() {
             // Update semua state langsung (synchronous) agar reactive binding tidak rusak
             this.adminEditProduct = { ...p, _uid: p.rowIndex }; // spread + uid agar referensi selalu baru
             this.adminAddMode     = false;
-            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'' };
+            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'', kategori:p.category||'' };
             this.adminBenefitCat  = p.category || this.getCategory(p.nama);
             this.adminBenefitItems = Array.isArray(p.benefits) ? [...p.benefits] : [];
             this.adminBenefitNewItem = '';
@@ -3659,12 +3679,14 @@ function serabutStore() {
                     aktif:     String(this.adminNewProduct.aktif),
                     stok:      this.adminNewProduct.stok===''?'':Number(this.adminNewProduct.stok),
                     iconUrl:   this.adminNewProduct.iconUrl||'',
+                    kategori:  this.adminNewProduct.kategori||'',
                     benefits:  JSON.stringify(this.adminBenefitItems),
                 });
                 if(this.adminEditProduct) params.append('rowIndex', this.adminEditProduct.rowIndex);
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
                 if(data.success) {
+                    // Update local state benefits untuk produk yang diedit
                     if(this.adminEditProduct) {
                         const saved = [...this.adminBenefitItems];
                         const idx = this.products.findIndex(p => p.rowIndex == this.adminEditProduct.rowIndex);
@@ -3771,9 +3793,9 @@ function serabutStore() {
             const q = this.adminFeaturedSearch.toLowerCase().trim();
             if(!q) { this.adminFeaturedResults = []; return; }
             this.adminFeaturedResults = this.products.filter(p =>
-                (p.nama.toLowerCase().includes(q) || (p.varian||'').toLowerCase().includes(q) || (p.masaAktif||'').toLowerCase().includes(q)) &&
+                (p.nama.toLowerCase().includes(q) || (p.varian||'').toLowerCase().includes(q)) &&
                 !this.adminFeaturedItems.some(f => f.nama===p.nama && f.varian===p.varian && (f.masaAktif||'-')===(p.masaAktif||'-'))
-            ).slice(0, 10);
+            ).slice(0, 8);
         },
         adminFeaturedAdd(p) {
             if(this.adminFeaturedItems.length >= 10) { this._adminShowMsg('Maksimal 10 produk'); return; }
