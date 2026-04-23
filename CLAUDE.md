@@ -89,10 +89,21 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 - [2026-04-22] Selesai: Campaign warna merah (hapus emerald), grid 2→3 kolom desktop, search campaign by nama
 - [2026-04-22] Selesai: Catalog x-for key fix — ganti linkProduk+varian+harga → nama|varian|masaAktif (root cause: duplicate key Alpine → produk tidak render)
 - [2026-04-22] Selesai: Hero & Footer admin full-width field, Flash Sale campaign card 3-col compact di desktop
+- [2026-04-23] Selesai: No WA field bisa diedit untuk SSO user — field sebelumnya disabled, sekarang editable + tersimpan ke Users-web col C
+- [2026-04-23] Selesai: Adobe order fields — email akun Adobe (required) + password Adobe (required) + warning ganti password; parsed ke WA notif team
+- [2026-04-23] Selesai: Email reminder hidden untuk produk one-time (CorelDRAW, Office 2019/2021/2024, Project, Visio, Windows, Windows Server, G Suites)
+- [2026-04-23] Selesai: Benefits "Yang kamu dapat" dipindah dari Settings ke Catalog GSheet — disimpan sebagai JSON string di kolom O "Deskripsi"; GAS v29 pakai TextFinder + SpreadsheetApp.flush()
+- [2026-04-23] Selesai: GAS `_colIndexAny()` helper — kenali kolom "benefits", "deskripsi", "benefit" secara dinamis (tidak hardcode index)
+- [2026-04-23] Selesai: Spinner Save Profile button — SVG animate-spin saat editLoading
+- [2026-04-23] Selesai: Order flow tanpa login — hapus redirect ke login saat "Pesan Sekarang"; auto-set guest `{nama:'Pembeli', isGuest:true}`; tombol "Lanjutkan sebagai Tamu" dihapus dari auth modal
+- [2026-04-23] Selesai: Admin edit produk bug fix — `adminStartEditProduct` pakai `{...p}` baru + scroll ke form; `adminSaveBenefits` pakai `finally` untuk `adminSaving=false`
+- [2026-04-23] Selesai: Order modal mobile scrollable — `max-h-[92vh] overflow-y-auto flex flex-col`; konten bisa di-scroll jika panjang
+- [2026-04-23] Selesai: Checkbox "Gunakan email profil saya" tersembunyi jika user tidak punya email (auto-guest)
 
 ## Current Focus
-- **Semua fitur admin sudah lengkap** — Benefits CRUD, Produk CRUD, Tab Populer, Flash Sale (multi-campaign), Hero, Footer, Kategori, Panduan, Semua Order
+- **Benefits per kategori** — Tersimpan di Catalog GSheet kolom O "Deskripsi" sebagai JSON. Edit via Admin → tab Produk → edit produk → "Simpan Deskripsi". "Update Produk" hanya simpan data produk (nama/harga/dll), BUKAN benefits — klik "Simpan Deskripsi" terpisah untuk benefits.
+- **Order tanpa login** — Siapapun bisa order langsung tanpa daftar/login. Flash sale & promo hanya untuk member terdaftar (banner promo tetap tampil untuk mendorong register).
 - **Google SSO:** Siap diaktifkan — isi `GOOGLE_CLIENT_ID: 'xxxx.apps.googleusercontent.com'` di Alpine config; buat di Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID → authorized origin: `https://serabut.id`
 - **Fonnte note:** Jika notif WA group berhenti, jalankan `testWAGroupAfterSync()` di GAS untuk re-sync device Fonnte
-- **GAS deployment:** Setiap edit `Code.gs` perlu re-deploy manual di script.google.com (New Deployment)
+- **GAS deployment:** Setiap edit `Code.gs` perlu re-deploy manual di script.google.com (New Deployment) — current: v29
 - **Column Role di Users-web**: harus di kolom **I** (setelah OTP Expiry di H) — index 8 (0-indexed)

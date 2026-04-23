@@ -3658,7 +3658,30 @@ function serabutStore() {
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
                 if(data.success) {
-                    this._adminShowMsg(this.adminEditProduct ? 'Produk diupdate ✓' : 'Produk ditambahkan ✓');
+                    // Simpan benefits sekaligus (sebelum reset state)
+                    if(this.adminBenefitCat && this.adminBenefitItems.length > 0) {
+                        try {
+                            const bParams = new URLSearchParams({
+                                action:     'saveCategoryBenefits',
+                                adminEmail: this.currentUser.email,
+                                category:   this.adminBenefitCat,
+                                benefits:   JSON.stringify(this.adminBenefitItems),
+                            });
+                            const bRes  = await fetch(`${this.GAS_URL}?${bParams}`);
+                            const bData = await bRes.json();
+                            if(bData.success) {
+                                const saved = [...this.adminBenefitItems];
+                                if(!this.siteSettings.benefits) this.siteSettings.benefits = {};
+                                this.siteSettings.benefits[this.adminBenefitCat] = saved;
+                                for(let i=0;i<this.products.length;i++) {
+                                    if(this.products[i].category===this.adminBenefitCat)
+                                        this.products[i] = {...this.products[i], benefits: saved};
+                                }
+                                this.products = [...this.products];
+                            }
+                        } catch {}
+                    }
+                    this._adminShowMsg(this.adminEditProduct ? 'Produk & deskripsi diupdate ✓' : 'Produk ditambahkan ✓');
                     this.adminEditProduct=null; this.adminAddMode=false;
                     await this.adminLoadProducts();
                     await this.fetchProducts();
