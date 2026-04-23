@@ -99,9 +99,10 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 - [2026-04-23] Selesai: Admin edit produk bug fix — `adminStartEditProduct` pakai `{...p}` baru + scroll ke form; `adminSaveBenefits` pakai `finally` untuk `adminSaving=false`
 - [2026-04-23] Selesai: Order modal mobile scrollable — `max-h-[92vh] overflow-y-auto flex flex-col`; konten bisa di-scroll jika panjang
 - [2026-04-23] Selesai: Checkbox "Gunakan email profil saya" tersembunyi jika user tidak punya email (auto-guest)
+- [2026-04-23] Selesai: "Update Produk" otomatis simpan benefits sekaligus ke GSheet col O — tidak perlu klik "Simpan Deskripsi" terpisah lagi; toast berubah jadi "Produk & deskripsi diupdate ✓"
 
 ## Current Focus
-- **Benefits per kategori** — Tersimpan di Catalog GSheet kolom O "Deskripsi" sebagai JSON. Edit via Admin → tab Produk → edit produk → "Simpan Deskripsi". "Update Produk" hanya simpan data produk (nama/harga/dll), BUKAN benefits — klik "Simpan Deskripsi" terpisah untuk benefits.
+- **Benefits per kategori** — Tersimpan di Catalog GSheet kolom O "Deskripsi" sebagai JSON. Edit via Admin → tab Produk → edit produk → klik "Update Produk" (simpan produk + benefits sekaligus) ATAU "Simpan Deskripsi" (benefits saja).
 - **Order tanpa login** — Siapapun bisa order langsung tanpa daftar/login. Flash sale & promo hanya untuk member terdaftar (banner promo tetap tampil untuk mendorong register).
 - **Google SSO:** Siap diaktifkan — isi `GOOGLE_CLIENT_ID: 'xxxx.apps.googleusercontent.com'` di Alpine config; buat di Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID → authorized origin: `https://serabut.id`
 - **Fonnte note:** Jika notif WA group berhenti, jalankan `testWAGroupAfterSync()` di GAS untuk re-sync device Fonnte
