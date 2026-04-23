@@ -3302,7 +3302,7 @@ function serabutStore() {
         },
 
         // ── Admin tab init ────────────────────────────
-        adminInitTab(tab) {
+        async adminInitTab(tab) {
             if(tab==='flashsale') {
                 this.adminFlashCampaigns = JSON.parse(JSON.stringify(this.flashSale.campaigns || []));
                 this.adminFlashCampIdx = -1;
