@@ -2119,9 +2119,12 @@
 ══════════════════════════════════════════════════════ -->
 <div x-show="orderModal" class="fixed inset-0 z-[200] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="orderModal=false"></div>
-    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl px-5 py-6 modal-enter">
-        <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
-        <h3 class="font-black text-gray-900 text-lg mb-4">Konfirmasi Pesanan</h3>
+    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter flex flex-col max-h-[92vh] md:max-h-[90vh]">
+        <div class="px-5 pt-5 flex-none">
+            <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+            <h3 class="font-black text-gray-900 text-lg mb-4">Konfirmasi Pesanan</h3>
+        </div>
+        <div class="overflow-y-auto flex-1 px-5 pb-6">
 
         <!-- Summary -->
         <div class="bg-gray-50 rounded-2xl p-4 mb-4 space-y-2.5">
@@ -2301,6 +2304,7 @@
             <span x-text="orderLoading?'Memproses...':'Konfirmasi Pesanan'"></span>
         </button>
         <button @click="orderModal=false" class="w-full text-center text-gray-400 text-sm py-2.5 hover:text-gray-600 transition-colors">Batal</button>
+        </div><!-- end scrollable -->
     </div>
 </div>
 
@@ -3620,19 +3624,16 @@ function serabutStore() {
             this.adminProductsLoading=false;
         },
         adminStartEditProduct(p) {
-            // Reset dulu ke null agar Alpine paksa re-render form (hindari stale state)
-            this.adminEditProduct = null;
+            // Update semua state langsung (synchronous) agar reactive binding tidak rusak
+            this.adminEditProduct = { ...p, _uid: p.rowIndex }; // spread + uid agar referensi selalu baru
             this.adminAddMode     = false;
+            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'' };
+            this.adminBenefitCat  = p.category || this.getCategory(p.nama);
+            this.adminBenefitItems = [...this.getProductBenefits(this.adminBenefitCat)];
+            this.adminBenefitNewItem = '';
+            // Scroll ke form (hanya setelah render selesai)
             this.$nextTick(() => {
-                this.adminEditProduct = { ...p }; // spread agar referensi selalu baru
-                this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'' };
-                this.adminBenefitCat  = p.category || this.getCategory(p.nama);
-                this.adminBenefitItems = [...this.getProductBenefits(this.adminBenefitCat)];
-                this.adminBenefitNewItem = '';
-                // Scroll ke form edit
-                this.$nextTick(() => {
-                    document.getElementById('adminProdukForm')?.scrollIntoView({ behavior:'smooth', block:'start' });
-                });
+                document.getElementById('adminProdukForm')?.scrollIntoView({ behavior:'smooth', block:'start' });
             });
         },
         async adminSaveProduct() {
@@ -3825,27 +3826,30 @@ function serabutStore() {
                 });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
-                console.log('[adminSaveBenefits] GAS response:', data);
                 if(data.success) {
-                    if(data.updated === 0) {
-                        alert(`⚠️ GAS menjawab success tapi 0 baris diupdate.\n\nCategory: ${this.adminBenefitCat}\nCol: ${data.col}\nRows: ${JSON.stringify(data.rows)}\n\nCek console untuk detail.`);
+                    // Update lokal di products (in-place, hindari replace array yg bisa rusak reactivity)
+                    const saved = [...this.adminBenefitItems];
+                    for(let i=0;i<this.products.length;i++) {
+                        if(this.products[i].category === this.adminBenefitCat) {
+                            this.products[i] = { ...this.products[i], benefits: saved };
+                        }
                     }
-                    // Update lokal di products array
-                    this.products = this.products.map(p =>
-                        (p.category === this.adminBenefitCat) ? { ...p, benefits: [...this.adminBenefitItems] } : p
-                    );
+                    this.products = [...this.products]; // trigger reactivity minimal
                     if(!this.siteSettings.benefits) this.siteSettings.benefits = {};
-                    this.siteSettings.benefits[this.adminBenefitCat] = [...this.adminBenefitItems];
-                    this._adminShowMsg(`✓ Disimpan ${data.updated} baris di col ${data.col} (${this.adminBenefitCat})`);
+                    this.siteSettings.benefits[this.adminBenefitCat] = saved;
+                    const rows = data.updated ?? 0;
+                    if(rows === 0) {
+                        this._adminShowMsg(`⚠ 0 baris diupdate — pastikan kategori cocok (${this.adminBenefitCat})`);
+                    } else {
+                        this._adminShowMsg(`✓ Disimpan ${rows} baris (${this.adminBenefitCat})`);
+                    }
                 } else {
-                    alert('❌ GAS Error: ' + (data.error || 'Unknown error'));
                     this._adminShowMsg('❌ ' + (data.error||'Gagal'));
                 }
             } catch(err) {
-                alert('Network error: ' + err.message);
-                this._adminShowMsg('Gagal terhubung');
+                this._adminShowMsg('Gagal terhubung: ' + err.message);
             } finally {
-                this.adminSaving = false; // selalu reset, bahkan jika ada exception tak terduga
+                this.adminSaving = false;
             }
         },
 
