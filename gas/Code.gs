@@ -767,7 +767,7 @@ function checkStatus(type, query) {
 // ────────────────────────────────────────────────────────
 //  REGISTER → simpan Pending + kirim OTP email
 // ────────────────────────────────────────────────────────
-function register({ nama, email, wa, password }) {
+function register({ nama, email, wa, password, privacyConsent }) {
   if (!nama || !email || !wa || !password) {
     return { success: false, error: 'Semua field harus diisi' };
   }
@@ -777,8 +777,8 @@ function register({ nama, email, wa, password }) {
 
   if (!sheet) {
     sheet = ss.insertSheet(TAB_USERS);
-    sheet.appendRow(['Nama', 'Email', 'No Hp', 'Password', 'Created At', 'Status', 'OTP', 'OTP Expiry', 'Role']);
-    sheet.getRange(1, 1, 1, 9).setFontWeight('bold');
+    sheet.appendRow(['Nama', 'Email', 'No Hp', 'Password', 'Created At', 'Status', 'Privacy Notice', 'OTP', 'OTP Expiry', 'Role']);
+    sheet.getRange(1, 1, 1, 10).setFontWeight('bold');
   }
 
   const data = sheet.getDataRange().getValues();
@@ -796,6 +796,9 @@ function register({ nama, email, wa, password }) {
   const otp       = generateOTP();
   const expiry    = getOTPExpiry();
   const createdAt = formatJkt(new Date(), 'yyyy-MM-dd HH:mm:ss');
+  const privacyTs = privacyConsent
+    ? `I Accept – Kebijakan Privasi Serabut Store | ${formatJkt(new Date(), 'dd MMM yyyy, HH:mm')} WIB`
+    : '';
 
   sheet.appendRow([
     nama.trim(),
@@ -804,9 +807,10 @@ function register({ nama, email, wa, password }) {
     password,
     createdAt,
     'Pending',
-    otp,
-    expiry,
-    'buyer', // Role default
+    privacyTs,  // col G: Privacy Notice
+    otp,        // col H
+    expiry,     // col I
+    'buyer',    // col J: Role
   ]);
 
   sendOTPEmail(email.toLowerCase().trim(), nama.trim(), otp);
@@ -829,8 +833,8 @@ function verifyOTP({ email, otp }) {
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][1]).toLowerCase().trim() !== email.toLowerCase().trim()) continue;
 
-    const storedOTP = String(data[i][6] || '').trim();
-    const expiryStr = String(data[i][7] || '').trim();
+    const storedOTP = String(data[i][7] || '').trim();
+    const expiryStr = String(data[i][8] || '').trim();
     const status    = String(data[i][5] || '').trim();
     const role      = _getUserRole(data, i);
 
@@ -846,8 +850,8 @@ function verifyOTP({ email, otp }) {
 
     const row = i + 1;
     sheet.getRange(row, 6).setValue('Aktif');
-    sheet.getRange(row, 7).setValue('');
-    sheet.getRange(row, 8).setValue('');
+    sheet.getRange(row, 8).setValue('');  // clear OTP (col H)
+    sheet.getRange(row, 9).setValue('');  // clear OTP Expiry (col I)
 
     sendWelcomeEmail(email.toLowerCase().trim(), String(data[i][0]));
 
@@ -890,8 +894,8 @@ function resendOTP({ email }) {
 function sendNewOTP(sheet, sheetRow, email, nama) {
   const otp    = generateOTP();
   const expiry = getOTPExpiry();
-  sheet.getRange(sheetRow, 7).setValue(otp);
-  sheet.getRange(sheetRow, 8).setValue(expiry);
+  sheet.getRange(sheetRow, 8).setValue(otp);    // col H
+  sheet.getRange(sheetRow, 9).setValue(expiry); // col I
   sendOTPEmail(email, nama, otp);
   return { success: true, action: 'verify_otp', email };
 }
