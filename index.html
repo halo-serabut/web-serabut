@@ -1783,8 +1783,8 @@
             <div class="border-t border-gray-800 mt-5 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-600">
                 <span x-text="siteSettings.footer.copyright"></span>
                 <div class="flex gap-5">
-                    <a href="#" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</a>
-                    <a href="#" class="hover:text-gray-400 transition-colors">Kebijakan Privasi</a>
+                    <button @click="legalModal='terms'" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</button>
+                    <button @click="legalModal='privacy'" class="hover:text-gray-400 transition-colors">Kebijakan Privasi</button>
                 </div>
             </div>
         </div>
@@ -2428,6 +2428,210 @@
 
 
 <!-- ══════════════════════════════════════════════════════
+     LEGAL MODAL (SYARAT & KETENTUAN / KEBIJAKAN PRIVASI)
+══════════════════════════════════════════════════════ -->
+<div x-show="legalModal" class="fixed inset-0 z-[350] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" style="display:none">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="legalModal=null"></div>
+    <div class="relative bg-white w-full md:max-w-2xl md:rounded-3xl rounded-t-3xl max-h-[90vh] flex flex-col modal-enter">
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 flex-shrink-0">
+            <div class="md:hidden w-10 h-1 bg-gray-200 rounded-full absolute top-3 left-1/2 -translate-x-1/2"></div>
+            <h2 class="text-lg font-bold text-gray-900 mt-2 md:mt-0" x-text="legalModal==='terms' ? 'Syarat & Ketentuan' : 'Kebijakan Privasi'"></h2>
+            <button @click="legalModal=null" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors mt-2 md:mt-0">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <!-- Content -->
+        <div class="overflow-y-auto px-6 py-5 text-sm text-gray-700 space-y-5 leading-relaxed">
+
+            <!-- SYARAT & KETENTUAN -->
+            <template x-if="legalModal==='terms'">
+                <div class="space-y-5">
+                    <p class="text-xs text-gray-400">Terakhir diperbarui: 24 April 2026</p>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">1. Penerimaan Syarat</h3>
+                        <p>Dengan mengakses dan menggunakan layanan Serabut Store ("Serabut", "kami") di serabut.id, Anda menyatakan telah membaca, memahami, dan menyetujui syarat & ketentuan ini. Jika Anda tidak menyetujui, harap hentikan penggunaan layanan kami.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">2. Tentang Layanan</h3>
+                        <p>Serabut Store adalah platform penjual lisensi software digital resmi, termasuk namun tidak terbatas pada Microsoft Office 365, Microsoft Office 2021/2024, Adobe Creative Cloud, Windows OS, dan produk digital lainnya. Kami bertindak sebagai reseller yang menyediakan akses lisensi kepada pengguna akhir.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">3. Pembelian & Pembayaran</h3>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Semua harga yang tercantum dalam satuan Rupiah (IDR) dan sudah termasuk biaya layanan.</li>
+                            <li>Pembayaran dilakukan melalui metode yang tersedia (Transfer Bank, QRIS, e-wallet).</li>
+                            <li>Pesanan diproses setelah pembayaran dikonfirmasi oleh tim kami.</li>
+                            <li>Serabut Store berhak membatalkan pesanan yang dicurigai sebagai transaksi tidak wajar atau penipuan.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">4. Pengiriman Produk</h3>
+                        <p>Produk berupa lisensi digital atau akun yang dikirim melalui WhatsApp atau email terdaftar. Waktu pengiriman umumnya <strong>1×24 jam</strong> hari kerja sejak pembayaran dikonfirmasi, kecuali terdapat kendala teknis atau stok habis.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">5. Garansi & Refund</h3>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Kami memberikan garansi produk sesuai masa aktif yang tertera pada deskripsi produk.</li>
+                            <li>Garansi berlaku untuk masalah teknis yang disebabkan oleh pihak Serabut Store (akun tidak bisa digunakan, lisensi tidak valid, dll).</li>
+                            <li>Garansi <strong>tidak berlaku</strong> jika akun dinonaktifkan akibat pelanggaran kebijakan penggunaan oleh pengguna (berbagi akun di luar ketentuan, mengubah password tanpa izin, dll).</li>
+                            <li>Permintaan refund dapat diajukan dalam 3×24 jam setelah produk diterima jika produk tidak sesuai deskripsi, dengan bukti yang valid.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">6. Ketentuan Penggunaan Produk</h3>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Lisensi yang diberikan hanya untuk penggunaan pribadi atau sesuai paket yang dibeli.</li>
+                            <li>Dilarang menjual kembali, mendistribusikan ulang, atau memindahtangankan lisensi/akun kepada pihak lain tanpa izin tertulis dari Serabut Store.</li>
+                            <li>Pengguna wajib menjaga kerahasiaan kredensial akun yang diberikan dan tidak membagikannya kepada pihak tidak berwenang.</li>
+                            <li>Penggunaan produk harus sesuai dengan kebijakan penggunaan dari vendor terkait (Microsoft, Adobe, dll).</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">7. Larangan</h3>
+                        <p>Pengguna dilarang menggunakan layanan Serabut Store untuk:</p>
+                        <ul class="list-disc list-inside space-y-1 mt-1">
+                            <li>Aktivitas ilegal atau melanggar hukum yang berlaku di Indonesia.</li>
+                            <li>Penipuan, manipulasi data, atau penyalahgunaan sistem pembayaran.</li>
+                            <li>Mendistribusikan malware, spam, atau konten berbahaya.</li>
+                            <li>Upaya membobol sistem keamanan Serabut Store atau vendor pihak ketiga.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">8. Batasan Tanggung Jawab</h3>
+                        <p>Serabut Store tidak bertanggung jawab atas kerugian tidak langsung, kehilangan data, atau gangguan bisnis yang timbul dari penggunaan produk kami. Tanggung jawab kami terbatas pada nilai transaksi yang bersangkutan.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">9. Perubahan Layanan & Harga</h3>
+                        <p>Serabut Store berhak mengubah harga, fitur, atau ketentuan layanan sewaktu-waktu. Perubahan akan diumumkan melalui website atau saluran komunikasi resmi kami. Penggunaan layanan setelah perubahan dianggap sebagai penerimaan atas perubahan tersebut.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">10. Hukum yang Berlaku</h3>
+                        <p>Syarat & Ketentuan ini tunduk pada hukum yang berlaku di Republik Indonesia. Setiap perselisihan akan diselesaikan secara musyawarah, dan jika tidak tercapai kesepakatan, akan diselesaikan melalui pengadilan yang berwenang di Indonesia.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">11. Kontak</h3>
+                        <p>Untuk pertanyaan terkait Syarat & Ketentuan ini, hubungi kami di <strong>halo@serabut.com</strong> atau WhatsApp <strong>0888-1500-555</strong> (08.00–22.00 WIB).</p>
+                    </section>
+                </div>
+            </template>
+
+            <!-- KEBIJAKAN PRIVASI -->
+            <template x-if="legalModal==='privacy'">
+                <div class="space-y-5">
+                    <p class="text-xs text-gray-400">Terakhir diperbarui: 24 April 2026 · Mengacu pada UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP)</p>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">1. Pendahuluan</h3>
+                        <p>Serabut Store ("kami") berkomitmen melindungi data pribadi pengguna sesuai dengan <strong>Undang-Undang No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP)</strong>. Kebijakan ini menjelaskan bagaimana kami mengumpulkan, menggunakan, menyimpan, dan melindungi data Anda.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">2. Data Pribadi yang Kami Kumpulkan</h3>
+                        <p>Kami mengumpulkan data berikut saat Anda menggunakan layanan kami:</p>
+                        <ul class="list-disc list-inside space-y-1 mt-1">
+                            <li><strong>Data identitas:</strong> Nama lengkap</li>
+                            <li><strong>Data kontak:</strong> Alamat email, nomor WhatsApp</li>
+                            <li><strong>Data akun:</strong> Password (tersimpan dalam bentuk hash terenkripsi, tidak dapat dibaca)</li>
+                            <li><strong>Data transaksi:</strong> Riwayat pesanan, produk yang dibeli, status pembayaran</li>
+                            <li><strong>Data teknis:</strong> Alamat IP, jenis perangkat, browser (melalui Google Analytics jika diaktifkan)</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">3. Dasar & Tujuan Penggunaan Data</h3>
+                        <p>Sesuai Pasal 20 UU PDP, kami memproses data pribadi berdasarkan:</p>
+                        <ul class="list-disc list-inside space-y-1 mt-1">
+                            <li><strong>Persetujuan pengguna</strong> — saat mendaftar akun</li>
+                            <li><strong>Pelaksanaan kontrak</strong> — memproses dan mengirimkan pesanan</li>
+                            <li><strong>Kepentingan sah kami</strong> — mencegah penipuan, meningkatkan layanan</li>
+                        </ul>
+                        <p class="mt-2">Data digunakan untuk: memproses pesanan, mengirim notifikasi order, verifikasi identitas via OTP, dan komunikasi layanan pelanggan.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">4. Penyimpanan & Keamanan Data</h3>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Data disimpan di Google Sheets (infrastruktur Google Cloud) dengan akses terbatas hanya untuk tim Serabut Store.</li>
+                            <li>Password tidak pernah disimpan dalam bentuk teks biasa — selalu dalam bentuk <strong>hash SHA-256</strong>.</li>
+                            <li>OTP email berlaku terbatas (15 menit) untuk verifikasi identitas.</li>
+                            <li>Komunikasi menggunakan HTTPS/SSL yang dikelola oleh Cloudflare.</li>
+                            <li>Kami menerapkan langkah-langkah teknis dan organisasional untuk mencegah akses tidak sah, kebocoran, atau penyalahgunaan data.</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">5. Berbagi Data dengan Pihak Ketiga</h3>
+                        <p>Kami <strong>tidak menjual</strong> data pribadi Anda. Data dapat dibagikan terbatas kepada:</p>
+                        <ul class="list-disc list-inside space-y-1 mt-1">
+                            <li><strong>Google (GmailApp, Google Sheets):</strong> untuk pengiriman email OTP dan penyimpanan data transaksi</li>
+                            <li><strong>Fonnte:</strong> untuk pengiriman notifikasi WhatsApp terkait pesanan</li>
+                            <li><strong>Cloudflare:</strong> untuk keamanan jaringan dan proxy SSL</li>
+                        </ul>
+                        <p class="mt-2">Semua pihak ketiga terikat kebijakan privasi mereka masing-masing dan hanya menerima data yang diperlukan untuk fungsi layanan.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">6. Hak Anda sebagai Subjek Data (UU PDP Pasal 5–14)</h3>
+                        <p>Sesuai UU PDP, Anda memiliki hak untuk:</p>
+                        <ul class="list-disc list-inside space-y-1 mt-1">
+                            <li><strong>Mengakses</strong> data pribadi yang kami simpan tentang Anda</li>
+                            <li><strong>Memperbaiki</strong> data yang tidak akurat atau tidak lengkap</li>
+                            <li><strong>Menghapus</strong> data Anda jika tidak lagi diperlukan</li>
+                            <li><strong>Menarik persetujuan</strong> pemrosesan data kapan saja</li>
+                            <li><strong>Mengajukan keberatan</strong> atas pemrosesan data tertentu</li>
+                            <li><strong>Portabilitas data</strong> — meminta salinan data Anda dalam format yang dapat dibaca</li>
+                        </ul>
+                        <p class="mt-2">Untuk menggunakan hak-hak di atas, hubungi kami di <strong>halo@serabut.com</strong>. Kami akan merespons dalam <strong>14 hari kerja</strong>.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">7. Retensi Data</h3>
+                        <p>Data akun disimpan selama akun aktif. Data transaksi disimpan minimal <strong>5 tahun</strong> untuk keperluan audit dan pertanggungjawaban. Setelah periode tersebut, data akan dihapus atau dianonimkan.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">8. Kebijakan Cookie</h3>
+                        <p>Serabut Store tidak menggunakan cookie pelacak pihak ketiga. Data sesi disimpan di <strong>localStorage</strong> browser Anda secara lokal dan tidak dikirim ke server kami tanpa tindakan eksplisit dari Anda.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">9. Perubahan Kebijakan</h3>
+                        <p>Kami dapat memperbarui Kebijakan Privasi ini sewaktu-waktu. Perubahan signifikan akan diberitahukan melalui email atau notifikasi di website. Penggunaan layanan setelah pembaruan dianggap sebagai penerimaan kebijakan baru.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="font-bold text-gray-900 mb-1">10. Kontak & Pengaduan</h3>
+                        <p>Jika Anda memiliki pertanyaan, keberatan, atau ingin mengajukan pengaduan terkait pelindungan data pribadi, hubungi:</p>
+                        <ul class="list-none space-y-1 mt-2">
+                            <li>📧 <strong>halo@serabut.com</strong></li>
+                            <li>💬 WhatsApp: <strong>0888-1500-555</strong> (08.00–22.00 WIB)</li>
+                        </ul>
+                        <p class="mt-2 text-xs text-gray-500">Anda juga dapat mengajukan pengaduan kepada <strong>Badan Siber dan Sandi Negara (BSSN)</strong> atau lembaga berwenang lainnya sesuai ketentuan UU PDP jika merasa hak Anda dilanggar.</p>
+                    </section>
+                </div>
+            </template>
+
+        </div>
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-gray-100 flex-shrink-0">
+            <button @click="legalModal=null" class="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-gray-700 transition-colors">Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
      ALPINE.JS APP
 ══════════════════════════════════════════════════════ -->
 <script>
@@ -2518,6 +2722,7 @@ function serabutStore() {
         ordersLoading: false,
 
         // Reset Password
+        legalModal:     null,
         resetPwModal:   false,
         resetPwForm:    { oldPassword:'', newPassword:'', konfirmasi:'' },
         resetPwLoading: false,
