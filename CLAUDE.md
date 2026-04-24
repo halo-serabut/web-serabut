@@ -100,11 +100,17 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 - [2026-04-23] Selesai: Order modal mobile scrollable — `max-h-[92vh] overflow-y-auto flex flex-col`; konten bisa di-scroll jika panjang
 - [2026-04-23] Selesai: Checkbox "Gunakan email profil saya" tersembunyi jika user tidak punya email (auto-guest)
 - [2026-04-23] Selesai: "Update Produk" otomatis simpan benefits sekaligus ke GSheet col O — tidak perlu klik "Simpan Deskripsi" terpisah lagi; toast berubah jadi "Produk & deskripsi diupdate ✓"
+- [2026-04-23] Selesai: Benefits per-produk (bukan per-kategori) — setiap baris Catalog GSheet punya col O sendiri; getCatalog/getCatalogAdmin baca col O; updateProduct/addProduct/saveProductBenefits simpan ke col O; modal pakai benefits sesuai varian dipilih; label admin "Deskripsi spesifik untuk: [nama · varian]"; "Simpan Deskripsi" pakai rowIndex
+- [2026-04-24] Selesai: Kategori dinamis dari GSheet kolom H — GAS v31: _colIndex helper, getCatalog/getCatalogAdmin return `category` dari col H, updateProduct/addProduct tidak hardcode col 8; frontend: _mapProducts pakai p.category dari API, get categories() computed dari products+extraCategories, filter pills otomatis
+- [2026-04-24] Selesai: Tab Admin Kategori redesign — dua seksi: "Dari Catalog (otomatis)" read-only + "Tambahan Manual" bisa tambah/hapus kategori via UI, simpan ke Settings key `categories.extra`; merged di get categories()
+- [2026-04-24] Selesai: Admin form produk — field Kategori baru dengan datalist autocomplete; pass `kategori` ke updateProduct/addProduct GAS
+- [2026-04-24] Selesai: Admin Populer search fix — adminInitTab('populer') panggil adminLoadProducts() agar fresh; filter dari adminProducts.filter(aktif); fix x-for key tambah masaAktif agar 3 varian berbeda tampil semua (bukan deduplicate by nama+varian)
 
 ## Current Focus
-- **Benefits per kategori** — Tersimpan di Catalog GSheet kolom O "Deskripsi" sebagai JSON. Edit via Admin → tab Produk → edit produk → klik "Update Produk" (simpan produk + benefits sekaligus) ATAU "Simpan Deskripsi" (benefits saja).
-- **Order tanpa login** — Siapapun bisa order langsung tanpa daftar/login. Flash sale & promo hanya untuk member terdaftar (banner promo tetap tampil untuk mendorong register).
-- **Google SSO:** Siap diaktifkan — isi `GOOGLE_CLIENT_ID: 'xxxx.apps.googleusercontent.com'` di Alpine config; buat di Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client ID → authorized origin: `https://serabut.id`
+- **Kategori dinamis** — Sumber utama: kolom H Catalog GSheet. Kategori tambahan manual bisa diset di Admin → Kategori → Tambahan Manual (simpan ke Settings `categories.extra`). GAS v31 deployed.
+- **Benefits per-produk** — Tersimpan di Catalog GSheet kolom O "Deskripsi" sebagai JSON array per baris.
+- **Order tanpa login** — Siapapun bisa order langsung tanpa daftar/login.
+- **Google SSO:** Siap diaktifkan — isi `GOOGLE_CLIENT_ID: 'xxxx.apps.googleusercontent.com'` di Alpine config.
 - **Fonnte note:** Jika notif WA group berhenti, jalankan `testWAGroupAfterSync()` di GAS untuk re-sync device Fonnte
-- **GAS deployment:** Setiap edit `Code.gs` perlu re-deploy manual di script.google.com (New Deployment) — current: v29
+- **GAS deployment:** Setiap edit `Code.gs` perlu re-deploy manual di script.google.com (New Deployment) — current: v30
 - **Column Role di Users-web**: harus di kolom **I** (setelah OTP Expiry di H) — index 8 (0-indexed)
