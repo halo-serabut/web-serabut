@@ -1039,21 +1039,48 @@
             </div>
 
             <!-- ── Tab: Kategori ── -->
-            <div x-show="adminTab==='kategori'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
-                <h2 class="font-bold text-gray-900 mb-3">Kategori Produk</h2>
-                <div class="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3 mb-4">
-                    <svg class="w-4 h-4 text-blue-500 mt-0.5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <p class="text-xs text-blue-700 leading-relaxed">Kategori diambil otomatis dari kolom <strong>H (Kategori)</strong> di tab Catalog pada Google Sheets. Tambah atau ubah kategori langsung dari Sheets — perubahan akan tampil di sini setelah cache produk diperbarui (maks. 5 menit).</p>
+            <div x-show="adminTab==='kategori'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm space-y-5">
+                <!-- Dari Catalog (otomatis) -->
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Dari Catalog — otomatis (kolom H Sheets)</p>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        <template x-for="cat in categories.filter(c => products.some(p => p.category === c.name))" :key="cat.name">
+                            <div class="flex items-center gap-2.5 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                                <div class="w-5 h-5 text-brand-500 flex-none" x-html="cat.icon"></div>
+                                <span class="text-sm font-semibold text-gray-700 truncate" x-text="cat.name"></span>
+                            </div>
+                        </template>
+                        <div x-show="!products.some(p=>p.category)" class="col-span-full text-sm text-gray-400 py-2">Belum ada produk aktif dengan kategori.</div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    <template x-for="cat in categories" :key="cat.name">
-                        <div class="flex items-center gap-2.5 bg-gray-50 rounded-xl p-3 border border-gray-100">
-                            <div class="w-6 h-6 text-brand-500 flex-none" x-html="cat.icon"></div>
-                            <span class="text-sm font-semibold text-gray-700 truncate" x-text="cat.name"></span>
-                        </div>
-                    </template>
-                    <div x-show="!categories.length" class="col-span-full text-sm text-gray-400 text-center py-6">Belum ada produk aktif dengan kategori.</div>
+
+                <!-- Kategori tambahan (manual) -->
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-2">Tambahan Manual</p>
+                    <div class="space-y-1.5 mb-3" x-show="adminEditCats.length">
+                        <template x-for="(cat, ci) in adminEditCats" :key="cat">
+                            <div class="flex items-center gap-2 bg-brand-50 rounded-xl px-3 py-2">
+                                <span class="flex-1 text-sm font-semibold text-brand-700" x-text="cat"></span>
+                                <button @click="adminEditCats.splice(ci,1)" class="text-red-400 hover:text-red-600 flex-none">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="flex gap-2">
+                        <input x-model="adminNewCatName" type="text" placeholder="Nama kategori baru..."
+                               @keydown.enter="if(adminNewCatName.trim()&&!adminEditCats.includes(adminNewCatName.trim())){adminEditCats.push(adminNewCatName.trim());adminNewCatName='';}"
+                               class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        <button @click="if(adminNewCatName.trim()&&!adminEditCats.includes(adminNewCatName.trim())){adminEditCats.push(adminNewCatName.trim());adminNewCatName='';}"
+                                class="text-xs font-bold text-brand-500 bg-brand-50 px-4 py-2 rounded-xl hover:bg-brand-100 transition-colors whitespace-nowrap">+ Tambah</button>
+                    </div>
                 </div>
+
+                <button @click="adminSaveCats()" :disabled="adminSaving" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all flex items-center gap-2">
+                    <svg x-show="adminSaving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <span x-show="!adminSaving">Simpan Kategori Tambahan</span>
+                    <span x-show="adminSaving">Menyimpan...</span>
+                </button>
             </div>
 
             <!-- ── Tab: Produk ── -->
@@ -1346,7 +1373,7 @@
                     </div>
                     <!-- Hasil pencarian -->
                     <div x-show="adminFeaturedResults.length" class="mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
-                        <template x-for="p in adminFeaturedResults" :key="p.nama+p.varian">
+                        <template x-for="p in adminFeaturedResults" :key="p.nama+'|'+p.varian+'|'+(p.masaAktif||'-')">
                             <button @click="adminFeaturedAdd(p)" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-brand-50 transition-colors text-left border-b border-gray-50 last:border-0">
                                 <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-none" :class="getCategoryBg(p.category)">
                                     <img :src="getProductLogo(p.category)" class="w-5 h-5 object-contain" onerror="this.style.display='none'">
@@ -2451,6 +2478,7 @@ function serabutStore() {
             benefits: {},
             featured: [],
             renewal:  { discountPct: 10, discountMax: 10000 },
+            extraCategories: [],
         },
         renewalMode: false,
         settingsLoaded: false,
@@ -2499,6 +2527,7 @@ function serabutStore() {
         adminFeaturedItems:   [],
         adminFeaturedSearch:  '',
         adminFeaturedResults: [],
+        adminNewCatName:      '',
 
         // ── Static Data ──────────────────────────────
         navItems: [
@@ -2561,8 +2590,10 @@ function serabutStore() {
         get categories() {
             const defaultIcon = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>`;
             const seen = new Set();
-            return this.products
-                .map(p => p.category).filter(c => c && !seen.has(c) && seen.add(c))
+            this.products.map(p => p.category).filter(Boolean).forEach(c => seen.add(c));
+            const extra = (this.siteSettings.extraCategories || []).filter(c => c && !seen.has(c));
+            return [...seen, ...extra]
+                .filter(Boolean)
                 .sort()
                 .map(name => ({ name, icon: this._categoryIconMap[name] || defaultIcon, desc: '', iconKey: name.toLowerCase().replace(/\s+/g,'') }));
         },
@@ -2750,6 +2781,12 @@ function serabutStore() {
                 try {
                     const feat = JSON.parse(s['featured.items'] || '[]');
                     if(feat.length) this.siteSettings.featured = feat;
+                } catch {}
+
+                // Extra categories (manual tambah dari admin)
+                try {
+                    const extra = JSON.parse(s['categories.extra'] || '[]');
+                    if(Array.isArray(extra)) this.siteSettings.extraCategories = extra;
                 } catch {}
 
                 // Benefits per category
@@ -3318,7 +3355,8 @@ function serabutStore() {
             } else if(tab==='footer') {
                 this.adminEditFooter = { ...this.siteSettings.footer };
             } else if(tab==='kategori') {
-                this.adminEditCats = this.categories.map(c=>({ name:c.name, desc:c.desc, iconKey:c.iconKey||'other' }));
+                this.adminEditCats = [...(this.siteSettings.extraCategories || [])];
+                this.adminNewCatName = '';
             } else if(tab==='produk') {
                 this.adminLoadProducts();
             } else if(tab==='populer') {
@@ -3609,8 +3647,13 @@ function serabutStore() {
             this.adminEditCats.push({ name:'', desc:'', iconKey:'other' });
         },
         async adminSaveCats() {
-            // Kategori kini otomatis dari col H Catalog — tidak ada yang perlu disimpan
-            this._adminShowMsg('Kategori diambil otomatis dari Catalog Sheets ✓');
+            this.adminSaving=true;
+            try {
+                await this._adminSave('categories.extra', JSON.stringify(this.adminEditCats));
+                this.siteSettings.extraCategories = [...this.adminEditCats];
+                this._adminShowMsg('Kategori tambahan disimpan ✓');
+            } catch { this._adminShowMsg('Gagal menyimpan'); }
+            this.adminSaving=false;
         },
 
         // ── Admin: Products ───────────────────────────
