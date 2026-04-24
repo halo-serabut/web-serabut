@@ -777,9 +777,8 @@ function register({ nama, email, wa, password, privacyConsent }) {
 
   if (!sheet) {
     sheet = ss.insertSheet(TAB_USERS);
-    sheet.appendRow(['Nama', 'Email', 'No Hp', 'Password', 'Created At', 'Status', 'Privacy Notice', 'OTP', 'OTP Expiry', 'Role']);
-    sheet.getRange(1, 1, 1, 10).setFontWeight('bold');
   }
+  ensureUserSheetHeaders(sheet);
 
   const data = sheet.getDataRange().getValues();
 
@@ -853,7 +852,10 @@ function verifyOTP({ email, otp }) {
     sheet.getRange(row, 8).setValue('');  // clear OTP (col H)
     sheet.getRange(row, 9).setValue('');  // clear OTP Expiry (col I)
 
-    sendWelcomeEmail(email.toLowerCase().trim(), String(data[i][0]));
+    const userName = String(data[i][0]);
+    const userWa   = String(data[i][2]);
+    sendWelcomeEmail(email.toLowerCase().trim(), userName);
+    sendWAWelcome(userWa, userName);
 
     return {
       success: true,
@@ -1015,6 +1017,23 @@ function createOrder({ userNama, userEmail, userWa, produk, varian, masaAktif, h
 // ────────────────────────────────────────────────────────
 //  GET PROFILE
 // ────────────────────────────────────────────────────────
+function _profileCols(headers) {
+  const h = headers.map(x => String(x).toLowerCase().trim());
+  return {
+    tgl:  h.findIndex(x => x === 'tanggal lahir'),
+    jk:   h.findIndex(x => x === 'jenis kelamin'),
+    kota: h.findIndex(x => x === 'kota'),
+    prov: h.findIndex(x => x === 'provinsi'),
+  };
+}
+
+function ensureUserSheetHeaders(sheet) {
+  const needed = ['Nama','Email','No Hp','Password','Created At','Status','Privacy Notice','OTP','OTP Expiry','Role','Tanggal Lahir','Jenis Kelamin','Kota','Provinsi'];
+  const cur = sheet.getRange(1, 1, 1, needed.length).getValues()[0];
+  const changed = needed.some((h, i) => String(cur[i]||'').trim() !== h);
+  if (changed) sheet.getRange(1, 1, 1, needed.length).setValues([needed]).setFontWeight('bold');
+}
+
 function getProfile({ email }) {
   if (!email) return { success: false, error: 'Email kosong' };
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -1022,19 +1041,20 @@ function getProfile({ email }) {
   if (!sheet) return { success: false, error: 'User tidak ditemukan' };
 
   const data = sheet.getDataRange().getValues();
+  const cols = _profileCols(data[0]);
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][1]).toLowerCase().trim() !== email.toLowerCase().trim()) continue;
     return {
       success: true,
       profile: {
-        nama:         String(data[i][0]  || ''),
-        email:        String(data[i][1]  || ''),
-        wa:           String(data[i][2]  || ''),
+        nama:         String(data[i][0] || ''),
+        email:        String(data[i][1] || ''),
+        wa:           String(data[i][2] || ''),
         role:         _getUserRole(data, i),
-        tanggalLahir: String(data[i][9]  || ''),
-        jenisKelamin: String(data[i][10] || ''),
-        alamat:       String(data[i][11] || ''),
-        provinsi:     String(data[i][12] || ''),
+        tanggalLahir: cols.tgl  >= 0 ? String(data[i][cols.tgl]  || '') : '',
+        jenisKelamin: cols.jk   >= 0 ? String(data[i][cols.jk]   || '') : '',
+        alamat:       cols.kota >= 0 ? String(data[i][cols.kota]  || '') : '',
+        provinsi:     cols.prov >= 0 ? String(data[i][cols.prov]  || '') : '',
       }
     };
   }
@@ -1050,16 +1070,18 @@ function updateProfile({ email, nama, tanggalLahir, jenisKelamin, alamat, provin
   const sheet = ss.getSheetByName(TAB_USERS);
   if (!sheet) return { success: false, error: 'User tidak ditemukan' };
 
+  ensureUserSheetHeaders(sheet);
   const data = sheet.getDataRange().getValues();
+  const cols = _profileCols(data[0]);
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][1]).toLowerCase().trim() !== email.toLowerCase().trim()) continue;
     const row  = i + 1;
     const role = _getUserRole(data, i);
     sheet.getRange(row, 1).setValue(nama.trim());
-    sheet.getRange(row, 10).setValue(tanggalLahir  || '');
-    sheet.getRange(row, 11).setValue(jenisKelamin || '');
-    sheet.getRange(row, 12).setValue(alamat       || '');
-    sheet.getRange(row, 13).setValue(provinsi     || '');
+    if (cols.tgl  >= 0) sheet.getRange(row, cols.tgl  + 1).setValue(tanggalLahir  || '');
+    if (cols.jk   >= 0) sheet.getRange(row, cols.jk   + 1).setValue(jenisKelamin || '');
+    if (cols.kota >= 0) sheet.getRange(row, cols.kota + 1).setValue(alamat        || '');
+    if (cols.prov >= 0) sheet.getRange(row, cols.prov + 1).setValue(provinsi      || '');
     return {
       success: true,
       user: { nama: nama.trim(), email: String(data[i][1]), wa: String(data[i][2]), role }
@@ -1124,7 +1146,7 @@ function getOrders({ email }) {
 //  EMAIL — OTP
 // ────────────────────────────────────────────────────────
 function sendOTPEmail(email, nama, otp) {
-  const subject  = `[${otp}] Kode Verifikasi Akun Serabut Store`;
+  const subject  = `Kode OTP Serabut Store ${otp}`;
   const htmlBody = buildOTPEmailHTML(nama, otp);
   GmailApp.sendEmail(email, subject,
     `Kode OTP kamu: ${otp}\nBerlaku ${OTP_EXPIRY_MIN} menit.\nJangan bagikan kode ini kepada siapapun.`,
@@ -1138,38 +1160,38 @@ function buildOTPEmailHTML(nama, otp) {
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Kode OTP Serabut Store</title></head>
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 16px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:32px 16px;">
 <tr><td align="center">
-<table width="100%" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.08);" cellpadding="0" cellspacing="0">
+<table width="100%" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.07);" cellpadding="0" cellspacing="0">
+  <!-- Header -->
   <tr>
-    <td style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);padding:32px 40px 28px;text-align:center;">
-      <img src="https://halo-serabut.github.io/web-serabut/logo.png" width="40" height="40" alt="S" style="display:block;margin:0 auto 14px;" onerror="this.style.display='none'">
-      <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px;line-height:1;">SERABUT</div>
-      <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.7);letter-spacing:5px;margin-top:3px;">STORE</div>
+    <td style="background:#dc2626;padding:22px 36px;text-align:center;">
+      <div style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:3px;">SERABUT STORE</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:3px;letter-spacing:1px;">serabut.id</div>
     </td>
   </tr>
+  <!-- Body -->
   <tr>
-    <td style="padding:36px 40px 28px;">
-      <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#111827;">Halo, ${nama}!</p>
-      <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.65;">Masukkan kode OTP di bawah untuk verifikasi akun kamu.</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
+    <td style="padding:32px 36px 24px;">
+      <p style="margin:0 0 4px;font-size:20px;font-weight:700;color:#111827;">Halo, ${nama}!</p>
+      <p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.6;">Gunakan kode OTP berikut untuk verifikasi akun kamu di Serabut Store.</p>
+      <!-- OTP Box -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
         <tr>
-          <td style="background:#fef2f2;border:2px dashed #fca5a5;border-radius:16px;padding:28px 24px;text-align:center;">
-            <p style="margin:0 0 10px;font-size:11px;font-weight:700;color:#dc2626;letter-spacing:3px;text-transform:uppercase;">Kode OTP Kamu</p>
-            <div style="font-size:48px;font-weight:900;letter-spacing:14px;color:#dc2626;font-family:'Courier New',Courier,monospace;line-height:1.1;">${otp}</div>
-            <p style="margin:12px 0 0;font-size:13px;color:#9ca3af;">Berlaku <strong style="color:#374151;">${OTP_EXPIRY_MIN} menit</strong></p>
+          <td style="background:#fef2f2;border-radius:12px;padding:24px;text-align:center;">
+            <div style="font-size:11px;font-weight:700;color:#dc2626;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Kode OTP</div>
+            <div style="font-size:44px;font-weight:900;letter-spacing:12px;color:#dc2626;font-family:'Courier New',Courier,monospace;">${otp}</div>
+            <div style="margin-top:10px;font-size:12px;color:#9ca3af;">Berlaku <strong style="color:#374151;">${OTP_EXPIRY_MIN} menit</strong> &nbsp;·&nbsp; Jangan bagikan ke siapapun</div>
           </td>
         </tr>
       </table>
-      <p style="margin:0;font-size:13px;color:#9ca3af;line-height:1.6;">Jika kamu tidak mendaftar di Serabut Store, abaikan email ini.</p>
+      <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">Jika kamu tidak mendaftar di Serabut Store, abaikan email ini.</p>
     </td>
   </tr>
+  <!-- Footer -->
   <tr>
-    <td style="background:#f9fafb;border-top:1px solid #f3f4f6;padding:20px 40px;">
-      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
-        &copy; 2025 Serabut Store &nbsp;&middot;&nbsp;
-        <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a>
-      </p>
+    <td style="border-top:1px solid #f3f4f6;padding:16px 36px;text-align:center;">
+      <p style="margin:0;font-size:11px;color:#d1d5db;">&copy; 2019–2026 PT Serabut Solusi Digital &nbsp;&middot;&nbsp; <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a></p>
     </td>
   </tr>
 </table>
@@ -1183,12 +1205,25 @@ function buildOTPEmailHTML(nama, otp) {
 //  EMAIL — Selamat Datang
 // ────────────────────────────────────────────────────────
 function sendWelcomeEmail(email, nama) {
-  const subject  = `Selamat Datang di Serabut Store, ${nama}!`;
+  const subject  = `Selamat Datang di Serabut Store, ${nama}! 🎉`;
   const htmlBody = buildWelcomeEmailHTML(nama);
   GmailApp.sendEmail(email, subject,
-    `Halo ${nama}! Akun kamu sudah aktif. Yuk belanja di serabut.id`,
+    `Halo ${nama}! Akun kamu sudah aktif. Terima kasih sudah bergabung — yuk nikmati promo eksklusif di serabut.id`,
     { name: STORE_NAME, htmlBody }
   );
+}
+
+function sendWAWelcome(waNumber, nama) {
+  if (!FONNTE_TOKEN || !waNumber) return;
+  const msg = `Halo, *${nama}*! 🎉\n\nSelamat bergabung di *Serabut Store*!\n\nAkun kamu sudah aktif. Terima kasih sudah menjadi bagian dari keluarga kami 😊\n\nYuk nikmati promo-promo eksklusif di *serabut.id* — hemat hingga 70% dari harga resmi! ✨\n\nAda pertanyaan? CS kami siap membantu kamu jam 08.00–22.00 WIB.\n\n— Tim Serabut Store 🛍️`;
+  try {
+    UrlFetchApp.fetch('https://api.fonnte.com/send', {
+      method: 'post',
+      headers: { 'Authorization': FONNTE_TOKEN },
+      payload: { target: waNumber.replace(/^0/, '62'), message: msg },
+      muteHttpExceptions: true,
+    });
+  } catch(e) { Logger.log('WA welcome error: ' + e.message); }
 }
 
 function buildWelcomeEmailHTML(nama) {
@@ -1197,37 +1232,41 @@ function buildWelcomeEmailHTML(nama) {
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Selamat Datang — Serabut Store</title></head>
 <body style="margin:0;padding:0;background:#f3f4f6;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 16px;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:32px 16px;">
 <tr><td align="center">
-<table width="100%" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.08);" cellpadding="0" cellspacing="0">
+<table width="100%" style="max-width:480px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.07);" cellpadding="0" cellspacing="0">
+  <!-- Header -->
   <tr>
-    <td style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);padding:32px 40px 28px;text-align:center;">
-      <img src="https://halo-serabut.github.io/web-serabut/logo.png" width="40" height="40" alt="S" style="display:block;margin:0 auto 14px;" onerror="this.style.display='none'">
-      <div style="font-size:26px;font-weight:900;color:#fff;">SERABUT</div>
-      <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.7);letter-spacing:5px;margin-top:3px;">STORE</div>
-      <div style="margin-top:20px;font-size:14px;font-weight:700;color:rgba(255,255,255,0.9);">AKUN BERHASIL DIAKTIFKAN</div>
+    <td style="background:#dc2626;padding:22px 36px;text-align:center;">
+      <div style="font-size:18px;font-weight:900;color:#ffffff;letter-spacing:3px;">SERABUT STORE</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.65);margin-top:3px;letter-spacing:1px;">serabut.id</div>
     </td>
   </tr>
+  <!-- Body -->
   <tr>
-    <td style="padding:36px 40px 28px;">
-      <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#111827;">Selamat datang, ${nama}!</p>
-      <p style="margin:0 0 24px;font-size:15px;color:#6b7280;line-height:1.65;">Akun kamu di <strong style="color:#111827;">Serabut Store</strong> sudah aktif. Yuk mulai jelajahi produk kami!</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
+    <td style="padding:32px 36px 28px;">
+      <p style="margin:0 0 4px;font-size:22px;font-weight:700;color:#111827;">Halo, ${nama}! 🎉</p>
+      <p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.7;">Selamat bergabung dan terima kasih sudah menjadi bagian dari keluarga <strong style="color:#111827;">Serabut Store</strong>. Akun kamu kini sudah aktif!</p>
+      <div style="background:#fef2f2;border-radius:12px;padding:18px 20px;margin:0 0 24px;">
+        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#dc2626;">✨ Yang bisa kamu nikmati sekarang:</p>
+        <p style="margin:0 0 6px;font-size:13px;color:#374151;">🎁 Promo-promo eksklusif hemat hingga 70%</p>
+        <p style="margin:0 0 6px;font-size:13px;color:#374151;">⚡ Aktivasi produk digital dalam hitungan menit</p>
+        <p style="margin:0;font-size:13px;color:#374151;">🛡️ Garansi resmi untuk semua produk</p>
+      </div>
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
         <tr>
           <td align="center">
-            <a href="https://serabut.id" style="display:inline-block;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#ffffff;font-size:15px;font-weight:700;text-decoration:none;padding:16px 40px;border-radius:12px;">Mulai Belanja &rarr;</a>
+            <a href="https://serabut.id" style="display:inline-block;background:#dc2626;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 36px;border-radius:10px;">Lihat Semua Produk &rarr;</a>
           </td>
         </tr>
       </table>
-      <p style="margin:0;font-size:13px;color:#9ca3af;">Ada pertanyaan? <a href="https://wa.me/${WA_STORE_NO}" style="color:#dc2626;font-weight:600;">Chat WhatsApp</a></p>
+      <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">Ada pertanyaan? Chat kami di WhatsApp <a href="https://wa.me/${WA_STORE_NO}" style="color:#dc2626;font-weight:600;">0888-1500-555</a> &nbsp;(08.00–22.00 WIB)</p>
     </td>
   </tr>
+  <!-- Footer -->
   <tr>
-    <td style="background:#f9fafb;border-top:1px solid #f3f4f6;padding:20px 40px;">
-      <p style="margin:0;font-size:12px;color:#9ca3af;text-align:center;">
-        &copy; 2025 Serabut Store &nbsp;&middot;&nbsp;
-        <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a>
-      </p>
+    <td style="border-top:1px solid #f3f4f6;padding:16px 36px;text-align:center;">
+      <p style="margin:0;font-size:11px;color:#d1d5db;">&copy; 2019–2026 PT Serabut Solusi Digital &nbsp;&middot;&nbsp; <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a></p>
     </td>
   </tr>
 </table>
