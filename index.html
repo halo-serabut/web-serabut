@@ -438,25 +438,63 @@
             </div>
         </div>
 
-        <!-- Mobile-only minimal footer -->
-        <div class="md:hidden bg-gray-950 px-5 pt-6 pb-24 text-xs text-gray-500 space-y-4">
-            <!-- Info baris -->
-            <div class="flex flex-col gap-2">
-                <div class="flex items-center justify-between">
-                    <span class="flex items-center gap-1.5"><span class="text-gray-600">⏱</span> 08.00 – 22.00 WIB</span>
-                    <span class="flex items-center gap-1.5"><span class="text-gray-600">✓</span> Garansi Resmi</span>
+        <!-- Mobile-only footer — elegant corporate -->
+        <div class="md:hidden bg-gray-950 pt-8 pb-24">
+            <!-- Top accent line -->
+            <div class="h-px bg-gradient-to-r from-transparent via-brand-500 to-transparent mx-5 mb-8"></div>
+
+            <div class="px-5 space-y-7">
+                <!-- Tagline -->
+                <p class="text-xs text-gray-400 leading-relaxed tracking-wide uppercase font-medium">Platform Produk Digital Terpercaya</p>
+
+                <!-- Kontak -->
+                <div class="space-y-3">
+                    <p class="text-[10px] uppercase tracking-widest text-gray-600 font-semibold">Layanan Pelanggan</p>
+                    <div class="space-y-2.5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <span class="text-sm text-gray-300">08.00 – 22.00 WIB</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            </div>
+                            <span class="text-sm text-gray-300">halo@serabut.com</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.948V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                            </div>
+                            <span class="text-sm text-gray-300">0888-1500-555</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                            </div>
+                            <span class="text-sm text-gray-300">Garansi Produk Resmi</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex items-center justify-between">
-                    <span>halo@serabut.com</span>
-                    <span>0888-1500-555</span>
+
+                <!-- Legal links -->
+                <div class="space-y-2">
+                    <p class="text-[10px] uppercase tracking-widest text-gray-600 font-semibold">Legal</p>
+                    <button @click="legalModal='terms'" class="flex items-center justify-between w-full py-2.5 border-b border-gray-800 group">
+                        <span class="text-sm text-gray-400 group-hover:text-gray-200 transition-colors">Syarat &amp; Ketentuan</span>
+                        <svg class="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                    <button @click="legalModal='privacy'" class="flex items-center justify-between w-full py-2.5 border-b border-gray-800 group">
+                        <span class="text-sm text-gray-400 group-hover:text-gray-200 transition-colors">Kebijakan Privasi</span>
+                        <svg class="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
                 </div>
-            </div>
-            <!-- Copyright + legal -->
-            <div class="border-t border-gray-800 pt-3.5 flex items-center justify-between">
-                <span class="text-gray-600" x-text="siteSettings.footer.copyright || '© 2019–2026 PT Serabut Solusi Digital'"></span>
-                <div class="flex gap-4 text-gray-500">
-                    <button @click="legalModal='terms'" class="hover:text-gray-300 transition-colors">S&amp;K</button>
-                    <button @click="legalModal='privacy'" class="hover:text-gray-300 transition-colors">Privasi</button>
+
+                <!-- Copyright -->
+                <div class="pt-1 space-y-0.5">
+                    <p class="text-xs text-gray-600">© 2019–2026</p>
+                    <p class="text-xs text-gray-600" x-text="(siteSettings.footer.copyright || 'PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.').replace(/^©.*?\d{4}\s*/,'')"></p>
                 </div>
             </div>
         </div>
