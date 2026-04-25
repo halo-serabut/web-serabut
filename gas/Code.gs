@@ -1163,9 +1163,7 @@ function sendOTPEmail(email, nama, otp) {
 
 function buildOTPEmailHTML(nama, otp) {
   const digits = String(otp).split('').map(d =>
-    `<td style="padding:0 5px;">
-       <div style="width:46px;height:58px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;text-align:center;line-height:58px;font-size:28px;font-weight:800;color:#0f172a;font-family:'Courier New',Courier,monospace;">${d}</div>
-     </td>`
+    `<td style="padding:0 5px;"><div style="width:46px;height:58px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;text-align:center;line-height:58px;font-size:28px;font-weight:800;color:#111827;font-family:'Courier New',Courier,monospace;">${d}</div></td>`
   ).join('');
   return `<!DOCTYPE html>
 <html lang="id">
@@ -1176,44 +1174,31 @@ function buildOTPEmailHTML(nama, otp) {
 <tr><td align="center">
 <table width="100%" style="max-width:460px;" cellpadding="0" cellspacing="0">
 
-  <!-- Top accent bar -->
-  <tr><td style="height:4px;background:linear-gradient(90deg,#dc2626,#ef4444,#dc2626);border-radius:4px 4px 0 0;"></td></tr>
-
-  <!-- Header -->
   <tr>
-    <td style="background:#0f172a;padding:28px 40px 24px;text-align:center;border-radius:0;">
-      <div style="font-size:13px;font-weight:700;color:#dc2626;letter-spacing:4px;text-transform:uppercase;">Serabut Store</div>
-      <div style="font-size:11px;color:#475569;margin-top:4px;letter-spacing:1px;">serabut.id</div>
+    <td style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);padding:28px 40px;text-align:center;border-radius:16px 16px 0 0;">
+      <div style="font-size:20px;font-weight:900;color:#ffffff;letter-spacing:3px;">SERABUT STORE</div>
     </td>
   </tr>
 
-  <!-- Card body -->
   <tr>
-    <td style="background:#ffffff;padding:36px 40px 28px;border-radius:0 0 20px 20px;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
+    <td style="background:#ffffff;padding:36px 40px 28px;border-radius:0 0 16px 16px;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
+      <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#111827;">Halo, ${nama}</p>
+      <p style="margin:0 0 28px;font-size:14px;color:#6b7280;line-height:1.65;">Masukkan kode berikut untuk menyelesaikan verifikasi akun kamu di Serabut Store.</p>
 
-      <!-- Greeting -->
-      <p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#0f172a;">Halo, ${nama}</p>
-      <p style="margin:0 0 28px;font-size:14px;color:#64748b;line-height:1.65;">Masukkan kode berikut untuk menyelesaikan verifikasi akun kamu.</p>
-
-      <!-- OTP digit boxes -->
-      <table cellpadding="0" cellspacing="0" style="margin:0 auto 12px;">
+      <table cellpadding="0" cellspacing="0" style="margin:0 auto 14px;">
         <tr>${digits}</tr>
       </table>
 
-      <!-- Timer info -->
-      <p style="text-align:center;margin:0 0 28px;font-size:12px;color:#94a3b8;">Berlaku <strong style="color:#0f172a;">${OTP_EXPIRY_MIN} menit</strong> &nbsp;&middot;&nbsp; Jangan bagikan ke siapapun</p>
+      <p style="text-align:center;margin:0 0 28px;font-size:12px;color:#9ca3af;">Berlaku <strong style="color:#111827;">${OTP_EXPIRY_MIN} menit</strong> &nbsp;&middot;&nbsp; Jangan bagikan ke siapapun</p>
 
-      <!-- Divider -->
-      <div style="height:1px;background:#f1f5f9;margin:0 0 20px;"></div>
-
-      <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">Tidak mendaftar di Serabut Store? Abaikan email ini.</p>
+      <div style="height:1px;background:#f3f4f6;margin:0 0 20px;"></div>
+      <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">Tidak mendaftar di Serabut Store? Abaikan email ini.</p>
     </td>
   </tr>
 
-  <!-- Footer -->
   <tr>
     <td style="padding:20px 0;text-align:center;">
-      <p style="margin:0;font-size:11px;color:#94a3b8;">&copy; 2019–2026 PT Serabut Solusi Digital &nbsp;&middot;&nbsp; <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a></p>
+      <p style="margin:0;font-size:11px;color:#9ca3af;">&copy; 2019&#8211;2026 PT Serabut Solusi Digital &nbsp;&middot;&nbsp; <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a></p>
     </td>
   </tr>
 
@@ -1229,7 +1214,7 @@ function buildOTPEmailHTML(nama, otp) {
 // ────────────────────────────────────────────────────────
 function sendWelcomeEmail(email, nama) {
   try {
-    const subject  = `Selamat Datang di Serabut Store, ${nama}! 🎉`;
+    const subject  = `Akun Serabut Store kamu sudah aktif`;
     const htmlBody = buildWelcomeEmailHTML(nama);
     GmailApp.sendEmail(email, subject,
       `Halo ${nama}! Akun kamu sudah aktif. Terima kasih sudah bergabung — yuk nikmati promo eksklusif di serabut.id`,
@@ -1255,82 +1240,75 @@ function sendWAWelcome(waNumber, nama) {
 }
 
 function buildWelcomeEmailHTML(nama) {
+  const iTag    = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'/><line x1='7' y1='7' x2='7.01' y2='7'/></svg>";
+  const iZap    = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/></svg>";
+  const iShield = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>";
   return `<!DOCTYPE html>
 <html lang="id">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Selamat Datang — Serabut Store</title></head>
+<title>Akun Serabut Store kamu sudah aktif</title></head>
 <body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 16px;">
 <tr><td align="center">
 <table width="100%" style="max-width:460px;" cellpadding="0" cellspacing="0">
 
-  <!-- Top accent bar -->
-  <tr><td style="height:4px;background:linear-gradient(90deg,#dc2626,#ef4444,#dc2626);border-radius:4px 4px 0 0;"></td></tr>
-
-  <!-- Header -->
   <tr>
-    <td style="background:#0f172a;padding:28px 40px 24px;text-align:center;">
-      <div style="font-size:13px;font-weight:700;color:#dc2626;letter-spacing:4px;text-transform:uppercase;">Serabut Store</div>
-      <div style="font-size:11px;color:#475569;margin-top:4px;letter-spacing:1px;">serabut.id</div>
+    <td style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);padding:28px 40px;text-align:center;border-radius:16px 16px 0 0;">
+      <div style="font-size:20px;font-weight:900;color:#ffffff;letter-spacing:3px;">SERABUT STORE</div>
     </td>
   </tr>
 
-  <!-- Card body -->
   <tr>
-    <td style="background:#ffffff;padding:36px 40px 32px;border-radius:0 0 20px 20px;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
+    <td style="background:#ffffff;padding:36px 40px 32px;border-radius:0 0 16px 16px;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
 
-      <!-- Greeting -->
-      <p style="margin:0 0 6px;font-size:24px;font-weight:700;color:#0f172a;">Halo, ${nama}!</p>
-      <p style="margin:0 0 28px;font-size:14px;color:#64748b;line-height:1.65;">Akun kamu sudah aktif. Selamat bergabung dan terima kasih sudah menjadi bagian dari keluarga <strong style="color:#0f172a;">Serabut Store</strong>.</p>
+      <div style="display:inline-block;background:#dcfce7;border-radius:50px;padding:4px 14px;font-size:12px;font-weight:700;color:#16a34a;margin-bottom:16px;">Akun Aktif</div>
 
-      <!-- Benefit rows -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;background:#f8fafc;border-radius:14px;overflow:hidden;">
+      <p style="margin:0 0 6px;font-size:24px;font-weight:700;color:#111827;">Halo, ${nama}!</p>
+      <p style="margin:0 0 28px;font-size:14px;color:#6b7280;line-height:1.65;">Verifikasi berhasil. Akun kamu di <strong style="color:#111827;">Serabut Store</strong> sudah aktif dan siap digunakan.</p>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;border:1px solid #f3f4f6;border-radius:12px;overflow:hidden;">
         <tr>
-          <td style="padding:14px 20px;border-bottom:1px solid #f1f5f9;">
-            <table cellpadding="0" cellspacing="0"><tr>
-              <td style="width:32px;height:32px;background:#fef2f2;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">%</td>
-              <td style="padding-left:12px;font-size:13px;color:#334155;">Promo eksklusif hemat hingga <strong>70%</strong></td>
+          <td style="padding:14px 18px;border-bottom:1px solid #f3f4f6;background:#fafafa;">
+            <table cellpadding="0" cellspacing="0" width="100%"><tr>
+              <td width="36" style="width:36px;height:36px;background:#dc2626;border-radius:8px;text-align:center;vertical-align:middle;"><img src="${iTag}" width="18" height="18" alt="" style="display:block;margin:9px auto;border:0;"></td>
+              <td style="padding-left:14px;font-size:13px;color:#374151;">Promo eksklusif hemat hingga <strong>70%</strong></td>
             </tr></table>
           </td>
         </tr>
         <tr>
-          <td style="padding:14px 20px;border-bottom:1px solid #f1f5f9;">
-            <table cellpadding="0" cellspacing="0"><tr>
-              <td style="width:32px;height:32px;background:#fef2f2;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">*</td>
-              <td style="padding-left:12px;font-size:13px;color:#334155;">Aktivasi produk digital <strong>dalam hitungan menit</strong></td>
+          <td style="padding:14px 18px;border-bottom:1px solid #f3f4f6;background:#fafafa;">
+            <table cellpadding="0" cellspacing="0" width="100%"><tr>
+              <td width="36" style="width:36px;height:36px;background:#dc2626;border-radius:8px;text-align:center;vertical-align:middle;"><img src="${iZap}" width="18" height="18" alt="" style="display:block;margin:9px auto;border:0;"></td>
+              <td style="padding-left:14px;font-size:13px;color:#374151;">Aktivasi produk digital <strong>dalam hitungan menit</strong></td>
             </tr></table>
           </td>
         </tr>
         <tr>
-          <td style="padding:14px 20px;">
-            <table cellpadding="0" cellspacing="0"><tr>
-              <td style="width:32px;height:32px;background:#fef2f2;border-radius:8px;text-align:center;line-height:32px;font-size:16px;">#</td>
-              <td style="padding-left:12px;font-size:13px;color:#334155;">Garansi resmi untuk <strong>semua produk</strong></td>
+          <td style="padding:14px 18px;background:#fafafa;">
+            <table cellpadding="0" cellspacing="0" width="100%"><tr>
+              <td width="36" style="width:36px;height:36px;background:#dc2626;border-radius:8px;text-align:center;vertical-align:middle;"><img src="${iShield}" width="18" height="18" alt="" style="display:block;margin:9px auto;border:0;"></td>
+              <td style="padding-left:14px;font-size:13px;color:#374151;">Garansi resmi untuk <strong>semua produk</strong></td>
             </tr></table>
           </td>
         </tr>
       </table>
 
-      <!-- CTA Button -->
       <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
         <tr>
           <td align="center">
-            <a href="https://serabut.id" style="display:inline-block;background:#dc2626;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:15px 40px;border-radius:12px;letter-spacing:0.3px;">Mulai Belanja &rarr;</a>
+            <a href="https://serabut.id" style="display:inline-block;background:#dc2626;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:15px 44px;border-radius:12px;">Lihat Produk &rarr;</a>
           </td>
         </tr>
       </table>
 
-      <!-- Divider -->
-      <div style="height:1px;background:#f1f5f9;margin:0 0 20px;"></div>
-
-      <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">Ada pertanyaan? Hubungi kami via WhatsApp <a href="https://wa.me/${WA_STORE_NO}" style="color:#dc2626;font-weight:600;text-decoration:none;">0888-1500-555</a> &nbsp;(08.00–22.00 WIB)</p>
+      <div style="height:1px;background:#f3f4f6;margin:0 0 20px;"></div>
+      <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">Butuh bantuan? Hubungi kami via WhatsApp <a href="https://wa.me/${WA_STORE_NO}" style="color:#dc2626;font-weight:600;text-decoration:none;">0888-1500-555</a> (08.00&#8211;22.00 WIB)</p>
     </td>
   </tr>
 
-  <!-- Footer -->
   <tr>
     <td style="padding:20px 0;text-align:center;">
-      <p style="margin:0;font-size:11px;color:#94a3b8;">&copy; 2019–2026 PT Serabut Solusi Digital &nbsp;&middot;&nbsp; <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a></p>
+      <p style="margin:0;font-size:11px;color:#9ca3af;">&copy; 2019&#8211;2026 PT Serabut Solusi Digital &nbsp;&middot;&nbsp; <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a></p>
     </td>
   </tr>
 
