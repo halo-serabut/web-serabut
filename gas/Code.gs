@@ -124,6 +124,13 @@ function _getUserRole(data, rowIdx) {
   return String(data[rowIdx][col] || 'buyer').trim().toLowerCase();
 }
 
+// Format nilai sel date dari GSheet — Date object → 'yyyy-MM-dd', string tetap apa adanya
+function _formatDateCell(val) {
+  if (!val) return '';
+  if (val instanceof Date) return Utilities.formatDate(val, 'Asia/Jakarta', 'yyyy-MM-dd');
+  return String(val).trim();
+}
+
 // Cari index kolom berdasarkan nama header (case-insensitive, trim)
 function _colIndex(headers, ...names) {
   for (const name of names) {
@@ -1051,7 +1058,7 @@ function getProfile({ email }) {
         email:        String(data[i][1] || ''),
         wa:           String(data[i][2] || ''),
         role:         _getUserRole(data, i),
-        tanggalLahir: cols.tgl  >= 0 ? String(data[i][cols.tgl]  || '') : '',
+        tanggalLahir: cols.tgl  >= 0 ? _formatDateCell(data[i][cols.tgl]) : '',
         jenisKelamin: cols.jk   >= 0 ? String(data[i][cols.jk]   || '') : '',
         alamat:       cols.kota >= 0 ? String(data[i][cols.kota]  || '') : '',
         provinsi:     cols.prov >= 0 ? String(data[i][cols.prov]  || '') : '',
@@ -1205,12 +1212,17 @@ function buildOTPEmailHTML(nama, otp) {
 //  EMAIL — Selamat Datang
 // ────────────────────────────────────────────────────────
 function sendWelcomeEmail(email, nama) {
-  const subject  = `Selamat Datang di Serabut Store, ${nama}! 🎉`;
-  const htmlBody = buildWelcomeEmailHTML(nama);
-  GmailApp.sendEmail(email, subject,
-    `Halo ${nama}! Akun kamu sudah aktif. Terima kasih sudah bergabung — yuk nikmati promo eksklusif di serabut.id`,
-    { name: STORE_NAME, htmlBody }
-  );
+  try {
+    const subject  = `Selamat Datang di Serabut Store, ${nama}! 🎉`;
+    const htmlBody = buildWelcomeEmailHTML(nama);
+    GmailApp.sendEmail(email, subject,
+      `Halo ${nama}! Akun kamu sudah aktif. Terima kasih sudah bergabung — yuk nikmati promo eksklusif di serabut.id`,
+      { name: STORE_NAME, htmlBody, replyTo: 'halo@serabut.id' }
+    );
+    Logger.log('Welcome email sent to: ' + email);
+  } catch(e) {
+    Logger.log('Welcome email error: ' + e.message);
+  }
 }
 
 function sendWAWelcome(waNumber, nama) {
