@@ -1598,3 +1598,26 @@ function testSettings() { Logger.log(JSON.stringify(getSettings(), null, 2)); }
 function testRegister() { Logger.log(JSON.stringify(register({ nama:'Test', email:'test@test.com', wa:'08123', password:'abc123hash' }), null, 2)); }
 function testLogin()    { Logger.log(JSON.stringify(login({ email:'test@test.com', password:'abc123hash' }), null, 2)); }
 function testOTP()      { Logger.log(JSON.stringify(verifyOTP({ email:'test@test.com', otp:'123456' }), null, 2)); }
+
+// Ganti TARGET_EMAIL dengan email tujuan lalu run fungsi ini dari editor GAS
+function testWelcomeEmail() {
+  const TARGET_EMAIL = 'ganti@emailkamu.com'; // ← ganti ini
+  const TARGET_NAMA  = 'Test User';
+  try {
+    sendWelcomeEmail(TARGET_EMAIL, TARGET_NAMA);
+    Logger.log('✓ Welcome email berhasil dikirim ke: ' + TARGET_EMAIL);
+  } catch(e) {
+    Logger.log('✗ Gagal kirim welcome email: ' + e.message);
+  }
+}
+
+function testOTPEmail() {
+  const TARGET_EMAIL = 'ganti@emailkamu.com'; // ← ganti ini
+  const TARGET_NAMA  = 'Test User';
+  try {
+    sendOTPEmail(TARGET_EMAIL, TARGET_NAMA, '123456');
+    Logger.log('✓ OTP email berhasil dikirim ke: ' + TARGET_EMAIL);
+  } catch(e) {
+    Logger.log('✗ Gagal kirim OTP email: ' + e.message);
+  }
+}
