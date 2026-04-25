@@ -16,7 +16,7 @@ const STORE_NAME     = 'Serabut Store';
 const OTP_EXPIRY_MIN = 10;
 
 const TAB_CS         = 'CS-Sessions';
-const OPENROUTER_KEY = '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';
+const OPENROUTER_KEY = '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';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // ── Kolom Users-web (0-indexed) ──────────────────────────
