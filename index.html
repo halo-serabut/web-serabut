@@ -588,8 +588,34 @@
                                 </template>
                                 <template x-if="product.stok!==0">
                                     <div>
-                                        <div x-show="flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-xs text-gray-400 line-through leading-none mb-0.5" x-text="formatPrice(product.harga)"></div>
-                                        <div class="font-black text-brand-500 text-base mb-2" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga ?? product.harga)"></div>
+                                        <!-- Member + flash sale: harga coret + harga diskon -->
+                                        <template x-if="isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                            <div>
+                                                <div class="text-xs text-gray-400 line-through leading-none mb-0.5" x-text="formatPrice(product.harga)"></div>
+                                                <div class="font-black text-brand-500 text-base mb-2" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
+                                            </div>
+                                        </template>
+                                        <!-- Non-member + flash sale: harga normal + banner promo member -->
+                                        <template x-if="!isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                            <div>
+                                                <div class="font-black text-brand-500 text-base mb-2" x-text="formatPrice(product.harga)"></div>
+                                                <div class="bg-red-50 border border-red-100 rounded-xl px-2.5 py-2 mb-2">
+                                                    <div class="flex items-center gap-1 mb-1.5">
+                                                        <span class="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full" x-text="flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon+'% OFF'"></span>
+                                                        <span class="text-[10px] text-red-600 font-semibold">Member →</span>
+                                                        <span class="text-[10px] font-black text-red-600" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></span>
+                                                    </div>
+                                                    <div class="flex gap-1">
+                                                        <button @click.stop="openAuth('register')" class="flex-1 text-[10px] font-black gradient-card text-white py-1 rounded-lg active:scale-95 transition-all">Daftar</button>
+                                                        <button @click.stop="openAuth('login')" class="flex-1 text-[10px] font-bold bg-white border border-red-200 text-red-500 py-1 rounded-lg active:scale-95 transition-all">Masuk</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <!-- No flash sale: harga biasa -->
+                                        <template x-if="!flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                            <div class="font-black text-brand-500 text-base mb-2" x-text="formatPrice(product.harga)"></div>
+                                        </template>
                                         <div class="flex gap-1.5">
                                             <button @click.stop="addToCart(product, product)" class="flex-none w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-brand-500 hover:border-brand-300 active:scale-95 transition-all">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
