@@ -1921,36 +1921,67 @@
      x-transition:leave-end="opacity-0 scale-95"
      @click.outside="csPopup=false">
     <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-72 overflow-hidden">
-        <!-- Header -->
-        <div class="gradient-card px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+        <!-- Header — AI Assistant style -->
+        <div class="gradient-card px-4 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <!-- Avatar robot -->
+                <div class="relative flex-none">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center ring-2 ring-white/30">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="2" x2="12" y2="5"/><circle cx="12" cy="2" r="1.2" fill="currentColor" stroke="none"/>
+                            <rect x="3.5" y="5" width="17" height="13" rx="3"/>
+                            <circle cx="8.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
+                            <circle cx="15.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
+                            <path d="M8.5 14.5 Q12 17 15.5 14.5"/>
+                        </svg>
+                    </div>
+                    <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white"></span>
                 </div>
+                <!-- Name + status -->
                 <div>
-                    <div class="text-white font-black text-sm leading-none">Chat CS Serabut</div>
-                    <div class="text-white/70 text-[10px] mt-0.5">08.00 – 22.00 WIB · Biasanya balas cepat</div>
+                    <div class="text-white font-black text-base leading-none tracking-tight">Sera</div>
+                    <div class="flex items-center gap-1.5 mt-1">
+                        <span class="text-white/90 text-[10px] font-semibold">AI Assistant</span>
+                        <span class="w-1 h-1 bg-white/40 rounded-full"></span>
+                        <span class="text-green-300 text-[10px] font-bold">● Online</span>
+                    </div>
                 </div>
             </div>
-            <button @click="csPopup=false" class="w-6 h-6 flex items-center justify-center text-white/70 hover:text-white">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            <button @click="csPopup=false" class="w-7 h-7 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
+
         <!-- Body -->
         <div class="flex flex-col" x-effect="if(csPopup && currentUser && !csStarted) startCSChat()">
 
             <!-- GATE: guest belum input nama -->
             <template x-if="!csStarted && !currentUser">
-                <div class="px-4 py-4">
-                    <p class="text-sm text-gray-500 mb-3 leading-relaxed">Siapa nama kamu? Kami siapkan chat yang personal.</p>
-                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Nama kamu <span class="text-brand-500">*</span></label>
-                    <input x-model="csGuestName" type="text" placeholder="Contoh: Budi Santoso"
+                <div class="px-4 pt-4 pb-4">
+                    <!-- Greeting bubble dari Sera -->
+                    <div class="flex items-start gap-2.5 mb-4">
+                        <div class="w-7 h-7 gradient-card rounded-full flex items-center justify-center flex-none mt-0.5">
+                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="2" x2="12" y2="5"/><circle cx="12" cy="2" r="1.2" fill="currentColor" stroke="none"/>
+                                <rect x="3.5" y="5" width="17" height="13" rx="3"/>
+                                <circle cx="8.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
+                                <circle cx="15.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
+                                <path d="M8.5 14.5 Q12 17 15.5 14.5"/>
+                            </svg>
+                        </div>
+                        <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-3 py-2.5 text-sm text-gray-700 leading-relaxed">
+                            Halo! 👋 Saya <strong>Sera</strong>, AI Assistant Serabut Store.<br>
+                            <span class="text-gray-500 text-xs">Boleh tahu nama kamu?</span>
+                        </div>
+                    </div>
+                    <!-- Input nama -->
+                    <input x-model="csGuestName" type="text" placeholder="Nama kamu..."
                            @keydown.enter="csGuestName.trim() && startCSChat()"
-                           class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all mb-3">
+                           class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:bg-white transition-all mb-2.5">
                     <button @click="csGuestName.trim() && startCSChat()" :disabled="!csGuestName.trim()"
-                            class="w-full gradient-card disabled:opacity-40 text-white font-bold py-3 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
-                        Mulai Chat →
+                            class="w-full gradient-card disabled:opacity-40 text-white font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm">
+                        Mulai Chat
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                     </button>
                 </div>
             </template>
