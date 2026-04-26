@@ -10,6 +10,13 @@
     <meta name="robots" content="index, follow">
     <meta name="author" content="Serabut Store">
     <link rel="canonical" href="https://serabut.id/">
+    <script>
+      // GitHub Pages SPA routing — restore path dari ?p= redirect 404.html
+      (function() {
+        var p = new URLSearchParams(window.location.search).get('p');
+        if (p) window.history.replaceState(null, null, p);
+      })();
+    </script>
 
     <!-- Google Analytics GA4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-V27R1T49LR"></script>
@@ -2890,7 +2897,7 @@ async function sha256(str) {
 function serabutStore() {
     return {
         // Config
-        GAS_URL:          'https://script.google.com/macros/s/AKfycbyGmAsPmz1U1OM7t56p5w9fNzdrhhURtYhR5blfQokoZVxAv2oBEnNmNyGlB0Tv8UKmUg/exec',
+        GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
 
@@ -3154,6 +3161,7 @@ function serabutStore() {
 
         // ── Init ──────────────────────────────────────
         async init() {
+            this.initPageFromURL();
             // ── Load site settings dari cache dulu (instant) ──
             try {
                 const cached = localStorage.getItem('serabutSettings');
@@ -3899,13 +3907,26 @@ function serabutStore() {
             return `${parts[0]} ${months[Number(parts[1])-1]} ${parts[2]}`;
         },
         setPage(page) {
-            this.activePage=page;
-            window.scrollTo({top:0,behavior:'smooth'});
-            this.searchQuery='';
+            this.activePage = page;
+            const routeMap = { home:'/', catalog:'/produk', panduan:'/panduan', status:'/cek-status', admin:'/admin', profile:'/akun' };
+            history.pushState({ page }, '', routeMap[page] || '/');
+            window.scrollTo({ top:0, behavior:'smooth' });
+            this.searchQuery = '';
             if(page==='catalog') this.activeCategory='Semua';
             if(page!=='status')  this.statusResult=null;
             if(page==='profile') { this.profileTab='diri'; this.editMode=false; this.loadProfile(); }
             if(page==='admin')   { this.adminTab='flashsale'; this.adminInitTab('flashsale'); }
+        },
+        initPageFromURL() {
+            const pathMap = { '/':'home', '/produk':'catalog', '/panduan':'panduan', '/cek-status':'status', '/admin':'admin', '/akun':'profile' };
+            const page = pathMap[window.location.pathname] || 'home';
+            this.activePage = page;
+            history.replaceState({ page }, '', window.location.pathname);
+            window.addEventListener('popstate', (e) => {
+                const p = e.state?.page || pathMap[window.location.pathname] || 'home';
+                this.activePage = p;
+                window.scrollTo({ top:0, behavior:'smooth' });
+            });
         },
 
         // ── Admin computed ────────────────────────────
