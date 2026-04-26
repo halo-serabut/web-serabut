@@ -3895,12 +3895,25 @@ function serabutStore() {
 
         // ── POST helper ───────────────────────────────
         async gasPost(payload) {
-            const res = await fetch(this.GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload),
-            });
-            return res.json();
+            try {
+                const res = await fetch(this.GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+                // Jika GAS lama (belum deploy v5), doPost tidak handle action → fallback GET
+                if (data?.error === 'Unknown action') {
+                    const p = new URLSearchParams(
+                        Object.fromEntries(Object.entries(payload).map(([k,v]) => [k, v == null ? '' : String(v)]))
+                    );
+                    const r2 = await fetch(`${this.GAS_URL}?${p}`);
+                    return r2.json();
+                }
+                return data;
+            } catch {
+                return { success: false, error: 'Gagal terhubung ke server' };
+            }
         },
 
         // ── Init ──────────────────────────────────────
