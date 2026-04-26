@@ -2645,27 +2645,40 @@
             <div class="flex justify-between gap-2"><span class="text-sm text-gray-400">Produk</span><span class="text-sm font-semibold text-gray-800 text-right max-w-[60%] leading-snug" x-text="selectedProductGroup?.nama"></span></div>
             <div x-show="selectedVariant?.varian" class="flex justify-between gap-2"><span class="text-sm text-gray-400">Varian</span><span class="text-sm font-semibold text-gray-800" x-text="selectedVariant?.varian"></span></div>
             <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="flex justify-between gap-2"><span class="text-sm text-gray-400">Durasi</span><span class="text-sm font-semibold text-gray-800" x-text="selectedVariant?.masaAktif"></span></div>
+            <!-- Qty -->
+            <div class="flex justify-between items-center gap-2">
+                <span class="text-sm text-gray-400">Jumlah</span>
+                <div class="flex items-center gap-2">
+                    <button @click="if(orderExtra.qty>1) orderExtra.qty--"
+                            class="w-7 h-7 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 font-black text-base flex items-center justify-center transition-all active:scale-90 select-none">−</button>
+                    <span class="font-black text-gray-800 text-sm min-w-[24px] text-center" x-text="orderExtra.qty||1"></span>
+                    <button @click="if(orderExtra.qty<10) orderExtra.qty++"
+                            class="w-7 h-7 rounded-lg gradient-card text-white font-black text-base flex items-center justify-center transition-all active:scale-90 select-none">+</button>
+                </div>
+            </div>
             <div class="border-t border-gray-200 pt-2.5 flex justify-between items-end">
-                <span class="text-sm font-bold text-gray-700">Total</span>
+                <div>
+                    <span class="text-sm font-bold text-gray-700">Total</span>
+                    <div x-show="(orderExtra.qty||1) > 1" class="text-xs text-gray-400" x-text="formatPrice(orderUnitPrice) + ' × ' + (orderExtra.qty||1)"></div>
+                </div>
                 <div class="text-right">
-                    <!-- Tamu (tidak login): selalu harga penuh -->
+                    <!-- Tamu: harga penuh × qty -->
                     <template x-if="!isMember">
-                        <span class="font-black text-brand-500 text-lg" x-text="formatPrice(selectedVariant?.harga)"></span>
+                        <span class="font-black text-brand-500 text-lg" x-text="formatPrice(orderTotal)"></span>
                     </template>
-                    <!-- Member: flash sale price jika ada -->
+                    <!-- Member: flash sale × qty -->
                     <template x-if="isMember && flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
                         <div>
-                            <span class="text-xs text-gray-400 line-through block" x-text="formatPrice(selectedVariant?.harga)"></span>
+                            <span class="text-xs text-gray-400 line-through block" x-text="formatPrice((selectedVariant?.harga||0) * (orderExtra.qty||1))"></span>
                             <div class="flex items-center gap-1.5 justify-end">
                                 <span class="text-[10px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full"
                                       x-text="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon+'% OFF'"></span>
-                                <span class="font-black text-brand-500 text-lg"
-                                      x-text="formatPrice(flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></span>
+                                <span class="font-black text-brand-500 text-lg" x-text="formatPrice(orderTotal)"></span>
                             </div>
                         </div>
                     </template>
                     <template x-if="isMember && !flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                        <span class="font-black text-brand-500 text-lg" x-text="formatPrice(selectedVariant?.harga)"></span>
+                        <span class="font-black text-brand-500 text-lg" x-text="formatPrice(orderTotal)"></span>
                     </template>
                 </div>
             </div>
@@ -2679,7 +2692,7 @@
                     <div class="flex-1">
                         <div class="text-white font-black text-sm leading-snug">
                             Hemat <span x-text="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon+'%'"></span>
-                            = <span x-text="formatPrice((selectedVariant?.harga||0) - (flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga||0))"></span> untuk Member!
+                            = <span x-text="formatPrice(((selectedVariant?.harga||0) - (flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga||0)) * (orderExtra.qty||1))"></span> jika jadi Member!
                         </div>
                         <div class="text-white/80 text-xs mt-0.5 mb-2">Daftar gratis & nikmati harga Flash Sale + promo eksklusif</div>
                         <button @click="orderModal=false; authModal=true; authTab='register'"
@@ -2699,17 +2712,34 @@
             </div>
         </template>
         <template x-if="!isMember">
-            <div class="bg-gray-50 rounded-2xl p-4 mb-5 flex items-center justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center flex-none">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <div class="mb-5 space-y-3">
+                <!-- Tamu badge -->
+                <div class="bg-gray-50 rounded-2xl p-4 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center flex-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-700 text-sm">Pesan sebagai Tamu</div>
+                            <div class="text-xs text-gray-400">Login untuk nikmati harga member</div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="font-bold text-gray-700 text-sm">Pesan sebagai Tamu</div>
-                        <div class="text-xs text-gray-400">Login untuk nikmati harga member</div>
-                    </div>
+                    <button @click="orderModal=false; openAuth('login')" class="text-xs font-bold text-brand-500 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg active:scale-95 transition-all">Login →</button>
                 </div>
-                <button @click="orderModal=false; openAuth('login')" class="text-xs font-bold text-brand-500 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg active:scale-95 transition-all">Login →</button>
+                <!-- Guest info fields -->
+                <div>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <input x-model="orderExtra.guestNama" type="text" placeholder="contoh: Budi Santoso" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="orderExtraError && !orderExtra.guestNama ? 'border-red-400' : ''">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email <span class="text-red-500">*</span></label>
+                    <input x-model="orderExtra.guestEmail" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="orderExtraError && !orderExtra.guestEmail ? 'border-red-400' : ''">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">No. WhatsApp <span class="text-red-500">*</span></label>
+                    <input x-model="orderExtra.guestWa" type="tel" placeholder="contoh: 08123456789" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="orderExtraError && !orderExtra.guestWa ? 'border-red-400' : ''">
+                    <p class="text-[11px] text-gray-400 mt-1">Untuk konfirmasi order &amp; pengiriman produk</p>
+                </div>
             </div>
         </template>
 
@@ -3362,6 +3392,13 @@ function serabutStore() {
         },
         // true hanya jika user login dengan akun nyata (bukan tamu CS chat)
         get isMember() { return !!(this.currentUser && !this.currentUser.isGuest); },
+        get orderUnitPrice() {
+            if (!this.selectedVariant) return 0;
+            if (!this.isMember) return this.selectedVariant.harga;
+            const base = this.flashSaleItem(this.selectedProductGroup?.nama, this.selectedVariant.varian, this.selectedVariant.masaAktif)?.harga ?? this.selectedVariant.harga;
+            return this.renewalMode ? base - this.getRenewalDiscount(base) : base;
+        },
+        get orderTotal() { return this.orderUnitPrice * (this.orderExtra?.qty || 1); },
         get filteredProducts() {
             return this.products.filter(p => {
                 const matchCat = this.activeCategory==='Semua'||p.category===this.activeCategory;
@@ -3747,9 +3784,6 @@ function serabutStore() {
 
         // ── Product Modal ─────────────────────────────
         flashSaleBeli(item) {
-            if (!this.isMember) {
-                this.authModal = true; this.authTab = 'login'; return;
-            }
             const product = this.products.find(p =>
                 p.nama === item.produk && (
                     !item.varian || item.varian === '-' ||
@@ -3938,40 +3972,47 @@ function serabutStore() {
         handlePesan() {
             this.orderError=''; this.orderExtraError='';
             const profileEmail = this.currentUser?.email || '';
-            this.orderExtra = { nama:'', username:'', microsoftEmail:'', emailAktif: profileEmail, emailSameAsProfile: !!profileEmail, emailReminder:'', adobeEmail:'', adobePass:'' };
+            this.orderExtra = { qty:1, guestNama:'', guestEmail:'', guestWa:'', nama:'', username:'', microsoftEmail:'', emailAktif: profileEmail, emailSameAsProfile: !!profileEmail, emailReminder:'', adobeEmail:'', adobePass:'' };
             this.orderModal=true;
         },
         async submitOrder() {
             if(!this.selectedVariant) return;
             this.orderExtraError='';
             const type = this.orderExtraType;
+            const qty  = this.orderExtra.qty || 1;
             const effectiveEmail = this.orderExtra.emailSameAsProfile ? (this.currentUser?.email||'') : this.orderExtra.emailAktif.trim();
+            // Guest validation
+            if(!this.isMember && !this.orderExtra.guestNama.trim())  { this.orderExtraError='Nama lengkap wajib diisi'; return; }
+            if(!this.isMember && !this.orderExtra.guestEmail.trim()) { this.orderExtraError='Email wajib diisi'; return; }
+            if(!this.isMember && !this.orderExtra.guestWa.trim())    { this.orderExtraError='No. WhatsApp wajib diisi'; return; }
             if(type==='web'    && !this.orderExtra.nama.trim())            { this.orderExtraError='Nama untuk akun Microsoft wajib diisi'; return; }
             if(type==='web'    && !this.orderExtra.username.trim())        { this.orderExtraError='Username Microsoft wajib diisi'; return; }
             if(type==='family' && !this.orderExtra.microsoftEmail.trim())  { this.orderExtraError='Email Microsoft wajib diisi'; return; }
             if(type==='adobe'  && !this.orderExtra.adobeEmail.trim())      { this.orderExtraError='Email akun Adobe wajib diisi'; return; }
             if(type==='adobe'  && !this.orderExtra.adobePass.trim())       { this.orderExtraError='Password akun Adobe wajib diisi'; return; }
-            if(type!=='adobe'  && !effectiveEmail)                          { this.orderExtraError='Email wajib diisi'; return; }
+            if(this.isMember && type!=='adobe' && !effectiveEmail)         { this.orderExtraError='Email wajib diisi'; return; }
             this.orderLoading=true; this.orderError='';
+            const unitHarga = (() => {
+                if (!this.isMember) return this.selectedVariant.harga;
+                const base = this.flashSaleItem(this.selectedProductGroup.nama, this.selectedVariant.varian, this.selectedVariant.masaAktif)?.harga ?? this.selectedVariant.harga;
+                return this.renewalMode ? base - this.getRenewalDiscount(base) : base;
+            })();
             try {
                 const data = await this.gasPost({
                     action:         'createOrder',
-                    userNama:       this.currentUser?.nama || '',
-                    userEmail:      this.currentUser?.email || '',
-                    userWa:         this.currentUser?.wa || '',
+                    userNama:       this.isMember ? (this.currentUser?.nama||'') : this.orderExtra.guestNama.trim(),
+                    userEmail:      this.isMember ? (this.currentUser?.email||'') : this.orderExtra.guestEmail.trim(),
+                    userWa:         this.isMember ? (this.currentUser?.wa||'') : this.orderExtra.guestWa.trim(),
                     sessionToken:   this.currentUser?.sessionToken || '',
                     produk:         this.selectedProductGroup.nama,
                     varian:         this.selectedVariant.varian||'',
                     masaAktif:      this.selectedVariant.masaAktif||'-',
-                    harga:          (() => {
-                        if (!this.isMember) return this.selectedVariant.harga;
-                        const base = this.flashSaleItem(this.selectedProductGroup.nama, this.selectedVariant.varian, this.selectedVariant.masaAktif)?.harga ?? this.selectedVariant.harga;
-                        return this.renewalMode ? base - this.getRenewalDiscount(base) : base;
-                    })(),
+                    qty:            qty,
+                    harga:          unitHarga * qty,
                     msNama:         this.orderExtra.nama,
                     username:       this.orderExtra.username,
                     microsoftEmail: this.orderExtra.microsoftEmail,
-                    emailAktif:     effectiveEmail,
+                    emailAktif:     this.isMember ? effectiveEmail : this.orderExtra.guestEmail.trim(),
                     emailReminder:  this.orderExtra.emailReminder,
                     adobeEmail:     this.orderExtra.adobeEmail,
                     adobePass:      this.orderExtra.adobePass,
