@@ -105,12 +105,16 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 - [2026-04-24] Selesai: Tab Admin Kategori redesign — dua seksi: "Dari Catalog (otomatis)" read-only + "Tambahan Manual" bisa tambah/hapus kategori via UI, simpan ke Settings key `categories.extra`; merged di get categories()
 - [2026-04-24] Selesai: Admin form produk — field Kategori baru dengan datalist autocomplete; pass `kategori` ke updateProduct/addProduct GAS
 - [2026-04-24] Selesai: Admin Populer search fix — adminInitTab('populer') panggil adminLoadProducts() agar fresh; filter dari adminProducts.filter(aktif); fix x-for key tambah masaAktif agar 3 varian berbeda tampil semua (bukan deduplicate by nama+varian)
+- [2026-04-26] Selesai: CS Chat Sera — OpenRouter/DeepSeek via GAS, OPENROUTER_KEY di Script Properties, markdown render (bold/italic/link), signature clean
+- [2026-04-26] Selesai: Product detail pages /produk/[slug] — full page (hero card, varian/durasi selector, benefits, harga flash sale, CTA Pesan Sekarang, Salin Link); deep link support via 404.html + pendingProductSlug; goToProductDetail() + slugify() helpers
+- [2026-04-26] Selesai: getProductLogo() case-insensitive — fix CorelDraw icon (GSheet "CorelDraw" vs map "CorelDRAW"), Microsoft 365 alias ke Office icon
+- [2026-04-26] Selesai: Kategori grid — grid-cols-5 mobile (2 baris) + md:grid-cols-10 desktop (1 baris)
+- [2026-04-26] Selesai: OpenClaw CATALOG.md rewrite — clean URL serabut.id/produk/[slug] untuk semua produk; SOUL.md + AGENTS.md diupdate; GAS system prompt Sera bisa share link produk spesifik
 
 ## Current Focus
-- **Kategori dinamis** — Sumber utama: kolom H Catalog GSheet. Kategori tambahan manual bisa diset di Admin → Kategori → Tambahan Manual (simpan ke Settings `categories.extra`). GAS v31 deployed.
+- **Product detail pages** — Live di serabut.id/produk/[slug]. Deep link support: buka langsung di browser atau share dari Sera.
+- **GAS deployment:** Setiap edit Code.gs → clasp push dari `/gas` folder → re-deploy di script.google.com (Manage Deployments → Edit → New version → Update). GAS_URL tidak perlu diganti.
+- **Sera (OpenClaw + GAS):** Sama-sama pakai DeepSeek via OpenRouter. CATALOG.md di OpenClaw workspace sudah diupdate dengan link produk bersih.
 - **Benefits per-produk** — Tersimpan di Catalog GSheet kolom O "Deskripsi" sebagai JSON array per baris.
-- **Order tanpa login** — Siapapun bisa order langsung tanpa daftar/login.
 - **Google SSO:** Siap diaktifkan — isi `GOOGLE_CLIENT_ID: 'xxxx.apps.googleusercontent.com'` di Alpine config.
-- **Fonnte note:** Jika notif WA group berhenti, jalankan `testWAGroupAfterSync()` di GAS untuk re-sync device Fonnte
-- **GAS deployment:** Setiap edit `Code.gs` perlu re-deploy manual di script.google.com (New Deployment) — current: v30
 - **Column Role di Users-web**: harus di kolom **I** (setelah OTP Expiry di H) — index 8 (0-indexed)
