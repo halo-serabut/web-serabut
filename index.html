@@ -219,6 +219,12 @@
                    class="w-52 pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:bg-white focus:w-64 transition-all duration-200">
         </div>
 
+        <!-- Cart icon desktop -->
+        <button @click="cartOpen=true" class="relative flex items-center justify-center w-10 h-10 rounded-xl hover:bg-gray-100 transition-colors">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            <span x-show="cartCount>0" x-text="cartCount>9?'9+':cartCount" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-0.5 leading-none"></span>
+        </button>
+
         <!-- Auth area desktop -->
         <div class="flex items-center gap-3">
             <template x-if="currentUser">
@@ -249,14 +255,21 @@
             <img src="logo.png" alt="Serabut" class="w-8 h-8 rounded-lg shadow-sm">
             <span class="font-black text-gray-900">Serabut Store</span>
         </button>
-        <template x-if="currentUser">
-            <button @click="setPage('profile')" class="flex items-center gap-1.5">
-                <div class="w-7 h-7 gradient-card rounded-lg flex items-center justify-center text-white font-black text-xs" x-text="currentUser.nama[0].toUpperCase()"></div>
+        <div class="flex items-center gap-2">
+            <!-- Cart icon mobile -->
+            <button @click="cartOpen=true" class="relative flex items-center justify-center w-9 h-9 rounded-xl hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span x-show="cartCount>0" x-text="cartCount>9?'9+':cartCount" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-0.5 leading-none"></span>
             </button>
-        </template>
-        <template x-if="!currentUser">
-            <button @click="openAuth('login')" class="text-xs font-bold text-brand-500 bg-brand-50 px-3 py-1.5 rounded-full">Masuk</button>
-        </template>
+            <template x-if="currentUser">
+                <button @click="setPage('profile')" class="flex items-center gap-1.5">
+                    <div class="w-7 h-7 gradient-card rounded-lg flex items-center justify-center text-white font-black text-xs" x-text="currentUser.nama[0].toUpperCase()"></div>
+                </button>
+            </template>
+            <template x-if="!currentUser">
+                <button @click="openAuth('login')" class="text-xs font-bold text-brand-500 bg-brand-50 px-3 py-1.5 rounded-full">Masuk</button>
+            </template>
+        </div>
     </div>
     <!-- Sticky search row mobile -->
     <div x-show="activePage==='catalog' && scrollY > 100"
@@ -577,8 +590,13 @@
                                 <template x-if="product.stok!==0">
                                     <div>
                                         <div x-show="flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-xs text-gray-400 line-through leading-none mb-0.5" x-text="formatPrice(product.harga)"></div>
-                                        <div class="font-black text-brand-500 text-base mb-3" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga ?? product.harga)"></div>
-                                        <div class="w-full text-center gradient-card text-white text-sm font-bold py-2.5 rounded-2xl">Lihat Detail</div>
+                                        <div class="font-black text-brand-500 text-base mb-2" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga ?? product.harga)"></div>
+                                        <div class="flex gap-1.5">
+                                            <button @click.stop="addToCart(product, product)" class="flex-none w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-brand-500 hover:border-brand-300 active:scale-95 transition-all">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                            </button>
+                                            <div class="flex-1 text-center gradient-card text-white text-xs font-bold py-2.5 rounded-xl">Detail →</div>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -719,10 +737,16 @@
                             <div class="w-full bg-gray-100 text-gray-400 font-black py-4 rounded-2xl text-base text-center">Stok Habis</div>
                         </template>
                         <template x-if="selectedVariant?.stok!==0">
-                            <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
-                                <svg class="w-5 h-5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
-                                Pesan Sekarang
-                            </button>
+                            <div class="space-y-2.5">
+                                <button @click="addToCart(selectedProductGroup, selectedVariant)" class="w-full bg-white border-2 border-brand-400 text-brand-500 font-black py-3.5 rounded-2xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 hover:bg-brand-50">
+                                    <svg class="w-5 h-5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    Tambah ke Keranjang
+                                </button>
+                                <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
+                                    <svg class="w-5 h-5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
+                                    Pesan Sekarang
+                                </button>
+                            </div>
                         </template>
                         <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener" class="block w-full text-center text-gray-400 text-sm py-2 mt-2 hover:text-brand-500 transition-colors">
                             Atau beli di Shopee →
@@ -2237,6 +2261,256 @@
 <!-- ══════════════════════════════════════════════════════
      MOBILE BOTTOM NAV
 ══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════════════════
+     CART PANEL (slide from right)
+══════════════════════════════════════════════════════ -->
+<div x-show="cartOpen" class="fixed inset-0 z-[120] flex justify-end"
+     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="cartOpen=false"></div>
+    <!-- Panel -->
+    <div class="relative bg-white w-full md:w-[420px] h-full flex flex-col shadow-2xl"
+         x-transition:enter="transition ease-out duration-250" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-none">
+            <div class="flex items-center gap-2.5">
+                <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span class="font-black text-gray-900 text-lg">Keranjang</span>
+                <span x-show="cartCount>0" class="bg-brand-500 text-white text-xs font-black px-2 py-0.5 rounded-full" x-text="cartCount+' item'"></span>
+            </div>
+            <button @click="cartOpen=false" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Empty state -->
+        <div x-show="cart.length===0" class="flex-1 flex flex-col items-center justify-center gap-4 px-8 text-center">
+            <div class="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center">
+                <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            </div>
+            <div>
+                <div class="font-bold text-gray-700 text-base mb-1">Keranjang masih kosong</div>
+                <div class="text-sm text-gray-400">Tambahkan produk dari katalog</div>
+            </div>
+            <button @click="cartOpen=false; setPage('catalog')" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm active:scale-95 transition-all">
+                Lihat Katalog →
+            </button>
+        </div>
+
+        <!-- Item list -->
+        <div x-show="cart.length>0" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            <template x-for="item in cart" :key="item.id">
+                <div class="bg-gray-50 rounded-2xl p-3.5 flex gap-3">
+                    <!-- Logo -->
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-none" :class="getCategoryBg(item.product.category)">
+                        <img :src="getProductLogo(item.product.category)" :alt="item.product.category" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
+                    </div>
+                    <!-- Info -->
+                    <div class="flex-1 min-w-0">
+                        <div class="font-bold text-gray-800 text-sm leading-snug line-clamp-2" x-text="item.product.nama"></div>
+                        <div class="text-xs text-gray-400 mt-0.5">
+                            <span x-text="item.variant.varian"></span>
+                            <span x-show="item.variant.masaAktif && item.variant.masaAktif!=='-'" x-text="' · '+item.variant.masaAktif"></span>
+                        </div>
+                        <!-- Flash sale badge -->
+                        <template x-if="flashSaleItem(item.product.nama, item.variant.varian, item.variant.masaAktif)">
+                            <span class="inline-block mt-1 text-[10px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full" x-text="flashSaleItem(item.product.nama, item.variant.varian, item.variant.masaAktif)?.diskon+'% OFF'"></span>
+                        </template>
+                        <!-- Price + qty row -->
+                        <div class="flex items-center justify-between mt-2">
+                            <div>
+                                <template x-if="flashSaleItem(item.product.nama, item.variant.varian, item.variant.masaAktif) && isMember">
+                                    <div>
+                                        <div class="text-[10px] text-gray-400 line-through leading-none" x-text="formatPrice(item.variant.harga)"></div>
+                                        <div class="font-black text-brand-500 text-sm" x-text="formatPrice(cartItemUnitPrice(item))"></div>
+                                    </div>
+                                </template>
+                                <template x-if="!(flashSaleItem(item.product.nama, item.variant.varian, item.variant.masaAktif) && isMember)">
+                                    <div class="font-black text-brand-500 text-sm" x-text="formatPrice(cartItemUnitPrice(item))"></div>
+                                </template>
+                            </div>
+                            <!-- Qty controls -->
+                            <div class="flex items-center gap-1.5">
+                                <button @click="updateCartItemQty(item.id, -1)" class="w-7 h-7 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 font-black text-base flex items-center justify-center active:scale-95 transition-all select-none">−</button>
+                                <span class="font-black text-gray-800 text-sm min-w-[20px] text-center" x-text="item.qty||1"></span>
+                                <button @click="updateCartItemQty(item.id, 1)" class="w-7 h-7 rounded-lg gradient-card text-white font-black text-base flex items-center justify-center active:scale-95 transition-all select-none">+</button>
+                            </div>
+                        </div>
+                        <!-- Subtotal -->
+                        <div x-show="(item.qty||1)>1" class="text-xs text-gray-400 mt-1" x-text="'Subtotal: '+formatPrice(cartItemUnitPrice(item)*(item.qty||1))"></div>
+                    </div>
+                    <!-- Remove -->
+                    <button @click="removeFromCart(item.id)" class="flex-none w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors mt-0.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                </div>
+            </template>
+        </div>
+
+        <!-- Footer -->
+        <div x-show="cart.length>0" class="flex-none border-t border-gray-100 px-5 py-4 bg-white space-y-3">
+            <!-- Total -->
+            <div class="flex justify-between items-center">
+                <span class="text-sm text-gray-500">Total (<span x-text="cartCount"></span> item)</span>
+                <span class="font-black text-gray-900 text-lg" x-text="formatPrice(cartTotal)"></span>
+            </div>
+            <!-- Member savings hint for guests -->
+            <template x-if="!isMember && cart.some(i => flashSaleItem(i.product.nama, i.variant.varian, i.variant.masaAktif))">
+                <div class="bg-red-50 border border-red-100 rounded-xl px-3 py-2 text-xs text-red-600 font-semibold flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Login sebagai Member untuk nikmati harga flash sale!
+                </div>
+            </template>
+            <button @click="cartOpen=false; openCartCheckout()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base active:scale-95 transition-all shadow-md flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                Checkout
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     CART CHECKOUT MODAL
+══════════════════════════════════════════════════════ -->
+<div x-show="cartCheckoutModal" class="fixed inset-0 z-[130] flex items-end md:items-center justify-center"
+     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="!cartCheckoutLoading && (cartCheckoutModal=false)"></div>
+    <div class="relative bg-white w-full md:max-w-lg md:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto flex flex-col modal-enter">
+        <!-- Handle mobile -->
+        <div class="md:hidden flex justify-center pt-3 pb-1 flex-none"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+
+        <!-- Header -->
+        <div class="px-5 pt-4 pb-4 border-b border-gray-100 flex items-center justify-between flex-none">
+            <div>
+                <div class="font-black text-gray-900 text-lg">Konfirmasi Pesanan</div>
+                <div class="text-xs text-gray-400 mt-0.5" x-text="cart.length+' produk · '+formatPrice(cartTotal)"></div>
+            </div>
+            <button @click="cartCheckoutModal=false" x-show="!cartCheckoutLoading" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="px-5 py-5 space-y-5 overflow-y-auto flex-1">
+
+            <!-- Success state -->
+            <template x-if="cartCheckoutSuccess">
+                <div class="text-center py-6">
+                    <div class="w-16 h-16 bg-green-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <div class="font-black text-gray-900 text-xl mb-2">Pesanan Diterima!</div>
+                    <div class="text-sm text-gray-500 mb-4">Tim kami akan segera memproses pesanan kamu.</div>
+                    <div class="bg-gray-50 rounded-2xl p-4 text-left mb-5 space-y-1.5">
+                        <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">ID Pesanan</div>
+                        <template x-for="oid in cartOrderIds" :key="oid">
+                            <div class="font-black text-brand-500 text-sm" x-text="'#'+oid"></div>
+                        </template>
+                    </div>
+                    <button @click="cartCheckoutModal=false; setPage('home')" class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all">
+                        Kembali ke Beranda
+                    </button>
+                </div>
+            </template>
+
+            <template x-if="!cartCheckoutSuccess">
+                <div class="space-y-5">
+                    <!-- Cart items summary -->
+                    <div>
+                        <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Ringkasan Pesanan</div>
+                        <div class="space-y-2">
+                            <template x-for="item in cart" :key="item.id">
+                                <div class="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5">
+                                    <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-none" :class="getCategoryBg(item.product.category)">
+                                        <img :src="getProductLogo(item.product.category)" :alt="item.product.category" class="w-6 h-6 object-contain" onerror="this.style.display='none'">
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="font-bold text-gray-800 text-xs line-clamp-1" x-text="item.product.nama"></div>
+                                        <div class="text-[10px] text-gray-400">
+                                            <span x-text="item.variant.varian"></span>
+                                            <span x-show="item.variant.masaAktif && item.variant.masaAktif!=='-'" x-text="' · '+item.variant.masaAktif"></span>
+                                            <span x-text="' · '+item.qty+'x'"></span>
+                                        </div>
+                                    </div>
+                                    <div class="font-black text-brand-500 text-sm flex-none" x-text="formatPrice(cartItemUnitPrice(item)*(item.qty||1))"></div>
+                                </div>
+                            </template>
+                        </div>
+                        <!-- Grand total -->
+                        <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
+                            <span class="font-bold text-gray-700 text-sm">Total</span>
+                            <span class="font-black text-brand-500 text-lg" x-text="formatPrice(cartTotal)"></span>
+                        </div>
+                    </div>
+
+                    <!-- Member info or Guest fields -->
+                    <template x-if="isMember">
+                        <div class="bg-gray-50 rounded-2xl p-4 flex items-center gap-3">
+                            <div class="w-10 h-10 gradient-card rounded-xl flex items-center justify-center text-white font-black text-base flex-none" x-text="currentUser.nama[0].toUpperCase()"></div>
+                            <div>
+                                <div class="font-bold text-gray-800 text-sm" x-text="currentUser.nama"></div>
+                                <div class="text-xs text-gray-400" x-text="currentUser.email"></div>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="!isMember">
+                        <div class="space-y-3">
+                            <div class="bg-gray-50 rounded-2xl p-3.5 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-9 h-9 bg-gray-200 rounded-xl flex items-center justify-center flex-none">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-gray-700 text-sm">Pesan sebagai Tamu</div>
+                                        <div class="text-xs text-gray-400">Login untuk harga member</div>
+                                    </div>
+                                </div>
+                                <button @click="cartCheckoutModal=false; openAuth('login')" class="text-xs font-bold text-brand-500 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg active:scale-95 transition-all">Login →</button>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-700 mb-1.5 block">Nama Lengkap <span class="text-red-500">*</span></label>
+                                <input x-model="cartCheckoutExtra.guestNama" type="text" placeholder="contoh: Budi Santoso" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartCheckoutError && !cartCheckoutExtra.guestNama ? 'border-red-400' : ''">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email <span class="text-red-500">*</span></label>
+                                <input x-model="cartCheckoutExtra.guestEmail" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartCheckoutError && !cartCheckoutExtra.guestEmail ? 'border-red-400' : ''">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-700 mb-1.5 block">No. WhatsApp <span class="text-red-500">*</span></label>
+                                <input x-model="cartCheckoutExtra.guestWa" type="tel" placeholder="contoh: 08123456789" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartCheckoutError && !cartCheckoutExtra.guestWa ? 'border-red-400' : ''">
+                                <p class="text-[11px] text-gray-400 mt-1">Untuk konfirmasi order &amp; pengiriman produk</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Error -->
+                    <div x-show="cartCheckoutError" class="bg-red-50 border border-red-100 text-red-600 text-sm rounded-xl px-4 py-3 font-medium" x-text="cartCheckoutError"></div>
+
+                    <!-- Submit button -->
+                    <button @click="submitCartOrder()" :disabled="cartCheckoutLoading" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base active:scale-95 transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-70">
+                        <template x-if="cartCheckoutLoading">
+                            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        </template>
+                        <template x-if="!cartCheckoutLoading">
+                            <span>Konfirmasi Pesanan</span>
+                        </template>
+                    </button>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+
+<!-- Cart toast notification -->
+<div x-show="cartToast" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+     class="fixed top-20 left-1/2 -translate-x-1/2 z-[140] bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 pointer-events-none whitespace-nowrap">
+    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+    <span x-text="cartToast"></span>
+</div>
+
 <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
     <div class="grid grid-cols-5 h-16">
         <template x-for="item in navItems" :key="item.id">
@@ -2401,10 +2675,16 @@
                 <div class="w-full bg-gray-100 text-gray-400 font-black py-4 rounded-2xl text-base text-center mb-3">Stok Habis</div>
             </template>
             <template x-if="selectedVariant?.stok!==0">
-                <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all active:scale-95 shadow-md mb-3 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
-                    Pesan Sekarang
-                </button>
+                <div class="space-y-2.5 mb-3">
+                    <button @click="addToCart(selectedProductGroup, selectedVariant); closeProductModal()" class="w-full bg-white border-2 border-brand-400 text-brand-500 font-black py-3.5 rounded-2xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 hover:bg-brand-50">
+                        <svg class="w-5 h-5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        Tambah ke Keranjang
+                    </button>
+                    <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
+                        Pesan Sekarang
+                    </button>
+                </div>
             </template>
             <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener" class="block w-full text-center text-gray-400 text-sm py-2 hover:text-brand-500 transition-colors">
                 Atau beli di Shopee →
@@ -3241,6 +3521,18 @@ function serabutStore() {
         // Provinces
         provinces: ['Aceh','Sumatera Utara','Sumatera Barat','Riau','Jambi','Sumatera Selatan','Bengkulu','Lampung','Kepulauan Bangka Belitung','Kepulauan Riau','DKI Jakarta','Jawa Barat','Jawa Tengah','DI Yogyakarta','Jawa Timur','Banten','Bali','Nusa Tenggara Barat','Nusa Tenggara Timur','Kalimantan Barat','Kalimantan Tengah','Kalimantan Selatan','Kalimantan Timur','Kalimantan Utara','Sulawesi Utara','Sulawesi Tengah','Sulawesi Selatan','Sulawesi Tenggara','Gorontalo','Sulawesi Barat','Maluku','Maluku Utara','Papua Barat','Papua','Papua Selatan','Papua Tengah','Papua Pegunungan','Papua Barat Daya'],
 
+        // Cart
+        cart: [],
+        cartOpen: false,
+        cartCheckoutModal: false,
+        cartCheckoutExtra: { guestNama:'', guestEmail:'', guestWa:'' },
+        cartCheckoutError: '',
+        cartCheckoutLoading: false,
+        cartCheckoutSuccess: false,
+        cartOrderIds: [],
+        cartToast: '',
+        cartToastTimer: null,
+
         // Status check
         statusSearchType: 'email',
         statusQuery:      '',
@@ -3392,6 +3684,8 @@ function serabutStore() {
         },
         // true hanya jika user login dengan akun nyata (bukan tamu CS chat)
         get isMember() { return !!(this.currentUser && !this.currentUser.isGuest); },
+        get cartCount() { return this.cart.reduce((s,i) => s + (i.qty||1), 0); },
+        get cartTotal() { return this.cart.reduce((s,i) => s + this.cartItemUnitPrice(i) * (i.qty||1), 0); },
         get orderUnitPrice() {
             if (!this.selectedVariant) return 0;
             if (!this.isMember) return this.selectedVariant.harga;
@@ -3482,6 +3776,7 @@ function serabutStore() {
                 }
             }
 
+            this.loadCart();
             const saved = localStorage.getItem('serabutUser');
             if(saved) {
                 try {
@@ -3969,6 +4264,100 @@ function serabutStore() {
             const ma = (this.selectedVariant?.masaAktif || '').toLowerCase();
             return !ma.includes('bulan') && !ma.includes('tahun') && !ma.includes('month') && !ma.includes('year');
         },
+        // ── Cart ──────────────────────────────────────
+        cartItemUnitPrice(item) {
+            if (!item?.variant) return 0;
+            if (!this.isMember) return item.variant.harga || 0;
+            const fs = this.flashSaleItem(item.product?.nama, item.variant.varian, item.variant.masaAktif);
+            return fs ? fs.harga : (item.variant.harga || 0);
+        },
+        addToCart(product, variant) {
+            const v = variant || product;
+            const existing = this.cart.find(i => i.product.nama === product.nama && i.variant.varian === v.varian && i.variant.masaAktif === v.masaAktif);
+            if (existing) {
+                if (existing.qty < 10) existing.qty++;
+            } else {
+                this.cart.push({ id: Date.now() + Math.random(), product, variant: v, qty: 1 });
+            }
+            this.saveCart();
+            this.showCartToast('Ditambahkan ke keranjang!');
+        },
+        removeFromCart(id) {
+            this.cart = this.cart.filter(i => i.id !== id);
+            this.saveCart();
+        },
+        updateCartItemQty(id, delta) {
+            const item = this.cart.find(i => i.id === id);
+            if (!item) return;
+            const next = (item.qty || 1) + delta;
+            if (next < 1) { this.removeFromCart(id); return; }
+            if (next > 10) return;
+            item.qty = next;
+            this.saveCart();
+        },
+        saveCart() {
+            try { localStorage.setItem('serabutCart', JSON.stringify(this.cart)); } catch {}
+        },
+        loadCart() {
+            try {
+                const raw = localStorage.getItem('serabutCart');
+                if (raw) this.cart = JSON.parse(raw);
+            } catch {}
+        },
+        showCartToast(msg) {
+            this.cartToast = msg;
+            clearTimeout(this.cartToastTimer);
+            this.cartToastTimer = setTimeout(() => { this.cartToast = ''; }, 2200);
+        },
+        openCartCheckout() {
+            this.cartCheckoutError = '';
+            this.cartCheckoutSuccess = false;
+            this.cartOrderIds = [];
+            const profileEmail = this.currentUser?.email || '';
+            this.cartCheckoutExtra = {
+                guestNama: this.isMember ? (this.currentUser?.nama||'') : '',
+                guestEmail: this.isMember ? profileEmail : '',
+                guestWa: this.isMember ? (this.currentUser?.wa||'') : '',
+            };
+            this.cartCheckoutModal = true;
+        },
+        async submitCartOrder() {
+            if (!this.cart.length) return;
+            this.cartCheckoutError = '';
+            if (!this.isMember) {
+                if (!this.cartCheckoutExtra.guestNama.trim()) { this.cartCheckoutError='Nama lengkap wajib diisi'; return; }
+                if (!this.cartCheckoutExtra.guestEmail.trim()) { this.cartCheckoutError='Email wajib diisi'; return; }
+                if (!this.cartCheckoutExtra.guestWa.trim()) { this.cartCheckoutError='No. WhatsApp wajib diisi'; return; }
+            }
+            this.cartCheckoutLoading = true;
+            const ids = [];
+            for (const item of this.cart) {
+                const unitHarga = this.cartItemUnitPrice(item);
+                try {
+                    const data = await this.gasPost({
+                        action:       'createOrder',
+                        userNama:     this.isMember ? (this.currentUser?.nama||'') : this.cartCheckoutExtra.guestNama.trim(),
+                        userEmail:    this.isMember ? (this.currentUser?.email||'') : this.cartCheckoutExtra.guestEmail.trim(),
+                        userWa:       this.isMember ? (this.currentUser?.wa||'') : this.cartCheckoutExtra.guestWa.trim(),
+                        sessionToken: this.currentUser?.sessionToken || '',
+                        produk:       item.product.nama,
+                        varian:       item.variant.varian||'',
+                        masaAktif:    item.variant.masaAktif||'-',
+                        qty:          item.qty||1,
+                        harga:        unitHarga * (item.qty||1),
+                        emailAktif:   this.isMember ? (this.currentUser?.email||'') : this.cartCheckoutExtra.guestEmail.trim(),
+                    });
+                    if (data.success) ids.push(data.orderId);
+                    else { this.cartCheckoutError = data.error||'Gagal memproses salah satu pesanan'; this.cartCheckoutLoading=false; return; }
+                } catch { this.cartCheckoutError='Gagal terhubung ke server'; this.cartCheckoutLoading=false; return; }
+            }
+            this.cartOrderIds = ids;
+            this.cartCheckoutSuccess = true;
+            this.cart = [];
+            this.saveCart();
+            this.cartCheckoutLoading = false;
+        },
+
         handlePesan() {
             this.orderError=''; this.orderExtraError='';
             const profileEmail = this.currentUser?.email || '';
