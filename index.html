@@ -422,7 +422,7 @@
             </div>
             <div x-show="!loading" class="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <template x-for="product in featuredProducts" :key="product.linkProduk+product.varian+product.harga">
-                    <div @click="product.stok!==0 && openProductModal(product)"
+                    <div @click="product.stok!==0 && goToProductDetail(product)"
                          :class="product.stok===0?'opacity-60 cursor-not-allowed':'cursor-pointer hover:shadow-md hover:border-brand-200 active:scale-[0.99]'"
                          class="bg-white rounded-2xl border border-gray-100 shadow-sm transition-all duration-150 flex items-center gap-3 px-3.5 py-3">
                         <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-none relative" :class="getCategoryBg(product.category)">
@@ -549,7 +549,7 @@
             </div>
             <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 <template x-for="product in filteredProducts" :key="product.nama+'|'+product.varian+'|'+product.masaAktif">
-                    <div @click="product.stok!==0 && openProductModal(product)"
+                    <div @click="product.stok!==0 && goToProductDetail(product)"
                          :class="product.stok===0?'opacity-70 cursor-not-allowed':'cursor-pointer hover:shadow-xl hover:-translate-y-1'"
                          class="bg-white rounded-3xl overflow-hidden shadow-md transition-all duration-200 group flex flex-col">
                         <!-- Header: logo hero -->
@@ -590,6 +590,110 @@
                     <button @click="searchQuery='';activeCategory='Semua'" class="mt-4 text-brand-500 font-semibold text-sm underline underline-offset-2">Reset filter</button>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- ───────── PRODUCT DETAIL ───────── -->
+    <section x-show="activePage==='product-detail'" class="page-enter">
+        <div class="max-w-2xl mx-auto px-4 py-4">
+            <!-- Back button -->
+            <button @click="setPage('catalog')" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-500 transition-colors mb-5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Kembali ke Katalog
+            </button>
+
+            <template x-if="selectedProductGroup">
+                <div>
+                    <!-- Hero card -->
+                    <div class="rounded-3xl overflow-hidden shadow-md mb-5" :class="getCategoryBg(selectedProductGroup.category)">
+                        <div class="flex items-center gap-4 px-6 py-7">
+                            <div class="w-20 h-20 bg-white/60 rounded-2xl flex items-center justify-center flex-none shadow-sm">
+                                <img :src="getProductLogo(selectedProductGroup.category)" :alt="selectedProductGroup.category" class="w-14 h-14 object-contain" onerror="this.style.display='none'">
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(selectedProductGroup.category)" x-text="selectedProductGroup.category"></span>
+                                <h1 class="font-black text-gray-900 text-lg leading-snug mt-1.5" x-text="selectedProductGroup.nama"></h1>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Varian selector -->
+                    <template x-if="getUniqueVariants(selectedProductGroup).length > 1">
+                        <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-4">
+                            <div class="text-sm font-bold text-gray-700 mb-2">Pilih Varian</div>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="v in getUniqueVariants(selectedProductGroup)" :key="v">
+                                    <button @click="selectVariantByName(v)" :class="selectedVariant?.varian===v?'border-brand-500 bg-brand-50 text-brand-600':'border-gray-200 text-gray-600 hover:border-gray-300'" class="px-4 py-2 rounded-xl border text-sm font-semibold transition-all" x-text="v"></button>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Durasi selector -->
+                    <template x-if="getVariantDurations(selectedProductGroup, selectedVariant?.varian).length > 1">
+                        <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-4">
+                            <div class="text-sm font-bold text-gray-700 mb-2">Pilih Durasi</div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <template x-for="opt in getVariantDurations(selectedProductGroup, selectedVariant?.varian)" :key="opt.masaAktif+opt.harga">
+                                    <button @click="selectedVariant=opt" :class="selectedVariant?.masaAktif===opt.masaAktif&&selectedVariant?.harga===opt.harga?'border-brand-500 bg-brand-50':'border-gray-200 hover:border-gray-300'" class="p-3 rounded-xl border text-left transition-all">
+                                        <div class="text-xs text-gray-500" x-text="opt.masaAktif!=='-'?opt.masaAktif:'Seumur Hidup'"></div>
+                                        <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Benefits -->
+                    <div class="bg-gray-50 rounded-2xl p-4 mb-4">
+                        <div class="text-sm font-bold text-gray-700 mb-3">Yang kamu dapat</div>
+                        <div class="space-y-2">
+                            <template x-for="benefit in getProductBenefits(selectedVariant || selectedProductGroup.category)" :key="benefit">
+                                <div class="flex items-start gap-2">
+                                    <span class="text-brand-500 flex-none mt-0.5 font-bold text-sm">✓</span>
+                                    <span class="text-sm text-gray-600 leading-relaxed" x-text="benefit"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Price + CTA -->
+                    <div class="bg-white rounded-2xl border border-gray-100 p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <div class="text-xs text-gray-400 mb-0.5">Total Harga</div>
+                                <div x-show="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="text-sm text-gray-400 line-through leading-none mb-0.5" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                <div class="flex items-center gap-2">
+                                    <span x-show="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
+                                    <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga ?? selectedVariant?.harga)"></div>
+                                </div>
+                            </div>
+                            <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="text-right">
+                                <div class="text-xs text-gray-400">Durasi</div>
+                                <div class="font-bold text-gray-700 text-sm" x-text="selectedVariant?.masaAktif"></div>
+                            </div>
+                        </div>
+                        <template x-if="selectedVariant?.stok===0">
+                            <div class="w-full bg-gray-100 text-gray-400 font-black py-4 rounded-2xl text-base text-center">Stok Habis</div>
+                        </template>
+                        <template x-if="selectedVariant?.stok!==0">
+                            <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
+                                Pesan Sekarang
+                            </button>
+                        </template>
+                        <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener" class="block w-full text-center text-gray-400 text-sm py-2 mt-2 hover:text-brand-500 transition-colors">
+                            Atau beli di Shopee →
+                        </a>
+                    </div>
+
+                    <!-- Share link -->
+                    <div class="mt-4 flex items-center justify-between bg-white rounded-2xl border border-gray-100 px-4 py-3">
+                        <span class="text-xs text-gray-400">Link produk ini</span>
+                        <button @click="navigator.clipboard?.writeText(window.location.href).then(()=>{ $el.textContent='Tersalin ✓'; setTimeout(()=>{ $el.textContent='Salin Link'; }, 2000) })" class="text-xs font-semibold text-brand-500 hover:text-brand-700 transition-colors">Salin Link</button>
+                    </div>
+                </div>
+            </template>
         </div>
     </section>
 
@@ -2940,6 +3044,7 @@ function serabutStore() {
         // Product detail
         selectedProductGroup: null,
         selectedVariant:      null,
+        pendingProductSlug:   null,
 
         // Auth
         authTab:      'login',
@@ -3368,6 +3473,20 @@ function serabutStore() {
                 }
                 return null;
             };
+            const _resolvePendingSlug = () => {
+                if(!this.pendingProductSlug) return;
+                const slug = this.pendingProductSlug;
+                this.pendingProductSlug = null;
+                const product = this.products.find(p => this.productSlug(p) === slug);
+                if(product) {
+                    const variants = this.products.filter(p => p.nama === product.nama);
+                    this.selectedProductGroup = { nama:product.nama, category:product.category, variants };
+                    this.selectedVariant = variants[0];
+                    this.activePage = 'product-detail';
+                } else {
+                    this.activePage = 'catalog';
+                }
+            };
             // Coba load dari cache dulu → tampil instan
             if(!force) {
                 try {
@@ -3375,6 +3494,7 @@ function serabutStore() {
                     if(cached?.data?.length && (Date.now()-cached.ts) < TTL) {
                         this.products = _mapProducts(cached.data);
                         this.loading  = false;
+                        _resolvePendingSlug();
                         // Refresh di background tanpa blocking UI
                         _fetchFresh().then(p=>{ if(p) this.products=p; }).catch(()=>{});
                         return;
@@ -3387,6 +3507,7 @@ function serabutStore() {
                 this.products = fresh || this.demoProducts();
             } catch { this.products=this.demoProducts(); }
             this.loading=false;
+            _resolvePendingSlug();
         },
         demoProducts() {
             return [
@@ -3493,11 +3614,31 @@ function serabutStore() {
                 )
             ) || this.products.find(p => p.nama === item.produk);
             if (product) {
-                this.openProductModal(product);
+                this.goToProductDetail(product);
             } else {
                 this.setPage('catalog');
                 this.searchQuery = item.produk;
             }
+        },
+        slugify(str) {
+            return String(str).toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .trim();
+        },
+        productSlug(product) {
+            return this.slugify(product.nama);
+        },
+        goToProductDetail(product) {
+            if(!product || product.stok === 0) return;
+            const variants = this.products.filter(p => p.nama === product.nama);
+            this.selectedProductGroup = { nama: product.nama, category: product.category, variants };
+            this.selectedVariant = variants.find(v => v.varian === product.varian && v.masaAktif === product.masaAktif) || variants[0];
+            const slug = this.productSlug(product);
+            history.pushState({ page: 'product-detail', slug }, '', '/produk/' + slug);
+            this.activePage = 'product-detail';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         },
         openProductModal(product) {
             const variants = this.products.filter(p=>p.nama===product.nama);
@@ -3919,12 +4060,35 @@ function serabutStore() {
         },
         initPageFromURL() {
             const pathMap = { '/':'home', '/produk':'catalog', '/panduan':'panduan', '/cek-status':'status', '/admin':'admin', '/akun':'profile' };
-            const page = pathMap[window.location.pathname] || 'home';
-            this.activePage = page;
-            history.replaceState({ page }, '', window.location.pathname);
+            const path = window.location.pathname;
+            // Detect /produk/[slug] — product detail deep link
+            const produkMatch = path.match(/^\/produk\/(.+)$/);
+            if(produkMatch) {
+                this.pendingProductSlug = produkMatch[1];
+                this.activePage = 'catalog'; // will redirect after products load
+                history.replaceState({ page:'product-detail', slug:produkMatch[1] }, '', path);
+            } else {
+                const page = pathMap[path] || 'home';
+                this.activePage = page;
+                history.replaceState({ page }, '', path);
+            }
             window.addEventListener('popstate', (e) => {
-                const p = e.state?.page || pathMap[window.location.pathname] || 'home';
-                this.activePage = p;
+                const state = e.state;
+                if(state?.page === 'product-detail' && state?.slug) {
+                    const slug = state.slug;
+                    const product = this.products.find(p => this.productSlug(p) === slug);
+                    if(product) {
+                        const variants = this.products.filter(p => p.nama === product.nama);
+                        this.selectedProductGroup = { nama:product.nama, category:product.category, variants };
+                        this.selectedVariant = variants[0];
+                        this.activePage = 'product-detail';
+                    } else {
+                        this.activePage = 'catalog';
+                    }
+                } else {
+                    const p = state?.page || pathMap[window.location.pathname] || 'home';
+                    this.activePage = p;
+                }
                 window.scrollTo({ top:0, behavior:'smooth' });
             });
         },

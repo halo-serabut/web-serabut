@@ -1565,6 +1565,15 @@ Akun aktif 5–15 menit setelah konfirmasi pembayaran (jam 08.00–22.00 WIB)
 - Cek status akun → https://serabut.id/cek-status
 - Hubungi CS / WA → https://wa.me/628881500555
 
+## LINK DETAIL PRODUK SPESIFIK
+Setiap produk punya halaman sendiri di: https://serabut.id/produk/[slug]
+Cara buat slug: nama produk → huruf kecil → spasi jadi "-" → hapus karakter non-alfanumerik kecuali "-"
+Contoh:
+- "Microsoft Office 365 Family" → https://serabut.id/produk/microsoft-office-365-family
+- "Adobe Creative Cloud All Apps" → https://serabut.id/produk/adobe-creative-cloud-all-apps
+- "Windows 11 Pro Original License" → https://serabut.id/produk/windows-11-pro-original-license
+Gunakan link spesifik ini saat user tanya produk tertentu — lebih berguna dari link /produk umum.
+
 ## FAQ
 - Kapan akun dikirim? → 5–15 menit setelah pembayaran dikonfirmasi, jam 08.00–22.00 WIB
 - Garansi? → Garansi penuh selama masa aktif
@@ -1573,9 +1582,9 @@ Akun aktif 5–15 menit setelah konfirmasi pembayaran (jam 08.00–22.00 WIB)
 - Mau beli? → https://serabut.id/produk atau WA +62 888 1500 555
 
 ## REKOMENDASI PRODUK
-- Tanya software kerja/kuliah → "Cek Office 365 di https://serabut.id/produk"
-- Tanya software desain/edit foto/video → "Cek Adobe CC di https://serabut.id/produk"
-- Tanya aktivasi Windows → "Cek Windows license di https://serabut.id/produk"
+- Tanya software kerja/kuliah → rekomendasikan Office 365, berikan link spesifik produknya
+- Tanya software desain/edit foto/video → rekomendasikan Adobe CC, berikan link spesifik produknya
+- Tanya aktivasi Windows → rekomendasikan Windows license, berikan link spesifik produknya
 - Tanya panduan/cara install → "Panduan lengkap ada di https://serabut.id/panduan"
 - Tanya status akun → "Cek langsung di https://serabut.id/cek-status"
 - Selalu natural, tidak hard-sell, selalu sertakan link langsung
