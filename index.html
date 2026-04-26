@@ -401,7 +401,7 @@
         <!-- Categories -->
         <div class="max-w-6xl mx-auto px-4 py-6">
             <h2 class="text-base font-black text-gray-900 mb-3">Kategori Produk</h2>
-            <div class="grid grid-cols-4 md:grid-cols-8 gap-2">
+            <div class="grid grid-cols-5 md:grid-cols-10 gap-2">
                 <template x-for="cat in categories" :key="cat.name">
                     <button @click="setPage('catalog'); activeCategory=cat.name" class="bg-white rounded-2xl py-3 px-2 border border-gray-100 hover:border-brand-200 hover:bg-brand-50 active:scale-95 transition-all text-center group flex flex-col items-center gap-1.5">
                         <div class="w-6 h-6 text-brand-500" x-html="cat.icon"></div>
@@ -3546,27 +3546,27 @@ function serabutStore() {
             const f = d => `https://www.google.com/s2/favicons?domain=${d}&sz=${sz}`;
             const sp = name => `https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/svg/${name}_48x1.svg`;
             const m = {
-                'Office 365':    sp('office'),
-                'Office':        sp('office'),
-                'Visio':         sp('visio'),
-                'Project':       sp('project'),
-                'Windows':       f('microsoft.com'),
-                'Windows Server':f('microsoft.com'),
-                'Adobe':         f('adobe.com'),
-                'Google':        f('google.com'),
-                'Google One':    f('one.google.com'),
-                'CorelDRAW':     f('coreldraw.com'),
-                'Netflix':       f('netflix.com'),
-                'Canva':         f('canva.com'),
-                'NordVPN':       f('nordvpn.com'),
-                'Wattpad':       f('wattpad.com'),
-                'Disney+':       f('disneyplus.com'),
-                'Amazon Prime':  f('amazon.com'),
-                'iQIYI':         f('iqiyi.com'),
-                'Zoom':          f('zoom.us'),
-                'Lainnya':       f('microsoft.com'),
+                'office 365':    sp('office'),
+                'microsoft 365': sp('office'),
+                'office':        sp('office'),
+                'visio':         sp('visio'),
+                'project':       sp('project'),
+                'windows':       f('microsoft.com'),
+                'windows server':f('microsoft.com'),
+                'adobe':         f('adobe.com'),
+                'google':        f('google.com'),
+                'google one':    f('one.google.com'),
+                'coreldraw':     f('coreldraw.com'),
+                'netflix':       f('netflix.com'),
+                'canva':         f('canva.com'),
+                'nordvpn':       f('nordvpn.com'),
+                'wattpad':       f('wattpad.com'),
+                'disney+':       f('disneyplus.com'),
+                'amazon prime':  f('amazon.com'),
+                'iqiyi':         f('iqiyi.com'),
+                'zoom':          f('zoom.us'),
             };
-            return m[cat] || f('microsoft.com');
+            return m[(cat||'').toLowerCase()] || f('microsoft.com');
         },
         getCategoryBg(cat) {
             const m={'Office 365':'bg-blue-50','Adobe':'bg-red-50','Windows':'bg-sky-50','Office':'bg-orange-50','Google':'bg-green-50','CorelDRAW':'bg-yellow-50','Project':'bg-purple-50','Visio':'bg-indigo-50'};
