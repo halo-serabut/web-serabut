@@ -90,7 +90,10 @@ function doPost(e) {
       case 'getOrders':         result = getOrders(params); break;
       case 'getProfile':        result = getProfile(params); break;
       case 'updateProfile':     result = updateProfile(params); break;
-      case 'changePassword':    result = changePassword(params); break;
+      case 'changePassword':          result = changePassword(params); break;
+      case 'forgotPasswordSendOTP':   result = forgotPasswordSendOTP(params); break;
+      case 'forgotPasswordVerify':    result = forgotPasswordVerify(params); break;
+      case 'createCartOrder':         result = createCartOrder(params); break;
       // CS
       case 'csChat':            result = handleCSChat(params); break;
       // Admin
@@ -1251,6 +1254,160 @@ function changePassword({ email, sessionToken, oldPassword, oldPasswordLegacy, n
     return { success: true };
   }
   return { success: false, error: 'User tidak ditemukan' };
+}
+
+// ────────────────────────────────────────────────────────
+//  FORGOT PASSWORD — kirim OTP via email (dan WA jika tersedia)
+// ────────────────────────────────────────────────────────
+function forgotPasswordSendOTP({ email }) {
+  if (!email) return { success: false, error: 'Email harus diisi' };
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_USERS);
+  if (!sheet) return { success: false, error: 'User tidak ditemukan' };
+
+  const data      = sheet.getDataRange().getValues();
+  const emailNorm = email.toLowerCase().trim();
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).toLowerCase().trim() !== emailNorm) continue;
+    const status = String(data[i][5] || '').trim();
+    if (status === 'Pending') return { success: false, error: 'Akun belum diverifikasi. Selesaikan verifikasi OTP registrasi terlebih dahulu.' };
+
+    const nama = String(data[i][0]);
+    const wa   = String(data[i][2] || '').trim();
+    const otp  = generateOTP();
+    const exp  = getOTPExpiry();
+
+    const attCol = _colIndex(sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0], 'otp attempts');
+    sheet.getRange(i + 1, 8).setValue(otp);
+    sheet.getRange(i + 1, 9).setValue(exp);
+    if (attCol >= 0) sheet.getRange(i + 1, attCol + 1).setValue(0);
+
+    sendOTPEmail(emailNorm, nama, otp);
+
+    const maskedEmail = emailNorm.replace(/(.{2}).*(@.*)/, '$1***$2');
+    let maskedWa = '';
+    if (wa && FONNTE_TOKEN) {
+      const waNum = wa.replace(/^0/, '62');
+      const msg   = `*Kode Reset Password Serabut Store*\n\nKode OTP kamu: *${otp}*\n\nBerlaku ${OTP_EXPIRY_MIN} menit. Jangan bagikan ke siapapun.`;
+      try {
+        UrlFetchApp.fetch('https://api.fonnte.com/send', {
+          method: 'post',
+          headers: { 'Authorization': FONNTE_TOKEN },
+          payload: { target: waNum, message: msg },
+          muteHttpExceptions: true,
+        });
+      } catch(e) { Logger.log('WA OTP error: ' + e.message); }
+      maskedWa = wa.replace(/(\d{3})\d+(\d{3})/, '$1****$2');
+    }
+
+    return { success: true, maskedEmail, maskedWa, hasWa: !!wa };
+  }
+  return { success: false, error: 'Email tidak terdaftar' };
+}
+
+// ────────────────────────────────────────────────────────
+//  FORGOT PASSWORD — verifikasi OTP + set password baru
+// ────────────────────────────────────────────────────────
+function forgotPasswordVerify({ email, otp, newPassword }) {
+  if (!email || !otp || !newPassword) return { success: false, error: 'Data tidak lengkap' };
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_USERS);
+  if (!sheet) return { success: false, error: 'User tidak ditemukan' };
+
+  const data      = sheet.getDataRange().getValues();
+  const headers   = data[0].map(h => String(h).toLowerCase().trim());
+  const emailNorm = email.toLowerCase().trim();
+  const attCol    = _colIndex(headers, 'otp attempts');
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).toLowerCase().trim() !== emailNorm) continue;
+
+    const storedOTP = String(data[i][7] || '').trim();
+    const expiry    = String(data[i][8] || '').trim();
+    const attempts  = attCol >= 0 ? (Number(data[i][attCol]) || 0) : 0;
+
+    if (!storedOTP) return { success: false, error: 'OTP tidak ditemukan. Minta kode baru.' };
+    if (attempts >= OTP_MAX_ATTEMPTS) return { success: false, error: 'Terlalu banyak percobaan. Minta kode baru.' };
+    if (expiry && new Date() > new Date(expiry)) return { success: false, error: 'OTP kadaluarsa. Minta kode baru.' };
+
+    if (String(otp).trim() !== storedOTP) {
+      if (attCol >= 0) sheet.getRange(i + 1, attCol + 1).setValue(attempts + 1);
+      const remaining = OTP_MAX_ATTEMPTS - attempts - 1;
+      return { success: false, error: remaining > 0 ? `Kode OTP salah. Sisa ${remaining} percobaan.` : 'Terlalu banyak percobaan. Minta kode baru.' };
+    }
+
+    sheet.getRange(i + 1, 4).setValue(String(newPassword));
+    sheet.getRange(i + 1, 8).setValue('');
+    sheet.getRange(i + 1, 9).setValue('');
+    if (attCol >= 0) sheet.getRange(i + 1, attCol + 1).setValue(0);
+    return { success: true };
+  }
+  return { success: false, error: 'User tidak ditemukan' };
+}
+
+// ────────────────────────────────────────────────────────
+//  CREATE CART ORDER — semua item keranjang dalam 1 order ID
+// ────────────────────────────────────────────────────────
+function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, itemsJson }) {
+  const effectiveEmail = userEmail || email || '';
+  if (!effectiveEmail || !itemsJson) return { success: false, error: 'Data tidak lengkap' };
+
+  let items;
+  try { items = JSON.parse(itemsJson); } catch(_) { return { success: false, error: 'Format data tidak valid' }; }
+  if (!items || !items.length) return { success: false, error: 'Keranjang kosong' };
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(TAB_ORDERS);
+  if (!sheet) {
+    sheet = ss.insertSheet(TAB_ORDERS);
+    sheet.appendRow(['Order ID','Tanggal','Nama','Email','No WA','Produk','Varian','Masa Aktif','Harga','Status','Nama MS','Username','Email Microsoft','Email Aktif','Email Reminder']);
+    sheet.getRange(1, 1, 1, 15).setFontWeight('bold');
+  }
+
+  const orderId = 'SRB-' + new Date().getTime().toString().slice(-8);
+  const tanggal = formatJkt(new Date(), 'dd/MM/yyyy HH:mm');
+  let totalHarga = 0;
+  const waLines  = [];
+
+  for (let idx = 0; idx < items.length; idx++) {
+    const it = items[idx];
+    const catalogPrice = _getCatalogPrice(it.produk, it.varian, it.masaAktif);
+    let hargaNum;
+    if (catalogPrice !== null) {
+      hargaNum = catalogPrice * (Number(it.qty) || 1);
+    } else {
+      hargaNum = Number(it.harga) || 0;
+    }
+    totalHarga += hargaNum;
+
+    sheet.appendRow([
+      orderId, tanggal, userNama, userEmail, userWa,
+      it.produk, it.varian||'-', it.masaAktif||'-', hargaNum, 'Pending',
+      it.msNama||'-', it.username||'-', it.microsoftEmail||'-', it.emailAktif||'-', '-'
+    ]);
+
+    const varLower  = (it.varian || '').toLowerCase();
+    const isFamily  = varLower.includes('family');
+    const isWeb     = varLower.includes('web');
+    const produkCat = (it.produk || '').toLowerCase();
+    const isAdobe   = produkCat.includes('adobe');
+    let line = `*[${idx+1}] ${it.produk}${it.varian && it.varian!=='-' ? ' - '+it.varian : ''}${it.masaAktif && it.masaAktif!=='-' ? ' ('+it.masaAktif+')' : ''}*`;
+    if (isFamily  && it.microsoftEmail) line += `\n   > MS Email: ${it.microsoftEmail}`;
+    if (isWeb && it.msNama)             line += `\n   > Nama MS: ${it.msNama}`;
+    if (isWeb && it.username)           line += `\n   > Username: ${it.username}`;
+    if (isAdobe && it.adobeEmail)       line += `\n   > Adobe: ${it.adobeEmail}`;
+    if (it.emailAktif)                  line += `\n   > Email Aktif: ${it.emailAktif}`;
+    line += `\n   > Harga: Rp ${hargaNum.toLocaleString('id-ID')}`;
+    waLines.push(line);
+  }
+
+  const itemsBlock = waLines.join('\n');
+  const totalFmt   = totalHarga.toLocaleString('id-ID');
+  const groupMsg   = `*ORDER KERANJANG*\nOrder ID: *${orderId}*\nPembeli: ${userNama}\nNo WA: ${userWa}\n────────────────────\n${itemsBlock}\n────────────────────\nTotal: *Rp ${totalFmt}*\nStatus: *Pending*`;
+  sendWAToGroup(groupMsg);
+
+  return { success: true, orderId, total: totalHarga };
 }
 
 // ────────────────────────────────────────────────────────

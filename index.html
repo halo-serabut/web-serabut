@@ -1062,8 +1062,8 @@
                                     <span x-show="order.varian&&order.varian!=='-'" x-text="order.varian + ' · '"></span>
                                     <span x-text="formatOrderDate(order.tanggal)"></span>
                                 </div>
-                                <!-- Expiry info -->
-                                <template x-if="calcExpiry(order.tanggal, order.masaAktif)">
+                                <!-- Expiry info — hanya tampil jika admin sudah set Aktif/Selesai -->
+                                <template x-if="(order.status==='Aktif'||order.status==='Selesai') && calcExpiry(order.tanggal, order.masaAktif)">
                                     <div class="mt-1.5 flex items-center gap-1.5">
                                         <template x-if="isExpired(calcExpiry(order.tanggal, order.masaAktif))">
                                             <span class="inline-flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
@@ -2903,7 +2903,11 @@
                 <svg x-show="authLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                 <span x-text="authLoading?'Memproses...':'Masuk'"></span>
             </button>
-            <p class="text-center text-xs text-gray-400 pb-2">Belum punya akun? <button @click="authTab='register'; authError=''" class="text-brand-500 font-semibold">Daftar sekarang</button></p>
+            <p class="text-center text-xs text-gray-400 pb-2">
+                <button @click="openForgotPw()" class="text-brand-500 font-semibold">Lupa password?</button>
+                <span class="mx-1.5 text-gray-300">·</span>
+                Belum punya akun? <button @click="authTab='register'; authError=''" class="text-brand-500 font-semibold">Daftar sekarang</button>
+            </p>
         </div>
 
         <!-- Register -->
@@ -3019,6 +3023,105 @@
     </div>
 </div>
 
+
+<!-- ══════════════════════════════════════════════════════
+     FORGOT PASSWORD MODAL
+══════════════════════════════════════════════════════ -->
+<div x-show="forgotPwModal" class="fixed inset-0 z-[225] flex items-end md:items-center justify-center"
+     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="forgotPwModal=false"></div>
+    <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 py-6 modal-enter">
+        <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+
+        <!-- Header -->
+        <div class="flex items-center gap-3 mb-5">
+            <button x-show="forgotPwStep>1 && !forgotPwSuccess" @click="forgotPwStep--; forgotPwError=''" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex-none">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <div class="flex-1">
+                <h3 class="font-black text-gray-900 text-lg leading-tight" x-text="forgotPwSuccess ? 'Password Berhasil Direset!' : forgotPwStep===1 ? 'Lupa Password' : forgotPwStep===2 ? 'Masukkan Kode OTP' : 'Buat Password Baru'"></h3>
+                <p class="text-xs text-gray-400 mt-0.5"
+                   x-text="forgotPwSuccess ? 'Silakan login dengan password baru kamu.' : forgotPwStep===1 ? 'Masukkan email akun kamu.' : forgotPwStep===2 ? ('Kode dikirim ke '+(forgotPwHasWa?'email & WA':'email')+' '+forgotPwMaskedEmail) : 'Password minimal 6 karakter.'"></p>
+            </div>
+            <button @click="forgotPwModal=false" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex-none">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Error -->
+        <div x-show="forgotPwError" class="bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4">
+            <p class="text-sm text-red-500" x-text="forgotPwError"></p>
+        </div>
+
+        <!-- Success -->
+        <template x-if="forgotPwSuccess">
+            <div class="text-center py-4">
+                <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <p class="text-sm text-gray-500 mb-5">Password kamu sudah diperbarui. Silakan login dengan password baru.</p>
+                <button @click="forgotPwModal=false; authModal=true; authTab='login'; document.body.style.overflow='hidden'"
+                        class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all">
+                    Login Sekarang
+                </button>
+            </div>
+        </template>
+
+        <!-- Step 1: Email -->
+        <template x-if="!forgotPwSuccess && forgotPwStep===1">
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">Email Akun</label>
+                    <input x-model="forgotPwEmail" type="email" placeholder="email@kamu.com" @keyup.enter="submitForgotPwEmail()"
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+                </div>
+                <button @click="submitForgotPwEmail()" :disabled="forgotPwLoading"
+                        class="w-full gradient-card disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
+                    <svg x-show="forgotPwLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <span x-text="forgotPwLoading?'Mengirim...':'Kirim Kode OTP'"></span>
+                </button>
+                <p class="text-center text-xs text-gray-400">Ingat password? <button @click="forgotPwModal=false; authModal=true; authTab='login'; document.body.style.overflow='hidden'" class="text-brand-500 font-semibold">Masuk</button></p>
+            </div>
+        </template>
+
+        <!-- Step 2: OTP -->
+        <template x-if="!forgotPwSuccess && forgotPwStep===2">
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">Kode OTP</label>
+                    <input x-model="forgotPwOtp" type="text" inputmode="numeric" maxlength="6" placeholder="6 digit kode" @keyup.enter="submitForgotPwOtp()"
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-center text-2xl font-black tracking-widest focus:outline-none focus:border-brand-400 transition-all">
+                </div>
+                <button @click="submitForgotPwOtp()" :disabled="forgotPwLoading"
+                        class="w-full gradient-card disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all">
+                    <span x-text="forgotPwLoading?'Memproses...':'Verifikasi Kode'"></span>
+                </button>
+                <p class="text-center text-xs text-gray-400">Tidak dapat kode? <button @click="submitForgotPwEmail()" class="text-brand-500 font-semibold">Kirim ulang</button></p>
+            </div>
+        </template>
+
+        <!-- Step 3: New Password -->
+        <template x-if="!forgotPwSuccess && forgotPwStep===3">
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">Password Baru <span class="text-gray-400 font-normal">(min. 6 karakter)</span></label>
+                    <input x-model="forgotPwNewPw" type="password" placeholder="Password baru"
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-600 mb-1.5 block">Konfirmasi Password</label>
+                    <input x-model="forgotPwConfirm" type="password" placeholder="Ulangi password baru" @keyup.enter="submitForgotPwNewPw()"
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all">
+                </div>
+                <button @click="submitForgotPwNewPw()" :disabled="forgotPwLoading"
+                        class="w-full gradient-card disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all">
+                    <svg x-show="forgotPwLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <span x-text="forgotPwLoading?'Menyimpan...':'Simpan Password Baru'"></span>
+                </button>
+            </div>
+        </template>
+    </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════
      OTP VERIFICATION MODAL
@@ -3680,7 +3783,7 @@ function serabutStore() {
         orders:        [],
         ordersLoading: false,
 
-        // Reset Password
+        // Reset Password (dari profil — butuh password lama)
         legalModal:     null,
         privacyScrolled: false,
         resetPwModal:   false,
@@ -3688,6 +3791,20 @@ function serabutStore() {
         resetPwLoading: false,
         resetPwError:   '',
         resetPwSuccess: false,
+
+        // Forgot Password (dari login — via OTP email/WA)
+        forgotPwModal:   false,
+        forgotPwStep:    1,
+        forgotPwEmail:   '',
+        forgotPwOtp:     '',
+        forgotPwNewPw:   '',
+        forgotPwConfirm: '',
+        forgotPwError:   '',
+        forgotPwLoading: false,
+        forgotPwSuccess: false,
+        forgotPwMaskedEmail: '',
+        forgotPwMaskedWa:    '',
+        forgotPwHasWa:       false,
 
         // Provinces
         provinces: ['Aceh','Sumatera Utara','Sumatera Barat','Riau','Jambi','Sumatera Selatan','Bengkulu','Lampung','Kepulauan Bangka Belitung','Kepulauan Riau','DKI Jakarta','Jawa Barat','Jawa Tengah','DI Yogyakarta','Jawa Timur','Banten','Bali','Nusa Tenggara Barat','Nusa Tenggara Timur','Kalimantan Barat','Kalimantan Tengah','Kalimantan Selatan','Kalimantan Timur','Kalimantan Utara','Sulawesi Utara','Sulawesi Tengah','Sulawesi Selatan','Sulawesi Tenggara','Gorontalo','Sulawesi Barat','Maluku','Maluku Utara','Papua Barat','Papua','Papua Selatan','Papua Tengah','Papua Pegunungan','Papua Barat Daya'],
@@ -4557,38 +4674,41 @@ function serabutStore() {
                 if (!this.cartCheckoutExtra.guestWa.trim()) { this.cartCheckoutError='No. WhatsApp wajib diisi'; return; }
             }
             this.cartCheckoutLoading = true;
-            const ids = [];
-            for (const item of this.cart) {
-                const unitHarga = this.cartItemUnitPrice(item);
-                try {
-                    const ex    = item.extra || {};
-                    const uEmail = this.isMember ? (this.currentUser?.email||'') : this.cartCheckoutExtra.guestEmail.trim();
-                    const data = await this.gasPost({
-                        action:         'createOrder',
-                        userNama:       this.isMember ? (this.currentUser?.nama||'') : this.cartCheckoutExtra.guestNama.trim(),
-                        userEmail:      uEmail,
-                        userWa:         this.isMember ? (this.currentUser?.wa||'') : this.cartCheckoutExtra.guestWa.trim(),
-                        sessionToken:   this.currentUser?.sessionToken || '',
-                        produk:         item.product.nama,
-                        varian:         item.variant.varian||'',
-                        masaAktif:      item.variant.masaAktif||'-',
-                        qty:            item.qty||1,
-                        harga:          unitHarga * (item.qty||1),
-                        emailAktif:     uEmail,
-                        msNama:         ex.nama        || '',
-                        username:       ex.username    || '',
-                        microsoftEmail: ex.microsoftEmail || '',
-                        adobeEmail:     ex.adobeEmail  || '',
-                        adobePass:      ex.adobePass   || '',
-                    });
-                    if (data.success) ids.push(data.orderId);
-                    else { this.cartCheckoutError = data.error||'Gagal memproses salah satu pesanan'; this.cartCheckoutLoading=false; return; }
-                } catch { this.cartCheckoutError='Gagal terhubung ke server'; this.cartCheckoutLoading=false; return; }
-            }
-            this.cartOrderIds = ids;
-            this.cartCheckoutSuccess = true;
-            this.cart = [];
-            this.saveCart();
+            const uNama  = this.isMember ? (this.currentUser?.nama||'') : this.cartCheckoutExtra.guestNama.trim();
+            const uEmail = this.isMember ? (this.currentUser?.email||'') : this.cartCheckoutExtra.guestEmail.trim();
+            const uWa    = this.isMember ? (this.currentUser?.wa||'') : this.cartCheckoutExtra.guestWa.trim();
+            const items  = this.cart.map(item => {
+                const ex = item.extra || {};
+                return {
+                    produk:         item.product.nama,
+                    varian:         item.variant.varian||'',
+                    masaAktif:      item.variant.masaAktif||'-',
+                    harga:          this.cartItemUnitPrice(item) * (item.qty||1),
+                    qty:            item.qty||1,
+                    msNama:         ex.nama||'',
+                    username:       ex.username||'',
+                    microsoftEmail: ex.microsoftEmail||'',
+                    adobeEmail:     ex.adobeEmail||'',
+                    adobePass:      ex.adobePass||'',
+                    emailAktif:     uEmail,
+                };
+            });
+            try {
+                const data = await this.gasPost({
+                    action:       'createCartOrder',
+                    userNama:     uNama,
+                    userEmail:    uEmail,
+                    userWa:       uWa,
+                    sessionToken: this.currentUser?.sessionToken || '',
+                    itemsJson:    JSON.stringify(items),
+                });
+                if (data.success) {
+                    this.cartOrderIds = [data.orderId];
+                    this.cartCheckoutSuccess = true;
+                    this.cart = [];
+                    this.saveCart();
+                } else { this.cartCheckoutError = data.error||'Gagal memproses pesanan'; }
+            } catch { this.cartCheckoutError = 'Gagal terhubung ke server'; }
             this.cartCheckoutLoading = false;
         },
 
@@ -5579,6 +5699,55 @@ function serabutStore() {
             } catch { this.resetPwError='Gagal terhubung ke server'; }
             this.resetPwLoading=false;
         },
+
+        // ── Forgot Password (via OTP) ──────────────────
+        openForgotPw() {
+            this.forgotPwModal   = true;
+            this.forgotPwStep    = 1;
+            this.forgotPwEmail   = this.loginForm?.email || '';
+            this.forgotPwOtp     = '';
+            this.forgotPwNewPw   = '';
+            this.forgotPwConfirm = '';
+            this.forgotPwError   = '';
+            this.forgotPwSuccess = false;
+            this.authModal = false;
+            document.body.style.overflow = 'hidden';
+        },
+        async submitForgotPwEmail() {
+            if (!this.forgotPwEmail.trim()) { this.forgotPwError='Email harus diisi'; return; }
+            this.forgotPwLoading=true; this.forgotPwError='';
+            try {
+                const data = await this.gasPost({ action:'forgotPasswordSendOTP', email: this.forgotPwEmail.trim().toLowerCase() });
+                if (data.success) {
+                    this.forgotPwMaskedEmail = data.maskedEmail || '';
+                    this.forgotPwMaskedWa    = data.maskedWa    || '';
+                    this.forgotPwHasWa       = !!data.hasWa;
+                    this.forgotPwStep = 2;
+                } else { this.forgotPwError = data.error||'Gagal mengirim kode OTP'; }
+            } catch { this.forgotPwError='Gagal terhubung ke server'; }
+            this.forgotPwLoading=false;
+        },
+        submitForgotPwOtp() {
+            if (!this.forgotPwOtp.trim()) { this.forgotPwError='Kode OTP harus diisi'; return; }
+            if (this.forgotPwOtp.trim().length < 4) { this.forgotPwError='Kode OTP tidak valid'; return; }
+            this.forgotPwError='';
+            this.forgotPwStep = 3;
+        },
+        async submitForgotPwNewPw() {
+            if (!this.forgotPwNewPw || !this.forgotPwConfirm) { this.forgotPwError='Semua field harus diisi'; return; }
+            if (this.forgotPwNewPw.length < 6) { this.forgotPwError='Password minimal 6 karakter'; return; }
+            if (this.forgotPwNewPw !== this.forgotPwConfirm) { this.forgotPwError='Konfirmasi password tidak cocok'; return; }
+            this.forgotPwLoading=true; this.forgotPwError='';
+            try {
+                const email   = this.forgotPwEmail.trim().toLowerCase();
+                const newHash = await sha256(email + ':' + this.forgotPwNewPw);
+                const data    = await this.gasPost({ action:'forgotPasswordVerify', email, otp: this.forgotPwOtp.trim(), newPassword: newHash });
+                if (data.success) { this.forgotPwSuccess=true; }
+                else { this.forgotPwError = data.error||'Gagal reset password'; }
+            } catch { this.forgotPwError='Gagal terhubung ke server'; }
+            this.forgotPwLoading=false;
+        },
+
         async pwaInstall() {
             if (this.pwaPromptEvent) {
                 this.pwaPromptEvent.prompt();
