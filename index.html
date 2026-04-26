@@ -637,7 +637,27 @@
                                 <template x-for="opt in getVariantDurations(selectedProductGroup, selectedVariant?.varian)" :key="opt.masaAktif+opt.harga">
                                     <button @click="selectedVariant=opt" :class="selectedVariant?.masaAktif===opt.masaAktif&&selectedVariant?.harga===opt.harga?'border-brand-500 bg-brand-50':'border-gray-200 hover:border-gray-300'" class="p-3 rounded-xl border text-left transition-all">
                                         <div class="text-xs text-gray-500" x-text="opt.masaAktif!=='-'?opt.masaAktif:'Seumur Hidup'"></div>
-                                        <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                                        <template x-if="isMember && flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
+                                            <div>
+                                                <div class="text-xs text-gray-400 line-through leading-none mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                                                <div class="flex items-center gap-1 mt-0.5">
+                                                    <span class="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.diskon+'% OFF'"></span>
+                                                    <span class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.harga)"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template x-if="!isMember && flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
+                                            <div>
+                                                <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                                                <div class="mt-1 flex items-center gap-1">
+                                                    <span class="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.diskon+'% OFF'"></span>
+                                                    <span class="text-[9px] text-red-500 font-bold">Member</span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template x-if="!flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
+                                            <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                                        </template>
                                     </button>
                                 </template>
                             </div>
@@ -662,11 +682,33 @@
                         <div class="flex items-center justify-between mb-4">
                             <div>
                                 <div class="text-xs text-gray-400 mb-0.5">Total Harga</div>
-                                <div x-show="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="text-sm text-gray-400 line-through leading-none mb-0.5" x-text="formatPrice(selectedVariant?.harga)"></div>
-                                <div class="flex items-center gap-2">
-                                    <span x-show="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
-                                    <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga ?? selectedVariant?.harga)"></div>
-                                </div>
+                                <!-- Member (logged in): tampilkan flash sale jika ada -->
+                                <template x-if="isMember && flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                    <div>
+                                        <div class="text-sm text-gray-400 line-through leading-none mb-0.5" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
+                                            <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <!-- Member (logged in): tidak ada flash sale -->
+                                <template x-if="isMember && !flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                    <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                </template>
+                                <!-- Tamu: harga normal + hint member -->
+                                <template x-if="!isMember">
+                                    <div>
+                                        <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                        <template x-if="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                            <div class="flex items-center gap-1.5 mt-1">
+                                                <span class="text-[10px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon+'% OFF'"></span>
+                                                <span class="text-[10px] text-red-500 font-bold">untuk Member → </span>
+                                                <span class="text-[10px] font-black text-red-600" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
                             <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="text-right">
                                 <div class="text-xs text-gray-400">Durasi</div>
@@ -743,10 +785,10 @@
                     <svg x-show="statusChecking" class="animate-spin w-5 h-5 text-brand-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                 </div>
                 <input x-model="statusQuery" type="text"
-                    placeholder="Cari nama, email, atau No. WA..."
+                    placeholder="Min. 4 karakter — nama, email, atau No. WA..."
                     @keyup.enter="checkStatus()"
                     class="w-full pl-12 pr-28 py-4 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 shadow-sm transition-all placeholder:text-gray-400">
-                <button @click="checkStatus()" :disabled="statusChecking||!statusQuery.trim()"
+                <button @click="checkStatus()" :disabled="statusChecking||statusQuery.trim().length<4"
                     class="absolute right-2 top-2 bottom-2 gradient-card text-white text-sm font-bold px-5 rounded-xl disabled:opacity-50 transition-all">
                     Cek
                 </button>
@@ -2021,19 +2063,24 @@
      FLOATING CS BUTTON
 ══════════════════════════════════════════════════════ -->
 
-<!-- Popup card: posisi terpisah agar tidak ikut translate -->
-<div class="fixed bottom-36 md:bottom-28 right-4 md:right-8 z-[91]"
+<!-- Popup card: mobile = floating card with margin, desktop = positioned card -->
+<div class="fixed inset-x-0 bottom-0 px-3 pb-3 z-[91] md:inset-auto md:bottom-28 md:right-8 md:px-0 md:pb-0"
      x-show="csPopup"
      x-transition:enter="transition ease-out duration-200"
-     x-transition:enter-start="opacity-0 translate-y-2 scale-95"
-     x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+     x-transition:enter-start="opacity-0 translate-y-4"
+     x-transition:enter-end="opacity-100 translate-y-0"
      x-transition:leave="transition ease-in duration-150"
      x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0 scale-95"
-     @click.outside="csPopup=false">
-    <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-72 overflow-hidden">
+     x-transition:leave-end="opacity-0 translate-y-4">
+    <!-- Mobile backdrop -->
+    <div class="fixed inset-0 bg-black/40 md:hidden -z-10" @click="csPopup=false"></div>
+    <div class="relative bg-white rounded-3xl md:rounded-2xl shadow-2xl border border-gray-100 w-full md:w-96 flex flex-col min-h-[58vh] md:min-h-[460px] overflow-hidden">
+        <!-- Drag handle mobile only -->
+        <div class="md:hidden flex justify-center pt-3 pb-1 flex-none">
+            <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
+        </div>
         <!-- Header — AI Assistant style -->
-        <div class="gradient-card px-4 py-3.5 flex items-center justify-between">
+        <div class="gradient-card px-4 py-3.5 flex items-center justify-between flex-none">
             <div class="flex items-center gap-3">
                 <!-- Avatar robot -->
                 <div class="relative flex-none">
@@ -2064,44 +2111,48 @@
         </div>
 
         <!-- Body -->
-        <div class="flex flex-col" x-effect="if(csPopup && currentUser && !csStarted) startCSChat()">
+        <div class="flex flex-col flex-1 min-h-0" x-effect="if(csPopup && currentUser && !csStarted) startCSChat()">
 
             <!-- GATE: guest belum input nama -->
             <template x-if="!csStarted && !currentUser">
-                <div class="px-4 pt-4 pb-4">
+                <div class="flex-1 flex flex-col px-4 pt-5 pb-5">
                     <!-- Greeting bubble dari Sera -->
-                    <div class="flex items-start gap-2.5 mb-4">
-                        <div class="w-7 h-7 gradient-card rounded-full flex items-center justify-center flex-none mt-0.5">
-                            <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="2" x2="12" y2="5"/><circle cx="12" cy="2" r="1.2" fill="currentColor" stroke="none"/>
-                                <rect x="3.5" y="5" width="17" height="13" rx="3"/>
-                                <circle cx="8.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
-                                <circle cx="15.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
-                                <path d="M8.5 14.5 Q12 17 15.5 14.5"/>
-                            </svg>
-                        </div>
-                        <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-3 py-2.5 text-sm text-gray-700 leading-relaxed">
-                            Halo! 👋 Saya <strong>Sera</strong>, AI Assistant Serabut Store.<br>
-                            <span class="text-gray-500 text-xs">Boleh tahu nama kamu?</span>
+                    <div class="flex-1 flex items-center">
+                        <div class="flex items-start gap-3 w-full">
+                            <div class="w-8 h-8 gradient-card rounded-full flex items-center justify-center flex-none mt-0.5 shadow-sm">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="2" x2="12" y2="5"/><circle cx="12" cy="2" r="1.2" fill="currentColor" stroke="none"/>
+                                    <rect x="3.5" y="5" width="17" height="13" rx="3"/>
+                                    <circle cx="8.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
+                                    <circle cx="15.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
+                                    <path d="M8.5 14.5 Q12 17 15.5 14.5"/>
+                                </svg>
+                            </div>
+                            <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-gray-700 leading-relaxed">
+                                Halo! 👋 Saya <strong>Sera</strong>, AI Assistant Serabut Store.<br>
+                                <span class="text-gray-500 text-xs mt-0.5 block">Boleh tahu nama kamu?</span>
+                            </div>
                         </div>
                     </div>
-                    <!-- Input nama -->
-                    <input x-model="csGuestName" type="text" placeholder="Nama kamu..."
-                           @keydown.enter="csGuestName.trim() && startCSChat()"
-                           class="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:bg-white transition-all mb-2.5">
-                    <button @click="csGuestName.trim() && startCSChat()" :disabled="!csGuestName.trim()"
-                            class="w-full gradient-card disabled:opacity-40 text-white font-bold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm">
-                        Mulai Chat
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                    </button>
+                    <!-- Input + CTA di bawah -->
+                    <div class="space-y-2.5 pt-4 border-t border-gray-100 mt-4">
+                        <input x-model="csGuestName" type="text" placeholder="Nama kamu..."
+                               @keydown.enter="csGuestName.trim() && startCSChat()"
+                               class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:bg-white transition-all">
+                        <button @click="csGuestName.trim() && startCSChat()" :disabled="!csGuestName.trim()"
+                                class="w-full gradient-card disabled:opacity-40 text-white font-bold py-3 rounded-2xl text-sm flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm">
+                            Mulai Chat
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        </button>
+                    </div>
                 </div>
             </template>
 
             <!-- CHAT UI -->
             <template x-if="csStarted">
-                <div class="flex flex-col">
+                <div class="flex flex-col flex-1 min-h-0">
                     <!-- Messages area -->
-                    <div class="px-3 pt-3 pb-2 max-h-52 overflow-y-auto space-y-2" x-ref="csScrollArea">
+                    <div class="px-3 pt-3 pb-2 flex-1 min-h-0 max-h-[45vh] md:max-h-none overflow-y-auto space-y-2" x-ref="csScrollArea">
                         <template x-for="msg in csMessages" :key="msg.id">
                             <div :class="msg.role==='user' ? 'flex justify-end' : 'flex justify-start'">
                                 <div :class="msg.role==='user' ? 'bg-brand-500 text-white' : 'bg-gray-100 text-gray-800'"
@@ -2261,7 +2312,27 @@
                     <template x-for="opt in getVariantDurations(selectedProductGroup, selectedVariant?.varian)" :key="opt.masaAktif+opt.harga">
                         <button @click="selectedVariant=opt" :class="selectedVariant?.masaAktif===opt.masaAktif&&selectedVariant?.harga===opt.harga?'border-brand-500 bg-brand-50':'border-gray-200 hover:border-gray-300'" class="p-3 rounded-xl border text-left transition-all">
                             <div class="text-xs text-gray-500" x-text="opt.masaAktif!=='-'?opt.masaAktif:'Seumur Hidup'"></div>
-                            <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                            <template x-if="isMember && flashSaleItem(selectedProductGroup?.nama, opt.varian, opt.masaAktif)">
+                                <div>
+                                    <div class="text-xs text-gray-400 line-through leading-none mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                                    <div class="flex items-center gap-1 mt-0.5">
+                                        <span class="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup?.nama, opt.varian, opt.masaAktif)?.diskon+'% OFF'"></span>
+                                        <span class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(selectedProductGroup?.nama, opt.varian, opt.masaAktif)?.harga)"></span>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="!isMember && flashSaleItem(selectedProductGroup?.nama, opt.varian, opt.masaAktif)">
+                                <div>
+                                    <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                                    <div class="mt-1 flex items-center gap-1">
+                                        <span class="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup?.nama, opt.varian, opt.masaAktif)?.diskon+'% OFF'"></span>
+                                        <span class="text-[9px] text-red-500 font-bold">Member</span>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="!flashSaleItem(selectedProductGroup?.nama, opt.varian, opt.masaAktif)">
+                                <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                            </template>
                         </button>
                     </template>
                 </div>
@@ -2295,12 +2366,34 @@
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <div class="text-xs text-gray-400">Total Harga</div>
-                    <div x-show="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif) || renewalMode" class="text-sm text-gray-400 line-through leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
-                    <div class="flex items-center gap-2">
-                        <span x-show="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full" x-text="(flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
-                        <span x-show="renewalMode && !flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="bg-brand-500 text-white text-xs font-black px-2 py-0.5 rounded-full">RENEWAL</span>
-                        <div class="font-black text-brand-500 text-2xl" x-text="formatPrice((() => { const base = flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga ?? selectedVariant?.harga; return renewalMode ? base - getRenewalDiscount(base) : base; })())"></div>
-                    </div>
+                    <!-- Member + flash sale atau renewal -->
+                    <template x-if="isMember && (flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif) || renewalMode)">
+                        <div>
+                            <div class="text-sm text-gray-400 line-through leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
+                            <div class="flex items-center gap-2">
+                                <span x-show="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full" x-text="(flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
+                                <span x-show="renewalMode && !flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)" class="bg-brand-500 text-white text-xs font-black px-2 py-0.5 rounded-full">RENEWAL</span>
+                                <div class="font-black text-brand-500 text-2xl" x-text="formatPrice((() => { const base = flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga ?? selectedVariant?.harga; return renewalMode ? base - getRenewalDiscount(base) : base; })())"></div>
+                            </div>
+                        </div>
+                    </template>
+                    <!-- Member + harga normal -->
+                    <template x-if="isMember && !flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif) && !renewalMode">
+                        <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(selectedVariant?.harga)"></div>
+                    </template>
+                    <!-- Tamu: harga normal + hint member -->
+                    <template x-if="!isMember">
+                        <div>
+                            <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(selectedVariant?.harga)"></div>
+                            <template x-if="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                <div class="flex items-center gap-1.5 mt-1">
+                                    <span class="text-[10px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon+'% OFF'"></span>
+                                    <span class="text-[10px] text-red-500 font-bold">Member → </span>
+                                    <span class="text-[10px] font-black text-red-600" x-text="formatPrice(flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
                 </div>
                 <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="text-right"><div class="text-xs text-gray-400">Durasi</div><div class="font-bold text-gray-700 text-sm" x-text="selectedVariant?.masaAktif"></div></div>
             </div>
@@ -2367,8 +2460,10 @@
             <!-- Google SSO — hanya tampil jika GOOGLE_CLIENT_ID diisi -->
             <template x-if="GOOGLE_CLIENT_ID">
                 <div class="space-y-3">
-                    <button @click="googleSignIn()" :disabled="authLoading"
-                            class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 active:scale-95 transition-all disabled:opacity-50">
+                    <button @click="registerForm.privacyAccepted ? googleSignIn() : (authError='Harap scroll dan centang Kebijakan Privasi dulu sebelum daftar via Google')"
+                            :disabled="authLoading"
+                            :class="!registerForm.privacyAccepted ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 active:scale-95'"
+                            class="w-full flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-2xl bg-white transition-all disabled:opacity-50">
                         <svg class="w-5 h-5 flex-none" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84z"/></svg>
                         <span class="text-sm font-semibold text-gray-700" x-text="authLoading?'Memproses...':'Daftar dengan Google'"></span>
                     </button>
@@ -2384,13 +2479,13 @@
             <div><label class="text-xs font-bold text-gray-600 mb-1 block">No. WhatsApp</label><input x-model="registerForm.wa" type="tel" placeholder="08xxxxxxxxxx" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
             <div><label class="text-xs font-bold text-gray-600 mb-1 block">Password <span class="text-gray-400 font-normal">(min. 6 karakter)</span></label><input x-model="registerForm.password" type="password" placeholder="Buat password" @keyup.enter="submitRegister()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
             <!-- Privacy Notice scroll-to-accept -->
-            <div class="rounded-2xl border border-gray-200 overflow-hidden">
+            <!-- State: belum dibaca → kotak scroll -->
+            <div x-show="!privacyScrolled" class="rounded-2xl border border-gray-200 overflow-hidden">
                 <div class="flex items-center justify-between bg-gray-50 px-3 py-2 border-b border-gray-200">
                     <p class="text-xs font-bold text-gray-700">Kebijakan Privasi & Syarat Layanan</p>
-                    <span x-show="!privacyScrolled" class="text-xs text-gray-400">scroll ke bawah ↓</span>
-                    <span x-show="privacyScrolled" class="text-xs text-emerald-500 font-semibold flex items-center gap-1">
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                        Sudah dibaca
+                    <span class="text-xs text-gray-400 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                        scroll
                     </span>
                 </div>
                 <div class="h-28 overflow-y-auto px-3 py-2.5 text-xs text-gray-500 space-y-1.5 leading-relaxed"
@@ -2402,6 +2497,15 @@
                     <p>Koneksi website dilindungi enkripsi SSL. Sesuai UU Pelindungan Data Pribadi (UU PDP) yang berlaku di Indonesia.</p>
                     <p class="pt-1 border-t border-gray-100">Lihat lengkap: <button @click.stop="legalModal='privacy'" class="text-brand-500 underline">Kebijakan Privasi</button> &amp; <button @click.stop="legalModal='terms'" class="text-brand-500 underline">Syarat &amp; Ketentuan</button></p>
                 </div>
+            </div>
+            <!-- State: sudah dibaca → badge ringkas -->
+            <div x-show="privacyScrolled" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                 class="rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 flex items-center gap-2.5">
+                <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center flex-none">
+                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <p class="text-xs text-emerald-800 font-medium flex-1">Kebijakan Privasi & Syarat Layanan telah dibaca</p>
+                <button @click="privacyScrolled=false; registerForm.privacyAccepted=false" class="text-xs text-gray-400 hover:text-gray-600 underline flex-none">baca ulang</button>
             </div>
             <!-- I Accept checkbox — muncul setelah scroll -->
             <div x-show="privacyScrolled" x-transition class="flex items-start gap-2.5 px-1">
@@ -2544,12 +2648,12 @@
             <div class="border-t border-gray-200 pt-2.5 flex justify-between items-end">
                 <span class="text-sm font-bold text-gray-700">Total</span>
                 <div class="text-right">
-                    <!-- Guest: selalu harga penuh -->
-                    <template x-if="currentUser?.isGuest">
+                    <!-- Tamu (tidak login): selalu harga penuh -->
+                    <template x-if="!isMember">
                         <span class="font-black text-brand-500 text-lg" x-text="formatPrice(selectedVariant?.harga)"></span>
                     </template>
                     <!-- Member: flash sale price jika ada -->
-                    <template x-if="!currentUser?.isGuest && flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                    <template x-if="isMember && flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
                         <div>
                             <span class="text-xs text-gray-400 line-through block" x-text="formatPrice(selectedVariant?.harga)"></span>
                             <div class="flex items-center gap-1.5 justify-end">
@@ -2560,15 +2664,15 @@
                             </div>
                         </div>
                     </template>
-                    <template x-if="!currentUser?.isGuest && !flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                    <template x-if="isMember && !flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
                         <span class="font-black text-brand-500 text-lg" x-text="formatPrice(selectedVariant?.harga)"></span>
                     </template>
                 </div>
             </div>
         </div>
 
-        <!-- Banner member promo untuk guest -->
-        <template x-if="currentUser?.isGuest && flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+        <!-- Banner member promo untuk tamu -->
+        <template x-if="!isMember && flashSaleItem(selectedProductGroup?.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
             <div class="bg-gradient-to-r from-brand-500 to-red-400 rounded-2xl p-4 mb-4">
                 <div class="flex items-start gap-3">
                     <div class="text-2xl flex-none">🎁</div>
@@ -2587,11 +2691,27 @@
             </div>
         </template>
 
-        <!-- User -->
-        <div class="bg-brand-50 rounded-2xl p-4 mb-5 flex items-center gap-3">
-            <div class="w-10 h-10 gradient-card rounded-xl flex items-center justify-center text-white font-black text-lg flex-none" x-text="currentUser?.nama?.[0]?.toUpperCase()"></div>
-            <div><div class="font-bold text-gray-800 text-sm" x-text="currentUser?.nama"></div><div class="text-xs text-gray-500" x-text="currentUser?.email"></div><div class="text-xs text-gray-500" x-text="currentUser?.wa"></div></div>
-        </div>
+        <!-- User / Tamu -->
+        <template x-if="isMember">
+            <div class="bg-brand-50 rounded-2xl p-4 mb-5 flex items-center gap-3">
+                <div class="w-10 h-10 gradient-card rounded-xl flex items-center justify-center text-white font-black text-lg flex-none" x-text="currentUser.nama?.[0]?.toUpperCase()"></div>
+                <div><div class="font-bold text-gray-800 text-sm" x-text="currentUser.nama"></div><div class="text-xs text-gray-500" x-text="currentUser.email"></div><div class="text-xs text-gray-500" x-text="currentUser.wa"></div></div>
+            </div>
+        </template>
+        <template x-if="!isMember">
+            <div class="bg-gray-50 rounded-2xl p-4 mb-5 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gray-200 rounded-xl flex items-center justify-center flex-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div>
+                        <div class="font-bold text-gray-700 text-sm">Pesan sebagai Tamu</div>
+                        <div class="text-xs text-gray-400">Login untuk nikmati harga member</div>
+                    </div>
+                </div>
+                <button @click="orderModal=false; openAuth('login')" class="text-xs font-bold text-brand-500 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg active:scale-95 transition-all">Login →</button>
+            </div>
+        </template>
 
         <!-- Dynamic extra fields -->
         <div class="mb-4 space-y-3">
@@ -3240,6 +3360,8 @@ function serabutStore() {
                 .sort()
                 .map(name => ({ name, icon: this._categoryIconMap[name] || defaultIcon, desc: '', iconKey: name.toLowerCase().replace(/\s+/g,'') }));
         },
+        // true hanya jika user login dengan akun nyata (bukan tamu CS chat)
+        get isMember() { return !!(this.currentUser && !this.currentUser.isGuest); },
         get filteredProducts() {
             return this.products.filter(p => {
                 const matchCat = this.activeCategory==='Semua'||p.category===this.activeCategory;
@@ -3262,6 +3384,16 @@ function serabutStore() {
             const seen={}, out=[];
             for(const p of this.products){ if(!seen[p.category]){seen[p.category]=true;out.push(p);if(out.length>=6)break;} }
             return out.length>0?out:this.products.slice(0,6);
+        },
+
+        // ── POST helper ───────────────────────────────
+        async gasPost(payload) {
+            const res = await fetch(this.GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            return res.json();
         },
 
         // ── Init ──────────────────────────────────────
@@ -3314,7 +3446,18 @@ function serabutStore() {
             }
 
             const saved = localStorage.getItem('serabutUser');
-            if(saved) { try{ this.currentUser=JSON.parse(saved); }catch{} }
+            if(saved) {
+                try {
+                    const u = JSON.parse(saved);
+                    // H5: auto-logout jika sessionToken missing atau sesi > 30 hari
+                    const expired = u.loginAt && (Date.now() - new Date(u.loginAt).getTime()) > 30 * 24 * 60 * 60 * 1000;
+                    if(!u.sessionToken || expired) {
+                        localStorage.removeItem('serabutUser');
+                    } else {
+                        this.currentUser = u;
+                    }
+                } catch {}
+            }
             // Selalu refresh role dari GAS agar menu Admin selalu akurat
             if(this.currentUser) {
                 await this.refreshUserRole();
@@ -3334,12 +3477,13 @@ function serabutStore() {
         // ── Refresh role dari GAS (sesi lama) ─────────
         async refreshUserRole() {
             try {
-                const params = new URLSearchParams({ action:'getProfile', email:this.currentUser.email });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'getProfile', email:this.currentUser.email, sessionToken:this.currentUser.sessionToken });
                 if(data.success && data.profile?.role) {
                     this.currentUser = { ...this.currentUser, role: data.profile.role };
                     localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
+                } else if(!data.success) {
+                    // Token expired/invalid — auto logout
+                    this.logout();
                 }
             } catch {}
         },
@@ -3603,7 +3747,7 @@ function serabutStore() {
 
         // ── Product Modal ─────────────────────────────
         flashSaleBeli(item) {
-            if (this.currentUser?.isGuest) {
+            if (!this.isMember) {
                 this.authModal = true; this.authTab = 'login'; return;
             }
             const product = this.products.find(p =>
@@ -3684,13 +3828,13 @@ function serabutStore() {
             if(!this.loginForm.email||!this.loginForm.password){ this.authError='Email dan password harus diisi'; return; }
             this.authLoading=true; this.authError='';
             try {
-                const hashed = await sha256(this.loginForm.password);
-                const params = new URLSearchParams({ action:'login', email:this.loginForm.email, password:hashed });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const email = this.loginForm.email.toLowerCase().trim();
+                const hashed = await sha256(email + ':' + this.loginForm.password);
+                const hashedLegacy = await sha256(this.loginForm.password);
+                const data = await this.gasPost({ action:'login', email, password:hashed, passwordLegacy:hashedLegacy });
                 if(data.success) {
-                    this.currentUser = data.user;
-                    localStorage.setItem('serabutUser', JSON.stringify(data.user));
+                    this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
+                    localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
                     this.closeAuthModal();
                     this.loginForm = {email:'',password:''};
                     if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
@@ -3699,16 +3843,15 @@ function serabutStore() {
             this.authLoading=false;
         },
         async submitRegister() {
-            const {nama,email,wa,password,privacyAccepted}=this.registerForm;
+            const {nama,wa,password,privacyAccepted}=this.registerForm;
+            const email = (this.registerForm.email||'').toLowerCase().trim();
             if(!nama||!email||!wa||!password){ this.authError='Semua field harus diisi'; return; }
             if(password.length<6){ this.authError='Password minimal 6 karakter'; return; }
             if(!privacyAccepted){ this.authError='Harap setujui Kebijakan Privasi terlebih dahulu'; return; }
             this.authLoading=true; this.authError='';
             try {
-                const hashed = await sha256(password);
-                const params = new URLSearchParams({ action:'register', nama, email, wa, password:hashed, privacyConsent:'1' });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const hashed = await sha256(email + ':' + password);
+                const data = await this.gasPost({ action:'register', nama, email, wa, password:hashed, privacyConsent:'1' });
                 if(data.success && data.action==='verify_otp') {
                     this.closeAuthModal();
                     this.openOTPModal(data.email);
@@ -3748,12 +3891,10 @@ function serabutStore() {
             if(!this.otpCode||this.otpCode.length!==6){ this.otpError='Masukkan 6 digit kode OTP'; return; }
             this.otpLoading=true; this.otpError='';
             try {
-                const params = new URLSearchParams({ action:'verifyOTP', email:this.otpEmail, otp:this.otpCode });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'verifyOTP', email:this.otpEmail, otp:this.otpCode });
                 if(data.success) {
-                    this.currentUser = data.user;
-                    localStorage.setItem('serabutUser', JSON.stringify(data.user));
+                    this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
+                    localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
                     this.closeOTPModal();
                     this.registerForm = {nama:'',email:'',wa:'',password:''};
                     if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
@@ -3764,9 +3905,7 @@ function serabutStore() {
         async resendOTP() {
             this.otpResending=true; this.otpError='';
             try {
-                const params = new URLSearchParams({ action:'resendOTP', email:this.otpEmail });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'resendOTP', email:this.otpEmail });
                 if(data.success) { this.startOTPTimer(); this.otpError=''; }
                 else { this.otpError = data.error||'Gagal kirim ulang OTP'; }
             } catch { this.otpError='Gagal terhubung ke server'; }
@@ -3797,17 +3936,13 @@ function serabutStore() {
             return !ma.includes('bulan') && !ma.includes('tahun') && !ma.includes('month') && !ma.includes('year');
         },
         handlePesan() {
-            // Tidak perlu login — langsung buka order. Jika belum login, auto guest
-            if(!this.currentUser) {
-                this.currentUser = { nama: 'Pembeli', isGuest: true, role: 'guest' };
-            }
             this.orderError=''; this.orderExtraError='';
-            const profileEmail = this.currentUser?.isGuest ? '' : (this.currentUser?.email || '');
+            const profileEmail = this.currentUser?.email || '';
             this.orderExtra = { nama:'', username:'', microsoftEmail:'', emailAktif: profileEmail, emailSameAsProfile: !!profileEmail, emailReminder:'', adobeEmail:'', adobePass:'' };
             this.orderModal=true;
         },
         async submitOrder() {
-            if(!this.currentUser||!this.selectedVariant) return;
+            if(!this.selectedVariant) return;
             this.orderExtraError='';
             const type = this.orderExtraType;
             const effectiveEmail = this.orderExtra.emailSameAsProfile ? (this.currentUser?.email||'') : this.orderExtra.emailAktif.trim();
@@ -3819,16 +3954,17 @@ function serabutStore() {
             if(type!=='adobe'  && !effectiveEmail)                          { this.orderExtraError='Email wajib diisi'; return; }
             this.orderLoading=true; this.orderError='';
             try {
-                const params = new URLSearchParams({
+                const data = await this.gasPost({
                     action:         'createOrder',
-                    userNama:       this.currentUser.nama,
-                    userEmail:      this.currentUser.email,
-                    userWa:         this.currentUser.wa,
+                    userNama:       this.currentUser?.nama || '',
+                    userEmail:      this.currentUser?.email || '',
+                    userWa:         this.currentUser?.wa || '',
+                    sessionToken:   this.currentUser?.sessionToken || '',
                     produk:         this.selectedProductGroup.nama,
                     varian:         this.selectedVariant.varian||'',
                     masaAktif:      this.selectedVariant.masaAktif||'-',
                     harga:          (() => {
-                        if (this.currentUser?.isGuest) return this.selectedVariant.harga;
+                        if (!this.isMember) return this.selectedVariant.harga;
                         const base = this.flashSaleItem(this.selectedProductGroup.nama, this.selectedVariant.varian, this.selectedVariant.masaAktif)?.harga ?? this.selectedVariant.harga;
                         return this.renewalMode ? base - this.getRenewalDiscount(base) : base;
                     })(),
@@ -3840,8 +3976,6 @@ function serabutStore() {
                     adobeEmail:     this.orderExtra.adobeEmail,
                     adobePass:      this.orderExtra.adobePass,
                 });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
                 if(data.success) {
                     this.currentOrderId = data.orderId;
                     this.orderModal  = false;
@@ -3853,10 +3987,11 @@ function serabutStore() {
 
         // ── Status Check ──────────────────────────────
         async checkStatus() {
-            if(!this.statusQuery.trim()) return;
+            const q = this.statusQuery.trim();
+            if(q.length < 4) { this.statusResult = null; return; }
             this.statusChecking=true; this.statusResult=null;
             try {
-                const params = new URLSearchParams({ action:'smartSearch', query:this.statusQuery.trim() });
+                const params = new URLSearchParams({ action:'smartSearch', query:q });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
                 this.statusResult = data.data||[];
@@ -3970,15 +4105,13 @@ function serabutStore() {
             this.csSending = true;
             this.$nextTick(() => this.scrollCSToBottom());
             try {
-                const qs  = new URLSearchParams({
+                const data = await this.gasPost({
                     action:    'csChat',
                     sessionId: this.csSessionId,
                     message:   msg,
                     userName:  this.currentUser ? this.currentUser.nama  : this.csGuestName,
                     userEmail: this.currentUser ? this.currentUser.email : '',
                 });
-                const res  = await fetch(this.GAS_URL + '?' + qs.toString());
-                const data = await res.json();
                 if (data.success) {
                     this.csMessages.push({ id: Date.now() + 1, role: 'assistant', content: data.reply });
                     if (data.escalate) this.csEscalate = true;
@@ -4150,9 +4283,7 @@ function serabutStore() {
 
         // ── Admin save helper ─────────────────────────
         async _adminSave(key, value) {
-            const params = new URLSearchParams({ action:'saveSettings', adminEmail:this.currentUser.email, key, value });
-            const res  = await fetch(`${this.GAS_URL}?${params}`);
-            return res.json();
+            return this.gasPost({ action:'saveSettings', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, key, value });
         },
         _adminShowMsg(msg) {
             this.adminSaveMsg = msg;
@@ -4264,16 +4395,14 @@ function serabutStore() {
             window._serabutGoogleCallback = async (response) => {
                 this.authLoading = true;
                 try {
-                    const parts  = response.credential.split('.');
-                    const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
-                    await this.googleAuthCallback(payload);
+                    // C4: kirim raw credential (id_token) ke GAS — verifikasi dilakukan server-side
+                    await this.googleAuthCallback(response.credential);
                 } catch(e) { this.authError = 'Gagal login dengan Google.'; }
                 this.authLoading = false;
             };
             google.accounts.id.initialize({ client_id: CLIENT_ID, callback: window._serabutGoogleCallback, auto_select: false });
             google.accounts.id.prompt((notification) => {
                 if(notification.isNotDisplayed() || notification.isSkippedMoment()) {
-                    // Fallback: render button ke hidden div lalu klik
                     const div = document.createElement('div');
                     div.style.display='none';
                     document.body.appendChild(div);
@@ -4282,13 +4411,11 @@ function serabutStore() {
                 }
             });
         },
-        async googleAuthCallback(payload) {
-            const params = new URLSearchParams({ action:'googleLogin', email: payload.email, nama: payload.name||'' });
-            const res  = await fetch(`${this.GAS_URL}?${params}`);
-            const data = await res.json();
+        async googleAuthCallback(credential) {
+            const data = await this.gasPost({ action:'googleLogin', credential });
             if(data.success) {
-                this.currentUser = data.user;
-                localStorage.setItem('serabutUser', JSON.stringify(data.user));
+                this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
+                localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
                 this.closeAuthModal();
                 if(data.user.role==='admin') this.setPage('admin');
             } else {
@@ -4310,9 +4437,7 @@ function serabutStore() {
         },
         async adminSaveGuideOrder() {
             try {
-                const params = new URLSearchParams({ action:'saveGuides', adminEmail:this.currentUser.email, tab:this.adminGuideTab, guidesJson:JSON.stringify(this.adminGuides[this.adminGuideTab]) });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'saveGuides', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, tab:this.adminGuideTab, guidesJson:JSON.stringify(this.adminGuides[this.adminGuideTab]) });
                 if(data.success) {
                     this.guides[this.adminGuideTab] = this.adminGuides[this.adminGuideTab].map(g=>({...g,open:false}));
                     this._adminShowMsg('Urutan panduan disimpan ✓');
@@ -4435,9 +4560,7 @@ function serabutStore() {
         async adminLoadProducts() {
             this.adminProductsLoading=true;
             try {
-                const params = new URLSearchParams({ action:'getCatalogAdmin', adminEmail:this.currentUser.email });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'getCatalogAdmin', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken });
                 this.adminProducts = data.success ? data.data : [];
             } catch { this.adminProducts=[]; }
             this.adminProductsLoading=false;
@@ -4462,8 +4585,8 @@ function serabutStore() {
             this.adminSaving=true;
             try {
                 const action = this.adminEditProduct ? 'updateProduct' : 'addProduct';
-                const params = new URLSearchParams({
-                    action, adminEmail:this.currentUser.email,
+                const payload = {
+                    action, adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken,
                     nama:      this.adminNewProduct.nama,
                     varian:    this.adminNewProduct.varian,
                     masaAktif: this.adminNewProduct.masaAktif,
@@ -4474,10 +4597,9 @@ function serabutStore() {
                     iconUrl:   this.adminNewProduct.iconUrl||'',
                     kategori:  this.adminNewProduct.kategori||'',
                     benefits:  JSON.stringify(this.adminBenefitItems),
-                });
-                if(this.adminEditProduct) params.append('rowIndex', this.adminEditProduct.rowIndex);
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                };
+                if(this.adminEditProduct) payload.rowIndex = this.adminEditProduct.rowIndex;
+                const data = await this.gasPost(payload);
                 if(data.success) {
                     // Update local state benefits untuk produk yang diedit
                     if(this.adminEditProduct) {
@@ -4500,9 +4622,7 @@ function serabutStore() {
             const newAktif = !p.aktif;
             p.aktif = newAktif;
             try {
-                const params = new URLSearchParams({ action:'updateProductAktif', adminEmail:this.currentUser.email, rowIndex:p.rowIndex, aktif:String(newAktif) });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'updateProductAktif', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:p.rowIndex, aktif:String(newAktif) });
                 if (!data.success) { p.aktif = !newAktif; this._adminShowMsg(data.error||'Gagal update'); }
                 else { this._adminShowMsg(newAktif ? 'Produk diaktifkan ✓' : 'Produk dinonaktifkan ✓'); await this.fetchProducts(); }
             } catch { p.aktif = !newAktif; this._adminShowMsg('Gagal terhubung'); }
@@ -4510,8 +4630,7 @@ function serabutStore() {
         async adminUpdateStock(p, val) {
             const stok = val===''?'':Number(val);
             try {
-                const params = new URLSearchParams({ action:'updateProductStock', adminEmail:this.currentUser.email, rowIndex:p.rowIndex, stok });
-                await fetch(`${this.GAS_URL}?${params}`);
+                await this.gasPost({ action:'updateProductStock', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:p.rowIndex, stok });
                 p.stok = val===''?null:Number(val);
                 this._adminShowMsg('Stok diperbarui ✓');
                 await this.fetchProducts();
@@ -4520,9 +4639,7 @@ function serabutStore() {
         async adminDeleteProduct(p) {
             if(!confirm(`Hapus produk "${p.nama} — ${p.varian}"?`)) return;
             try {
-                const params = new URLSearchParams({ action:'deleteProduct', adminEmail:this.currentUser.email, rowIndex:p.rowIndex });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'deleteProduct', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:p.rowIndex });
                 if(data.success) { this._adminShowMsg('Produk dihapus ✓'); await this.adminLoadProducts(); await this.fetchProducts(); }
                 else { this._adminShowMsg(data.error||'Gagal hapus'); }
             } catch { this._adminShowMsg('Gagal terhubung'); }
@@ -4552,9 +4669,7 @@ function serabutStore() {
                 const entry = { title:this.adminNewGuide.title, steps:this.adminNewGuide.steps.filter(s=>s.trim()), note:this.adminNewGuide.note };
                 if(this.adminEditGuideIdx>=0) tabGuides[this.adminEditGuideIdx]=entry;
                 else tabGuides.push(entry);
-                const params = new URLSearchParams({ action:'saveGuides', adminEmail:this.currentUser.email, tab:this.adminGuideTab, guidesJson:JSON.stringify(tabGuides) });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'saveGuides', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, tab:this.adminGuideTab, guidesJson:JSON.stringify(tabGuides) });
                 if(data.success) {
                     this.adminGuides[this.adminGuideTab] = tabGuides;
                     this.guides[this.adminGuideTab] = tabGuides.map(g=>({...g,open:false}));
@@ -4570,9 +4685,7 @@ function serabutStore() {
             try {
                 const tabGuides = [...this.adminGuides[this.adminGuideTab]];
                 tabGuides.splice(gi,1);
-                const params = new URLSearchParams({ action:'saveGuides', adminEmail:this.currentUser.email, tab:this.adminGuideTab, guidesJson:JSON.stringify(tabGuides) });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'saveGuides', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, tab:this.adminGuideTab, guidesJson:JSON.stringify(tabGuides) });
                 if(data.success) {
                     this.adminGuides[this.adminGuideTab]=tabGuides;
                     this.guides[this.adminGuideTab]=tabGuides.map(g=>({...g,open:false}));
@@ -4648,14 +4761,13 @@ function serabutStore() {
             if(!rowIndex) { this._adminShowMsg('Pilih produk terlebih dahulu'); return; }
             this.adminSaving = true;
             try {
-                const params = new URLSearchParams({
-                    action:     'saveProductBenefits',
-                    adminEmail: this.currentUser.email,
-                    rowIndex:   rowIndex,
-                    benefits:   JSON.stringify(this.adminBenefitItems),
+                const data = await this.gasPost({
+                    action:      'saveProductBenefits',
+                    adminEmail:  this.currentUser.email,
+                    adminToken:  this.currentUser.sessionToken,
+                    rowIndex,
+                    benefits:    JSON.stringify(this.adminBenefitItems),
                 });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
                 if(data.success) {
                     const saved = [...this.adminBenefitItems];
                     const idx = this.products.findIndex(p => p.rowIndex == rowIndex);
@@ -4696,9 +4808,7 @@ function serabutStore() {
         async adminLoadOrders() {
             this.adminOrdersLoading=true;
             try {
-                const params = new URLSearchParams({ action:'getAllOrders', adminEmail:this.currentUser.email });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'getAllOrders', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken });
                 this.adminOrders = data.success ? data.data : [];
             } catch { this.adminOrders=[]; }
             this.adminOrdersLoading=false;
@@ -4706,9 +4816,7 @@ function serabutStore() {
         async adminUpdateOrderStatus(order, newStatus) {
             if(!newStatus) return;
             try {
-                const params = new URLSearchParams({ action:'updateOrderStatus', adminEmail:this.currentUser.email, rowIndex:order.rowIndex, status:newStatus });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'updateOrderStatus', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:order.rowIndex, status:newStatus });
                 if(data.success) {
                     order.status = newStatus;
                     this._adminShowMsg(`Status ${order.orderId} → ${newStatus} ✓`);
@@ -4735,9 +4843,7 @@ function serabutStore() {
             if(!this.currentUser || this.ordersLoading) return;
             this.ordersLoading=true;
             try {
-                const params = new URLSearchParams({ action:'getOrders', email:this.currentUser.email });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'getOrders', email:this.currentUser.email, sessionToken:this.currentUser.sessionToken });
                 this.orders = data.data || [];
             } catch { this.orders=[]; }
             this.ordersLoading=false;
@@ -4745,9 +4851,7 @@ function serabutStore() {
         async loadProfile() {
             if(!this.currentUser) return;
             try {
-                const params = new URLSearchParams({ action:'getProfile', email:this.currentUser.email });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const data = await this.gasPost({ action:'getProfile', email:this.currentUser.email, sessionToken:this.currentUser.sessionToken });
                 if(data.success) this.profileExtra = data.profile || {};
             } catch {}
         },
@@ -4767,9 +4871,10 @@ function serabutStore() {
             if(!this.editForm.nama.trim()){ this.editError='Nama tidak boleh kosong'; return; }
             this.editLoading=true; this.editError='';
             try {
-                const params = new URLSearchParams({
+                const data = await this.gasPost({
                     action:       'updateProfile',
                     email:        this.currentUser.email,
+                    sessionToken: this.currentUser.sessionToken,
                     nama:         this.editForm.nama.trim(),
                     wa:           this.editForm.wa || '',
                     tanggalLahir: this.editForm.tanggalLahir,
@@ -4777,8 +4882,6 @@ function serabutStore() {
                     alamat:       this.editForm.alamat,
                     provinsi:     this.editForm.provinsi,
                 });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
                 if(data.success) {
                     this.currentUser = data.user;
                     localStorage.setItem('serabutUser', JSON.stringify(data.user));
@@ -4795,11 +4898,18 @@ function serabutStore() {
             if(newPassword!==konfirmasi){ this.resetPwError='Konfirmasi password tidak cocok'; return; }
             this.resetPwLoading=true; this.resetPwError='';
             try {
-                const oldHash = await sha256(oldPassword);
-                const newHash = await sha256(newPassword);
-                const params  = new URLSearchParams({ action:'changePassword', email:this.currentUser.email, oldPassword:oldHash, newPassword:newHash });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
+                const email = this.currentUser.email.toLowerCase().trim();
+                const oldHash = await sha256(email + ':' + oldPassword);
+                const newHash = await sha256(email + ':' + newPassword);
+                const oldHashLegacy = await sha256(oldPassword);
+                const data = await this.gasPost({
+                    action:           'changePassword',
+                    email,
+                    sessionToken:     this.currentUser.sessionToken,
+                    oldPassword:      oldHash,
+                    newPassword:      newHash,
+                    oldPasswordLegacy: oldHashLegacy,
+                });
                 if(data.success) { this.resetPwSuccess=true; }
                 else { this.resetPwError = data.error||'Gagal mengubah password'; }
             } catch { this.resetPwError='Gagal terhubung ke server'; }

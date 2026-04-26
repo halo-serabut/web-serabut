@@ -110,8 +110,13 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 - [2026-04-26] Selesai: getProductLogo() case-insensitive — fix CorelDraw icon (GSheet "CorelDraw" vs map "CorelDRAW"), Microsoft 365 alias ke Office icon
 - [2026-04-26] Selesai: Kategori grid — grid-cols-5 mobile (2 baris) + md:grid-cols-10 desktop (1 baris)
 - [2026-04-26] Selesai: OpenClaw CATALOG.md rewrite — clean URL serabut.id/produk/[slug] untuk semua produk; SOUL.md + AGENTS.md diupdate; GAS system prompt Sera bisa share link produk spesifik
+- [2026-04-26] Selesai: Guest order flow revamp — hapus akun temp "Pembeli"; `isMember` computed helper; tamu bisa order tapi harga penuh; duration selector + price area tunjukkan "X% OFF Member" badge ke tamu; order modal user card ganti jadi "Pesan sebagai Tamu" + tombol Login
+- [2026-04-26] Selesai: Security hardening full (Critical + High) — GAS v5 + frontend:
+  - GAS: FONNTE_TOKEN ke Script Properties, session token system (UUID, 30 hari), OTP lockout 5x, server-side price validation, Google JWT verify via tokeninfo API, doGet hanya public, doPost semua sensitive action, error sanitization
+  - Frontend: `gasPost()` helper (semua sensitive call via POST JSON body), salted password hash `sha256(email:password)` + legacy migration, sessionToken disimpan di localStorage + dikirim ke setiap request, Google SSO kirim raw credential (no client-side decode), session expiry 30 hari auto-logout, checkStatus min 4 karakter
 
 ## Current Focus
+- **Security (selesai):** GAS v5 + frontend fully hardened. Semua sensitive request via POST. Session token wajib untuk semua auth endpoint. Langkah berikutnya: `clasp push` dari `/gas` lalu re-deploy GAS (new version) agar backend v5 aktif.
 - **Product detail pages** — Live di serabut.id/produk/[slug]. Deep link support: buka langsung di browser atau share dari Sera.
 - **GAS deployment:** Setiap edit Code.gs → clasp push dari `/gas` folder → re-deploy di script.google.com (Manage Deployments → Edit → New version → Update). GAS_URL tidak perlu diganti.
 - **Sera (OpenClaw + GAS):** Sama-sama pakai DeepSeek via OpenRouter. CATALOG.md di OpenClaw workspace sudah diupdate dengan link produk bersih.
