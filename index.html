@@ -504,7 +504,7 @@
                             <div class="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             </div>
-                            <span class="text-sm text-gray-300"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="375f565b5877445245565542431954585a">[email&#160;protected]</a></span>
+                            <span class="text-sm text-gray-300">halo@serabut.com</span>
                         </div>
                         <div class="flex items-center gap-3">
                             <div class="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
@@ -801,23 +801,6 @@
             <h1 class="text-2xl font-black text-gray-900 mb-1">Cek Status Akun</h1>
             <p class="text-sm text-gray-400 mb-5">Cari menggunakan nama, email, atau nomor WhatsApp</p>
 
-            <!-- Cek Pesanan shortcut for guest -->
-            <template x-if="!currentUser">
-                <button @click="guestCheckModal=true; guestCheckResult=null; guestCheckError=''; guestCheckOrderId=''; guestCheckEmail=''"
-                        class="w-full mb-4 flex items-center justify-between bg-brand-50 border border-brand-200 rounded-2xl px-4 py-3 hover:bg-brand-100 transition-colors active:scale-[0.99]">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 gradient-card rounded-lg flex items-center justify-center">
-                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                        </div>
-                        <div class="text-left">
-                            <div class="text-sm font-bold text-brand-600">Cek Status Pesanan Saya</div>
-                            <div class="text-xs text-brand-400">Punya Order ID? Cek status tanpa login</div>
-                        </div>
-                    </div>
-                    <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </button>
-            </template>
-
             <!-- Smart Search Bar -->
             <div class="relative mb-4">
                 <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -1068,11 +1051,10 @@
                             <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg"
                                 :class="{
                                     'bg-yellow-50 text-yellow-700': order.status==='Pending',
-                                    'bg-orange-50 text-orange-600': order.status==='Menunggu Bayar',
                                     'bg-blue-50 text-blue-700':    order.status==='Diproses',
                                     'bg-emerald-50 text-emerald-700': order.status==='Aktif'||order.status==='Selesai',
                                     'bg-red-50 text-red-600':      order.status==='Dibatalkan',
-                                    'bg-gray-50 text-gray-500':    !['Pending','Menunggu Bayar','Diproses','Aktif','Selesai','Dibatalkan'].includes(order.status)
+                                    'bg-gray-100 text-gray-500':   !['Pending','Diproses','Aktif','Selesai','Dibatalkan'].includes(order.status)
                                 }" x-text="order.status"></span>
                         </div>
 
@@ -2690,28 +2672,37 @@
                         <!-- Guest -->
                         <template x-if="!isMember">
                             <div class="space-y-3">
-                                <!-- Member savings banner — tampil jika ada item flash sale -->
-                                <template x-if="cart.some(i => flashSaleItem(i.product.nama, i.variant.varian, i.variant.masaAktif))">
-                                    <div class="rounded-2xl p-4 text-white" style="background: linear-gradient(135deg, #ef4444, #f97316)">
-                                        <div class="flex items-start gap-2.5 mb-3">
-                                            <span class="text-2xl leading-none">🎁</span>
-                                            <div>
+                                        <!-- Member savings banner — SELALU tampil untuk tamu -->
+                                <div class="rounded-2xl p-4 text-white" style="background: linear-gradient(135deg, #ef4444, #f97316)">
+                                    <div class="flex items-start gap-2.5 mb-3">
+                                        <span class="text-2xl leading-none flex-none">🎁</span>
+                                        <div class="flex-1 min-w-0">
+                                            <!-- Jika ada flash sale savings -->
+                                            <template x-if="cartMemberSavings > 0">
                                                 <div class="font-black text-sm leading-snug">
-                                                    Hemat
-                                                    <span x-text="formatPrice(cart.reduce((s,i)=>{ const f=flashSaleItem(i.product.nama,i.variant.varian,i.variant.masaAktif); return s+(f?(i.variant.harga-f.harga)*(i.qty||1):0) }, 0))"></span>
-                                                    jika jadi Member!
+                                                    Hemat <span x-text="formatPrice(cartMemberSavings)"></span> jika jadi Member!
                                                 </div>
-                                                <div class="text-xs text-white/80 mt-0.5">Daftar gratis &amp; nikmati harga Flash Sale + promo eksklusif</div>
-                                            </div>
+                                            </template>
+                                            <!-- Jika tidak ada flash sale -->
+                                            <template x-if="cartMemberSavings === 0">
+                                                <div class="font-black text-sm leading-snug">
+                                                    Nikmati harga Flash Sale &amp; promo eksklusif Member!
+                                                </div>
+                                            </template>
+                                            <div class="text-xs text-white/80 mt-0.5">Daftar gratis • Proses lebih cepat • Harga spesial</div>
                                         </div>
-                                        <button @click="cartCheckoutModal=false; openAuth('register')" class="w-full bg-white text-red-500 font-black text-sm py-2.5 rounded-xl active:scale-95 transition-all">
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button @click="cartCheckoutModal=false; openAuth('register')" class="flex-1 bg-white text-red-500 font-black text-sm py-2.5 rounded-xl active:scale-95 transition-all">
                                             Daftar Sekarang →
                                         </button>
+                                        <button @click="cartCheckoutModal=false; openAuth('login')" class="flex-1 bg-white/20 border border-white/30 text-white font-bold text-sm py-2.5 rounded-xl active:scale-95 transition-all">
+                                            Sudah punya akun
+                                        </button>
                                     </div>
-                                </template>
-                                <div class="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 border border-gray-100">
-                                    <span class="text-xs text-gray-500 font-medium">Pesan sebagai Tamu</span>
-                                    <button @click="cartCheckoutModal=false; openAuth('login')" class="text-xs font-bold text-brand-500 hover:underline">Masuk →</button>
+                                </div>
+                                <div class="flex items-center justify-center bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
+                                    <span class="text-xs text-gray-400">atau lanjut pesan sebagai tamu di bawah</span>
                                 </div>
                                 <div>
                                     <label class="text-xs font-semibold text-gray-600 mb-1.5 block">Nama Lengkap <span class="text-red-400">*</span></label>
@@ -3021,7 +3012,7 @@
                     <p>Dengan mendaftar, kamu menyetujui pengumpulan dan penggunaan data (nama, email, nomor WA) untuk keperluan layanan Serabut Store.</p>
                     <p>Data kamu <strong class="text-gray-700">tidak dijual</strong> ke pihak ketiga. Password tersimpan terenkripsi dan tidak bisa dibaca siapapun.</p>
                     <p>Data digunakan untuk: memproses pesanan, mengirim OTP, notifikasi order, dan komunikasi layanan pelanggan.</p>
-                    <p>Kamu berhak meminta akses, koreksi, atau penghapusan data kapan saja via <strong class="text-gray-700"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="137b727f7c53607661727166673d707c7e">[email&#160;protected]</a></strong>.</p>
+                    <p>Kamu berhak meminta akses, koreksi, atau penghapusan data kapan saja via <strong class="text-gray-700">halo@serabut.com</strong>.</p>
                     <p>Koneksi website dilindungi enkripsi SSL. Sesuai UU Pelindungan Data Pribadi (UU PDP) yang berlaku di Indonesia.</p>
                     <p class="pt-1 border-t border-gray-100">Lihat lengkap: <button @click.stop="legalModal='privacy'" class="text-brand-500 underline">Kebijakan Privasi</button> &amp; <button @click.stop="legalModal='terms'" class="text-brand-500 underline">Syarat &amp; Ketentuan</button></p>
                 </div>
@@ -3426,30 +3417,32 @@
             <!-- ── ADOBE ── -->
             <template x-if="orderExtraType==='adobe'">
                 <div class="space-y-3">
-                    <!-- Info box — opsi B: password via WA -->
-                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 flex gap-2.5">
-                        <svg class="w-4 h-4 text-blue-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <div class="text-xs text-blue-700 leading-relaxed space-y-0.5">
-                            <p><strong>Cara aktivasi Adobe:</strong></p>
-                            <p>1. Isi email akun Adobe kamu di bawah</p>
-                            <p>2. Tim kami WA kamu untuk minta password <strong>secara private</strong></p>
-                            <p>3. Kami login, beli subscription, lalu konfirmasi ke kamu</p>
-                            <p class="text-blue-500 mt-1">🔒 Jangan bagikan password di form ini.</p>
-                        </div>
+                    <!-- Warning box -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2.5">
+                        <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                        <p class="text-xs text-amber-700 leading-relaxed">Kami perlu login ke akun Adobe kamu untuk membeli langsung atas namamu. <span class="font-bold">Disarankan ganti password setelah aktivasi selesai.</span></p>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email akun Adobe kamu <span class="text-red-500">*</span></label>
                         <input x-model="orderExtra.adobeEmail" type="email" placeholder="email@adobe.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
-                        <p class="text-[11px] text-gray-400 mt-1.5">Email yang kamu gunakan untuk login ke akun Adobe</p>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Password akun Adobe kamu <span class="text-red-500">*</span></label>
+                        <input x-model="orderExtra.adobePass" type="password" placeholder="Password akun Adobe" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                        <p class="text-[11px] text-amber-600 mt-1.5 font-medium">⚠ Segera ganti password setelah aktivasi selesai</p>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email untuk menerima produk <span class="text-red-500">*</span></label>
+                        <label x-show="currentUser?.email" class="flex items-center gap-2 cursor-pointer mb-2 select-none">
+                            <input type="checkbox" x-model="orderExtra.emailSameAsProfile" @change="if(orderExtra.emailSameAsProfile) orderExtra.emailAktif=(currentUser?.email||'')" class="w-4 h-4 rounded accent-red-600">
+                            <span class="text-xs text-gray-600">Gunakan email profil saya — <span class="font-semibold text-gray-800" x-text="currentUser?.email"></span></span>
+                        </label>
+                        <input x-show="!orderExtra.emailSameAsProfile" x-model="orderExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                     </div>
                     <div x-show="!isOneTimeProduct">
                         <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email reminder <span class="text-gray-400 font-normal">(opsional)</span></label>
-                        <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email Adobe" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
-                        <p class="text-[11px] text-gray-400 mt-1.5">Isi jika ingin reminder perpanjangan dikirim ke email berbeda</p>
-                    </div>
-                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 flex gap-2.5">
-                        <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                        <p class="text-xs text-amber-700 leading-relaxed"><strong>Setelah aktivasi selesai</strong>, segera ganti password Adobe kamu kembali ke password yang kamu inginkan.</p>
+                        <input x-model="orderExtra.emailReminder" type="email" placeholder="Kosongi jika sama dengan email di atas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                        <p class="text-[11px] text-gray-400 mt-1.5">Isi jika pesan untuk orang lain dan ingin reminder dikirim ke email berbeda</p>
                     </div>
                 </div>
             </template>
@@ -3503,14 +3496,7 @@
         <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4"><svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div>
         <h3 class="font-black text-gray-900 text-xl mb-2">Pesanan Diterima!</h3>
         <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-3" x-text="currentOrderId"></div>
-        <p class="text-gray-500 text-sm mb-4 leading-relaxed">Tim kami akan menghubungi kamu via WhatsApp dalam waktu dekat untuk proses pembayaran &amp; aktivasi.</p>
-        <!-- Guest reminder to save order ID -->
-        <template x-if="!currentUser">
-            <div class="bg-brand-50 border border-brand-200 rounded-xl p-3 mb-4 text-left">
-                <p class="text-xs text-brand-700 font-semibold mb-1">💡 Simpan Order ID kamu!</p>
-                <p class="text-xs text-brand-600">Gunakan Order ID di atas untuk cek status pesanan kapan saja di halaman <strong>Cek Status</strong> tanpa perlu login.</p>
-            </div>
-        </template>
+        <p class="text-gray-500 text-sm mb-6 leading-relaxed">Tim kami akan menghubungi kamu via WhatsApp dalam waktu dekat untuk proses pembayaran & aktivasi.</p>
         <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+currentOrderId+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full gradient-card text-white font-bold py-3.5 rounded-2xl mb-3 text-sm active:scale-95 shadow-sm">Chat WhatsApp Sekarang</a>
         <button @click="orderSuccess=false; productModal=false; currentOrderId=null; renewalMode=false" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Tutup</button>
     </div>
@@ -3632,7 +3618,7 @@
                     </div>
 
                     <div class="rounded-2xl bg-brand-50 border border-brand-100 p-4">
-                        <p class="text-gray-600 text-center">Ada pertanyaan? Hubungi kami di <strong class="text-gray-800"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="254d44494a65564057444750510b464a48">[email&#160;protected]</a></strong> atau WA <strong class="text-gray-800">0888-1500-555</strong></p>
+                        <p class="text-gray-600 text-center">Ada pertanyaan? Hubungi kami di <strong class="text-gray-800">halo@serabut.com</strong> atau WA <strong class="text-gray-800">0888-1500-555</strong></p>
                     </div>
                 </div>
             </template>
@@ -3753,11 +3739,11 @@
                                 <span class="text-gray-600">Menarik persetujuan penggunaan data kapan saja</span>
                             </div>
                         </div>
-                        <p class="text-gray-500 text-xs pt-1">Kirim permintaan ke <strong><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ed858c8182ad9e889f8c8f9899c38e8280">[email&#160;protected]</a></strong> — kami akan merespons dalam 14 hari kerja.</p>
+                        <p class="text-gray-500 text-xs pt-1">Kirim permintaan ke <strong>halo@serabut.com</strong> — kami akan merespons dalam 14 hari kerja.</p>
                     </div>
 
                     <div class="rounded-2xl bg-brand-50 border border-brand-100 p-4">
-                        <p class="text-gray-600 text-center">Pertanyaan soal privasi? Hubungi kami di <strong class="text-gray-800"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="442c25282b04372136252631306a272b29">[email&#160;protected]</a></strong> atau WA <strong class="text-gray-800">0888-1500-555</strong></p>
+                        <p class="text-gray-600 text-center">Pertanyaan soal privasi? Hubungi kami di <strong class="text-gray-800">halo@serabut.com</strong> atau WA <strong class="text-gray-800">0888-1500-555</strong></p>
                     </div>
                 </div>
             </template>
@@ -3773,7 +3759,7 @@
 <!-- ══════════════════════════════════════════════════════
      ALPINE.JS APP
 ══════════════════════════════════════════════════════ -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ── SHA-256 client-side hash (untuk password) ──────────
 async function sha256(str) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -3821,7 +3807,7 @@ function serabutStore() {
         guestNameInput: '',
         orderModal:   false,
         orderSuccess: false,
-        orderExtra:   { nama:'', username:'', microsoftEmail:'', emailAktif:'', emailSameAsProfile:true, emailReminder:'', adobeEmail:'' },
+        orderExtra:   { nama:'', username:'', microsoftEmail:'', emailAktif:'', emailSameAsProfile:true, emailReminder:'', adobeEmail:'', adobePass:'' },
         orderExtraError: '',
 
         // Product detail
@@ -3898,22 +3884,6 @@ function serabutStore() {
         cartCheckoutSuccess: false,
         cartOrderIds: [],
         cartToast: '',
-
-        // Order Detail Modal
-        orderDetailModal: false,
-        orderDetailData:  null,
-
-        // Guest Order Check Modal
-        guestCheckModal:   false,
-        guestCheckOrderId: '',
-        guestCheckEmail:   '',
-        guestCheckError:   '',
-        guestCheckResult:  null,
-        guestCheckLoading: false,
-
-        // iPaymu Payment Modal
-        paymentModal: false,
-        paymentData:  null,
         cartToastTimer: null,
         // Cart add modal (product-specific fields)
         cartAddModal: false,
@@ -4074,6 +4044,12 @@ function serabutStore() {
         get isMember() { return !!(this.currentUser && !this.currentUser.isGuest); },
         get cartCount() { return this.cart.reduce((s,i) => s + (i.qty||1), 0); },
         get cartTotal() { return this.cart.reduce((s,i) => s + this.cartItemUnitPrice(i) * (i.qty||1), 0); },
+        get cartMemberSavings() {
+            return this.cart.reduce((s,i) => {
+                const f = this.flashSaleItem(i.product.nama, i.variant.varian, i.variant.masaAktif);
+                return s + (f ? (i.variant.harga - f.harga) * (i.qty||1) : 0);
+            }, 0);
+        },
         get orderUnitPrice() {
             if (!this.selectedVariant) return 0;
             if (!this.isMember) return this.selectedVariant.harga;
@@ -4866,6 +4842,7 @@ function serabutStore() {
                     emailAktif:     this.isMember ? effectiveEmail : this.orderExtra.guestEmail.trim(),
                     emailReminder:  this.orderExtra.emailReminder,
                     adobeEmail:     this.orderExtra.adobeEmail,
+                    adobePass:      this.orderExtra.adobePass,
                 });
                 if(data.success) {
                     this.currentOrderId = data.orderId;
@@ -5741,86 +5718,6 @@ function serabutStore() {
             } catch(err) { console.error('[loadOrders] exception:', err); this.orders=[]; }
             finally { this.ordersLoading=false; }
         },
-
-        // ── Order Detail Modal ─────────────────────────
-        openOrderDetail(order) {
-            this.orderDetailData  = order;
-            this.orderDetailModal = true;
-        },
-
-        // ── Cancel Order (user self-service) ───────────
-        async cancelOrderUser(order) {
-            const email = this.currentUser?.email || order.email || '';
-            if (!email) {
-                // guest — buka modal cek pesanan
-                this.guestCheckModal  = true;
-                this.guestCheckOrderId = order.orderId || '';
-                return;
-            }
-            if (!confirm(`Batalkan pesanan ${order.orderId}?\nTindakan ini tidak bisa dibatalkan.`)) return;
-            try {
-                const data = await this.gasPost({
-                    action:       'cancelOrder',
-                    email:        email,
-                    sessionToken: this.currentUser?.sessionToken || '',
-                    orderId:      order.orderId,
-                });
-                if (data.success) {
-                    // Update status lokal
-                    const idx = this.orders.findIndex(o => o.orderId === order.orderId);
-                    if (idx !== -1) this.orders[idx].status = 'Dibatalkan';
-                    if (this.orderDetailData?.orderId === order.orderId) this.orderDetailData.status = 'Dibatalkan';
-                    alert('Pesanan berhasil dibatalkan.');
-                } else {
-                    alert(data.error || 'Gagal membatalkan pesanan. Hubungi CS.');
-                }
-            } catch { alert('Gagal terhubung ke server. Coba lagi.'); }
-        },
-
-        // ── Guest Order Check ──────────────────────────
-        async checkOrderGuest() {
-            const orderId = this.guestCheckOrderId.trim();
-            const email   = this.guestCheckEmail.trim();
-            if (!orderId || !email) { this.guestCheckError = 'Order ID dan email wajib diisi'; return; }
-            this.guestCheckError  = '';
-            this.guestCheckResult = null;
-            this.guestCheckLoading = true;
-            try {
-                const data = await this.gasPost({ action:'checkOrderGuest', orderId, email });
-                if (data.success) {
-                    this.guestCheckResult = data.data;
-                } else {
-                    this.guestCheckError = data.error || 'Pesanan tidak ditemukan';
-                }
-            } catch { this.guestCheckError = 'Gagal terhubung ke server'; }
-            this.guestCheckLoading = false;
-        },
-
-        // ── iPaymu Payment ─────────────────────────────
-        async openPaymentModal(order) {
-            this.paymentData  = null;
-            this.paymentModal = true;
-            const email = this.currentUser?.email || order.email || '';
-            try {
-                const data = await this.gasPost({
-                    action:       'createPaymentIPaymu',
-                    email:        email,
-                    sessionToken: this.currentUser?.sessionToken || '',
-                    orderId:      order.orderId,
-                    amount:       order.harga,
-                    buyerName:    this.currentUser?.nama || order.nama || '',
-                    buyerEmail:   email,
-                    buyerPhone:   this.currentUser?.wa   || order.wa   || '',
-                    produkName:   order.produk,
-                });
-                if (data.success) {
-                    this.paymentData = data;
-                } else {
-                    this.paymentModal = false;
-                    alert(data.error || 'Gagal membuat sesi pembayaran');
-                }
-            } catch { this.paymentModal = false; alert('Gagal terhubung ke server'); }
-        },
         async loadProfile() {
             if(!this.currentUser) return;
             try {
@@ -6078,232 +5975,6 @@ function serabutStore() {
                 </div>
             </template>
 
-        </div>
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     ORDER DETAIL MODAL
-══════════════════════════════════════════════════════ -->
-<div x-show="orderDetailModal" x-cloak class="fixed inset-0 z-[70] flex items-end md:items-center justify-center p-0 md:p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="orderDetailModal=false"></div>
-    <div class="relative bg-white rounded-t-3xl md:rounded-3xl w-full md:max-w-md max-h-[90vh] overflow-y-auto shadow-2xl modal-enter">
-        <div class="sticky top-0 bg-white px-5 pt-5 pb-3 border-b border-gray-100 z-10">
-            <div class="md:hidden flex justify-center mb-3"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
-            <div class="flex items-center justify-between">
-                <h3 class="font-black text-gray-900 text-lg">Detail Pesanan</h3>
-                <button @click="orderDetailModal=false" class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-        </div>
-        <template x-if="orderDetailData">
-            <div class="px-5 py-4 space-y-4">
-                <!-- Status banner -->
-                <div class="rounded-2xl px-4 py-3 flex items-center justify-between"
-                     :class="{
-                        'bg-yellow-50': orderDetailData.status==='Pending',
-                        'bg-orange-50': orderDetailData.status==='Menunggu Bayar',
-                        'bg-blue-50':   orderDetailData.status==='Diproses',
-                        'bg-emerald-50':orderDetailData.status==='Aktif'||orderDetailData.status==='Selesai',
-                        'bg-red-50':    orderDetailData.status==='Dibatalkan',
-                        'bg-gray-50':   !['Pending','Menunggu Bayar','Diproses','Aktif','Selesai','Dibatalkan'].includes(orderDetailData.status)
-                     }">
-                    <div>
-                        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</div>
-                        <div class="font-black text-gray-800 text-base" x-text="orderDetailData.status"></div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">No. Pesanan</div>
-                        <div class="font-black text-brand-500 text-sm" x-text="orderDetailData.orderId"></div>
-                    </div>
-                </div>
-
-                <!-- Produk info -->
-                <div class="bg-gray-50 rounded-2xl p-4 space-y-2">
-                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Produk</div>
-                    <div class="font-bold text-gray-800" x-text="orderDetailData.produk"></div>
-                    <div class="text-sm text-gray-500" x-show="orderDetailData.varian&&orderDetailData.varian!=='-'" x-text="orderDetailData.varian + ' · ' + orderDetailData.masaAktif"></div>
-                    <div class="flex items-center justify-between pt-1 border-t border-gray-200 mt-2">
-                        <span class="text-sm text-gray-500">Total Bayar</span>
-                        <span class="font-black text-brand-500" x-text="formatPrice(orderDetailData.harga)"></span>
-                    </div>
-                </div>
-
-                <!-- Tanggal -->
-                <div class="flex gap-3">
-                    <div class="flex-1 bg-gray-50 rounded-xl p-3">
-                        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tanggal Order</div>
-                        <div class="font-semibold text-gray-700 text-sm" x-text="formatOrderDate(orderDetailData.tanggal)"></div>
-                    </div>
-                    <template x-if="(orderDetailData.status==='Aktif'||orderDetailData.status==='Selesai') && calcExpiry(orderDetailData.tanggal, orderDetailData.masaAktif)">
-                        <div class="flex-1 bg-emerald-50 rounded-xl p-3">
-                            <div class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1">Aktif s/d</div>
-                            <div class="font-semibold text-emerald-700 text-sm" x-text="formatOrderDate(calcExpiry(orderDetailData.tanggal, orderDetailData.masaAktif))"></div>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Akun info (jika sudah aktif) -->
-                <template x-if="orderDetailData.status==='Aktif'||orderDetailData.status==='Selesai'">
-                    <div class="bg-blue-50 rounded-2xl p-4 space-y-2">
-                        <div class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-2">Info Akun</div>
-                        <div x-show="orderDetailData.emailAktif&&orderDetailData.emailAktif!=='-'" class="flex items-center gap-2 text-sm">
-                            <svg class="w-4 h-4 text-blue-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            <span class="text-blue-700 font-medium" x-text="orderDetailData.emailAktif"></span>
-                        </div>
-                        <div x-show="orderDetailData.msNama&&orderDetailData.msNama!=='-'" class="flex items-center gap-2 text-sm">
-                            <svg class="w-4 h-4 text-blue-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                            <span class="text-blue-700 font-medium" x-text="'Nama MS: '+orderDetailData.msNama"></span>
-                        </div>
-                        <div x-show="!orderDetailData.emailAktif||orderDetailData.emailAktif==='-'" class="text-sm text-blue-600">Tim akan menghubungi kamu via WA dengan detail akun.</div>
-                    </div>
-                </template>
-
-                <!-- Panduan -->
-                <button @click="setPage('panduan'); orderDetailModal=false"
-                        class="w-full text-center text-sm text-brand-500 font-semibold py-2.5 rounded-xl border border-brand-200 hover:bg-brand-50 transition-colors">
-                    Lihat Panduan Aktivasi →
-                </button>
-
-                <!-- Cancel button -->
-                <template x-if="orderDetailData.status==='Pending'||orderDetailData.status==='Menunggu Bayar'">
-                    <button @click="cancelOrderUser(orderDetailData); orderDetailModal=false"
-                            class="w-full text-center text-sm text-red-500 font-semibold py-2.5 rounded-xl border border-red-200 hover:bg-red-50 transition-colors">
-                        Batalkan Pesanan
-                    </button>
-                </template>
-
-                <!-- iPaymu payment button -->
-                <template x-if="orderDetailData.status==='Pending'||orderDetailData.status==='Menunggu Bayar'">
-                    <button @click="openPaymentModal(orderDetailData); orderDetailModal=false"
-                            class="w-full gradient-card text-white text-sm font-bold py-3 rounded-xl shadow-sm hover:shadow active:scale-95 transition-all">
-                        Bayar Sekarang via iPaymu
-                    </button>
-                </template>
-            </div>
-        </template>
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     CEK PESANAN GUEST MODAL
-══════════════════════════════════════════════════════ -->
-<div x-show="guestCheckModal" x-cloak class="fixed inset-0 z-[70] flex items-end md:items-center justify-center p-0 md:p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="guestCheckModal=false"></div>
-    <div class="relative bg-white rounded-t-3xl md:rounded-3xl w-full md:max-w-sm shadow-2xl modal-enter">
-        <div class="px-5 pt-5 pb-4">
-            <div class="md:hidden flex justify-center mb-3"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
-            <h3 class="font-black text-gray-900 text-lg mb-1">Cek Status Pesanan</h3>
-            <p class="text-sm text-gray-400 mb-4">Masukkan Order ID dan email yang kamu gunakan saat memesan.</p>
-
-            <div class="space-y-3">
-                <div>
-                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">No. Pesanan</label>
-                    <input x-model="guestCheckOrderId" type="text" placeholder="SRB-XXXXXXXX"
-                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all font-mono">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email</label>
-                    <input x-model="guestCheckEmail" type="email" placeholder="email@kamu.com"
-                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
-                </div>
-                <div x-show="guestCheckError" class="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg" x-text="guestCheckError"></div>
-
-                <!-- Result -->
-                <template x-if="guestCheckResult">
-                    <div class="bg-gray-50 rounded-2xl p-4 space-y-2 border border-gray-200">
-                        <div class="flex items-center justify-between">
-                            <div class="text-xs font-bold text-gray-500" x-text="guestCheckResult.orderId"></div>
-                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg"
-                                  :class="{
-                                    'bg-yellow-50 text-yellow-700': guestCheckResult.status==='Pending',
-                                    'bg-orange-50 text-orange-600': guestCheckResult.status==='Menunggu Bayar',
-                                    'bg-blue-50 text-blue-700':    guestCheckResult.status==='Diproses',
-                                    'bg-emerald-50 text-emerald-700': guestCheckResult.status==='Aktif'||guestCheckResult.status==='Selesai',
-                                    'bg-red-50 text-red-600':      guestCheckResult.status==='Dibatalkan',
-                                  }" x-text="guestCheckResult.status"></span>
-                        </div>
-                        <div class="font-bold text-gray-800 text-sm" x-text="guestCheckResult.produk"></div>
-                        <div class="text-xs text-gray-400" x-text="formatOrderDate(guestCheckResult.tanggal)"></div>
-                        <template x-if="guestCheckResult.status==='Pending'||guestCheckResult.status==='Menunggu Bayar'">
-                            <button @click="cancelOrderUser(guestCheckResult); guestCheckModal=false"
-                                    class="w-full text-xs text-red-500 font-semibold py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors mt-1">
-                                Batalkan Pesanan Ini
-                            </button>
-                        </template>
-                    </div>
-                </template>
-
-                <button @click="checkOrderGuest()"
-                        :disabled="guestCheckLoading"
-                        class="w-full gradient-card text-white text-sm font-bold py-3 rounded-xl shadow-sm active:scale-95 transition-all disabled:opacity-60">
-                    <span x-show="guestCheckLoading" class="flex items-center justify-center gap-2">
-                        <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                        Mengecek...
-                    </span>
-                    <span x-show="!guestCheckLoading">Cek Pesanan</span>
-                </button>
-                <button @click="guestCheckModal=false" class="w-full text-center text-gray-400 text-sm py-2">Tutup</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════
-     IPAYMU PAYMENT MODAL (DUMMY)
-══════════════════════════════════════════════════════ -->
-<div x-show="paymentModal" x-cloak class="fixed inset-0 z-[70] flex items-end md:items-center justify-center p-0 md:p-4">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="paymentModal=false"></div>
-    <div class="relative bg-white rounded-t-3xl md:rounded-3xl w-full md:max-w-sm shadow-2xl modal-enter">
-        <div class="px-5 pt-5 pb-6">
-            <div class="md:hidden flex justify-center mb-3"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center">
-                    <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                </div>
-                <div>
-                    <h3 class="font-black text-gray-900 text-base">Pembayaran via iPaymu</h3>
-                    <p class="text-xs text-gray-400">QRIS · Transfer Bank · dll</p>
-                </div>
-            </div>
-
-            <!-- Dummy notice -->
-            <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4 flex gap-2">
-                <svg class="w-4 h-4 text-yellow-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                <p class="text-xs text-yellow-700">Mode Demo — iPaymu belum aktif. Integrasi penuh segera hadir.</p>
-            </div>
-
-            <template x-if="paymentData">
-                <div class="space-y-3">
-                    <div class="bg-gray-50 rounded-xl p-4 space-y-2">
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-gray-500">Order ID</span>
-                            <span class="font-bold text-gray-800" x-text="paymentData.orderId"></span>
-                        </div>
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-gray-500">Total Bayar</span>
-                            <span class="font-black text-brand-500" x-text="formatPrice(paymentData.amount)"></span>
-                        </div>
-                        <div class="flex items-center justify-between text-sm" x-show="paymentData.sessionId">
-                            <span class="text-gray-500">Session ID</span>
-                            <span class="font-mono text-xs text-gray-500" x-text="paymentData.sessionId?.slice(-12)"></span>
-                        </div>
-                    </div>
-                    <a :href="paymentData.paymentUrl" target="_blank"
-                       class="flex items-center justify-center gap-2 w-full gradient-card text-white text-sm font-bold py-3 rounded-xl shadow-sm hover:shadow active:scale-95 transition-all">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                        Buka Halaman Pembayaran
-                    </a>
-                    <p class="text-[11px] text-center text-gray-400">Kamu akan diarahkan ke halaman pembayaran iPaymu. Setelah bayar, status pesanan akan update otomatis.</p>
-                </div>
-            </template>
-            <template x-if="!paymentData">
-                <div class="flex justify-center py-6">
-                    <svg class="animate-spin w-6 h-6 text-brand-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                </div>
-            </template>
-            <button @click="paymentModal=false" class="w-full text-center text-gray-400 text-sm py-2.5 mt-2">Tutup</button>
         </div>
     </div>
 </div>
