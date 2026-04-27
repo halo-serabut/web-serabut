@@ -1041,58 +1041,84 @@
             <div x-show="!ordersLoading && orders.length>0" class="space-y-3">
                 <template x-for="order in orders" :key="order.orderId">
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-50">
+
+                        <!-- Header: No. Pesanan + Tanggal + Status -->
+                        <div class="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
                             <div>
-                                <div class="text-[10px] text-gray-400 font-medium">No. Pesanan</div>
-                                <div class="text-xs font-black text-gray-700" x-text="order.orderId"></div>
+                                <div class="font-mono text-xs font-bold text-gray-800" x-text="order.orderId"></div>
+                                <div class="text-[10px] text-gray-400 mt-0.5" x-text="formatOrderDate(order.tanggal.split(' ')[0])"></div>
                             </div>
-                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg"
+                            <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg"
                                 :class="{
                                     'bg-yellow-50 text-yellow-700': order.status==='Pending',
-                                    'bg-blue-50 text-blue-700': order.status==='Diproses',
+                                    'bg-blue-50 text-blue-700':    order.status==='Diproses',
                                     'bg-emerald-50 text-emerald-700': order.status==='Aktif'||order.status==='Selesai',
-                                    'bg-red-50 text-red-600': order.status==='Dibatalkan',
-                                    'bg-gray-50 text-gray-500': !['Pending','Diproses','Aktif','Selesai','Dibatalkan'].includes(order.status)
+                                    'bg-red-50 text-red-600':      order.status==='Dibatalkan',
+                                    'bg-gray-100 text-gray-500':   !['Pending','Diproses','Aktif','Selesai','Dibatalkan'].includes(order.status)
                                 }" x-text="order.status"></span>
                         </div>
-                        <div class="px-4 py-3 flex items-center justify-between gap-3">
-                            <div class="flex-1 min-w-0">
-                                <button @click="reorderProduct(order)" class="font-bold text-gray-800 text-sm leading-snug text-left hover:text-brand-500 transition-colors" x-text="order.produk"></button>
-                                <div class="text-xs text-gray-400 mt-0.5">
-                                    <span x-show="order.varian&&order.varian!=='-'" x-text="order.varian + ' · '"></span>
-                                    <span x-text="formatOrderDate(order.tanggal)"></span>
+
+                        <!-- Single item -->
+                        <template x-if="order.items.length === 1">
+                            <div class="px-4 py-3 flex items-start justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <button @click="reorderProduct(order.items[0])"
+                                            class="font-bold text-gray-800 text-sm leading-snug text-left hover:text-brand-500 transition-colors"
+                                            x-text="order.items[0].produk"></button>
+                                    <div class="text-xs text-gray-400 mt-0.5">
+                                        <span x-show="order.items[0].varian && order.items[0].varian!=='-'" x-text="order.items[0].varian"></span>
+                                    </div>
+                                    <!-- Expiry badge — hanya jika Aktif/Selesai -->
+                                    <template x-if="(order.status==='Aktif'||order.status==='Selesai') && calcExpiry(order.tanggal, order.items[0].masaAktif)">
+                                        <div class="mt-1.5">
+                                            <template x-if="isExpired(calcExpiry(order.tanggal, order.items[0].masaAktif))">
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    Expired <span x-text="formatOrderDate(calcExpiry(order.tanggal, order.items[0].masaAktif))"></span>
+                                                </span>
+                                            </template>
+                                            <template x-if="!isExpired(calcExpiry(order.tanggal, order.items[0].masaAktif))">
+                                                <span class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                                      :class="isExpiringSoon(calcExpiry(order.tanggal, order.items[0].masaAktif)) ? 'text-orange-500 bg-orange-50' : 'text-emerald-600 bg-emerald-50'">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                    Aktif s/d <span x-text="formatOrderDate(calcExpiry(order.tanggal, order.items[0].masaAktif))"></span>
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </div>
-                                <!-- Expiry info — hanya tampil jika admin sudah set Aktif/Selesai -->
-                                <template x-if="(order.status==='Aktif'||order.status==='Selesai') && calcExpiry(order.tanggal, order.masaAktif)">
-                                    <div class="mt-1.5 flex items-center gap-1.5">
-                                        <template x-if="isExpired(calcExpiry(order.tanggal, order.masaAktif))">
-                                            <span class="inline-flex items-center gap-1 text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                Expired <span x-text="formatOrderDate(calcExpiry(order.tanggal, order.masaAktif))"></span>
-                                            </span>
-                                        </template>
-                                        <template x-if="!isExpired(calcExpiry(order.tanggal, order.masaAktif))">
-                                            <span class="inline-flex items-center gap-1 text-[10px] font-semibold"
-                                                  :class="isExpiringSoon(calcExpiry(order.tanggal, order.masaAktif)) ? 'text-orange-500 bg-orange-50' : 'text-emerald-600 bg-emerald-50'"
-                                                  class="px-2 py-0.5 rounded-full">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                                Aktif s/d <span x-text="formatOrderDate(calcExpiry(order.tanggal, order.masaAktif))"></span>
-                                            </span>
-                                        </template>
+                                <div class="flex flex-col items-end gap-2 flex-none">
+                                    <div class="text-brand-500 font-black text-sm" x-text="formatPrice(order.items[0].harga)"></div>
+                                    <template x-if="(order.status==='Selesai'||order.status==='Aktif') && calcExpiry(order.tanggal, order.items[0].masaAktif) && (isExpired(calcExpiry(order.tanggal, order.items[0].masaAktif)) || isExpiringSoon(calcExpiry(order.tanggal, order.items[0].masaAktif)))">
+                                        <button @click="renewOrder(order.items[0])"
+                                                class="text-[10px] font-black px-2.5 py-1 rounded-lg bg-brand-500 text-white active:scale-95 transition-all whitespace-nowrap">
+                                            🔄 Perpanjang
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Multi item (cart order) -->
+                        <template x-if="order.items.length > 1">
+                            <div>
+                                <template x-for="(item, idx) in order.items" :key="idx">
+                                    <div class="px-4 py-2.5 flex items-center justify-between gap-3 border-b border-gray-50 last:border-0">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="text-sm font-semibold text-gray-800 truncate" x-text="item.produk"></div>
+                                            <div class="text-[11px] text-gray-400" x-show="item.varian && item.varian!=='-'" x-text="item.varian"></div>
+                                        </div>
+                                        <div class="text-sm font-bold text-gray-700 flex-none" x-text="formatPrice(item.harga)"></div>
                                     </div>
                                 </template>
+                                <!-- Footer total -->
+                                <div class="px-4 py-2.5 flex items-center justify-between bg-gray-50 border-t border-gray-100">
+                                    <div class="text-[11px] text-gray-400"><span x-text="order.items.length"></span> produk</div>
+                                    <div class="text-brand-500 font-black text-sm" x-text="'Total ' + formatPrice(order.total)"></div>
+                                </div>
                             </div>
-                            <div class="flex flex-col items-end gap-2 flex-none">
-                                <div class="text-brand-500 font-black text-sm" x-text="formatPrice(order.harga)"></div>
-                                <!-- Perpanjang button: show jika Selesai/Aktif dan ada expiry -->
-                                <template x-if="(order.status==='Selesai'||order.status==='Aktif') && calcExpiry(order.tanggal, order.masaAktif) && (isExpired(calcExpiry(order.tanggal, order.masaAktif)) || isExpiringSoon(calcExpiry(order.tanggal, order.masaAktif)))">
-                                    <button @click="renewOrder(order)"
-                                            class="text-[10px] font-black px-2.5 py-1 rounded-lg bg-brand-500 text-white active:scale-95 transition-all whitespace-nowrap">
-                                        🔄 Perpanjang
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
+                        </template>
+
                     </div>
                 </template>
             </div>
@@ -2311,6 +2337,7 @@
                             <div x-show="item.extra.username" x-text="'Username: '+item.extra.username"></div>
                             <div x-show="item.extra.microsoftEmail" x-text="'MS Email: '+item.extra.microsoftEmail"></div>
                             <div x-show="item.extra.adobeEmail" x-text="'Adobe: '+item.extra.adobeEmail"></div>
+                            <div x-show="item.extra.emailAktif" x-text="'Email: '+item.extra.emailAktif"></div>
                         </div>
                     </template>
                     <div class="flex items-center justify-between mt-1.5">
@@ -2470,21 +2497,15 @@
         <div class="px-5 py-5 space-y-3">
             <p class="text-xs text-gray-400">Isi data berikut sebelum menambahkan ke keranjang.</p>
 
-            <!-- Web fields -->
+            <!-- Web: hanya Nama Akun Microsoft -->
             <template x-if="cartAddPending && cartExtraType(cartAddPending.product, cartAddPending.variant)==='web'">
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Nama untuk Akun Microsoft <span class="text-red-500">*</span></label>
-                        <input x-model="cartAddExtra.nama" type="text" placeholder="Nama lengkap" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.nama?'border-red-400':''">
-                    </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Username Microsoft yang Diinginkan <span class="text-red-500">*</span></label>
-                        <input x-model="cartAddExtra.username" type="text" placeholder="contoh: budi.santoso" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.username?'border-red-400':''">
-                    </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Nama Akun Microsoft <span class="text-red-500">*</span></label>
+                    <input x-model="cartAddExtra.nama" type="text" placeholder="Nama lengkap" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.nama?'border-red-400':''">
                 </div>
             </template>
 
-            <!-- Family fields -->
+            <!-- Family: email Microsoft -->
             <template x-if="cartAddPending && cartExtraType(cartAddPending.product, cartAddPending.variant)==='family'">
                 <div>
                     <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email Microsoft yang Akan Diundang <span class="text-red-500">*</span></label>
@@ -2492,18 +2513,36 @@
                 </div>
             </template>
 
-            <!-- Adobe fields -->
+            <!-- Adobe: info box + email saja (password diminta via WA secara private) -->
             <template x-if="cartAddPending && cartExtraType(cartAddPending.product, cartAddPending.variant)==='adobe'">
                 <div class="space-y-3">
+                    <div class="bg-blue-50 border border-blue-100 rounded-xl p-3.5">
+                        <div class="flex items-start gap-2.5">
+                            <svg class="w-4 h-4 text-blue-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <div>
+                                <div class="text-xs font-bold text-blue-700 mb-1.5">Cara aktivasi Adobe:</div>
+                                <ol class="text-[11px] text-blue-600 space-y-0.5 list-decimal ml-3 leading-relaxed">
+                                    <li>Isi email akun Adobe kamu di bawah</li>
+                                    <li>Tim kami WA kamu untuk minta password <strong>secara private</strong></li>
+                                    <li>Kami login, beli subscription, lalu konfirmasi ke kamu</li>
+                                </ol>
+                                <div class="text-[11px] text-blue-500 mt-1.5 font-medium">🔒 Jangan bagikan password di form ini.</div>
+                            </div>
+                        </div>
+                    </div>
                     <div>
                         <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email Akun Adobe <span class="text-red-500">*</span></label>
                         <input x-model="cartAddExtra.adobeEmail" type="email" placeholder="email@domain.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.adobeEmail?'border-red-400':''">
                     </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Password Akun Adobe <span class="text-red-500">*</span></label>
-                        <input x-model="cartAddExtra.adobePass" type="password" placeholder="Password akun Adobe kamu" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.adobePass?'border-red-400':''">
-                        <p class="text-[11px] text-gray-400 mt-1">Jangan ganti password setelah aktivasi.</p>
-                    </div>
+                </div>
+            </template>
+
+            <!-- License (produk one-time: Windows, Office, CorelDraw, dll): email penerima -->
+            <template x-if="cartAddPending && cartExtraType(cartAddPending.product, cartAddPending.variant)==='license'">
+                <div>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email Penerima <span class="text-red-500">*</span></label>
+                    <p class="text-[11px] text-gray-400 mb-2">Produk/lisensi akan dikirimkan ke email ini.</p>
+                    <input x-model="cartAddExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.emailAktif?'border-red-400':''">
                 </div>
             </template>
 
@@ -3823,7 +3862,7 @@ function serabutStore() {
         // Cart add modal (product-specific fields)
         cartAddModal: false,
         cartAddPending: null,
-        cartAddExtra: { nama:'', username:'', microsoftEmail:'', adobeEmail:'', adobePass:'' },
+        cartAddExtra: { nama:'', username:'', microsoftEmail:'', adobeEmail:'', adobePass:'', emailAktif:'' },
         cartAddError: '',
 
         // Status check
@@ -4574,9 +4613,13 @@ function serabutStore() {
         cartExtraType(product, variant) {
             const cat = (product?.category || '').toLowerCase();
             const v   = (variant?.varian  || '').toLowerCase();
+            const ma  = (variant?.masaAktif || '').toLowerCase();
             if (cat === 'adobe')      return 'adobe';
             if (v.includes('family')) return 'family';
             if (v.includes('web'))    return 'web';
+            // Produk one-time (Windows, Office, CorelDraw, G Suite, dll) — masaAktif bukan bulan/tahun
+            const isOnetime = !ma.includes('bulan') && !ma.includes('tahun') && !ma.includes('month') && !ma.includes('year');
+            if (isOnetime)            return 'license';
             return 'other';
         },
         cartItemUnitPrice(item) {
@@ -4590,7 +4633,7 @@ function serabutStore() {
             const type = this.cartExtraType(product, v);
             if (type !== 'other') {
                 this.cartAddPending = { product, variant: v };
-                this.cartAddExtra   = { nama:'', username:'', microsoftEmail:'', adobeEmail:'', adobePass:'' };
+                this.cartAddExtra   = { nama:'', username:'', microsoftEmail:'', adobeEmail:'', adobePass:'', emailAktif:'' };
                 this.cartAddError   = '';
                 this.cartAddModal   = true;
                 return;
@@ -4600,15 +4643,10 @@ function serabutStore() {
         confirmAddToCart() {
             const { product, variant } = this.cartAddPending;
             const type = this.cartExtraType(product, variant);
-            if (type === 'web') {
-                if (!this.cartAddExtra.nama.trim())     { this.cartAddError = 'Nama untuk akun Microsoft wajib diisi'; return; }
-                if (!this.cartAddExtra.username.trim()) { this.cartAddError = 'Username Microsoft wajib diisi'; return; }
-            }
-            if (type === 'family' && !this.cartAddExtra.microsoftEmail.trim()) { this.cartAddError = 'Email Microsoft wajib diisi'; return; }
-            if (type === 'adobe') {
-                if (!this.cartAddExtra.adobeEmail.trim()) { this.cartAddError = 'Email akun Adobe wajib diisi'; return; }
-                if (!this.cartAddExtra.adobePass.trim())  { this.cartAddError = 'Password Adobe wajib diisi'; return; }
-            }
+            if (type === 'web'     && !this.cartAddExtra.nama.trim())         { this.cartAddError = 'Nama akun Microsoft wajib diisi'; return; }
+            if (type === 'family'  && !this.cartAddExtra.microsoftEmail.trim()){ this.cartAddError = 'Email Microsoft wajib diisi'; return; }
+            if (type === 'adobe'   && !this.cartAddExtra.adobeEmail.trim())   { this.cartAddError = 'Email akun Adobe wajib diisi'; return; }
+            if (type === 'license' && !this.cartAddExtra.emailAktif.trim())   { this.cartAddError = 'Email penerima wajib diisi'; return; }
             this._pushToCart(product, variant, { ...this.cartAddExtra });
             this.cartAddModal = false;
         },
@@ -4690,7 +4728,7 @@ function serabutStore() {
                     microsoftEmail: ex.microsoftEmail||'',
                     adobeEmail:     ex.adobeEmail||'',
                     adobePass:      ex.adobePass||'',
-                    emailAktif:     uEmail,
+                    emailAktif:     ex.emailAktif || uEmail,
                 };
             });
             try {
@@ -5628,9 +5666,11 @@ function serabutStore() {
             this.ordersLoading=true;
             try {
                 const data = await this.gasPost({ action:'getOrders', email:this.currentUser.email, sessionToken:this.currentUser.sessionToken });
+                console.log('[loadOrders] response:', JSON.stringify(data));
+                if(!data.success) console.warn('[loadOrders] error dari GAS:', data.error);
                 this.orders = data.data || [];
-            } catch { this.orders=[]; }
-            this.ordersLoading=false;
+            } catch(err) { console.error('[loadOrders] exception:', err); this.orders=[]; }
+            finally { this.ordersLoading=false; }
         },
         async loadProfile() {
             if(!this.currentUser) return;
