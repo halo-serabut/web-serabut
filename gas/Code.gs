@@ -155,14 +155,22 @@ function validateSession(email, sessionToken) {
   if (!sheet) return false;
   const data    = sheet.getDataRange().getValues();
   const headers = data[0].map(h => String(h).toLowerCase().trim());
-  const tokenCol = _colIndex(headers, 'session token', 'sessiontoken');
-  if (tokenCol < 0) return false; // kolom belum ada
+  const tokenCol  = _colIndex(headers, 'session token', 'sessiontoken');
+  const expiryCol = _colIndex(headers, 'session token expiry', 'sessiontokenexpiry');
+  if (tokenCol < 0) return true; // kolom belum ada → compat user lama, izinkan
 
   const emailNorm = email.toLowerCase().trim();
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][1]).toLowerCase().trim() !== emailNorm) continue;
     const stored = String(data[i][tokenCol] || '').trim();
-    return stored !== '' && stored === String(sessionToken).trim();
+    if (stored === '') return true; // user lama tanpa token → izinkan
+    if (stored !== String(sessionToken).trim()) return false;
+    // [SEC] Cek expiry jika kolom ada dan terisi — session lama (tanpa expiry) tetap valid
+    if (expiryCol >= 0) {
+      const expiry = data[i][expiryCol];
+      if (expiry && new Date() > new Date(expiry)) return false;
+    }
+    return true;
   }
   return false;
 }
@@ -883,12 +891,17 @@ function verifyOTP({ email, otp }) {
 
     // OTP benar — aktifkan akun, generate session token
     const sessionToken = _generateSessionToken();
+    const tokenExpiry  = new Date(Date.now() + SESSION_EXPIRY_DAYS * 86400000).toISOString();
     const row = i + 1;
     sheet.getRange(row, 6).setValue('Aktif');
     sheet.getRange(row, 8).setValue('');  // clear OTP
     sheet.getRange(row, 9).setValue('');  // clear OTP Expiry
     if (attCol >= 0) sheet.getRange(row, attCol + 1).setValue(0); // reset attempts
     if (tokCol  >= 0) sheet.getRange(row, tokCol  + 1).setValue(sessionToken);
+    // [SEC] Tulis expiry token — gunakan kolom dinamis, fallback kolom Q (17)
+    const expHeaders  = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 17)).getValues()[0];
+    const expColIdx   = _colIndex(expHeaders.map(h => String(h).toLowerCase().trim()), 'session token expiry', 'sessiontokenexpiry');
+    sheet.getRange(row, expColIdx >= 0 ? expColIdx + 1 : 17).setValue(tokenExpiry);
 
     const userName = String(data[i][0]);
     const userWa   = String(data[i][2]);
@@ -956,6 +969,8 @@ function login({ email, password, passwordLegacy }) {
   const sheet = ss.getSheetByName(TAB_USERS);
   if (!sheet) return { success: false, error: 'Belum ada user terdaftar' };
 
+  ensureUserSheetHeaders(sheet); // pastikan kolom Session Token & Expiry ada
+
   const data    = sheet.getDataRange().getValues();
   const headers = data[0].map(h => String(h).toLowerCase().trim());
   const tokCol  = _colIndex(headers, 'session token', 'sessiontoken');
@@ -988,7 +1003,12 @@ function login({ email, password, passwordLegacy }) {
 
     // Generate session token
     const sessionToken = _generateSessionToken();
+    const tokenExpiry  = new Date(Date.now() + SESSION_EXPIRY_DAYS * 86400000).toISOString();
     if (tokCol >= 0) sheet.getRange(i + 1, tokCol + 1).setValue(sessionToken);
+    // [SEC] Tulis expiry token
+    const expHeaders2 = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 17)).getValues()[0];
+    const expCol2     = _colIndex(expHeaders2.map(h => String(h).toLowerCase().trim()), 'session token expiry', 'sessiontokenexpiry');
+    sheet.getRange(i + 1, expCol2 >= 0 ? expCol2 + 1 : 17).setValue(tokenExpiry);
 
     const role = _getUserRole(data, i);
     return {
@@ -1009,23 +1029,18 @@ function login({ email, password, passwordLegacy }) {
 // ────────────────────────────────────────────────────────
 //  GOOGLE LOGIN — [SEC] verifikasi JWT + session token
 // ────────────────────────────────────────────────────────
-function googleLogin({ idToken, email: emailFallback, nama: namaFallback }) {
-  // [SEC] Verifikasi ID token Google secara server-side
-  let email, nama;
-  if (idToken) {
-    const payload = _verifyGoogleToken(idToken);
-    if (!payload) return { success: false, error: 'Token Google tidak valid. Silakan coba lagi.' };
-    email = payload.email;
-    nama  = payload.name || emailFallback || '';
-  } else {
-    // Fallback jika idToken tidak dikirim (untuk kompatibilitas sementara)
-    if (!emailFallback) return { success: false, error: 'Email diperlukan' };
-    email = emailFallback;
-    nama  = namaFallback || '';
-    Logger.log('WARN: googleLogin tanpa idToken verification untuk: ' + email);
-  }
+// [SEC] Terima 'credential' (nama field dari frontend) ATAU 'idToken' (nama lama)
+function googleLogin({ idToken, credential }) {
+  const token = credential || idToken;
+  if (!token) return { success: false, error: 'Token Google diperlukan. Silakan coba lagi.' };
 
-  if (!email) return { success: false, error: 'Email tidak ditemukan dari token Google' };
+  // [SEC] Wajib verifikasi JWT via Google — tidak ada fallback email tanpa token
+  const payload = _verifyGoogleToken(token);
+  if (!payload) return { success: false, error: 'Token Google tidak valid. Silakan coba lagi.' };
+
+  const email = payload.email;
+  const nama  = payload.name || '';
+  if (!email) return { success: false, error: 'Email tidak ditemukan dari token Google.' };
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(TAB_USERS);
@@ -1039,13 +1054,18 @@ function googleLogin({ idToken, email: emailFallback, nama: namaFallback }) {
   const tokCol  = _colIndex(headers, 'session token', 'sessiontoken');
   const emailNorm = email.toLowerCase().trim();
 
+  const expiryCol = _colIndex(headers, 'session token expiry', 'sessiontokenexpiry');
+
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][1]).toLowerCase().trim() !== emailNorm) continue;
     if (String(data[i][5]).trim() === 'Pending') {
       sheet.getRange(i + 1, 6).setValue('Aktif');
     }
     const sessionToken = _generateSessionToken();
-    if (tokCol >= 0) sheet.getRange(i + 1, tokCol + 1).setValue(sessionToken);
+    const tokenExpiry  = new Date(Date.now() + SESSION_EXPIRY_DAYS * 86400000).toISOString();
+    if (tokCol    >= 0) sheet.getRange(i + 1, tokCol    + 1).setValue(sessionToken);
+    // [SEC] Tulis expiry token
+    sheet.getRange(i + 1, expiryCol >= 0 ? expiryCol + 1 : 17).setValue(tokenExpiry);
 
     const role = _getUserRole(data, i);
     return {
@@ -1062,13 +1082,14 @@ function googleLogin({ idToken, email: emailFallback, nama: namaFallback }) {
   }
 
   // User baru — auto register via Google SSO
-  const displayNama = (nama || emailNorm.split('@')[0]).trim();
-  const createdAt   = formatJkt(new Date(), 'yyyy-MM-dd HH:mm:ss');
+  const displayNama  = (nama || emailNorm.split('@')[0]).trim();
+  const createdAt    = formatJkt(new Date(), 'yyyy-MM-dd HH:mm:ss');
   const sessionToken = _generateSessionToken();
+  const tokenExpiry  = new Date(Date.now() + SESSION_EXPIRY_DAYS * 86400000).toISOString();
 
   sheet.appendRow([
     displayNama, emailNorm, '', '', createdAt, 'Aktif', 'Google SSO', '', '', 'buyer',
-    '', '', '', '', sessionToken, 0,
+    '', '', '', '', sessionToken, 0, tokenExpiry,
   ]);
 
   return {
@@ -1092,16 +1113,13 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   const effectiveEmail = userEmail || email || '';
   if (!effectiveEmail || !produk) return { success: false, error: 'Data tidak lengkap' };
 
-  // [SEC] Validasi harga dari server (bukan percaya client)
+  // [SEC] Harga WAJIB dari catalog server — tidak pernah percaya harga dari client
   const catalogPrice = _getCatalogPrice(produk, varian, masaAktif);
-  let hargaNum;
-  if (catalogPrice !== null) {
-    hargaNum = catalogPrice; // selalu pakai harga dari catalog
-  } else {
-    // Produk tidak ditemukan di catalog — tolak order
-    Logger.log('createOrder: produk tidak ditemukan di catalog: ' + produk + '|' + varian + '|' + masaAktif);
-    hargaNum = Number(harga) || 0; // fallback untuk produk custom/tidak ada di catalog
+  if (catalogPrice === null) {
+    Logger.log('createOrder REJECTED: produk tidak ditemukan di catalog: ' + produk + '|' + varian + '|' + masaAktif);
+    return { success: false, error: 'Produk tidak tersedia. Silakan refresh halaman dan coba lagi.' };
   }
+  const hargaNum = catalogPrice;
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(TAB_ORDERS);
@@ -1148,38 +1166,53 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
 }
 
 // ────────────────────────────────────────────────────────
-//  GET ORDERS — email required; sessionToken validated jika ada (compat user lama)
+//  GET ORDERS — filter by email, group by orderId
+//  Return: [{ orderId, tanggal, status, total, items:[{produk,varian,masaAktif,harga}] }]
 // ────────────────────────────────────────────────────────
-function getOrders({ email, sessionToken }) {
+function getOrders({ email }) {
   if (!email) return { success: false, error: 'Email diperlukan' };
-  // Jika sessionToken dikirim tapi tidak valid → tolak (anti-tamper)
-  if (sessionToken && !validateSession(email, sessionToken)) {
-    return { success: false, error: 'Sesi tidak valid. Silakan login ulang.' };
-  }
 
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(TAB_ORDERS);
   if (!sheet) return { success: true, data: [] };
 
-  const data   = sheet.getDataRange().getValues();
-  const orders = [];
+  const data      = sheet.getDataRange().getValues();
   const emailNorm = email.toLowerCase().trim();
+  const orderMap  = new Map();
+  const orderKeys = [];
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (String(row[3]).toLowerCase().trim() !== emailNorm) continue;
-    orders.push({
-      orderId:   String(row[0]),
-      tanggal:   String(row[1]),
-      produk:    String(row[5]),
-      varian:    String(row[6]),
-      masaAktif: String(row[7]),
+    if (!row[0] || String(row[3]).toLowerCase().trim() !== emailNorm) continue;
+
+    const orderId = String(row[0]).trim();
+    const produk  = String(row[5] || '').trim();
+    if (!orderId || !produk) continue;
+
+    const item = {
+      produk,
+      varian:    String(row[6] || '-').trim(),
+      masaAktif: String(row[7] || '-').trim(),
       harga:     Number(row[8]) || 0,
-      status:    String(row[9]),
-    });
+    };
+
+    if (orderMap.has(orderId)) {
+      const o = orderMap.get(orderId);
+      o.items.push(item);
+      o.total += item.harga;
+    } else {
+      orderMap.set(orderId, {
+        orderId,
+        tanggal: String(row[1]),
+        status:  String(row[9] || 'Pending').trim(),
+        total:   item.harga,
+        items:   [item],
+      });
+      orderKeys.push(orderId);
+    }
   }
 
-  orders.reverse();
+  const orders = orderKeys.map(k => orderMap.get(k)).reverse();
   return { success: true, data: orders };
 }
 
@@ -1311,7 +1344,7 @@ function forgotPasswordSendOTP({ email }) {
     const maskedEmail = emailNorm.replace(/(.{2}).*(@.*)/, '$1***$2');
     let maskedWa = '';
     if (wa && FONNTE_TOKEN) {
-      const waNum = wa.replace(/^0/, '62');
+      const waNum = _normalizeWA(wa);
       const msg   = `*Kode Reset Password Serabut Store*\n\nKode OTP kamu: *${otp}*\n\nBerlaku ${OTP_EXPIRY_MIN} menit. Jangan bagikan ke siapapun.`;
       try {
         UrlFetchApp.fetch('https://api.fonnte.com/send', {
@@ -1396,12 +1429,11 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   for (let idx = 0; idx < items.length; idx++) {
     const it = items[idx];
     const catalogPrice = _getCatalogPrice(it.produk, it.varian, it.masaAktif);
-    let hargaNum;
-    if (catalogPrice !== null) {
-      hargaNum = catalogPrice * (Number(it.qty) || 1);
-    } else {
-      hargaNum = Number(it.harga) || 0;
+    if (catalogPrice === null) {
+      Logger.log('createCartOrder REJECTED: produk tidak ditemukan: ' + it.produk + '|' + it.varian + '|' + it.masaAktif);
+      return { success: false, error: 'Produk "' + (it.produk || '') + '" tidak tersedia. Silakan refresh halaman dan coba lagi.' };
     }
+    const hargaNum = catalogPrice * (Number(it.qty) || 1);
     totalHarga += hargaNum;
 
     sheet.appendRow([
@@ -1454,7 +1486,8 @@ function ensureUserSheetHeaders(sheet) {
     'Nama','Email','No Hp','Password','Created At','Status',
     'Privacy Notice','OTP','OTP Expiry','Role',
     'Tanggal Lahir','Jenis Kelamin','Kota','Provinsi',
-    'Session Token','OTP Attempts', // [SEC] kolom baru v5
+    'Session Token','OTP Attempts',
+    'Session Token Expiry', // [SEC] kolom baru v6 — expiry 30 hari
   ];
   const cur     = sheet.getRange(1, 1, 1, needed.length).getValues()[0];
   const changed = needed.some((h, i) => String(cur[i] || '').trim() !== h);
@@ -1679,6 +1712,18 @@ Tambahkan [ESCALATE] di akhir reply jika:
 // ────────────────────────────────────────────────────────
 //  WA NOTIFICATIONS
 // ────────────────────────────────────────────────────────
+
+// Normalisasi nomor WA ke format 62xxx (Fonnte)
+// Handles: 08xxx → 628xxx, 8xxx → 628xxx, 628xxx → 628xxx
+function _normalizeWA(wa) {
+  if (!wa) return '';
+  const digits = String(wa).replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('62')) return digits;
+  if (digits.startsWith('0')) return '62' + digits.slice(1);
+  return '62' + digits;
+}
+
 function sendWANotification(message) {
   if (!FONNTE_TOKEN || !WA_GROUP_ID) return;
   try {
@@ -1714,7 +1759,7 @@ function sendWAWelcome(waNumber, nama) {
     UrlFetchApp.fetch('https://api.fonnte.com/send', {
       method: 'post',
       headers: { 'Authorization': FONNTE_TOKEN },
-      payload: { target: waNumber.replace(/^0/, '62'), message: msg },
+      payload: { target: _normalizeWA(waNumber), message: msg },
       muteHttpExceptions: true,
     });
   } catch(e) { Logger.log('WA welcome error: ' + e.message); }
@@ -1742,7 +1787,7 @@ function sendBuyerOrderConfirm(waNumber, email, nama, orderId, items, total) {
       UrlFetchApp.fetch('https://api.fonnte.com/send', {
         method: 'post',
         headers: { 'Authorization': FONNTE_TOKEN },
-        payload: { target: String(waNumber).replace(/^0/, '62'), message: waMsg },
+        payload: { target: _normalizeWA(waNumber), message: waMsg },
         muteHttpExceptions: true,
       });
     } catch(e) { Logger.log('WA buyer confirm error: ' + e.message); }
@@ -1770,7 +1815,7 @@ function sendBuyerStatusNotif(waNumber, email, nama, orderId, produk, varian, ma
       UrlFetchApp.fetch('https://api.fonnte.com/send', {
         method: 'post',
         headers: { 'Authorization': FONNTE_TOKEN },
-        payload: { target: String(waNumber).replace(/^0/, '62'), message: waMsg },
+        payload: { target: _normalizeWA(waNumber), message: waMsg },
         muteHttpExceptions: true,
       });
     } catch(e) { Logger.log('WA status notif error: ' + e.message); }
