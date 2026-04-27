@@ -115,11 +115,17 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - GAS: FONNTE_TOKEN ke Script Properties, session token system (UUID, 30 hari), OTP lockout 5x, server-side price validation, Google JWT verify via tokeninfo API, doGet hanya public, doPost semua sensitive action, error sanitization
   - Frontend: `gasPost()` helper (semua sensitive call via POST JSON body), salted password hash `sha256(email:password)` + legacy migration, sessionToken disimpan di localStorage + dikirim ke setiap request, Google SSO kirim raw credential (no client-side decode), session expiry 30 hari auto-logout, checkStatus min 4 karakter
 
+- [2026-04-27] Selesai: gasPost() fallback GET — try POST dulu, jika "Unknown action" fallback ke GET (backward compat GAS lama); try/catch return `{success:false, error:'Gagal terhubung'}`
+- [2026-04-27] Selesai: Keranjang belanja (Cart) — add-to-cart dari catalog card + product detail, cart panel (dropdown desktop / full panel mobile), cart icon navbar + badge count, product-specific fields modal (web/family/adobe), cart checkout modal 2-col (summary + buyer info), member savings banner
+- [2026-04-27] Selesai: Forgot password via OTP — modal 3-step (email → OTP → password baru), OTP ke email + WA jika tersedia; GAS: forgotPasswordSendOTP + forgotPasswordVerify
+- [2026-04-27] Selesai: Cart checkout single order ID — createCartOrder GAS, 1 orderId untuk semua item, 1 pesan WA group terangkum
+- [2026-04-27] Selesai: Profile > Pesanan "Aktif s/d" hanya muncul jika status = Aktif/Selesai (bukan Pending)
+- [2026-04-27] Selesai: getOrders relax auth — validasi sessionToken hanya jika dikirim (backward compat user lama); order buyer langsung muncul
+- [2026-04-27] Selesai: Buyer notifications — WA + email ke pembeli saat order berhasil dibuat; WA + email saat admin ubah status ke Aktif/Selesai; HTML email template untuk konfirmasi order + status update
+
 ## Current Focus
-- **Security (selesai):** GAS v5 + frontend fully hardened. Semua sensitive request via POST. Session token wajib untuk semua auth endpoint. Langkah berikutnya: `clasp push` dari `/gas` lalu re-deploy GAS (new version) agar backend v5 aktif.
-- **Product detail pages** — Live di serabut.id/produk/[slug]. Deep link support: buka langsung di browser atau share dari Sera.
-- **GAS deployment:** Setiap edit Code.gs → clasp push dari `/gas` folder → re-deploy di script.google.com (Manage Deployments → Edit → New version → Update). GAS_URL tidak perlu diganti.
-- **Sera (OpenClaw + GAS):** Sama-sama pakai DeepSeek via OpenRouter. CATALOG.md di OpenClaw workspace sudah diupdate dengan link produk bersih.
-- **Benefits per-produk** — Tersimpan di Catalog GSheet kolom O "Deskripsi" sebagai JSON array per baris.
+- **FONNTE_TOKEN** perlu diset di GAS Script Properties agar WA notification aktif: script.google.com → Project Settings → Script properties → key `FONNTE_TOKEN`.
+- **Login "Password Salah" user lama** — akan fix setelah GAS di-deploy versi baru: script.google.com → Manage Deployments → Edit → New version → Deploy. GAS v5 punya passwordLegacy migration.
+- **GAS deployment:** Setiap edit Code.gs → `clasp push` dari `/gas` folder → re-deploy di script.google.com (New version). GAS_URL tidak perlu diganti.
 - **Google SSO:** Siap diaktifkan — isi `GOOGLE_CLIENT_ID: 'xxxx.apps.googleusercontent.com'` di Alpine config.
 - **Column Role di Users-web**: harus di kolom **I** (setelah OTP Expiry di H) — index 8 (0-indexed)
