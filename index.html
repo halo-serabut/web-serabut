@@ -126,6 +126,14 @@
             }
         }
     </script>
+    <script>
+        // Capture beforeinstallprompt ASAP — fires before Alpine init
+        window._pwaPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            window._pwaPrompt = e;
+        });
+    </script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
@@ -4175,11 +4183,19 @@ function serabutStore() {
                 if (this.pwaIsIos) {
                     setTimeout(() => { this.pwaPopup = true; }, 3000);
                 } else {
-                    window.addEventListener('beforeinstallprompt', e => {
-                        e.preventDefault();
-                        this.pwaPromptEvent = e;
+                    // Cek apakah event sudah dicapture sebelum Alpine init
+                    if (window._pwaPrompt) {
+                        this.pwaPromptEvent = window._pwaPrompt;
+                        window._pwaPrompt = null;
                         setTimeout(() => { this.pwaPopup = true; }, 3000);
-                    });
+                    } else {
+                        // Fallback: event belum fire, tunggu
+                        window.addEventListener('beforeinstallprompt', e => {
+                            e.preventDefault();
+                            this.pwaPromptEvent = e;
+                            setTimeout(() => { this.pwaPopup = true; }, 3000);
+                        });
+                    }
                 }
             }
 
@@ -5948,29 +5964,21 @@ function serabutStore() {
             <!-- iOS: 3 step compact -->
             <template x-if="pwaIsIos">
                 <div class="space-y-3">
-                    <div class="bg-gray-50 rounded-2xl p-3.5 space-y-3">
-                        <!-- Step 1 -->
-                        <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 rounded-xl bg-blue-500 text-white text-xs font-black flex items-center justify-center flex-none">1</div>
-                            <div class="text-sm text-gray-700 flex-1">Buka halaman ini di <span class="font-semibold text-gray-900">Safari</span></div>
+                    <div class="bg-gray-50 rounded-2xl p-3 space-y-2">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-lg bg-blue-500 text-white text-[11px] font-black flex items-center justify-center flex-none">1</div>
+                            <div class="text-sm text-gray-700">Buka halaman ini di <span class="font-semibold text-gray-900">Safari</span></div>
                         </div>
-                        <!-- divider -->
-                        <div class="ml-3.5 border-l-2 border-dashed border-gray-200 pl-7 -mt-1 pb-1"></div>
-                        <!-- Step 2 -->
-                        <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 rounded-xl bg-blue-500 text-white text-xs font-black flex items-center justify-center flex-none">2</div>
-                            <div class="text-sm text-gray-700 flex-1">
-                                Ketuk
-                                <svg class="w-4 h-4 inline text-blue-500 mx-0.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
-                                lalu pilih <span class="font-semibold text-gray-900">Add to Home Screen</span>
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-lg bg-blue-500 text-white text-[11px] font-black flex items-center justify-center flex-none">2</div>
+                            <div class="text-sm text-gray-700">Ketuk
+                                <svg class="w-3.5 h-3.5 inline text-blue-500 mx-0.5 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+                                → pilih <span class="font-semibold text-gray-900">Add to Home Screen</span>
                             </div>
                         </div>
-                        <!-- divider -->
-                        <div class="ml-3.5 border-l-2 border-dashed border-gray-200 pl-7 -mt-1 pb-1"></div>
-                        <!-- Step 3 -->
-                        <div class="flex items-center gap-3">
-                            <div class="w-7 h-7 rounded-xl bg-blue-500 text-white text-xs font-black flex items-center justify-center flex-none">3</div>
-                            <div class="text-sm text-gray-700 flex-1">Ketuk <span class="font-semibold text-gray-900">Add</span> — selesai! 🎉</div>
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-lg bg-blue-500 text-white text-[11px] font-black flex items-center justify-center flex-none">3</div>
+                            <div class="text-sm text-gray-700">Ketuk <span class="font-semibold text-gray-900">Add</span> — selesai! 🎉</div>
                         </div>
                     </div>
                     <button @click="pwaDismiss()" class="w-full py-3 rounded-2xl bg-gray-100 text-gray-500 text-sm font-semibold active:scale-95 transition-all">
