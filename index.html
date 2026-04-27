@@ -2331,7 +2331,7 @@
                         <span x-show="item.variant.masaAktif&&item.variant.masaAktif!=='-'" x-text="' · '+item.variant.masaAktif"></span>
                     </div>
                     <!-- Extra fields summary -->
-                    <template x-if="item.extra && (item.extra.nama||item.extra.microsoftEmail||item.extra.adobeEmail)">
+                    <template x-if="item.extra && (item.extra.nama||item.extra.username||item.extra.microsoftEmail||item.extra.adobeEmail||item.extra.emailAktif)">
                         <div class="mt-1 text-[10px] text-gray-400 bg-gray-100 rounded-lg px-2 py-1 space-y-0.5">
                             <div x-show="item.extra.nama" x-text="'Nama: '+item.extra.nama"></div>
                             <div x-show="item.extra.username" x-text="'Username: '+item.extra.username"></div>
@@ -2416,12 +2416,13 @@
                             <span x-show="item.variant.masaAktif&&item.variant.masaAktif!=='-'" x-text="' · '+item.variant.masaAktif"></span>
                         </div>
                         <!-- Extra fields summary -->
-                        <template x-if="item.extra && (item.extra.nama||item.extra.microsoftEmail||item.extra.adobeEmail)">
+                        <template x-if="item.extra && (item.extra.nama||item.extra.username||item.extra.microsoftEmail||item.extra.adobeEmail||item.extra.emailAktif)">
                             <div class="mt-1.5 text-[10px] text-gray-500 bg-white rounded-lg px-2.5 py-1.5 border border-gray-100 space-y-0.5">
                                 <div x-show="item.extra.nama" x-text="'Nama: '+item.extra.nama"></div>
                                 <div x-show="item.extra.username" x-text="'Username: '+item.extra.username"></div>
                                 <div x-show="item.extra.microsoftEmail" x-text="'MS Email: '+item.extra.microsoftEmail"></div>
                                 <div x-show="item.extra.adobeEmail" x-text="'Adobe: '+item.extra.adobeEmail"></div>
+                                <div x-show="item.extra.emailAktif" x-text="'Email: '+item.extra.emailAktif"></div>
                             </div>
                         </template>
                         <template x-if="flashSaleItem(item.product.nama,item.variant.varian,item.variant.masaAktif)">
@@ -2497,11 +2498,26 @@
         <div class="px-5 py-5 space-y-3">
             <p class="text-xs text-gray-400">Isi data berikut sebelum menambahkan ke keranjang.</p>
 
-            <!-- Web: hanya Nama Akun Microsoft -->
+            <!-- Web: Nama Akun Microsoft + Username -->
             <template x-if="cartAddPending && cartExtraType(cartAddPending.product, cartAddPending.variant)==='web'">
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Nama Akun Microsoft <span class="text-red-500">*</span></label>
+                        <input x-model="cartAddExtra.nama" type="text" placeholder="Nama lengkap" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.nama?'border-red-400':''">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Username Microsoft <span class="text-red-500">*</span></label>
+                        <input x-model="cartAddExtra.username" type="text" placeholder="contoh: username@outlook.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.username?'border-red-400':''">
+                    </div>
+                </div>
+            </template>
+
+            <!-- Renewal: hanya Nama Akun Microsoft -->
+            <template x-if="cartAddPending && cartExtraType(cartAddPending.product, cartAddPending.variant)==='renewal'">
                 <div>
                     <label class="text-xs font-bold text-gray-700 mb-1.5 block">Nama Akun Microsoft <span class="text-red-500">*</span></label>
-                    <input x-model="cartAddExtra.nama" type="text" placeholder="Nama lengkap" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.nama?'border-red-400':''">
+                    <p class="text-[11px] text-gray-400 mb-2">Nama akun yang akan diperpanjang masa aktifnya.</p>
+                    <input x-model="cartAddExtra.nama" type="text" placeholder="Nama lengkap akun" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.nama?'border-red-400':''">
                 </div>
             </template>
 
@@ -3747,6 +3763,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
+        APP_VERSION:      '20260427-2',
 
         // PWA Install
         pwaPopup:       false,
@@ -4075,6 +4092,16 @@ function serabutStore() {
         // ── Init ──────────────────────────────────────
         async init() {
             this.initPageFromURL();
+            // ── Cache busting — auto-reload jika versi baru terdeteksi ──
+            try {
+                const storedV = localStorage.getItem('srb_app_v');
+                if (storedV && storedV !== this.APP_VERSION) {
+                    localStorage.setItem('srb_app_v', this.APP_VERSION);
+                    location.reload(true);
+                    return;
+                }
+                localStorage.setItem('srb_app_v', this.APP_VERSION);
+            } catch {}
             // ── Load site settings dari cache dulu (instant) ──
             try {
                 const cached = localStorage.getItem('serabutSettings');
@@ -4611,15 +4638,17 @@ function serabutStore() {
         },
         // ── Cart ──────────────────────────────────────
         cartExtraType(product, variant) {
-            const cat = (product?.category || '').toLowerCase();
-            const v   = (variant?.varian  || '').toLowerCase();
-            const ma  = (variant?.masaAktif || '').toLowerCase();
-            if (cat === 'adobe')      return 'adobe';
-            if (v.includes('family')) return 'family';
-            if (v.includes('web'))    return 'web';
-            // Produk one-time (Windows, Office, CorelDraw, G Suite, dll) — masaAktif bukan bulan/tahun
+            const cat  = (product?.category  || '').toLowerCase();
+            const nama = (product?.nama       || '').toLowerCase();
+            const v    = (variant?.varian    || '').toLowerCase();
+            const ma   = (variant?.masaAktif || '').toLowerCase();
+            if (cat === 'adobe')               return 'adobe';
+            if (v.includes('family'))          return 'family';
+            if (v.includes('web') && nama.includes('renewal')) return 'renewal'; // Renewal: hanya Nama
+            if (v.includes('web'))             return 'web';    // 365 Web biasa: Nama + Username
+            // Produk one-time (Windows, Office, CorelDraw, G Suite, dll)
             const isOnetime = !ma.includes('bulan') && !ma.includes('tahun') && !ma.includes('month') && !ma.includes('year');
-            if (isOnetime)            return 'license';
+            if (isOnetime)                     return 'license';
             return 'other';
         },
         cartItemUnitPrice(item) {
@@ -4643,10 +4672,12 @@ function serabutStore() {
         confirmAddToCart() {
             const { product, variant } = this.cartAddPending;
             const type = this.cartExtraType(product, variant);
-            if (type === 'web'     && !this.cartAddExtra.nama.trim())         { this.cartAddError = 'Nama akun Microsoft wajib diisi'; return; }
-            if (type === 'family'  && !this.cartAddExtra.microsoftEmail.trim()){ this.cartAddError = 'Email Microsoft wajib diisi'; return; }
-            if (type === 'adobe'   && !this.cartAddExtra.adobeEmail.trim())   { this.cartAddError = 'Email akun Adobe wajib diisi'; return; }
-            if (type === 'license' && !this.cartAddExtra.emailAktif.trim())   { this.cartAddError = 'Email penerima wajib diisi'; return; }
+            if (type === 'web'     && !this.cartAddExtra.nama.trim())           { this.cartAddError = 'Nama akun Microsoft wajib diisi'; return; }
+            if (type === 'web'     && !this.cartAddExtra.username.trim())       { this.cartAddError = 'Username Microsoft wajib diisi'; return; }
+            if (type === 'renewal' && !this.cartAddExtra.nama.trim())           { this.cartAddError = 'Nama akun Microsoft wajib diisi'; return; }
+            if (type === 'family'  && !this.cartAddExtra.microsoftEmail.trim()) { this.cartAddError = 'Email Microsoft wajib diisi'; return; }
+            if (type === 'adobe'   && !this.cartAddExtra.adobeEmail.trim())     { this.cartAddError = 'Email akun Adobe wajib diisi'; return; }
+            if (type === 'license' && !this.cartAddExtra.emailAktif.trim())     { this.cartAddError = 'Email penerima wajib diisi'; return; }
             this._pushToCart(product, variant, { ...this.cartAddExtra });
             this.cartAddModal = false;
         },

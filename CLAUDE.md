@@ -120,12 +120,12 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 - [2026-04-27] Selesai: Forgot password via OTP — modal 3-step (email → OTP → password baru), OTP ke email + WA jika tersedia; GAS: forgotPasswordSendOTP + forgotPasswordVerify
 - [2026-04-27] Selesai: Cart checkout single order ID — createCartOrder GAS, 1 orderId untuk semua item, 1 pesan WA group terangkum
 - [2026-04-27] Selesai: Profile > Pesanan "Aktif s/d" hanya muncul jika status = Aktif/Selesai (bukan Pending)
-- [2026-04-27] Selesai: getOrders relax auth — validasi sessionToken hanya jika dikirim (backward compat user lama); order buyer langsung muncul
+- [2026-04-27] Selesai: getOrders fix auth — `login()` kini panggil `ensureUserSheetHeaders` agar kolom Session Token selalu ada; `validateSession` lebih lenient: return true jika kolom tidak ada atau token row kosong (compat user lama); orders buyer muncul kembali
+- [2026-04-27] Selesai: WA number normalization — helper `_normalizeWA()`: handle 08xxx→628xxx, 8xxx→628xxx, 628xxx→628xxx; dipakai di semua fungsi WA individu (welcome, buyer confirm, buyer status, OTP reset); root cause: nomor 82300011736 tidak diawali 0 sehingga replace(/^0/,'62') tidak bekerja
 - [2026-04-27] Selesai: Buyer notifications — WA + email ke pembeli saat order berhasil dibuat; WA + email saat admin ubah status ke Aktif/Selesai; HTML email template untuk konfirmasi order + status update
 
 ## Current Focus
+- **GAS deployment wajib:** Setelah fix ini → `clasp push` dari `/gas` folder → re-deploy di script.google.com (Manage Deployments → Edit → New version → Deploy). GAS_URL tidak perlu diganti.
 - **FONNTE_TOKEN** perlu diset di GAS Script Properties agar WA notification aktif: script.google.com → Project Settings → Script properties → key `FONNTE_TOKEN`.
-- **Login "Password Salah" user lama** — akan fix setelah GAS di-deploy versi baru: script.google.com → Manage Deployments → Edit → New version → Deploy. GAS v5 punya passwordLegacy migration.
-- **GAS deployment:** Setiap edit Code.gs → `clasp push` dari `/gas` folder → re-deploy di script.google.com (New version). GAS_URL tidak perlu diganti.
 - **Google SSO:** Siap diaktifkan — isi `GOOGLE_CLIENT_ID: 'xxxx.apps.googleusercontent.com'` di Alpine config.
 - **Column Role di Users-web**: harus di kolom **I** (setelah OTP Expiry di H) — index 8 (0-indexed)
