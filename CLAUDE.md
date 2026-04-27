@@ -124,8 +124,16 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 - [2026-04-27] Selesai: WA number normalization — helper `_normalizeWA()`: handle 08xxx→628xxx, 8xxx→628xxx, 628xxx→628xxx; dipakai di semua fungsi WA individu (welcome, buyer confirm, buyer status, OTP reset); root cause: nomor 82300011736 tidak diawali 0 sehingga replace(/^0/,'62') tidak bekerja
 - [2026-04-27] Selesai: Buyer notifications — WA + email ke pembeli saat order berhasil dibuat; WA + email saat admin ubah status ke Aktif/Selesai; HTML email template untuk konfirmasi order + status update
 
+- [2026-04-27 sesi 2] Selesai: Cart modal fix — Office 365 Web: 2 field (Nama + Username); Renewal: template baru Nama saja; License: email penerima; `cartExtraType()` pisah 'renewal' dari 'web'
+- [2026-04-27 sesi 2] Selesai: Cache busting — `APP_VERSION` constant + check localStorage `srb_app_v` di init(); auto reload saat versi baru deploy
+- [2026-04-27 sesi 2] Selesai: Cart checkout member savings banner — selalu tampil untuk tamu; jika ada flash sale: "Hemat Rp X.xxx jika jadi Member!"; tanpa flash sale: pesan generic; getter `cartMemberSavings`; 2 tombol: Daftar + Login
+- [2026-04-27 sesi 2] Selesai: Discount Campaign system — admin tab "Flash Sale" → "Diskon"; toggle `showAsFlashSale` per campaign (ON=banner+countdown, OFF=hanya diskon harga); badge ⚡ Flash Sale / 🏷 Diskon Regular; `flashSaleItem()` cek `allDiscountItems` (semua campaign aktif)
+- [2026-04-27 sesi 2] Selesai: Footer mobile padding — `pb-24` → `pb-4` (space berlebih hilang)
+- [2026-04-27 sesi 2] Selesai: PWA popup redesign — compact, modern, OS-aware; Android: 1 tombol native install; iOS: 3 step Safari guide; capture `beforeinstallprompt` di `<head>` sebelum Alpine; Android fallback manual jika event tidak fire dalam 5s
+- [2026-04-27 sesi 2] Selesai: Auth modal scrollable — `max-h-[92vh] overflow-y-auto`; tabs sticky; fix register tab terpotong di mobile
+
 ## Current Focus
-- **GAS deployment wajib:** Setelah fix ini → `clasp push` dari `/gas` folder → re-deploy di script.google.com (Manage Deployments → Edit → New version → Deploy). GAS_URL tidak perlu diganti.
-- **FONNTE_TOKEN** perlu diset di GAS Script Properties agar WA notification aktif: script.google.com → Project Settings → Script properties → key `FONNTE_TOKEN`.
-- **Google SSO:** Siap diaktifkan — isi `GOOGLE_CLIENT_ID: 'xxxx.apps.googleusercontent.com'` di Alpine config.
-- **Column Role di Users-web**: harus di kolom **I** (setelah OTP Expiry di H) — index 8 (0-indexed)
+- Semua fitur selesai. Produksi stabil.
+- **FONNTE_TOKEN** perlu diset di GAS Script Properties agar WA notification aktif.
+- **Google SSO** sudah aktif (GOOGLE_CLIENT_ID sudah diisi di Alpine config).
+- Deploy GAS: `cp worktree/gas/Code.gs gas/Code.gs && cd gas && clasp push && clasp deploy --deploymentId [ID]`
