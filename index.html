@@ -1151,7 +1151,7 @@
 
             <!-- Tab Navigation -->
             <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 overflow-x-auto no-scrollbar">
-                <template x-for="tab in [{id:'flashsale',label:'Flash Sale'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'}]" :key="tab.id">
+                <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'}]" :key="tab.id">
                     <button @click="adminTab=tab.id; adminInitTab(tab.id)"
                             :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
                             class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
@@ -1166,8 +1166,8 @@
                 <div x-show="adminFlashCampIdx === -1">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h2 class="font-bold text-gray-900">Flash Sale Campaigns</h2>
-                            <p class="text-xs text-gray-400 mt-0.5">Kelola campaign flash sale dengan tanggal mulai & berakhir</p>
+                            <h2 class="font-bold text-gray-900">Diskon & Campaigns</h2>
+                            <p class="text-xs text-gray-400 mt-0.5">Kelola campaign diskon — aktifkan Flash Sale banner per campaign</p>
                         </div>
                         <button @click="adminFlashNewCampaign()"
                                 class="flex items-center gap-1.5 text-xs font-bold text-white gradient-card px-3 py-2 rounded-xl active:scale-95 transition-all">
@@ -1188,7 +1188,7 @@
                          class="text-center py-12 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-2xl">
                         <svg class="w-10 h-10 mx-auto mb-3 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                         <p class="font-semibold text-gray-500">Belum ada campaign</p>
-                        <p class="text-xs mt-1">Klik "Campaign Baru" untuk membuat flash sale pertama</p>
+                        <p class="text-xs mt-1">Klik "Campaign Baru" untuk membuat diskon pertama</p>
                     </div>
 
                     <!-- Campaign cards — 1 col mobile, 3 col desktop -->
@@ -1211,6 +1211,12 @@
                                         <span class="flex-none text-[9px] font-black px-1.5 py-0.5 rounded-full"
                                               :class="camp.aktif ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-500'"
                                               x-text="camp.aktif ? '● Aktif' : '○ Off'"></span>
+                                    </div>
+                                    <!-- Tipe campaign -->
+                                    <div class="flex">
+                                        <span class="text-[9px] font-black px-2 py-0.5 rounded-full"
+                                              :class="(camp.showAsFlashSale!==false) ? 'bg-yellow-100 text-yellow-700' : 'bg-purple-100 text-purple-700'"
+                                              x-text="(camp.showAsFlashSale!==false) ? '⚡ Flash Sale' : '🏷 Diskon Regular'"></span>
                                     </div>
                                     <!-- Tanggal compact -->
                                     <div class="rounded-lg bg-white border border-gray-100 px-2.5 py-2 text-xs space-y-1">
@@ -1263,6 +1269,19 @@
                             <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1 block">Nama Campaign *</label>
                             <input x-model="adminFlashCampForm.nama" type="text" placeholder="cth. Flash Sale Lebaran 2026"
                                    class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 bg-white">
+                        </div>
+                        <!-- Toggle: Tampilkan sebagai Flash Sale -->
+                        <div class="flex items-center justify-between py-2 px-3 bg-white rounded-xl border border-gray-100">
+                            <div>
+                                <div class="text-xs font-bold text-gray-700">Tampilkan sebagai Flash Sale</div>
+                                <div class="text-[10px] text-gray-400 mt-0.5">Banner Flash Sale + countdown timer di halaman utama</div>
+                            </div>
+                            <div @click="adminFlashCampForm.showAsFlashSale = adminFlashCampForm.showAsFlashSale === false ? true : false"
+                                 :class="adminFlashCampForm.showAsFlashSale!==false ? 'bg-yellow-400' : 'bg-gray-300'"
+                                 class="w-9 h-5 rounded-full relative transition-colors cursor-pointer flex-none">
+                                <div :class="adminFlashCampForm.showAsFlashSale!==false ? 'left-[18px]' : 'left-0.5'"
+                                     class="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all"></div>
+                            </div>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div>
@@ -1368,7 +1387,7 @@
                         <div class="flex gap-2 pt-1">
                             <button @click="adminFlashSaveItem()" :disabled="!adminFlashFormItem.produk"
                                     class="gradient-card text-white font-bold px-4 py-2 rounded-xl text-sm active:scale-95 transition-all disabled:opacity-50"
-                                    x-text="adminFlashEditIdx===-2?'Tambah ke Flash Sale':'Update Produk'"></button>
+                                    x-text="adminFlashEditIdx===-2?'Tambah ke Campaign':'Update Produk'"></button>
                             <button @click="adminFlashCancelEdit()" class="text-gray-500 font-semibold px-4 py-2 rounded-xl text-sm border border-gray-200 hover:bg-gray-50 transition-all">Batal</button>
                         </div>
                     </div>
@@ -3901,6 +3920,7 @@ function serabutStore() {
         flashSale: {
             aktif: false,
             campaigns: [],
+            allDiscountItems: [],
             items: [],
             produk: '',
             varian: '',
@@ -4220,11 +4240,17 @@ function serabutStore() {
                 if(fsCampaigns.length) {
                     // Aktif campaign: aktif=true DAN saat ini di dalam date range (atau jika tidak ada deadline, tetap aktif)
                     const now = new Date();
-                    const active = fsCampaigns.find(c => c.aktif && (!c.endDate || new Date(c.endDate) > now))
-                                || fsCampaigns.find(c => c.aktif);
+                    const active = fsCampaigns.find(c => c.aktif && (c.showAsFlashSale !== false) && (!c.endDate || new Date(c.endDate) > now))
+                                || fsCampaigns.find(c => c.aktif && (c.showAsFlashSale !== false));
+                    // Compute allDiscountItems: semua campaign aktif dalam periode
+                    const _now = new Date();
+                    const allDiscountItems = fsCampaigns
+                        .filter(c => c.aktif && (!c.endDate || new Date(c.endDate) > _now))
+                        .flatMap(c => c.items || []);
                     this.flashSale = {
                         aktif:     !!active,
                         campaigns: fsCampaigns,
+                        allDiscountItems,
                         items:     active ? (active.items||[]) : [],
                         deadline:  active ? (active.endDate||'')  : '',
                         startDate: active ? (active.startDate||'') : '',
@@ -4247,6 +4273,7 @@ function serabutStore() {
                         deadline:  s['flashSale.deadline']   || '',
                         startDate: s['flashSale.startDate']  || '',
                         items: (() => { try { return JSON.parse(s['flashSale.items']||'[]'); } catch { return []; } })(),
+                        allDiscountItems: (() => { try { const it = JSON.parse(s['flashSale.items']||'[]'); return (s['flashSale.aktif']==='true') ? it : []; } catch { return []; } })(),
                     };
                 }
 
@@ -5239,9 +5266,12 @@ function serabutStore() {
             this.adminFlashVariantIdx = 0;
         },
         flashSaleItem(nama, varian, masaAktif) {
-            if (!this.flashSale.aktif || !this.flashSale.items?.length) return null;
             const combined = masaAktif && masaAktif !== '-' ? varian + ' · ' + masaAktif : varian;
-            return this.flashSale.items.find(i => i.produk === nama && (i.varian === varian || i.varian === combined)) || null;
+            // Cek semua active discount items (flash sale + regular discount)
+            const allItems = this.flashSale.allDiscountItems?.length
+                ? this.flashSale.allDiscountItems
+                : (this.flashSale.aktif ? (this.flashSale.items || []) : []);
+            return allItems.find(i => i.produk === nama && (i.varian === varian || i.varian === combined)) || null;
         },
         formatDT(dt) {
             if(!dt) return '—';
@@ -5315,7 +5345,7 @@ function serabutStore() {
 
         // ── Admin: Flash Sale Campaigns ──────────────
         adminFlashNewCampaign() {
-            this.adminFlashCampForm = { id:'camp_'+Date.now(), nama:'', aktif:true, startDate:'', endDate:'', items:[] };
+            this.adminFlashCampForm = { id:'camp_'+Date.now(), nama:'', aktif:true, showAsFlashSale:true, startDate:'', endDate:'', items:[] };
             this.adminFlashItems = [];
             this.adminFlashEditIdx = -1;
             this.adminFlashCampIdx = -2;
@@ -5351,13 +5381,20 @@ function serabutStore() {
             try {
                 await this._adminSave('flashSale.campaigns', JSON.stringify(this.adminFlashCampaigns));
                 const now = new Date();
-                const active = this.adminFlashCampaigns.find(c => c.aktif && (!c.endDate || new Date(c.endDate) > now))
-                             || this.adminFlashCampaigns.find(c => c.aktif);
+                // Flash Sale banner: hanya campaign aktif DAN showAsFlashSale !== false
+                const flashActive = this.adminFlashCampaigns.find(c =>
+                    c.aktif && (c.showAsFlashSale !== false) && (!c.endDate || new Date(c.endDate) > now)
+                ) || this.adminFlashCampaigns.find(c => c.aktif && (c.showAsFlashSale !== false));
+                // All active discount items: semua campaign aktif yang masih dalam periode
+                const allDiscountItems = this.adminFlashCampaigns
+                    .filter(c => c.aktif && (!c.endDate || new Date(c.endDate) > now))
+                    .flatMap(c => c.items || []);
                 this.flashSale.campaigns = [...this.adminFlashCampaigns];
-                this.flashSale.aktif  = !!active;
-                this.flashSale.items  = active ? (active.items||[]) : [];
-                this.flashSale.deadline   = active ? (active.endDate||'')  : '';
-                this.flashSale.startDate  = active ? (active.startDate||'') : '';
+                this.flashSale.aktif      = !!flashActive;
+                this.flashSale.items      = flashActive ? (flashActive.items || []) : [];
+                this.flashSale.deadline   = flashActive ? (flashActive.endDate || '')   : '';
+                this.flashSale.startDate  = flashActive ? (flashActive.startDate || '') : '';
+                this.flashSale.allDiscountItems = allDiscountItems;
                 this._adminShowMsg('Campaign disimpan ✓');
             } catch { this._adminShowMsg('Gagal menyimpan'); }
             this.adminSaving = false;
