@@ -2961,11 +2961,11 @@
 ══════════════════════════════════════════════════════ -->
 <div x-show="authModal" class="fixed inset-0 z-[200] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeAuthModal()"></div>
-    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter">
-        <div class="md:hidden flex justify-center pt-3 pb-1"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter max-h-[92vh] overflow-y-auto">
+        <div class="md:hidden flex justify-center pt-3 pb-1 sticky top-0 bg-white z-10"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
 
         <!-- Tabs -->
-        <div class="flex border-b border-gray-100 mt-3 mx-5">
+        <div class="flex border-b border-gray-100 mt-3 mx-5 sticky top-5 bg-white z-10">
             <button @click="authTab='login'; authError=''" :class="authTab==='login'?'border-b-2 border-brand-500 text-brand-600 font-bold':'text-gray-400 hover:text-gray-600'" class="flex-1 py-3 text-sm font-semibold transition-all">Masuk</button>
             <button @click="authTab='register'; authError=''" :class="authTab==='register'?'border-b-2 border-brand-500 text-brand-600 font-bold':'text-gray-400 hover:text-gray-600'" class="flex-1 py-3 text-sm font-semibold transition-all">Daftar</button>
         </div>
@@ -3802,9 +3802,10 @@ function serabutStore() {
         APP_VERSION:      '20260427-2',
 
         // PWA Install
-        pwaPopup:       false,
-        pwaIsIos:       false,
-        pwaPromptEvent: null,
+        pwaPopup:            false,
+        pwaIsIos:            false,
+        pwaIsAndroidManual:  false,
+        pwaPromptEvent:      null,
 
         // CS Floating Button
         csPopup:    false,
@@ -4189,12 +4190,20 @@ function serabutStore() {
                         window._pwaPrompt = null;
                         setTimeout(() => { this.pwaPopup = true; }, 3000);
                     } else {
-                        // Fallback: event belum fire, tunggu
+                        // Fallback: tunggu event, jika 5s tidak datang → tunjukkan instruksi manual
+                        let prompted = false;
                         window.addEventListener('beforeinstallprompt', e => {
                             e.preventDefault();
+                            prompted = true;
                             this.pwaPromptEvent = e;
-                            setTimeout(() => { this.pwaPopup = true; }, 3000);
+                            setTimeout(() => { this.pwaPopup = true; }, 1000);
                         });
+                        setTimeout(() => {
+                            if (!prompted && !this.pwaPopup) {
+                                this.pwaIsAndroidManual = true;
+                                this.pwaPopup = true;
+                            }
+                        }, 5000);
                     }
                 }
             }
@@ -5953,12 +5962,35 @@ function serabutStore() {
                 </button>
             </div>
 
-            <!-- Android: single CTA -->
-            <template x-if="!pwaIsIos">
+            <!-- Android: native prompt -->
+            <template x-if="!pwaIsIos && !pwaIsAndroidManual">
                 <button @click="pwaInstall()" class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all flex items-center justify-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Pasang di HP ini
                 </button>
+            </template>
+
+            <!-- Android: manual steps (jika beforeinstallprompt tidak fire) -->
+            <template x-if="!pwaIsIos && pwaIsAndroidManual">
+                <div class="space-y-3">
+                    <div class="bg-gray-50 rounded-2xl p-3 space-y-2">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-lg bg-green-500 text-white text-[11px] font-black flex items-center justify-center flex-none">1</div>
+                            <div class="text-sm text-gray-700">Buka di <span class="font-semibold text-gray-900">Chrome</span> (browser bawaan Android)</div>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-lg bg-green-500 text-white text-[11px] font-black flex items-center justify-center flex-none">2</div>
+                            <div class="text-sm text-gray-700">Ketuk <span class="font-semibold text-gray-900">⋮</span> (menu pojok kanan atas)</div>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-lg bg-green-500 text-white text-[11px] font-black flex items-center justify-center flex-none">3</div>
+                            <div class="text-sm text-gray-700">Pilih <span class="font-semibold text-gray-900">"Tambahkan ke layar utama"</span> → Tambahkan</div>
+                        </div>
+                    </div>
+                    <button @click="pwaDismiss()" class="w-full py-3 rounded-2xl bg-gray-100 text-gray-500 text-sm font-semibold active:scale-95 transition-all">
+                        Mengerti
+                    </button>
+                </div>
             </template>
 
             <!-- iOS: 3 step compact -->
