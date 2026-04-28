@@ -132,8 +132,17 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 - [2026-04-27 sesi 2] Selesai: PWA popup redesign — compact, modern, OS-aware; Android: 1 tombol native install; iOS: 3 step Safari guide; capture `beforeinstallprompt` di `<head>` sebelum Alpine; Android fallback manual jika event tidak fire dalam 5s
 - [2026-04-27 sesi 2] Selesai: Auth modal scrollable — `max-h-[92vh] overflow-y-auto`; tabs sticky; fix register tab terpotong di mobile
 
+- [2026-04-27 sesi 3] Selesai: Security audit round 2 + UX fixes — semua di-push ke GitHub
+  - SEC-05: Server-side salt — helper `_sha256GAS/_generateSalt/_applyServerSalt`; register() simpan SHA256(clientHash:salt); login() validasi dengan salt + auto-upgrade user lama; forgotPasswordVerify() generate salt baru; kolom 'Salt' di Users-web sheet
+  - SEC-06: CSRF marker — doPost() wajib `_srb:'1'` untuk 7 unauthenticated actions; gasPost() inject marker otomatis
+  - SEC-10: Rate limit tambahan — forgotPasswordVerify max 10x/jam
+  - UX-02: Progress bar 3-langkah di forgot password modal (Langkah 1/3, 2/3, 3/3)
+  - UX-01: Section "Langkah selanjutnya" di order success (single + cart) — screenshot ID, chat WA, estimasi 5–30 menit
+  - UX-05: Non-member tidak tampil harga flash sale; tampil harga penuh + badge "Member hemat X%"; badge "% OFF" juga disembunyikan
+
 ## Current Focus
-- Semua fitur selesai. Produksi stabil.
+- Semua security + UX selesai. Produksi stabil.
 - **FONNTE_TOKEN** perlu diset di GAS Script Properties agar WA notification aktif.
 - **Google SSO** sudah aktif (GOOGLE_CLIENT_ID sudah diisi di Alpine config).
 - Deploy GAS: `cp worktree/gas/Code.gs gas/Code.gs && cd gas && clasp push && clasp deploy --deploymentId [ID]`
+- **Penting**: Setelah deploy GAS baru, user lama tanpa salt kolom akan auto-upgrade ke salted hash saat login pertama kali.
