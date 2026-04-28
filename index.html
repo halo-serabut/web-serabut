@@ -538,6 +538,12 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <div class="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-3.5 h-3.5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            </div>
+                            <span class="text-sm text-gray-300">Jakarta Selatan, DKI Jakarta</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-7 h-7 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
                                 <svg class="w-3.5 h-3.5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                             </div>
                             <span class="text-sm text-gray-300">Garansi Produk Resmi</span>
@@ -548,6 +554,10 @@
                 <!-- Legal links -->
                 <div class="space-y-2">
                     <p class="text-[10px] uppercase tracking-widest text-gray-600 font-semibold">Legal</p>
+                    <button @click="setPage('faq')" class="flex items-center justify-between w-full py-2.5 border-b border-gray-800 group">
+                        <span class="text-sm text-gray-400 group-hover:text-gray-200 transition-colors">FAQ</span>
+                        <svg class="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
                     <button @click="legalModal='terms'" class="flex items-center justify-between w-full py-2.5 border-b border-gray-800 group">
                         <span class="text-sm text-gray-400 group-hover:text-gray-200 transition-colors">Syarat &amp; Ketentuan</span>
                         <svg class="w-3.5 h-3.5 text-gray-600 group-hover:text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
@@ -1215,6 +1225,59 @@
             </div>
         </div>
 
+    </section>
+
+    <!-- ───────── FAQ ───────── -->
+    <section x-show="activePage==='faq'" class="page-enter">
+        <div class="max-w-3xl mx-auto px-4 py-8 pb-28 md:pb-10">
+
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-14 h-14 bg-brand-50 rounded-2xl mb-4">
+                    <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h1 class="text-2xl font-black text-gray-900 mb-2">Pertanyaan yang Sering Ditanya</h1>
+                <p class="text-gray-500 text-sm">Temukan jawaban atas pertanyaan umum seputar Serabut Store</p>
+            </div>
+
+            <!-- FAQ Accordion -->
+            <div class="space-y-3" x-data="{ open: null }">
+
+                <template x-for="(faq, idx) in faqItems" :key="idx">
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <button @click="open = open===idx ? null : idx"
+                                class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-gray-50 transition-colors">
+                            <span class="font-semibold text-gray-800 text-sm leading-snug" x-text="faq.q"></span>
+                            <svg class="w-4 h-4 text-gray-400 flex-none transition-transform duration-200"
+                                 :class="open===idx ? 'rotate-90' : ''"
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                        <div x-show="open===idx" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
+                            <div class="px-5 pb-4 pt-0">
+                                <div class="h-px bg-gray-100 mb-3"></div>
+                                <p class="text-sm text-gray-600 leading-relaxed" x-html="faq.a"></p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+            </div>
+
+            <!-- CTA -->
+            <div class="mt-8 bg-brand-50 border border-brand-100 rounded-2xl p-5 text-center">
+                <p class="text-sm font-semibold text-gray-800 mb-1">Masih ada pertanyaan?</p>
+                <p class="text-xs text-gray-500 mb-4">Tim CS kami siap membantu kamu via WhatsApp</p>
+                <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya ingin bertanya...')"
+                   target="_blank"
+                   class="inline-flex items-center gap-2 bg-brand-500 text-white font-bold text-sm px-6 py-2.5 rounded-xl active:scale-95 transition-all">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    Chat WhatsApp
+                </a>
+            </div>
+
+        </div>
     </section>
 
     <!-- ───────── ADMIN DASHBOARD ───────── -->
@@ -2168,11 +2231,16 @@
                         <div><a href="#" @click.prevent="setPage('catalog')" class="active:text-white">Semua Produk</a></div>
                         <div><a href="#" @click.prevent="setPage('status')" class="active:text-white">Cek Status Akun</a></div>
                         <div><a href="#" @click.prevent="setPage('panduan')" class="active:text-white">Panduan Instalasi</a></div>
+                        <div><a href="#" @click.prevent="setPage('faq')" class="active:text-white">FAQ</a></div>
                     </div>
                 </div>
                 <div>
-                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Kontak</div>
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Kontak & Alamat</div>
                     <div class="space-y-1.5 text-xs text-gray-400">
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 flex-none text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <span>Jakarta Selatan, DKI Jakarta</span>
+                        </div>
                         <div x-text="siteSettings.footer.email"></div>
                         <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex items-center gap-1.5 active:text-white">
                             <svg class="w-3.5 h-3.5 flex-none text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -2204,11 +2272,16 @@
                         <div><a href="#" @click.prevent="setPage('catalog')" class="hover:text-white transition-colors">Semua Produk</a></div>
                         <div><a href="#" @click.prevent="setPage('status')" class="hover:text-white transition-colors">Cek Status Akun</a></div>
                         <div><a href="#" @click.prevent="setPage('panduan')" class="hover:text-white transition-colors">Panduan Instalasi</a></div>
+                        <div><a href="#" @click.prevent="setPage('faq')" class="hover:text-white transition-colors">FAQ</a></div>
                     </div>
                 </div>
                 <div>
-                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Kontak</div>
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Kontak & Alamat</div>
                     <div class="space-y-1 text-xs text-gray-400">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <span>Jakarta Selatan, DKI Jakarta</span>
+                        </div>
                         <div class="flex items-center gap-2">
                             <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             <span x-text="siteSettings.footer.email"></span>
@@ -2749,7 +2822,20 @@
                             <p class="text-xs text-gray-600">Pesanan diproses dalam <span class="font-semibold text-gray-800">5–30 menit</span> setelah pembayaran dikonfirmasi</p>
                         </div>
                     </div>
-                    <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+cartOrderIds.join(', ')+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 mb-2.5 transition-all text-center">Chat WhatsApp Sekarang</a>
+                    <!-- iPaymu payment button -->
+                    <button @click="payViaIPaymu()" :disabled="iPaymuLoading"
+                            class="w-full flex items-center justify-center gap-2.5 bg-[#0A3A5C] hover:bg-[#0d4a75] text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 mb-2.5 transition-all shadow-md disabled:opacity-60">
+                        <svg x-show="iPaymuLoading" class="animate-spin w-4 h-4 flex-none" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        <svg x-show="!iPaymuLoading" class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                        <span x-text="iPaymuLoading ? 'Mengarahkan ke iPaymu...' : 'Bayar via iPaymu'"></span>
+                    </button>
+                    <div x-show="iPaymuError" class="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-xl mb-2.5 text-center" x-text="iPaymuError"></div>
+                    <div class="relative flex items-center gap-3 mb-2.5">
+                        <div class="flex-1 h-px bg-gray-100"></div>
+                        <span class="text-[11px] text-gray-400 font-medium">atau</span>
+                        <div class="flex-1 h-px bg-gray-100"></div>
+                    </div>
+                    <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+cartOrderIds.join(', ')+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full border border-gray-200 text-gray-700 font-semibold py-3 rounded-2xl text-sm active:scale-95 mb-2.5 transition-all text-center hover:bg-gray-50">Konfirmasi via WhatsApp</a>
                     <button @click="cartCheckoutModal=false; setPage('home')" class="w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">
                         Kembali ke Beranda
                     </button>
@@ -2874,6 +2960,35 @@
             </template>
         </div>
     </div>
+</div>
+
+<!-- iPaymu return notification -->
+<div x-show="iPaymuReturnStatus" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+     class="fixed top-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto md:max-w-sm z-[500]">
+    <template x-if="iPaymuReturnStatus?.status==='success'">
+        <div class="bg-emerald-600 text-white rounded-2xl px-5 py-4 shadow-2xl flex items-start gap-3">
+            <svg class="w-5 h-5 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            <div class="flex-1">
+                <p class="font-bold text-sm">Pembayaran Berhasil!</p>
+                <p class="text-xs text-emerald-100 mt-0.5">Order <span x-text="iPaymuReturnStatus?.orderId" class="font-semibold"></span> sedang diproses. Kami akan menghubungi kamu segera.</p>
+            </div>
+            <button @click="iPaymuReturnStatus=null" class="text-emerald-200 hover:text-white transition-colors flex-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+    </template>
+    <template x-if="iPaymuReturnStatus?.status==='cancel'">
+        <div class="bg-orange-500 text-white rounded-2xl px-5 py-4 shadow-2xl flex items-start gap-3">
+            <svg class="w-5 h-5 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <div class="flex-1">
+                <p class="font-bold text-sm">Pembayaran Dibatalkan</p>
+                <p class="text-xs text-orange-100 mt-0.5">Order <span x-text="iPaymuReturnStatus?.orderId" class="font-semibold"></span> belum dibayar. Hubungi kami jika butuh bantuan.</p>
+            </div>
+            <button @click="iPaymuReturnStatus=null" class="text-orange-200 hover:text-white transition-colors flex-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+    </template>
 </div>
 
 <!-- Cart toast notification -->
@@ -3652,14 +3767,27 @@
             </div>
             <div class="flex items-start gap-3">
                 <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">2</span>
-                <p class="text-sm text-gray-600">Klik tombol WhatsApp di bawah untuk konfirmasi pesanan ke tim kami</p>
+                <p class="text-sm text-gray-600">Klik <strong class="text-gray-800">Bayar via iPaymu</strong> untuk pembayaran otomatis, atau konfirmasi via WhatsApp</p>
             </div>
             <div class="flex items-start gap-3">
                 <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">3</span>
                 <p class="text-sm text-gray-600">Pesanan diproses dalam <span class="font-semibold text-gray-800">5–30 menit</span> setelah pembayaran dikonfirmasi</p>
             </div>
         </div>
-        <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+currentOrderId+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full gradient-card text-white font-bold py-3.5 rounded-2xl mb-3 text-sm active:scale-95 shadow-sm">Chat WhatsApp Sekarang</a>
+        <!-- iPaymu payment button -->
+        <button @click="payViaIPaymu()" :disabled="iPaymuLoading"
+                class="w-full flex items-center justify-center gap-2.5 bg-[#0A3A5C] hover:bg-[#0d4a75] text-white font-bold py-3.5 rounded-2xl mb-2.5 text-sm active:scale-95 transition-all shadow-md disabled:opacity-60">
+            <svg x-show="iPaymuLoading" class="animate-spin w-4 h-4 flex-none" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            <svg x-show="!iPaymuLoading" class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            <span x-text="iPaymuLoading ? 'Mengarahkan ke iPaymu...' : 'Bayar via iPaymu'"></span>
+        </button>
+        <div x-show="iPaymuError" class="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-xl mb-2.5 text-center" x-text="iPaymuError"></div>
+        <div class="relative flex items-center gap-3 mb-2.5">
+            <div class="flex-1 h-px bg-gray-100"></div>
+            <span class="text-[11px] text-gray-400 font-medium">atau</span>
+            <div class="flex-1 h-px bg-gray-100"></div>
+        </div>
+        <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+currentOrderId+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full border border-gray-200 text-gray-700 font-semibold py-3 rounded-2xl mb-3 text-sm active:scale-95 transition-all text-center hover:bg-gray-50">Konfirmasi via WhatsApp</a>
         <button @click="orderSuccess=false; productModal=false; currentOrderId=null; renewalMode=false" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Tutup</button>
     </div>
 </div>
@@ -3934,7 +4062,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260428-3',
+        APP_VERSION:      '20260429-1',
 
         // PWA Install
         pwaPopup:            false,
@@ -4000,6 +4128,10 @@ function serabutStore() {
         orderLoading:    false,
         orderError:      '',
         currentOrderId:  null,
+        iPaymuLoading:   false,
+        iPaymuError:     '',
+        iPaymuReturnStatus: null,
+        currentOrderIPaymuData: null,
 
         // Profile
         profileTab:    'diri',
@@ -4142,8 +4274,8 @@ function serabutStore() {
         navItems: [
             { id:'home',    label:'Beranda',    icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
             { id:'catalog', label:'Produk',     icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>` },
-            { id:'panduan', label:'Panduan',    icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>` },
             { id:'status',  label:'Cek Status', icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
+            { id:'faq',     label:'FAQ',        icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
         ],
         _categoryIconMap: {
             'Office 365':    `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
@@ -4163,6 +4295,20 @@ function serabutStore() {
             {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,title:'Proses Kilat',      desc:'Aktivasi dalam hitungan menit setelah pembayaran'},
             {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>`,title:'Support 24/7',      desc:'Tim siap bantu via WhatsApp kapan saja'},
             {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>`,title:'Harga Terbaik',     desc:'Hemat hingga 70% dari harga resmi'},
+        ],
+        faqItems: [
+            { q: 'Apa itu Serabut Store?', a: 'Serabut Store adalah toko digital terpercaya yang menjual lisensi software premium seperti Microsoft Office 365, Adobe Creative Cloud, Windows, dan produk digital lainnya dengan harga terjangkau dan proses aktivasi cepat.' },
+            { q: 'Produk apa saja yang tersedia di Serabut Store?', a: 'Kami menyediakan berbagai produk digital antara lain:<br>• <strong>Microsoft Office 365</strong> (Personal, Family, Web)<br>• <strong>Adobe Creative Cloud</strong><br>• <strong>Microsoft Windows</strong> (10/11 Home/Pro)<br>• <strong>Windows Server</strong><br>• <strong>Microsoft Project & Visio</strong><br>• <strong>CorelDRAW</strong><br>• <strong>Google Workspace</strong><br>dan produk lainnya. Lihat katalog lengkap di halaman Produk.' },
+            { q: 'Bagaimana cara memesan di Serabut Store?', a: '1. Pilih produk yang diinginkan di halaman <strong>Produk</strong><br>2. Pilih varian dan durasi langganan<br>3. Klik tombol <strong>Pesan Sekarang</strong><br>4. Lengkapi data pemesanan<br>5. Lakukan pembayaran sesuai instruksi<br>6. Produk akan diaktifkan dalam <strong>5–30 menit</strong> setelah pembayaran dikonfirmasi.' },
+            { q: 'Metode pembayaran apa yang tersedia?', a: 'Kami menerima berbagai metode pembayaran melalui <strong>iPaymu</strong>, termasuk:<br>• Transfer bank (semua bank utama)<br>• QRIS (GoPay, OVO, Dana, dll)<br>• Virtual Account<br>• Kartu Kredit/Debit Visa & Mastercard<br>• Gerai minimarket (Alfamart, Indomaret)<br><br>Pembayaran diproses secara otomatis dan aman.' },
+            { q: 'Berapa lama proses aktivasi setelah pembayaran?', a: 'Produk diaktifkan dalam waktu <strong>5–30 menit</strong> pada hari kerja setelah pembayaran dikonfirmasi. Untuk pesanan di luar jam operasional (08.00–22.00 WIB), akan diproses di awal hari kerja berikutnya.' },
+            { q: 'Apakah ada garansi untuk produk yang dibeli?', a: 'Ya! Semua produk bergaransi sesuai masa aktif yang tertera. Jika produk bermasalah dari pihak kami (akun tidak aktif, lisensi tidak valid), kami <strong>wajib perbaiki atau ganti</strong> tanpa biaya tambahan.<br><br>Garansi tidak berlaku jika masalah disebabkan oleh perubahan password, penyalahgunaan akun, atau penggunaan di luar ketentuan produk.' },
+            { q: 'Bagaimana cara mengajukan refund?', a: 'Refund dapat diajukan dalam <strong>3×24 jam</strong> setelah pembelian jika:<br>• Produk tidak sesuai deskripsi yang tertera<br>• Produk tidak dapat diaktifkan setelah troubleshooting<br><br>Untuk mengajukan refund, hubungi CS kami via WhatsApp dengan menyertakan bukti yang jelas. Proses refund memakan waktu <strong>3–7 hari kerja</strong>.' },
+            { q: 'Bagaimana cara mengecek status berlangganan saya?', a: 'Gunakan fitur <strong>Cek Status</strong> di aplikasi ini. Masukkan email pembelian, nama, atau nomor WhatsApp kamu — sistem akan menampilkan status dan masa berlaku akun secara real-time.' },
+            { q: 'Apakah produk yang dijual legal dan resmi?', a: 'Ya, semua produk yang kami jual adalah <strong>lisensi resmi</strong> dari vendor. Kami beroperasi sebagai reseller software berlisensi dan mematuhi ketentuan penggunaan dari masing-masing vendor. Produk 100% bisa digunakan untuk keperluan pribadi maupun profesional.' },
+            { q: 'Apa perbedaan Office 365 Personal, Family, dan Web?', a: '<strong>Personal</strong>: 1 pengguna, hingga 5 perangkat, full fitur Office + 1TB OneDrive.<br><br><strong>Family</strong>: Hingga 6 pengguna, masing-masing hingga 5 perangkat, full fitur Office + 1TB OneDrive per orang.<br><br><strong>Web</strong>: Akses Office versi web browser (Word, Excel, PowerPoint online), tanpa instalasi desktop, cocok untuk penggunaan ringan.' },
+            { q: 'Apakah satu akun bisa digunakan di beberapa perangkat?', a: 'Tergantung produknya:<br>• <strong>Office 365 Personal/Family</strong>: Hingga 5 perangkat aktif per pengguna<br>• <strong>Adobe Creative Cloud</strong>: 2 perangkat aktif bersamaan<br>• <strong>Windows License Key</strong>: 1 perangkat per lisensi<br><br>Jangan bagikan akun ke orang lain di luar ketentuan paket.' },
+            { q: 'Bagaimana cara menghubungi customer service?', a: 'CS kami tersedia setiap hari <strong>08.00–22.00 WIB</strong> melalui:<br>• <strong>WhatsApp</strong>: 0888-1500-555<br>• <strong>Email</strong>: halo@serabut.com<br>• <strong>Live chat</strong>: Klik tombol chat di sudut kanan bawah aplikasi ini.' },
         ],
         statusOptions: [
             {value:'email',      label:'Email Pembelian',hint:'Email saat order',     placeholder:'contoh@email.com'},
@@ -4275,6 +4421,19 @@ function serabutStore() {
         // ── Init ──────────────────────────────────────
         async init() {
             this.initPageFromURL();
+            // ── iPaymu return URL handler ──
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const payStatus = urlParams.get('payment');
+                const payOrderId = urlParams.get('orderId');
+                if (payStatus === 'success' && payOrderId) {
+                    this.iPaymuReturnStatus = { status: 'success', orderId: payOrderId };
+                    window.history.replaceState({}, '', window.location.pathname);
+                } else if (payStatus === 'cancel' && payOrderId) {
+                    this.iPaymuReturnStatus = { status: 'cancel', orderId: payOrderId };
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
+            } catch {}
             // ── Cache busting — auto-reload jika versi baru terdeteksi ──
             try {
                 const storedV = localStorage.getItem('srb_app_v');
@@ -4979,12 +5138,43 @@ function serabutStore() {
                 });
                 if (data.success) {
                     this.cartOrderIds = [data.orderId];
+                    this.currentOrderId = data.orderId;
+                    this.currentOrderIPaymuData = {
+                        buyerName:  uNama,
+                        buyerEmail: uEmail,
+                        buyerPhone: uWa,
+                        items: items.map(it => ({ produk: it.produk, varian: it.varian||'-', harga: it.harga }))
+                    };
+                    this.iPaymuError = '';
                     this.cartCheckoutSuccess = true;
                     this.cart = [];
                     this.saveCart();
                 } else { this.cartCheckoutError = data.error||'Gagal memproses pesanan'; }
             } catch { this.cartCheckoutError = 'Gagal terhubung ke server'; }
             this.cartCheckoutLoading = false;
+        },
+
+        async payViaIPaymu() {
+            if (!this.currentOrderId || !this.currentOrderIPaymuData) return;
+            this.iPaymuLoading = true;
+            this.iPaymuError   = '';
+            try {
+                const d    = this.currentOrderIPaymuData;
+                const data = await this.gasPost({
+                    action:     'createIPaymuPayment',
+                    orderId:    this.currentOrderId,
+                    itemsJson:  JSON.stringify(d.items),
+                    buyerName:  d.buyerName,
+                    buyerEmail: d.buyerEmail,
+                    buyerPhone: d.buyerPhone,
+                });
+                if (data.success && data.paymentUrl) {
+                    window.location.href = data.paymentUrl;
+                } else {
+                    this.iPaymuError = data.error || 'Gagal membuat sesi pembayaran';
+                }
+            } catch { this.iPaymuError = 'Gagal terhubung ke server'; }
+            this.iPaymuLoading = false;
         },
 
         handlePesan() {
@@ -5037,6 +5227,13 @@ function serabutStore() {
                 });
                 if(data.success) {
                     this.currentOrderId = data.orderId;
+                    this.currentOrderIPaymuData = {
+                        buyerName:  this.isMember ? (this.currentUser?.nama||'') : this.orderExtra.guestNama.trim(),
+                        buyerEmail: this.isMember ? (this.currentUser?.email||'') : this.orderExtra.guestEmail.trim(),
+                        buyerPhone: this.isMember ? (this.currentUser?.wa||'') : this.orderExtra.guestWa.trim(),
+                        items: [{ produk: this.selectedProductGroup.nama, varian: this.selectedVariant.varian||'-', harga: data.harga }]
+                    };
+                    this.iPaymuError = '';
                     this.orderModal  = false;
                     this.orderSuccess = true;
                 } else { this.orderError = data.error||'Gagal membuat pesanan'; }

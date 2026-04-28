@@ -156,8 +156,14 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - GAS `smartSearch()` → CacheService 5 menit untuk 3 sheets (List Account 365, Family, Adobe CC); drastis kurangi latency untuk pencarian berulang
   - Admin "Semua Order" → grouped by orderId: 1 card per order number, item list di dalam card, total per order, 1 selector "Ubah Status" untuk semua item sekaligus via `adminUpdateGroupStatus()`
 
+- [2026-04-29] Selesai: iPaymu verification requirements (3 poin):
+  - **iPaymu Integration**: GAS `createIPaymuPayment()` + `ipaymuCallback()` — redirect payment API v2, HMAC-SHA256 signature; VA & API Key dari Script Properties (`IPAYMU_VA`, `IPAYMU_API_KEY`); frontend `payViaIPaymu()`, tombol "Bayar via iPaymu" di order success modal & cart checkout success; notification banner return dari iPaymu (success/cancel)
+  - **FAQ page**: halaman `/faq` dengan 11 Q&A accordion; FAQ masuk navItems (mobile bottom nav + desktop nav); link FAQ di semua footer
+  - **Alamat**: "Jakarta Selatan, DKI Jakarta" di footer desktop, footer mobile (home section), dan desktop footer mobile-view
+
 ## Current Focus
+- **Deploy GAS wajib**: `createIPaymuPayment` + `ipaymuCallback` sudah di Code.gs — push ke GAS dulu.
+- **Script Properties iPaymu**: Set `IPAYMU_VA` dan `IPAYMU_API_KEY` di GAS Script Properties setelah akun iPaymu approved.
 - **FONNTE_TOKEN** perlu diset di GAS Script Properties agar WA notification aktif.
 - **Google SSO** sudah aktif (GOOGLE_CLIENT_ID sudah diisi di Alpine config).
-- Deploy GAS terbaru: `cp worktree/gas/Code.gs gas/Code.gs && cd gas && clasp push && clasp deploy --deploymentId [ID]`
-- **Penting**: Setelah deploy GAS baru, user lama tanpa salt kolom akan auto-upgrade ke salted hash saat login pertama kali.
+- Deploy GAS: `cp worktree/gas/Code.gs gas/Code.gs && cd gas && clasp push && clasp deploy --deploymentId [ID]`

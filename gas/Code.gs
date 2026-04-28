@@ -100,6 +100,8 @@ function doPost(e) {
       case 'forgotPasswordSendOTP':   result = forgotPasswordSendOTP(params); break;
       case 'forgotPasswordVerify':    result = forgotPasswordVerify(params); break;
       case 'createCartOrder':         result = createCartOrder(params); break;
+      case 'createIPaymuPayment':     result = createIPaymuPayment(params); break;
+      case 'ipaymuCallback':          result = ipaymuCallback(params); break;
       // CS
       case 'csChat':            result = handleCSChat(params); break;
       // Admin
@@ -1612,6 +1614,94 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   try { sendBuyerOrderConfirm(userWa, userEmail, userNama, orderId, buyerItems, totalHarga); } catch(e) { Logger.log('Buyer notif error: ' + e.message); }
 
   return { success: true, orderId, total: totalHarga };
+}
+
+// ────────────────────────────────────────────────────────
+//  IPAYMU PAYMENT INTEGRATION
+// ────────────────────────────────────────────────────────
+function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerPhone, total }) {
+  const props  = PropertiesService.getScriptProperties();
+  const va     = props.getProperty('IPAYMU_VA');
+  const apiKey = props.getProperty('IPAYMU_API_KEY');
+  if (!va || !apiKey) return { success: false, error: 'iPaymu belum dikonfigurasi. Hubungi admin.' };
+  if (!orderId)       return { success: false, error: 'Order ID diperlukan' };
+
+  const items = JSON.parse(itemsJson || '[]');
+  if (!items.length)  return { success: false, error: 'Item pesanan kosong' };
+
+  const deployedUrl = ScriptApp.getService().getUrl();
+  const body = {
+    product:   items.map(i => i.produk + (i.varian && i.varian !== '-' ? ' - ' + i.varian : '')),
+    qty:       items.map(() => 1),
+    price:     items.map(i => Math.round(Number(i.harga) || 0)),
+    returnUrl: 'https://serabut.id/?payment=success&orderId=' + orderId,
+    cancelUrl: 'https://serabut.id/?payment=cancel&orderId=' + orderId,
+    notifyUrl: deployedUrl,
+    referenceId: orderId,
+    buyerName:   (buyerName  || 'Pembeli').substring(0, 50),
+    buyerEmail:  buyerEmail  || '',
+    buyerPhone:  buyerPhone  || ''
+  };
+
+  const bodyStr = JSON.stringify(body);
+  const timestamp = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyyMMddHHmmss');
+
+  // SHA256 body hash
+  const bodyHashBytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.newBlob(bodyStr).getBytes());
+  const bodyHash = bodyHashBytes.map(function(b){ return (b & 0xff).toString(16).padStart(2,'0'); }).join('');
+
+  // HMAC-SHA256 signature
+  const stringToSign = 'POST:' + va + ':' + bodyHash + ':' + timestamp;
+  const sigBytes = Utilities.computeHmacSha256Signature(stringToSign, apiKey);
+  const signature = sigBytes.map(function(b){ return (b & 0xff).toString(16).padStart(2,'0'); }).join('');
+
+  const resp = UrlFetchApp.fetch('https://my.ipaymu.com/api/v2/payment', {
+    method: 'post',
+    headers: { 'Content-Type': 'application/json', 'va': va, 'signature': signature, 'timestamp': timestamp },
+    payload: bodyStr,
+    muteHttpExceptions: true
+  });
+
+  const result = JSON.parse(resp.getContentText());
+  Logger.log('iPaymu createPayment response: ' + JSON.stringify(result));
+
+  if (result.Status === 200) {
+    return { success: true, paymentUrl: result.Data.Url, sessionId: result.Data.SessionID };
+  }
+  return { success: false, error: (result.Message || 'Gagal membuat sesi pembayaran iPaymu') };
+}
+
+function ipaymuCallback(params) {
+  // iPaymu POST callback: { trx_id, status, status_code, reference_id, ... }
+  const referenceId = params.reference_id || params.referenceId || params.trx_id;
+  const statusCode  = String(params.status_code || params.status || '');
+  if (!referenceId) return { success: false };
+
+  // status_code 1 = berhasil
+  const isPaid = (statusCode === '1' || statusCode.toLowerCase() === 'berhasil');
+  if (!isPaid) return { success: true, message: 'Status diabaikan: ' + statusCode };
+
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: false };
+
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(function(h){ return String(h).toLowerCase().trim(); });
+  const idCol   = headers.indexOf('order id');
+  const stCol   = headers.indexOf('status');
+  if (idCol < 0 || stCol < 0) return { success: false };
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]).trim() === String(referenceId).trim()) {
+      if (data[i][stCol] === 'Pending') {
+        sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
+        Logger.log('ipaymuCallback: order ' + referenceId + ' → Diproses');
+      }
+      return { success: true };
+    }
+  }
+  Logger.log('ipaymuCallback: order tidak ditemukan: ' + referenceId);
+  return { success: false, error: 'Order tidak ditemukan' };
 }
 
 // ────────────────────────────────────────────────────────
