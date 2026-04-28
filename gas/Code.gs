@@ -77,6 +77,12 @@ function doPost(e) {
   const action = params.action;
   let result;
 
+  // [SEC] CSRF defense-in-depth: unauthenticated endpoints wajib sertakan _srb marker
+  const UNAUTHENTICATED_ACTIONS = ['register','verifyOTP','resendOTP','login','googleLogin','forgotPasswordSendOTP','forgotPasswordVerify'];
+  if (UNAUTHENTICATED_ACTIONS.includes(action) && String(params._srb || '') !== '1') {
+    return _jsonOut({ success: false, error: 'Bad request' });
+  }
+
   try {
     switch (action) {
       // Auth
@@ -134,6 +140,37 @@ function _jsonOut(data) {
 // Generate session token UUID
 function _generateSessionToken() {
   return Utilities.getUuid();
+}
+
+// [SEC] SHA-256 hex digest via GAS Utilities
+function _sha256GAS(str) {
+  const bytes  = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(str), Utilities.Charset.UTF_8);
+  return bytes.map(b => ('0' + (b < 0 ? b + 256 : b).toString(16)).slice(-2)).join('');
+}
+
+// [SEC] Generate random 32-char hex salt
+function _generateSalt() {
+  return Utilities.getUuid().replace(/-/g, '');
+}
+
+// [SEC] Terapkan server-side salt ke client hash: SHA256(clientHash + ':' + salt)
+function _applyServerSalt(clientHash, salt) {
+  return _sha256GAS(String(clientHash) + ':' + String(salt));
+}
+
+// [SEC] Rate limiter via CacheService — return false jika sudah melebihi batas
+// Fail-open: jika CacheService error, izinkan request (jangan block semua user)
+function _rateLimit(key, maxAttempts, windowSeconds) {
+  try {
+    const cache   = CacheService.getScriptCache();
+    const current = parseInt(cache.get(key) || '0', 10);
+    if (current >= maxAttempts) return false;
+    cache.put(key, String(current + 1), windowSeconds);
+    return true;
+  } catch (e) {
+    Logger.log('RateLimit error (fail-open): ' + e.message);
+    return true;
+  }
 }
 
 // Simpan session token ke Users-web
@@ -768,7 +805,7 @@ function checkStatus(type, query) {
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     const val = String(row[colIdx] || '').toLowerCase().trim();
-    if (!val || (!val.includes(q) && val !== q)) continue;
+    if (!val || val !== q) continue; // [SEC] exact match — cegah enumerasi partial
 
     const account = {};
     headers.forEach((h, idx) => {
@@ -800,6 +837,11 @@ function register({ nama, email, wa, password, privacyConsent }) {
   if (!/^[0-9]{9,15}$/.test(wa.replace(/[\s\-+]/g, ''))) {
     return { success: false, error: 'Format nomor WhatsApp tidak valid' };
   }
+  // [SEC] Rate limit: max 5 register per email per jam
+  const emailKey = String(email).toLowerCase().trim();
+  if (!_rateLimit('reg_' + emailKey, 5, 3600)) {
+    return { success: false, error: 'Terlalu banyak percobaan. Coba lagi dalam 1 jam.' };
+  }
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(TAB_USERS);
@@ -825,11 +867,15 @@ function register({ nama, email, wa, password, privacyConsent }) {
     ? `I Accept – ${formatJkt(new Date(), 'dd MMM yyyy, HH:mm')} WIB`
     : '';
 
+  // [SEC] Server-side salt — simpan SHA256(clientHash:salt) bukan clientHash langsung
+  const salt         = _generateSalt();
+  const saltedPw     = _applyServerSalt(password, salt);
+
   sheet.appendRow([
     nama.trim(),      // 0 Nama
     emailNorm,        // 1 Email
     wa.trim(),        // 2 No Hp
-    password,         // 3 Password (SHA-256 salted dari client)
+    saltedPw,         // 3 Password (server-salted: SHA256(clientHash:salt))
     createdAt,        // 4 Created At
     'Pending',        // 5 Status
     privacyTs,        // 6 Privacy Notice
@@ -839,6 +885,8 @@ function register({ nama, email, wa, password, privacyConsent }) {
     '', '', '', '',   // 10-13 Profile fields
     '',               // 14 Session Token
     0,                // 15 OTP Attempts
+    '',               // 16 Session Token Expiry
+    salt,             // 17 Salt
   ]);
 
   sendOTPEmail(emailNorm, nama.trim(), otp);
@@ -965,6 +1013,11 @@ function sendNewOTP(sheet, sheetRow, email, nama) {
 function login({ email, password, passwordLegacy }) {
   if (!email || !password) return { success: false, error: 'Email dan password harus diisi' };
 
+  // [SEC] Rate limit: max 10 login per email per 15 menit (cegah brute-force)
+  if (!_rateLimit('login_' + String(email).toLowerCase().trim(), 10, 900)) {
+    return { success: false, error: 'Terlalu banyak percobaan login. Coba lagi dalam 15 menit.' };
+  }
+
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(TAB_USERS);
   if (!sheet) return { success: false, error: 'Belum ada user terdaftar' };
@@ -974,6 +1027,7 @@ function login({ email, password, passwordLegacy }) {
   const data    = sheet.getDataRange().getValues();
   const headers = data[0].map(h => String(h).toLowerCase().trim());
   const tokCol  = _colIndex(headers, 'session token', 'sessiontoken');
+  const saltCol = _colIndex(headers, 'salt');
   const emailNorm = email.toLowerCase().trim();
 
   for (let i = 1; i < data.length; i++) {
@@ -985,18 +1039,32 @@ function login({ email, password, passwordLegacy }) {
       return { success: false, error: 'Akun belum diverifikasi. Cek email kamu untuk kode OTP.' };
     }
 
-    const storedPw = String(row[3]);
-    let matched    = false;
-    let upgraded   = false;
+    const storedPw   = String(row[3]);
+    const storedSalt = saltCol >= 0 ? String(row[saltCol] || '').trim() : '';
+    let matched      = false;
 
-    if (storedPw === String(password)) {
-      matched = true; // new salted hash matches
-    } else if (passwordLegacy && storedPw === String(passwordLegacy)) {
-      // [SEC] Legacy unsalted hash — upgrade ke salted hash
-      sheet.getRange(i + 1, 4).setValue(String(password));
-      matched  = true;
-      upgraded = true;
-      Logger.log('Password upgraded to salted hash for: ' + emailNorm);
+    if (storedSalt) {
+      // [SEC] User sudah punya server-side salt — bandingkan SHA256(clientHash:salt)
+      matched = (_applyServerSalt(password, storedSalt) === storedPw);
+      if (!matched && passwordLegacy) {
+        matched = (_applyServerSalt(passwordLegacy, storedSalt) === storedPw);
+      }
+    } else {
+      // [SEC] User lama tanpa salt — coba direct compare, lalu upgrade ke salted
+      if (storedPw === String(password)) {
+        matched = true;
+      } else if (passwordLegacy && storedPw === String(passwordLegacy)) {
+        matched = true;
+      }
+      if (matched) {
+        // Upgrade: generate salt + simpan salted hash
+        const newSalt   = _generateSalt();
+        const newSalted = _applyServerSalt(password, newSalt);
+        sheet.getRange(i + 1, 4).setValue(newSalted);
+        if (saltCol >= 0) sheet.getRange(i + 1, saltCol + 1).setValue(newSalt);
+        else sheet.getRange(i + 1, 18).setValue(newSalt); // fallback col R
+        Logger.log('Password upgraded to server-salted for: ' + emailNorm);
+      }
     }
 
     if (!matched) return { success: false, error: 'Password salah' };
@@ -1317,12 +1385,17 @@ function changePassword({ email, sessionToken, oldPassword, oldPasswordLegacy, n
 // ────────────────────────────────────────────────────────
 function forgotPasswordSendOTP({ email }) {
   if (!email) return { success: false, error: 'Email harus diisi' };
+  const emailNorm = String(email).toLowerCase().trim();
+  // [SEC] Rate limit: max 3 kirim OTP reset per email per jam
+  if (!_rateLimit('fpwd_' + emailNorm, 3, 3600)) {
+    return { success: false, error: 'Terlalu banyak permintaan. Tunggu 1 jam sebelum coba lagi.' };
+  }
+
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(TAB_USERS);
   if (!sheet) return { success: false, error: 'User tidak ditemukan' };
 
-  const data      = sheet.getDataRange().getValues();
-  const emailNorm = email.toLowerCase().trim();
+  const data = sheet.getDataRange().getValues();
 
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][1]).toLowerCase().trim() !== emailNorm) continue;
@@ -1367,6 +1440,10 @@ function forgotPasswordSendOTP({ email }) {
 // ────────────────────────────────────────────────────────
 function forgotPasswordVerify({ email, otp, newPassword }) {
   if (!email || !otp || !newPassword) return { success: false, error: 'Data tidak lengkap' };
+  // [SEC] Rate limit: max 10 verify per email per jam
+  if (!_rateLimit('fverify_' + String(email).toLowerCase().trim(), 10, 3600)) {
+    return { success: false, error: 'Terlalu banyak percobaan. Coba lagi dalam 1 jam.' };
+  }
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(TAB_USERS);
   if (!sheet) return { success: false, error: 'User tidak ditemukan' };
@@ -1375,6 +1452,7 @@ function forgotPasswordVerify({ email, otp, newPassword }) {
   const headers   = data[0].map(h => String(h).toLowerCase().trim());
   const emailNorm = email.toLowerCase().trim();
   const attCol    = _colIndex(headers, 'otp attempts');
+  const saltCol   = _colIndex(headers, 'salt');
 
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][1]).toLowerCase().trim() !== emailNorm) continue;
@@ -1393,7 +1471,12 @@ function forgotPasswordVerify({ email, otp, newPassword }) {
       return { success: false, error: remaining > 0 ? `Kode OTP salah. Sisa ${remaining} percobaan.` : 'Terlalu banyak percobaan. Minta kode baru.' };
     }
 
-    sheet.getRange(i + 1, 4).setValue(String(newPassword));
+    // [SEC] Generate salt baru + simpan salted password setelah reset
+    const newSalt   = _generateSalt();
+    const saltedPw  = _applyServerSalt(newPassword, newSalt);
+    sheet.getRange(i + 1, 4).setValue(saltedPw);
+    if (saltCol >= 0) sheet.getRange(i + 1, saltCol + 1).setValue(newSalt);
+    else sheet.getRange(i + 1, 18).setValue(newSalt);
     sheet.getRange(i + 1, 8).setValue('');
     sheet.getRange(i + 1, 9).setValue('');
     if (attCol >= 0) sheet.getRange(i + 1, attCol + 1).setValue(0);
@@ -1488,6 +1571,7 @@ function ensureUserSheetHeaders(sheet) {
     'Tanggal Lahir','Jenis Kelamin','Kota','Provinsi',
     'Session Token','OTP Attempts',
     'Session Token Expiry', // [SEC] kolom baru v6 — expiry 30 hari
+    'Salt',                 // [SEC] kolom baru v7 — server-side password salt
   ];
   const cur     = sheet.getRange(1, 1, 1, needed.length).getValues()[0];
   const changed = needed.some((h, i) => String(cur[i] || '').trim() !== h);

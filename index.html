@@ -455,7 +455,7 @@
                             <div class="flex items-center gap-1 mb-0.5">
                                 <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md" :class="getCategoryColor(product.category)" x-text="product.category"></span>
                                 <span x-show="product.stok===0" class="text-[9px] font-black bg-gray-400 text-white px-1.5 py-0.5 rounded-full">Stok Habis</span>
-                                <span x-show="product.stok!==0 && flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full" x-text="(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'% OFF'"></span>
+                                <span x-show="isMember && product.stok!==0 && flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-[9px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full" x-text="(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'% OFF'"></span>
                             </div>
                             <h3 class="font-bold text-gray-800 text-sm leading-snug line-clamp-1" x-text="product.nama"></h3>
                             <p class="text-xs text-gray-400 truncate"><span x-text="product.varian"></span><span x-show="product.masaAktif&&product.masaAktif!=='-'" x-text="' · '+product.masaAktif"></span></p>
@@ -466,8 +466,24 @@
                             </template>
                             <template x-if="product.stok!==0">
                                 <div>
-                                    <div x-show="flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-[10px] text-gray-400 line-through leading-none" x-text="formatPrice(product.harga)"></div>
-                                    <div class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga ?? product.harga)"></div>
+                                    <!-- Member: tampilkan harga flash sale -->
+                                    <template x-if="isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                        <div>
+                                            <div class="text-[10px] text-gray-400 line-through leading-none" x-text="formatPrice(product.harga)"></div>
+                                            <div class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
+                                        </div>
+                                    </template>
+                                    <!-- Non-member dengan flash sale: harga penuh + badge hemat -->
+                                    <template x-if="!isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                        <div>
+                                            <div class="font-black text-brand-500 text-sm" x-text="formatPrice(product.harga)"></div>
+                                            <div class="text-[9px] text-red-500 font-bold leading-tight" x-text="'Member hemat '+(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'%'"></div>
+                                        </div>
+                                    </template>
+                                    <!-- Tidak ada flash sale -->
+                                    <template x-if="!flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                        <div class="font-black text-brand-500 text-sm" x-text="formatPrice(product.harga)"></div>
+                                    </template>
                                     <div class="text-[10px] text-gray-400 mt-0.5">Detail →</div>
                                 </div>
                             </template>
@@ -577,7 +593,7 @@
                             <span class="absolute top-2.5 left-2.5 text-[10px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(product.category)" x-text="product.category"></span>
                             <span x-show="product.stok===0"
                                   class="absolute top-2.5 right-2.5 bg-gray-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full">Habis</span>
-                            <span x-show="product.stok!==0 && flashSaleItem(product.nama, product.varian, product.masaAktif)"
+                            <span x-show="isMember && product.stok!==0 && flashSaleItem(product.nama, product.varian, product.masaAktif)"
                                   class="absolute top-2.5 right-2.5 bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full"
                                   x-text="(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'% OFF'"></span>
                             <img :src="getProductLogo(product.category)" :alt="product.category" class="w-14 h-14 object-contain mt-5" :class="product.stok===0?'grayscale opacity-50':''" onerror="this.style.display='none'">
@@ -596,8 +612,24 @@
                                 </template>
                                 <template x-if="product.stok!==0">
                                     <div>
-                                        <div x-show="flashSaleItem(product.nama, product.varian, product.masaAktif)" class="text-xs text-gray-400 line-through leading-none mb-0.5" x-text="formatPrice(product.harga)"></div>
-                                        <div class="font-black text-brand-500 text-base mb-2" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga ?? product.harga)"></div>
+                                        <!-- Member: harga flash sale -->
+                                        <template x-if="isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                            <div class="mb-2">
+                                                <div class="text-xs text-gray-400 line-through leading-none" x-text="formatPrice(product.harga)"></div>
+                                                <div class="font-black text-brand-500 text-base" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
+                                            </div>
+                                        </template>
+                                        <!-- Non-member dengan flash sale: harga penuh + badge hemat -->
+                                        <template x-if="!isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                            <div class="mb-2">
+                                                <div class="font-black text-brand-500 text-base" x-text="formatPrice(product.harga)"></div>
+                                                <div class="text-[9px] text-red-500 font-bold leading-tight" x-text="'Member hemat '+(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'%'"></div>
+                                            </div>
+                                        </template>
+                                        <!-- Tidak ada flash sale -->
+                                        <template x-if="!flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                            <div class="font-black text-brand-500 text-base mb-2" x-text="formatPrice(product.harga)"></div>
+                                        </template>
                                         <div class="flex gap-1.5">
                                             <button @click.stop="addToCart(product, product)" class="flex-none w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-brand-500 hover:border-brand-300 active:scale-95 transition-all">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -2633,14 +2665,30 @@
                         <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                     </div>
                     <div class="font-black text-gray-900 text-xl mb-1.5">Pesanan Diterima!</div>
-                    <div class="text-sm text-gray-400 mb-6">Tim kami akan segera memproses pesanan kamu.</div>
-                    <div class="w-full bg-gray-50 rounded-2xl p-4 text-left mb-6 space-y-1.5 border border-gray-100">
+                    <div class="w-full bg-gray-50 rounded-2xl p-4 text-left mb-4 space-y-1.5 border border-gray-100">
                         <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">ID Pesanan</div>
                         <template x-for="oid in cartOrderIds" :key="oid">
                             <div class="font-black text-brand-500 text-base" x-text="'#'+oid"></div>
                         </template>
                     </div>
-                    <button @click="cartCheckoutModal=false; setPage('home')" class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all">
+                    <!-- Langkah Selanjutnya -->
+                    <div class="w-full bg-white rounded-2xl p-4 text-left mb-5 space-y-2.5 border border-gray-100">
+                        <p class="font-bold text-gray-800 text-xs">Langkah selanjutnya:</p>
+                        <div class="flex items-start gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">1</span>
+                            <p class="text-xs text-gray-600">Screenshot / catat ID pesanan di atas</p>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">2</span>
+                            <p class="text-xs text-gray-600">Chat WhatsApp kami untuk konfirmasi pesanan</p>
+                        </div>
+                        <div class="flex items-start gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">3</span>
+                            <p class="text-xs text-gray-600">Pesanan diproses dalam <span class="font-semibold text-gray-800">5–30 menit</span> setelah pembayaran dikonfirmasi</p>
+                        </div>
+                    </div>
+                    <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+cartOrderIds.join(', ')+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 mb-2.5 transition-all text-center">Chat WhatsApp Sekarang</a>
+                    <button @click="cartCheckoutModal=false; setPage('home')" class="w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">
                         Kembali ke Beranda
                     </button>
                 </div>
@@ -3139,6 +3187,17 @@
             </button>
         </div>
 
+        <!-- Progress Steps -->
+        <div x-show="!forgotPwSuccess" class="flex items-center gap-2 mb-5">
+            <template x-for="step in [1,2,3]" :key="step">
+                <div class="flex items-center gap-2 flex-1">
+                    <div class="h-1.5 flex-1 rounded-full transition-all duration-300"
+                         :class="step <= forgotPwStep ? 'bg-brand-500' : 'bg-gray-200'"></div>
+                </div>
+            </template>
+            <span class="text-xs text-gray-400 flex-none" x-text="'Langkah '+forgotPwStep+'/3'"></span>
+        </div>
+
         <!-- Error -->
         <div x-show="forgotPwError" class="bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-4">
             <p class="text-sm text-red-500" x-text="forgotPwError"></p>
@@ -3522,8 +3581,23 @@
     <div class="relative bg-white rounded-3xl p-7 max-w-sm w-full text-center shadow-2xl">
         <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4"><svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div>
         <h3 class="font-black text-gray-900 text-xl mb-2">Pesanan Diterima!</h3>
-        <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-3" x-text="currentOrderId"></div>
-        <p class="text-gray-500 text-sm mb-6 leading-relaxed">Tim kami akan menghubungi kamu via WhatsApp dalam waktu dekat untuk proses pembayaran & aktivasi.</p>
+        <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-4" x-text="currentOrderId"></div>
+        <!-- Langkah Selanjutnya -->
+        <div class="bg-gray-50 rounded-2xl p-4 text-left mb-5 space-y-3">
+            <p class="font-bold text-gray-800 text-sm">Langkah selanjutnya:</p>
+            <div class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">1</span>
+                <p class="text-sm text-gray-600">Screenshot / catat ID pesanan kamu di atas</p>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">2</span>
+                <p class="text-sm text-gray-600">Klik tombol WhatsApp di bawah untuk konfirmasi pesanan ke tim kami</p>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">3</span>
+                <p class="text-sm text-gray-600">Pesanan diproses dalam <span class="font-semibold text-gray-800">5–30 menit</span> setelah pembayaran dikonfirmasi</p>
+            </div>
+        </div>
         <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya baru saja order dengan ID: '+currentOrderId+'. Mohon diproses ya 🙏')" target="_blank" class="block w-full gradient-card text-white font-bold py-3.5 rounded-2xl mb-3 text-sm active:scale-95 shadow-sm">Chat WhatsApp Sekarang</a>
         <button @click="orderSuccess=false; productModal=false; currentOrderId=null; renewalMode=false" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Tutup</button>
     </div>
@@ -4113,10 +4187,12 @@ function serabutStore() {
         // ── POST helper ───────────────────────────────
         async gasPost(payload) {
             try {
+                // [SEC] CSRF marker — wajib ada _srb di semua POST ke GAS
+                const body = Object.assign({ _srb: '1' }, payload);
                 const res = await fetch(this.GAS_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload),
+                    body: JSON.stringify(body),
                 });
                 const data = await res.json();
                 // Jika GAS lama (belum deploy v5), doPost tidak handle action → fallback GET
