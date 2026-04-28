@@ -1618,14 +1618,13 @@ function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerP
   const items = JSON.parse(itemsJson || '[]');
   if (!items.length)  return { success: false, error: 'Item pesanan kosong' };
 
-  const deployedUrl = ScriptApp.getService().getUrl();
   const body = {
     product:   items.map(i => i.produk + (i.varian && i.varian !== '-' ? ' - ' + i.varian : '')),
     qty:       items.map(() => 1),
     price:     items.map(i => Math.round(Number(i.harga) || 0)),
     returnUrl: 'https://serabut.id/?payment=success&orderId=' + orderId,
     cancelUrl: 'https://serabut.id/?payment=cancel&orderId=' + orderId,
-    notifyUrl: deployedUrl,
+    notifyUrl: 'https://serabut.id/',
     referenceId: orderId,
     buyerName:   (buyerName  || 'Pembeli').substring(0, 50),
     buyerEmail:  buyerEmail  || '',
