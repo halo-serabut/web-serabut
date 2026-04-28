@@ -102,6 +102,7 @@ function doPost(e) {
       case 'createCartOrder':         result = createCartOrder(params); break;
       case 'createIPaymuPayment':     result = createIPaymuPayment(params); break;
       case 'ipaymuCallback':          result = ipaymuCallback(params); break;
+      case 'confirmPayment':          result = confirmPayment(params); break;
       // CS
       case 'csChat':            result = handleCSChat(params); break;
       // Admin
@@ -1281,10 +1282,23 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
     groupMsg = `*ORDER BARU*\nOrder ID: *${orderId}*\nProduk: ${produk}\nVarian: ${varian || '-'}\nDurasi: ${masaAktif || '-'}\nNama: ${userNama}\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nNo WA: ${userWa}\nStatus: *Pending*`;
   }
 
-  sendWAToGroup(groupMsg);
-  // Notif ke buyer
-  try { sendBuyerOrderConfirm(userWa, userEmail, userNama, orderId, [{produk, varian, masaAktif, harga: hargaNum}], hargaNum); } catch(e) { Logger.log('Buyer notif error: ' + e.message); }
-  return { success: true, orderId, harga: hargaNum };
+  // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
+  // Buat sesi iPaymu langsung
+  let paymentUrl = null;
+  try {
+    const ipRes = createIPaymuPayment({
+      orderId,
+      itemsJson: JSON.stringify([{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum }]),
+      buyerName:  userNama,
+      buyerEmail: userEmail,
+      buyerPhone: userWa,
+      total: hargaNum
+    });
+    if (ipRes.success) paymentUrl = ipRes.paymentUrl;
+    else Logger.log('createOrder iPaymu error: ' + ipRes.error);
+  } catch(e) { Logger.log('createOrder iPaymu exception: ' + e.message); }
+
+  return { success: true, orderId, harga: hargaNum, paymentUrl };
 }
 
 // ────────────────────────────────────────────────────────
@@ -1594,15 +1608,24 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
     waLines.push(line);
   }
 
-  const itemsBlock = waLines.join('\n');
-  const totalFmt   = totalHarga.toLocaleString('id-ID');
-  const groupMsg   = `*ORDER KERANJANG*\nOrder ID: *${orderId}*\nPembeli: ${userNama}\nNo WA: ${userWa}\n────────────────────\n${itemsBlock}\n────────────────────\nTotal: *Rp ${totalFmt}*\nStatus: *Pending*`;
-  sendWAToGroup(groupMsg);
-  // Notif ke buyer
-  const buyerItems = items.map(it => ({ produk: it.produk, varian: it.varian, masaAktif: it.masaAktif, harga: Number(it.harga)||0 }));
-  try { sendBuyerOrderConfirm(userWa, userEmail, userNama, orderId, buyerItems, totalHarga); } catch(e) { Logger.log('Buyer notif error: ' + e.message); }
+  // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
+  // Buat sesi iPaymu langsung
+  let paymentUrl = null;
+  try {
+    const ipItems = items.map(it => ({ produk: it.produk, varian: it.varian||'-', masaAktif: it.masaAktif||'-', harga: it.harga }));
+    const ipRes = createIPaymuPayment({
+      orderId,
+      itemsJson:  JSON.stringify(ipItems),
+      buyerName:  userNama,
+      buyerEmail: userEmail,
+      buyerPhone: userWa,
+      total: totalHarga
+    });
+    if (ipRes.success) paymentUrl = ipRes.paymentUrl;
+    else Logger.log('createCartOrder iPaymu error: ' + ipRes.error);
+  } catch(e) { Logger.log('createCartOrder iPaymu exception: ' + e.message); }
 
-  return { success: true, orderId, total: totalHarga };
+  return { success: true, orderId, total: totalHarga, paymentUrl };
 }
 
 // ────────────────────────────────────────────────────────
@@ -1691,6 +1714,120 @@ function ipaymuCallback(params) {
   }
   Logger.log('ipaymuCallback: order tidak ditemukan: ' + referenceId);
   return { success: false, error: 'Order tidak ditemukan' };
+}
+
+// ────────────────────────────────────────────────────────
+//  CONFIRM PAYMENT — dipanggil frontend saat user kembali dari iPaymu
+//  Update status → Diproses, kirim WA group + notif buyer
+// ────────────────────────────────────────────────────────
+function confirmPayment({ orderId }) {
+  if (!orderId) return { success: false, error: 'Order ID diperlukan' };
+
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: false, error: 'Sheet tidak ditemukan' };
+
+  const data    = sheet.getDataRange().getValues();
+  const h       = data[0].map(x => String(x).toLowerCase().trim());
+  const idCol   = h.indexOf('order id');
+  const stCol   = h.indexOf('status');
+  const namaCol = h.indexOf('nama');
+  const waCol   = h.indexOf('no wa');
+  const emCol   = h.indexOf('email');
+  const prodCol = h.indexOf('produk');
+  const varCol  = h.indexOf('varian');
+  const masCol  = h.indexOf('masa aktif');
+  const hrgCol  = h.indexOf('harga');
+  const nmMSCol = h.indexOf('nama ms');
+  const usrCol  = h.indexOf('username');
+  const msEmCol = h.indexOf('email microsoft');
+  const eaCol   = h.indexOf('email aktif');
+
+  if (idCol < 0 || stCol < 0) return { success: false, error: 'Kolom tidak ditemukan' };
+
+  // Kumpulkan semua baris dengan orderId ini
+  const rows = [];
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]).trim() === String(orderId).trim()) rows.push({ idx: i + 1, row: data[i] });
+  }
+  if (!rows.length) return { success: false, error: 'Order tidak ditemukan' };
+
+  // Update status semua baris → Diproses
+  rows.forEach(r => sheet.getRange(r.idx, stCol + 1).setValue('Diproses'));
+
+  const first    = rows[0].row;
+  const userNama = String(first[namaCol]  || '');
+  const userWa   = String(first[waCol]    || '');
+  const userEmail= String(first[emCol]    || '');
+
+  // Bangun WA group message
+  let groupMsg, productName;
+
+  if (rows.length === 1) {
+    const produk    = String(first[prodCol] || '');
+    const varian    = String(first[varCol]  || '-');
+    const masaAktif = String(first[masCol]  || '-');
+    const harga     = Number(first[hrgCol]  || 0);
+    const msNama    = String(first[nmMSCol] || '');
+    const username  = String(first[usrCol]  || '');
+    const msEmail   = String(first[msEmCol] || '');
+    const emailAktif= String(first[eaCol]   || '');
+    const varLower  = varian.toLowerCase();
+    const isFamily  = varLower.includes('family');
+    const isWeb     = varLower.includes('web');
+
+    productName = produk + (varian !== '-' ? ' ' + varian : '');
+    const hargaFmt = harga.toLocaleString('id-ID');
+
+    if (isFamily) {
+      groupMsg = `ORDER: *${produk}*\n━━━━━━━━━━━━━━━━\n📋 ID: ${orderId}\n👤 Pembeli: ${userNama}\n📱 WA: ${userWa}\n📧 MS Email (invite): ${msEmail || '-'}\n📧 Email Aktif: ${emailAktif || '-'}\n⏱ Durasi: ${masaAktif}\n💰 Harga: Rp ${hargaFmt}\n✅ Status: *PAID*\n━━━━━━━━━━━━━━━━`;
+    } else if (isWeb) {
+      groupMsg = `ORDER: *${produk}*\n━━━━━━━━━━━━━━━━\n📋 ID: ${orderId}\n👤 Pembeli: ${userNama}\n📱 WA: ${userWa}\n🪪 Nama MS: ${msNama || '-'}\n🔑 Username: ${username || '-'}\n📧 Email Aktif: ${emailAktif || '-'}\n⏱ Durasi: ${masaAktif}\n💰 Harga: Rp ${hargaFmt}\n✅ Status: *PAID*\n━━━━━━━━━━━━━━━━`;
+    } else {
+      groupMsg = `ORDER: *${produk}*\n━━━━━━━━━━━━━━━━\n📋 ID: ${orderId}\n👤 Pembeli: ${userNama}\n📱 WA: ${userWa}\n📧 Email Aktif: ${emailAktif || '-'}\n⏱ Durasi: ${masaAktif}\n💰 Harga: Rp ${hargaFmt}\n✅ Status: *PAID*\n━━━━━━━━━━━━━━━━`;
+    }
+  } else {
+    // Cart order — multiple items
+    let totalHarga = 0;
+    const waLines  = [];
+    const produkNames = [];
+
+    rows.forEach((r, idx) => {
+      const row       = r.row;
+      const produk    = String(row[prodCol] || '');
+      const varian    = String(row[varCol]  || '-');
+      const masaAktif = String(row[masCol]  || '-');
+      const harga     = Number(row[hrgCol]  || 0);
+      const varLower  = varian.toLowerCase();
+      const isFamily  = varLower.includes('family');
+      const isWeb     = varLower.includes('web');
+      const msEmail   = String(row[msEmCol] || '');
+      const username  = String(row[usrCol]  || '');
+      const msNama    = String(row[nmMSCol] || '');
+      const emailAktif= String(row[eaCol]   || '');
+
+      totalHarga += harga;
+      produkNames.push(produk);
+
+      let line = `*[${idx+1}] ${produk}${varian !== '-' ? ' - '+varian : ''}${masaAktif !== '-' ? ' ('+masaAktif+')' : ''}*`;
+      if (isFamily && msEmail)  line += `\n   > MS Email: ${msEmail}`;
+      if (isWeb && msNama)      line += `\n   > Nama MS: ${msNama}`;
+      if (isWeb && username)    line += `\n   > Username: ${username}`;
+      if (emailAktif && emailAktif !== '-') line += `\n   > Email Aktif: ${emailAktif}`;
+      line += `\n   > Harga: Rp ${harga.toLocaleString('id-ID')}`;
+      waLines.push(line);
+    });
+
+    const uniq = [...new Set(produkNames)];
+    productName = uniq.length <= 2 ? uniq.join(' + ') : uniq[0] + ' +' + (uniq.length - 1) + ' lainnya';
+    const totalFmt = totalHarga.toLocaleString('id-ID');
+    groupMsg = `ORDER: *${productName}* (${rows.length} item)\n━━━━━━━━━━━━━━━━\n📋 ID: ${orderId}\n👤 Pembeli: ${userNama}\n📱 WA: ${userWa}\n────────────────────\n${waLines.join('\n')}\n────────────────────\n💰 Total: *Rp ${totalFmt}*\n✅ Status: *PAID*\n━━━━━━━━━━━━━━━━`;
+  }
+
+  sendWAToGroup(groupMsg);
+  Logger.log('confirmPayment: WA terkirim untuk order ' + orderId);
+
+  return { success: true, orderId, productName: productName || '' };
 }
 
 // ────────────────────────────────────────────────────────
