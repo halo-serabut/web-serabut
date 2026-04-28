@@ -715,22 +715,9 @@ function saveGuides({ adminEmail, adminToken, tab, guidesJson }) {
 function smartSearch(query) {
   if (!query || !String(query).trim()) return { success: false, error: 'Query kosong' };
 
-  const ss      = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const q       = String(query).toLowerCase().trim();
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const q  = String(query).toLowerCase().trim();
   const results = [];
-  const cache   = CacheService.getScriptCache();
-
-  // Baca sheet dengan cache 5 menit — drastis kurangi latency untuk search berulang
-  function getCachedSheetData(sheetName) {
-    const key    = 'srb_ss_' + sheetName.replace(/\s+/g, '_');
-    const cached = cache.get(key);
-    if (cached) { try { return JSON.parse(cached); } catch(e) {} }
-    const sheet = ss.getSheetByName(sheetName);
-    if (!sheet) return null;
-    const data = sheet.getDataRange().getValues();
-    try { cache.put(key, JSON.stringify(data), 300); } catch(e) {}
-    return data;
-  }
 
   // ── Office 365 & Family sheets ────────────────────────
   const OFFICE_SHEETS = [
@@ -739,8 +726,10 @@ function smartSearch(query) {
   ];
 
   for (const cfg of OFFICE_SHEETS) {
-    const data = getCachedSheetData(cfg.name);
-    if (!data || data.length < 2) continue;
+    const sheet = ss.getSheetByName(cfg.name);
+    if (!sheet) continue;
+    const data = sheet.getDataRange().getValues();
+    if (data.length < 2) continue;
 
     const headers = data[0].map(h => String(h).toLowerCase().trim());
     const col = {
@@ -787,9 +776,9 @@ function smartSearch(query) {
   }
 
   // ── Adobe CC sheet ────────────────────────────────────
-  const adobeData = getCachedSheetData('List Account Adobe CC');
-  if (adobeData) {
-    const data = adobeData;
+  const adobeSheet = ss.getSheetByName('List Account Adobe CC');
+  if (adobeSheet) {
+    const data = adobeSheet.getDataRange().getValues();
     if (data.length >= 2) {
       const headers = data[0].map(h => String(h).toLowerCase().trim());
       const col = {
@@ -1621,8 +1610,8 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
 // ────────────────────────────────────────────────────────
 function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerPhone, total }) {
   const props  = PropertiesService.getScriptProperties();
-  const va     = props.getProperty('IPAYMU_VA');
-  const apiKey = props.getProperty('IPAYMU_API_KEY');
+  const va     = (props.getProperty('IPAYMU_VA')      || '').trim();
+  const apiKey = (props.getProperty('IPAYMU_API_KEY') || '').trim();
   if (!va || !apiKey) return { success: false, error: 'iPaymu belum dikonfigurasi. Hubungi admin.' };
   if (!orderId)       return { success: false, error: 'Order ID diperlukan' };
 
@@ -1646,18 +1635,19 @@ function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerP
   const bodyStr = JSON.stringify(body);
   const timestamp = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyyMMddHHmmss');
 
-  // SHA256 body hash
-  const bodyHashBytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.newBlob(bodyStr).getBytes());
-  const bodyHash = bodyHashBytes.map(function(b){ return (b & 0xff).toString(16).padStart(2,'0'); }).join('');
+  function _hex(arr) {
+    return arr.map(function(b){ return ((b & 0xff) < 16 ? '0' : '') + (b & 0xff).toString(16); }).join('');
+  }
 
-  // HMAC-SHA256 signature
-  const stringToSign = 'POST:' + va + ':' + bodyHash + ':' + timestamp;
-  const sigBytes = Utilities.computeHmacSha256Signature(stringToSign, apiKey);
-  const signature = sigBytes.map(function(b){ return (b & 0xff).toString(16).padStart(2,'0'); }).join('');
+  // SHA256 body hash (lowercase hex)
+  const bodyHash    = _hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bodyStr));
+  // stringToSign: POST:VA:sha256(body):apiKey  — timestamp hanya di header, bukan di signature
+  const stringToSign = 'POST:' + va + ':' + bodyHash + ':' + apiKey;
+  const signature   = _hex(Utilities.computeHmacSha256Signature(stringToSign, apiKey));
 
   const resp = UrlFetchApp.fetch('https://my.ipaymu.com/api/v2/payment', {
     method: 'post',
-    headers: { 'Content-Type': 'application/json', 'va': va, 'signature': signature, 'timestamp': timestamp },
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'va': va, 'signature': signature, 'timestamp': timestamp },
     payload: bodyStr,
     muteHttpExceptions: true
   });
@@ -2273,4 +2263,126 @@ function testWAGroup()  { sendWAToGroup('Test notif dari GAS v5 - ' + new Date()
 function testTokenVerify() {
   Logger.log('FONNTE_TOKEN set: ' + (FONNTE_TOKEN ? 'YES' : 'NO (set di Script Properties)'));
   Logger.log('OPENROUTER_KEY set: ' + (OPENROUTER_KEY ? 'YES' : 'NO (set di Script Properties)'));
+}
+
+// Test iPaymu menggunakan SANDBOX credentials — run dari GAS editor
+// Sebelum test: set Script Properties IPAYMU_SANDBOX_VA dan IPAYMU_SANDBOX_KEY
+// (daftar akun sandbox di: https://sandbox.ipaymu.com)
+function testIPaymuSandbox() {
+  var props     = PropertiesService.getScriptProperties();
+  var va        = (props.getProperty('IPAYMU_SANDBOX_VA')  || '').trim();
+  var apiKey    = (props.getProperty('IPAYMU_SANDBOX_KEY') || '').trim();
+
+  if (!va || !apiKey) {
+    Logger.log('ERROR: Set IPAYMU_SANDBOX_VA dan IPAYMU_SANDBOX_KEY di Script Properties dulu');
+    Logger.log('Daftar akun sandbox di https://sandbox.ipaymu.com/register');
+    return;
+  }
+
+  var body = {
+    product:     ['Test Product'],
+    qty:         [1],
+    price:       [10000],
+    returnUrl:   'https://serabut.id',
+    cancelUrl:   'https://serabut.id',
+    notifyUrl:   'https://serabut.id',
+    referenceId: 'SANDBOX-TEST-' + Date.now(),
+    buyerName:   'Test Buyer',
+    buyerEmail:  'test@serabut.id',
+    buyerPhone:  '08881500555'
+  };
+
+  var bodyStr   = JSON.stringify(body);
+  var timestamp = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyyMMddHHmmss');
+
+  function _hex(arr) {
+    return arr.map(function(b){ return ((b & 0xff) < 16 ? '0' : '') + (b & 0xff).toString(16); }).join('');
+  }
+
+  var bodyHash    = _hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bodyStr));
+  var toSign      = 'POST:' + va + ':' + bodyHash + ':' + apiKey;
+  var signature   = _hex(Utilities.computeHmacSha256Signature(toSign, apiKey));
+
+  Logger.log('=== iPaymu SANDBOX Test ===');
+  Logger.log('VA       : ' + va);
+  Logger.log('timestamp: ' + timestamp);
+  Logger.log('bodyStr  : ' + bodyStr);
+  Logger.log('bodyHash : ' + bodyHash);
+  Logger.log('toSign   : ' + toSign);
+  Logger.log('signature: ' + signature);
+
+  var resp   = UrlFetchApp.fetch('https://sandbox.ipaymu.com/api/v2/payment', {
+    method: 'post',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'va': va, 'signature': signature, 'timestamp': timestamp },
+    payload: bodyStr,
+    muteHttpExceptions: true
+  });
+
+  Logger.log('HTTP status: ' + resp.getResponseCode());
+  Logger.log('Response   : ' + resp.getContentText());
+}
+
+// Cek IP publik yang dipakai GAS saat keluar ke internet
+function testGasEgressIP() {
+  var resp = UrlFetchApp.fetch('https://api.ipify.org?format=json', { muteHttpExceptions: true });
+  Logger.log('GAS Egress IP: ' + resp.getContentText());
+}
+
+// Test iPaymu PRODUCTION — run dari GAS editor
+function testIPaymuProduction() {
+  var props   = PropertiesService.getScriptProperties();
+  var va      = (props.getProperty('IPAYMU_VA')      || '').trim();
+  var apiKey  = (props.getProperty('IPAYMU_API_KEY') || '').trim();
+
+  if (!va || !apiKey) {
+    Logger.log('ERROR: Set IPAYMU_VA dan IPAYMU_API_KEY di Script Properties dulu');
+    return;
+  }
+
+  var body = {
+    product:     ['Test Product'],
+    qty:         [1],
+    price:       [10000],
+    returnUrl:   'https://serabut.id',
+    cancelUrl:   'https://serabut.id',
+    notifyUrl:   'https://serabut.id',
+    referenceId: 'PROD-TEST-' + Date.now(),
+    buyerName:   'Test Buyer',
+    buyerEmail:  'test@serabut.id',
+    buyerPhone:  '08881500555'
+  };
+
+  var bodyStr   = JSON.stringify(body);
+  var timestamp = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyyMMddHHmmss');
+
+  function _hex(arr) {
+    return arr.map(function(b){ return ((b & 0xff) < 16 ? '0' : '') + (b & 0xff).toString(16); }).join('');
+  }
+
+  var bodyHash    = _hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bodyStr));
+  var toSign      = 'POST:' + va + ':' + bodyHash + ':' + apiKey;
+  var signature   = _hex(Utilities.computeHmacSha256Signature(toSign, apiKey));
+
+  Logger.log('=== iPaymu PRODUCTION Test ===');
+  Logger.log('VA       : ' + va);
+  Logger.log('timestamp: ' + timestamp);
+  Logger.log('bodyHash : ' + bodyHash);
+  Logger.log('toSign   : ' + toSign);
+  Logger.log('signature: ' + signature);
+
+  var resp   = UrlFetchApp.fetch('https://my.ipaymu.com/api/v2/payment', {
+    method: 'post',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'va': va, 'signature': signature, 'timestamp': timestamp },
+    payload: bodyStr,
+    muteHttpExceptions: true
+  });
+
+  Logger.log('HTTP status: ' + resp.getResponseCode());
+  Logger.log('Response   : ' + resp.getContentText());
+}
+
+// Cek IP publik yang dipakai GAS saat keluar ke internet
+function testGasEgressIP() {
+  var resp = UrlFetchApp.fetch('https://api.ipify.org?format=json', { muteHttpExceptions: true });
+  Logger.log('GAS Egress IP: ' + resp.getContentText());
 }
