@@ -713,9 +713,22 @@ function saveGuides({ adminEmail, adminToken, tab, guidesJson }) {
 function smartSearch(query) {
   if (!query || !String(query).trim()) return { success: false, error: 'Query kosong' };
 
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const q  = String(query).toLowerCase().trim();
+  const ss      = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const q       = String(query).toLowerCase().trim();
   const results = [];
+  const cache   = CacheService.getScriptCache();
+
+  // Baca sheet dengan cache 5 menit — drastis kurangi latency untuk search berulang
+  function getCachedSheetData(sheetName) {
+    const key    = 'srb_ss_' + sheetName.replace(/\s+/g, '_');
+    const cached = cache.get(key);
+    if (cached) { try { return JSON.parse(cached); } catch(e) {} }
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return null;
+    const data = sheet.getDataRange().getValues();
+    try { cache.put(key, JSON.stringify(data), 300); } catch(e) {}
+    return data;
+  }
 
   // ── Office 365 & Family sheets ────────────────────────
   const OFFICE_SHEETS = [
@@ -724,10 +737,8 @@ function smartSearch(query) {
   ];
 
   for (const cfg of OFFICE_SHEETS) {
-    const sheet = ss.getSheetByName(cfg.name);
-    if (!sheet) continue;
-    const data = sheet.getDataRange().getValues();
-    if (data.length < 2) continue;
+    const data = getCachedSheetData(cfg.name);
+    if (!data || data.length < 2) continue;
 
     const headers = data[0].map(h => String(h).toLowerCase().trim());
     const col = {
@@ -774,9 +785,9 @@ function smartSearch(query) {
   }
 
   // ── Adobe CC sheet ────────────────────────────────────
-  const adobeSheet = ss.getSheetByName('List Account Adobe CC');
-  if (adobeSheet) {
-    const data = adobeSheet.getDataRange().getValues();
+  const adobeData = getCachedSheetData('List Account Adobe CC');
+  if (adobeData) {
+    const data = adobeData;
     if (data.length >= 2) {
       const headers = data[0].map(h => String(h).toLowerCase().trim());
       const col = {
