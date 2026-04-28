@@ -961,9 +961,17 @@
                                         </div>
                                     </div>
                                     <button @click="statusSuggestRebuy(account)"
-                                            class="mt-2.5 w-full text-xs font-bold py-2 rounded-lg transition-all active:scale-95 text-white"
-                                            :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'"
-                                            x-text="account.productType==='office365' && getDaysUntilExpiry(account.masaBerlaku) >= 0 ? '🔄 Lihat Produk Renewal' : '🛒 Lihat Produk untuk Beli Ulang'"></button>
+                                            class="mt-2.5 w-full text-xs font-bold py-2 rounded-lg transition-all active:scale-95 text-white flex items-center justify-center gap-1.5"
+                                            :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'">
+                                        <span x-show="account.productType==='office365' && getDaysUntilExpiry(account.masaBerlaku) >= 0 && getDaysUntilExpiry(account.masaBerlaku) <= 7" class="flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                            Lihat Produk Renewal
+                                        </span>
+                                        <span x-show="!(account.productType==='office365' && getDaysUntilExpiry(account.masaBerlaku) >= 0 && getDaysUntilExpiry(account.masaBerlaku) <= 7)" class="flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                            Lihat Produk untuk Beli Ulang
+                                        </span>
+                                    </button>
                                 </div>
                             </div>
                         </template>
@@ -2019,7 +2027,7 @@
                     <h2 class="font-bold text-gray-900 flex-1">Semua Order</h2>
                     <div class="flex gap-1 bg-gray-100 rounded-xl p-1">
                         <template x-for="f in ['Semua','Pending','Selesai','Dibatalkan']" :key="f">
-                            <button @click="adminOrderFilter=f" :class="adminOrderFilter===f?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" x-text="f"></button>
+                            <button @click="adminOrderFilter=f; adminOrdersPage=1" :class="adminOrderFilter===f?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" x-text="f"></button>
                         </template>
                     </div>
                 </div>
@@ -2027,9 +2035,24 @@
 
                 <div x-show="!adminOrdersLoading">
 
+                    <!-- Toolbar: per-page + summary -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <span class="text-xs text-gray-400" x-text="adminGroupedOrders.length + ' order' + (adminGroupedOrders.length !== adminOrders.length ? ' (filtered)' : '')"></span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500">Tampilkan</span>
+                            <select x-model.number="adminOrdersPerPage" @change="adminOrdersPage=1"
+                                    class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-brand-400 bg-white">
+                                <template x-for="n in [10,20,30,40,50]" :key="n">
+                                    <option :value="n" x-text="n"></option>
+                                </template>
+                            </select>
+                            <span class="text-xs text-gray-500">per halaman</span>
+                        </div>
+                    </div>
+
                     <!-- Grouped order cards (mobile + desktop) -->
                     <div class="space-y-3">
-                        <template x-for="g in adminGroupedOrders" :key="g.orderId">
+                        <template x-for="g in adminPagedOrders" :key="g.orderId">
                             <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
                                 <!-- Group header -->
@@ -2081,6 +2104,36 @@
                             </div>
                         </template>
                         <div x-show="adminGroupedOrders.length===0" class="text-center py-10 text-gray-400 text-sm">Tidak ada order</div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div x-show="adminOrdersTotalPages > 1" class="flex flex-wrap items-center justify-between gap-3 mt-4">
+                        <span class="text-xs text-gray-400"
+                              x-text="'Halaman ' + adminOrdersPage + ' dari ' + adminOrdersTotalPages + ' (' + adminGroupedOrders.length + ' order)'"></span>
+                        <div class="flex items-center gap-1">
+                            <!-- Prev -->
+                            <button @click="adminOrdersPage = Math.max(1, adminOrdersPage-1)"
+                                    :disabled="adminOrdersPage===1"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg border text-xs font-medium transition-all"
+                                    :class="adminOrdersPage===1 ? 'border-gray-100 text-gray-300 cursor-default' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <!-- Page numbers -->
+                            <template x-for="p in adminOrdersPageRange" :key="p">
+                                <button @click="typeof p === 'number' && (adminOrdersPage = p)"
+                                        :disabled="p === '…'"
+                                        class="w-8 h-8 flex items-center justify-center rounded-lg text-xs font-medium transition-all"
+                                        :class="p === adminOrdersPage ? 'bg-brand-600 text-white shadow-sm' : p === '…' ? 'text-gray-400 cursor-default' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'"
+                                        x-text="p"></button>
+                            </template>
+                            <!-- Next -->
+                            <button @click="adminOrdersPage = Math.min(adminOrdersTotalPages, adminOrdersPage+1)"
+                                    :disabled="adminOrdersPage===adminOrdersTotalPages"
+                                    class="w-8 h-8 flex items-center justify-center rounded-lg border text-xs font-medium transition-all"
+                                    :class="adminOrdersPage===adminOrdersTotalPages ? 'border-gray-100 text-gray-300 cursor-default' : 'border-gray-200 text-gray-600 hover:bg-gray-50'">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
                     </div>
 
                 </div>
@@ -3881,7 +3934,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260428-2',
+        APP_VERSION:      '20260428-3',
 
         // PWA Install
         pwaPopup:            false,
@@ -4044,8 +4097,10 @@ function serabutStore() {
         adminProducts:   [],
         adminProductsLoading: false,
         adminProductSearch: '',
-        adminOrders:     [],
+        adminOrders:        [],
         adminOrdersLoading: false,
+        adminOrdersPage:    1,
+        adminOrdersPerPage: 10,
         adminOrderFilter: 'Semua',
         adminEditProduct: null,
         adminAddMode:    false,
@@ -5254,6 +5309,21 @@ function serabutStore() {
             }
             return list;
         },
+        get adminOrdersTotalPages() {
+            return Math.max(1, Math.ceil(this.adminGroupedOrders.length / this.adminOrdersPerPage));
+        },
+        get adminPagedOrders() {
+            const start = (this.adminOrdersPage - 1) * this.adminOrdersPerPage;
+            return this.adminGroupedOrders.slice(start, start + this.adminOrdersPerPage);
+        },
+        get adminOrdersPageRange() {
+            const total = this.adminOrdersTotalPages;
+            const cur   = this.adminOrdersPage;
+            if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+            if (cur <= 4)   return [1, 2, 3, 4, 5, '…', total];
+            if (cur >= total - 3) return [1, '…', total-4, total-3, total-2, total-1, total];
+            return [1, '…', cur-1, cur, cur+1, '…', total];
+        },
         get adminFilteredProducts() {
             const q = this.adminProductSearch.toLowerCase().trim();
             if(!q) return this.adminProducts;
@@ -6070,7 +6140,8 @@ function serabutStore() {
                 }) || this.products.find(p => p.nama.toLowerCase().includes('adobe') && durationMatch(p));
             } else {
                 const isFamily  = account.productType === 'office365family';
-                const isRenewal = daysLeft >= 0 && daysLeft <= 7;
+                // Renewal hanya untuk Office 365 non-family (Family tidak punya produk renewal)
+                const isRenewal = !isFamily && daysLeft >= 0 && daysLeft <= 7;
                 const tipe      = (account.tipe || '').toLowerCase();
                 matchedProduct = this.products.find(p => {
                     const pn = p.nama.toLowerCase();
