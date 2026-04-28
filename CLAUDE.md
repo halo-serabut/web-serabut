@@ -140,8 +140,19 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - UX-01: Section "Langkah selanjutnya" di order success (single + cart) — screenshot ID, chat WA, estimasi 5–30 menit
   - UX-05: Non-member tidak tampil harga flash sale; tampil harga penuh + badge "Member hemat X%"; badge "% OFF" juga disembunyikan
 
+- [2026-04-28] Selesai: Cek Status UI/UX overhaul + fitur baru:
+  - Format Masa Berlaku: `DD/MM/YYYY` → `DD Mon YYYY` (mis. 29 Apr 2026), via `formatMasaBerlaku()`
+  - Hapus tombol "Chat WhatsApp Support" dari result card
+  - Tambah field "Pembelian dari" (Shopee/Web) — dari kolom G (List 365) atau kolom J (List 365 Family); dideteksi via header 'from'
+  - Cek Adobe CC: `smartSearch()` sekarang juga baca sheet "List Account Adobe CC"; tampilkan "Akun Adobe" + product name; icon Adobe merah
+  - Status badge: 3 state — Active (hijau) / Hampir Habis H-7 (oranye) / Sudah Dihapus (merah), via `getDaysUntilExpiry()`
+  - Suggest renewal/rebuy: banner + tombol muncul jika H-7 atau expired; Office 365 Web H-7 → "Lihat Produk Renewal"; lainnya → "Beli Ulang"; navigate ke catalog dengan pre-filled search via `statusSuggestRebuy()`
+  - Not found state: ganti "Chat WhatsApp" → tombol "Hubungi Live Agent" (WA link dengan query keyword)
+  - Chatbot: icon FAB + header + bubble diganti ke sparkle/AI icon; tombol eskalasi "Lanjut Chat ke CS Manusia" → "Hubungi Live Agent"
+  - Bottom nav: Akun tab selalu visible untuk semua user; admin mendapat tab ekstra (flex layout, tidak lagi grid-cols-5 hardcoded)
+
 ## Current Focus
-- Semua security + UX selesai. Produksi stabil.
+- **Deploy GAS wajib** setelah sesi ini: `smartSearch()` sudah updated untuk Adobe CC + pembelianDari field.
 - **FONNTE_TOKEN** perlu diset di GAS Script Properties agar WA notification aktif.
 - **Google SSO** sudah aktif (GOOGLE_CLIENT_ID sudah diisi di Alpine config).
 - Deploy GAS: `cp worktree/gas/Code.gs gas/Code.gs && cd gas && clasp push && clasp deploy --deploymentId [ID]`

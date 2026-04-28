@@ -713,13 +713,18 @@ function saveGuides({ adminEmail, adminToken, tab, guidesJson }) {
 function smartSearch(query) {
   if (!query || !String(query).trim()) return { success: false, error: 'Query kosong' };
 
-  const ss      = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const q       = String(query).toLowerCase().trim();
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const q  = String(query).toLowerCase().trim();
   const results = [];
-  const SHEETS  = ['List Account 365', 'List Account 365 Family'];
 
-  for (const sheetName of SHEETS) {
-    const sheet = ss.getSheetByName(sheetName);
+  // ── Office 365 & Family sheets ────────────────────────
+  const OFFICE_SHEETS = [
+    { name: 'List Account 365',        isFamily: false, defaultFromCol: 6 },
+    { name: 'List Account 365 Family', isFamily: true,  defaultFromCol: 9 },
+  ];
+
+  for (const cfg of OFFICE_SHEETS) {
+    const sheet = ss.getSheetByName(cfg.name);
     if (!sheet) continue;
     const data = sheet.getDataRange().getValues();
     if (data.length < 2) continue;
@@ -737,7 +742,9 @@ function smartSearch(query) {
       status:       findColIdx(headers, ['status']),
       duration:     findColIdx(headers, ['duration']),
       subscription: findColIdx(headers, ['subscription']),
+      from:         findColIdx(headers, ['from', 'source', 'platform', 'sumber pembelian']),
     };
+    const fromCol = col.from !== -1 ? col.from : cfg.defaultFromCol;
 
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
@@ -750,7 +757,8 @@ function smartSearch(query) {
       if (!searchable.some(v => v.includes(q))) continue;
 
       results.push({
-        sumber:         sheetName,
+        sumber:         cfg.name,
+        productType:    cfg.isFamily ? 'office365family' : 'office365',
         nama:           getVal(row, col.buyerName),
         emailPembeli:   getVal(row, col.mailActive) || getVal(row, col.emailActive),
         officeAccount:  getVal(row, col.officeAcc) || getVal(row, col.msa),
@@ -759,10 +767,54 @@ function smartSearch(query) {
         mulaiLangganan: getDateVal(row, col.startDate),
         status:         getVal(row, col.status) || 'Aktif',
         durasi:         getVal(row, col.duration),
-        tipe:           getVal(row, col.subscription) || (sheetName.includes('Family') ? 'Family' : 'Personal'),
+        tipe:           getVal(row, col.subscription) || (cfg.isFamily ? 'Family' : 'Personal'),
+        pembelianDari:  getVal(row, fromCol),
       });
     }
   }
+
+  // ── Adobe CC sheet ────────────────────────────────────
+  const adobeSheet = ss.getSheetByName('List Account Adobe CC');
+  if (adobeSheet) {
+    const data = adobeSheet.getDataRange().getValues();
+    if (data.length >= 2) {
+      const headers = data[0].map(h => String(h).toLowerCase().trim());
+      const col = {
+        duration:     findColIdx(headers, ['duration', 'duration (month)']),
+        product:      findColIdx(headers, ['product', 'produk']),
+        emailActive:  findColIdx(headers, ['email active', 'email aktif']),
+        adobeAcc:     findColIdx(headers, ['adobe account', 'adobe acc', 'adobe email']),
+        startDate:    findColIdx(headers, ['invitation date', 'start date', 'creation date']),
+        endDate:      findColIdx(headers, ['end subs date', 'end subs', 'end date', 'masa berlaku']),
+        from:         findColIdx(headers, ['from', 'source', 'platform']),
+        buyerName:    findColIdx(headers, ['buyer name', 'nama pembeli', 'nama buyer']),
+      };
+
+      for (let i = 1; i < data.length; i++) {
+        const row = data[i];
+        const searchable = [
+          getVal(row, col.buyerName), getVal(row, col.emailActive), getVal(row, col.adobeAcc),
+        ].filter(v => v).map(v => v.toLowerCase());
+
+        if (!searchable.some(v => v.includes(q))) continue;
+
+        results.push({
+          sumber:        'List Account Adobe CC',
+          productType:   'adobe',
+          nama:          getVal(row, col.buyerName),
+          emailPembeli:  getVal(row, col.emailActive),
+          adobeAccount:  getVal(row, col.adobeAcc),
+          masaBerlaku:   getDateVal(row, col.endDate),
+          mulaiLangganan:getDateVal(row, col.startDate),
+          durasi:        getVal(row, col.duration),
+          productName:   getVal(row, col.product) || 'Adobe Creative Cloud',
+          pembelianDari: getVal(row, col.from),
+          status:        'Aktif',
+        });
+      }
+    }
+  }
+
   return { success: true, data: results };
 }
 

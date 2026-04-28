@@ -865,8 +865,12 @@
                         <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </div>
                     <div class="font-bold text-gray-800 mb-1">Akun tidak ditemukan</div>
-                    <div class="text-sm text-gray-400 mb-4">Coba dengan kata kunci lain atau hubungi support</div>
-                    <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="inline-flex items-center gap-2 bg-brand-50 text-brand-600 font-semibold text-sm px-5 py-2.5 rounded-xl">Chat WhatsApp</a>
+                    <div class="text-sm text-gray-400 mb-5">Coba dengan kata kunci lain,<br>atau hubungi Live Agent kami</div>
+                    <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya ingin menanyakan status akun saya. Kata kunci: '+statusQuery)" target="_blank"
+                       class="inline-flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold text-sm px-5 py-3 rounded-xl transition-all">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        Hubungi Live Agent
+                    </a>
                 </div>
 
                 <!-- Result cards -->
@@ -874,23 +878,39 @@
                     <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3 shadow-sm">
                         <!-- Header -->
                         <div class="px-5 pt-5 pb-3 flex items-center gap-3">
-                            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-none overflow-hidden bg-blue-50">
-                                <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" alt="Microsoft" class="w-8 h-8 object-contain">
+                            <!-- Product icon: Adobe vs Microsoft -->
+                            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-none overflow-hidden"
+                                 :class="account.productType==='adobe' ? 'bg-red-50' : 'bg-blue-50'">
+                                <template x-if="account.productType==='adobe'">
+                                    <img src="https://www.google.com/s2/favicons?domain=adobe.com&sz=64" alt="Adobe" class="w-8 h-8 object-contain">
+                                </template>
+                                <template x-if="account.productType!=='adobe'">
+                                    <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" alt="Microsoft" class="w-8 h-8 object-contain">
+                                </template>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="font-bold text-gray-900 truncate" x-text="account.nama||'Pelanggan'"></div>
-                                <div class="text-[11px] text-gray-500 font-semibold mt-0.5" x-text="account.sumber&&account.sumber.includes('Family')?'Microsoft Office 365 Family':'Microsoft Office 365'"></div>
+                                <div class="text-[11px] text-gray-500 font-semibold mt-0.5"
+                                     x-text="account.productType==='adobe' ? (account.productName||'Adobe Creative Cloud') : (account.productType==='office365family' ? 'Microsoft Office 365 Family' : 'Microsoft Office 365')"></div>
                             </div>
                             <span class="text-xs font-bold px-3 py-1.5 rounded-xl flex-none"
-                                :class="computeSubscriptionStatus(account.masaBerlaku)==='Active'?'bg-emerald-50 text-emerald-700':'bg-red-50 text-red-700'"
-                                x-text="computeSubscriptionStatus(account.masaBerlaku)"></span>
+                                :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'bg-red-50 text-red-700' : getDaysUntilExpiry(account.masaBerlaku) <= 7 ? 'bg-orange-50 text-orange-700' : 'bg-emerald-50 text-emerald-700'"
+                                x-text="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'Sudah Dihapus' : getDaysUntilExpiry(account.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Active'"></span>
                         </div>
 
                         <div class="border-t border-gray-50 mx-5"></div>
 
                         <!-- Detail -->
-                        <div class="px-5 py-4 space-y-2">
-                            <template x-if="account.officeAccount">
+                        <div class="px-5 py-4 space-y-2.5">
+                            <!-- Adobe account field -->
+                            <template x-if="account.productType==='adobe' && account.adobeAccount">
+                                <div class="flex justify-between gap-2">
+                                    <span class="text-xs text-gray-400 shrink-0">Akun Adobe</span>
+                                    <span class="text-xs font-semibold text-gray-800 break-all text-right" x-text="account.adobeAccount"></span>
+                                </div>
+                            </template>
+                            <!-- Office account field -->
+                            <template x-if="account.productType!=='adobe' && account.officeAccount">
                                 <div class="flex justify-between gap-2">
                                     <span class="text-xs text-gray-400 shrink-0">Akun Office</span>
                                     <span class="text-xs font-semibold text-gray-800 break-all text-right" x-text="account.officeAccount"></span>
@@ -905,7 +925,7 @@
                             <template x-if="account.masaBerlaku">
                                 <div class="flex justify-between gap-2">
                                     <span class="text-xs text-gray-400 shrink-0">Masa Berlaku</span>
-                                    <span class="text-xs font-semibold text-gray-800" x-text="account.masaBerlaku"></span>
+                                    <span class="text-xs font-semibold text-gray-800" x-text="formatMasaBerlaku(account.masaBerlaku)"></span>
                                 </div>
                             </template>
                             <template x-if="account.durasi">
@@ -914,16 +934,39 @@
                                     <span class="text-xs font-semibold text-gray-800" x-text="account.durasi + ' bulan'"></span>
                                 </div>
                             </template>
+                            <template x-if="account.pembelianDari">
+                                <div class="flex justify-between gap-2">
+                                    <span class="text-xs text-gray-400 shrink-0">Pembelian dari</span>
+                                    <span class="text-xs font-semibold text-gray-800" x-text="account.pembelianDari"></span>
+                                </div>
+                            </template>
                         </div>
 
-                        <!-- WA Button -->
-                        <div class="px-5 pb-5">
-                            <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya ingin menanyakan status akun atas nama '+(account.nama||''))" target="_blank"
-                                class="flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white text-sm font-bold py-2.5 rounded-xl transition-all">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                                Chat WhatsApp Support
-                            </a>
-                        </div>
+                        <!-- Renewal / Rebuy suggestion — muncul jika H-7 atau sudah habis -->
+                        <template x-if="getDaysUntilExpiry(account.masaBerlaku) <= 7">
+                            <div class="mx-5 mb-4 rounded-xl overflow-hidden border"
+                                 :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'bg-red-50 border-red-100' : 'bg-orange-50 border-orange-100'">
+                                <div class="px-4 py-3">
+                                    <div class="flex items-start gap-2.5">
+                                        <div class="mt-0.5 flex-none">
+                                            <svg class="w-4 h-4" :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'text-red-500' : 'text-orange-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-xs font-bold mb-0.5"
+                                               :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'text-red-700' : 'text-orange-700'"
+                                               x-text="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'Akun sudah tidak aktif' : 'Masa berlaku hampir habis!'"></p>
+                                            <p class="text-[11px] leading-snug"
+                                               :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'text-red-600' : 'text-orange-600'"
+                                               x-text="account.productType==='office365' && getDaysUntilExpiry(account.masaBerlaku) >= 0 ? 'Perpanjang sekarang agar tidak terputus.' : 'Segera beli ulang untuk melanjutkan akses.'"></p>
+                                        </div>
+                                    </div>
+                                    <button @click="statusSuggestRebuy(account)"
+                                            class="mt-2.5 w-full text-xs font-bold py-2 rounded-lg transition-all active:scale-95 text-white"
+                                            :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'"
+                                            x-text="account.productType==='office365' && getDaysUntilExpiry(account.masaBerlaku) >= 0 ? '🔄 Lihat Produk Renewal' : '🛒 Lihat Produk untuk Beli Ulang'"></button>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </template>
             </div>
@@ -2190,15 +2233,15 @@
         <!-- Header — AI Assistant style -->
         <div class="gradient-card px-4 py-3.5 flex items-center justify-between flex-none">
             <div class="flex items-center gap-3">
-                <!-- Avatar robot -->
+                <!-- Avatar AI -->
                 <div class="relative flex-none">
                     <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center ring-2 ring-white/30">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="2" x2="12" y2="5"/><circle cx="12" cy="2" r="1.2" fill="currentColor" stroke="none"/>
-                            <rect x="3.5" y="5" width="17" height="13" rx="3"/>
-                            <circle cx="8.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
-                            <circle cx="15.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
-                            <path d="M8.5 14.5 Q12 17 15.5 14.5"/>
+                        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.38-1 1.73V7h2a4 4 0 0 1 4 4v1h.27A1.5 1.5 0 0 1 21 13.5v1a1.5 1.5 0 0 1-1.73 1.48A4 4 0 0 1 15 18H9a4 4 0 0 1-3.27-2.02A1.5 1.5 0 0 1 3 14.5v-1A1.5 1.5 0 0 1 4.73 12H5v-1a4 4 0 0 1 4-4h2V5.73A2 2 0 0 1 12 2z" fill="currentColor" stroke="none" opacity="0.25"/>
+                            <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+                            <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+                            <path d="M9.5 16.5 Q12 18 14.5 16.5" stroke-width="1.5"/>
+                            <path d="M8 2.5 L6 0.5 M16 2.5 L18 0.5 M12 1 L12 0" stroke-width="1.2" opacity="0.6"/>
                         </svg>
                     </div>
                     <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white"></span>
@@ -2228,12 +2271,11 @@
                     <div class="flex-1 flex items-center">
                         <div class="flex items-start gap-3 w-full">
                             <div class="w-8 h-8 gradient-card rounded-full flex items-center justify-center flex-none mt-0.5 shadow-sm">
-                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="2" x2="12" y2="5"/><circle cx="12" cy="2" r="1.2" fill="currentColor" stroke="none"/>
-                                    <rect x="3.5" y="5" width="17" height="13" rx="3"/>
-                                    <circle cx="8.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
-                                    <circle cx="15.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
-                                    <path d="M8.5 14.5 Q12 17 15.5 14.5"/>
+                                <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.38-1 1.73V7h2a4 4 0 0 1 4 4v1h.27A1.5 1.5 0 0 1 21 13.5v1a1.5 1.5 0 0 1-1.73 1.48A4 4 0 0 1 15 18H9a4 4 0 0 1-3.27-2.02A1.5 1.5 0 0 1 3 14.5v-1A1.5 1.5 0 0 1 4.73 12H5v-1a4 4 0 0 1 4-4h2V5.73A2 2 0 0 1 12 2z" fill="currentColor" stroke="none" opacity="0.3"/>
+                                    <circle cx="9" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+                                    <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
+                                    <path d="M9.5 16.5 Q12 18 14.5 16.5" stroke-width="1.5"/>
                                 </svg>
                             </div>
                             <div class="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-gray-700 leading-relaxed">
@@ -2284,7 +2326,7 @@
                         <button @click="openCSChat(csGuestName)"
                                 class="w-full bg-emerald-500 text-white text-sm font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all">
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                            Lanjut Chat ke CS Manusia →
+                            Hubungi Live Agent →
                         </button>
                     </div>
                     <!-- Input area -->
@@ -2311,19 +2353,11 @@
             :class="!csPopup && !csHidden ? 'cs-fab-float' : ''"
             class="cs-fab w-14 h-14 gradient-card rounded-full shadow-2xl flex items-center justify-center text-white transition-all duration-200 active:scale-90 active:shadow-md relative">
 
-        <!-- Robot icon -->
-        <svg x-show="!csPopup" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-            <!-- antena -->
-            <line x1="12" y1="2" x2="12" y2="5"/>
-            <circle cx="12" cy="2" r="1.2" fill="currentColor" stroke="none"/>
-            <!-- kepala -->
-            <rect x="3.5" y="5" width="17" height="13" rx="3"/>
-            <!-- mata kiri -->
-            <circle cx="8.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
-            <!-- mata kanan -->
-            <circle cx="15.5" cy="10.5" r="1.8" fill="currentColor" stroke="none"/>
-            <!-- mulut -->
-            <path d="M8.5 14.5 Q12 17 15.5 14.5" stroke="currentColor" fill="none"/>
+        <!-- AI Sparkle icon -->
+        <svg x-show="!csPopup" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5Z" fill="currentColor" stroke="none" opacity="0.9"/>
+            <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8Z" fill="currentColor" stroke="none" opacity="0.7"/>
+            <path d="M5 3l.6 1.4L7 5l-1.4.6L5 7l-.6-1.4L3 5l1.4-.6Z" fill="currentColor" stroke="none" opacity="0.6"/>
         </svg>
 
         <!-- X close icon -->
@@ -2822,9 +2856,9 @@
 </div>
 
 <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
-    <div class="grid grid-cols-5 h-16">
+    <div class="h-16 flex">
         <template x-for="item in navItems" :key="item.id">
-            <button @click="setPage(item.id)" :class="activePage===item.id?'text-brand-500':'text-gray-400'" class="flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
+            <button @click="setPage(item.id)" :class="activePage===item.id?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
                 <div x-show="activePage===item.id" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
                 <div x-html="item.icon" class="w-5 h-5"></div>
                 <span class="text-[10px] font-semibold leading-none" x-text="item.label"></span>
@@ -2832,17 +2866,16 @@
         </template>
         <!-- Admin tab — hanya muncul jika role=admin -->
         <template x-if="currentUser?.role?.toLowerCase()==='admin'">
-            <button @click="setPage('admin')" :class="activePage==='admin'?'text-brand-500':'text-gray-400'" class="flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
+            <button @click="setPage('admin')" :class="activePage==='admin'?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
                 <div x-show="activePage==='admin'" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 <span class="text-[10px] font-semibold leading-none">Admin</span>
             </button>
         </template>
-        <!-- Akun tab — hidden jika admin (akses profil via avatar kanan atas) -->
-        <button x-show="currentUser?.role?.toLowerCase()!=='admin'"
-            @click="currentUser?setPage('profile'):openAuth('login')"
+        <!-- Akun tab — selalu tampil untuk semua user -->
+        <button @click="currentUser?setPage('profile'):openAuth('login')"
             :class="activePage==='profile'?'text-brand-500':'text-gray-400'"
-            class="flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
+            class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
             <div x-show="activePage==='profile'" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             <span class="text-[10px] font-semibold leading-none">Akun</span>
@@ -5999,6 +6032,28 @@ function serabutStore() {
             const endDate = new Date(Number(parts[2]), Number(parts[1])-1, Number(parts[0]));
             const today = new Date(); today.setHours(0,0,0,0);
             return endDate >= today ? 'Active' : 'Sudah Dihapus';
+        },
+        getDaysUntilExpiry(masaBerlaku) {
+            if (!masaBerlaku) return Infinity;
+            const parts = masaBerlaku.split('/');
+            if (parts.length !== 3) return Infinity;
+            const endDate = new Date(Number(parts[2]), Number(parts[1])-1, Number(parts[0]));
+            const today = new Date(); today.setHours(0,0,0,0);
+            return Math.floor((endDate - today) / 86400000);
+        },
+        formatMasaBerlaku(str) {
+            if (!str) return '—';
+            const parts = str.split('/');
+            if (parts.length !== 3) return str;
+            const bulan = ['','Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            const d = parseInt(parts[0]), m = parseInt(parts[1]), y = parseInt(parts[2]);
+            return `${d} ${bulan[m]||''} ${y}`;
+        },
+        statusSuggestRebuy(account) {
+            const isRenewal = account.productType === 'office365' && this.getDaysUntilExpiry(account.masaBerlaku) >= 0;
+            const keyword = isRenewal ? 'Renewal' : (account.productType === 'adobe' ? 'Adobe' : (account.productType === 'office365family' ? 'Office 365 Family' : 'Office 365'));
+            this.searchQuery = keyword;
+            this.setPage('catalog');
         },
     };
 }
