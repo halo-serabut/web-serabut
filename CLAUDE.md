@@ -146,14 +146,18 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Tambah field "Pembelian dari" (Shopee/Web) — dari kolom G (List 365) atau kolom J (List 365 Family); dideteksi via header 'from'
   - Cek Adobe CC: `smartSearch()` sekarang juga baca sheet "List Account Adobe CC"; tampilkan "Akun Adobe" + product name; icon Adobe merah
   - Status badge: 3 state — Active (hijau) / Hampir Habis H-7 (oranye) / Sudah Dihapus (merah), via `getDaysUntilExpiry()`
-  - Suggest renewal/rebuy: banner + tombol muncul jika H-7 atau expired; Office 365 Web H-7 → "Lihat Produk Renewal"; lainnya → "Beli Ulang"; navigate ke catalog dengan pre-filled search via `statusSuggestRebuy()`
+  - Suggest renewal/rebuy: banner + tombol muncul jika H-7 atau expired; `statusSuggestRebuy()` sekarang cari produk exact match di `this.products` by name+duration lalu `goToProductDetail()`; fallback ke search jika tidak ditemukan
   - Not found state: ganti "Chat WhatsApp" → tombol "Hubungi Live Agent" (WA link dengan query keyword)
   - Chatbot: icon FAB + header + bubble diganti ke sparkle/AI icon; tombol eskalasi "Lanjut Chat ke CS Manusia" → "Hubungi Live Agent"
   - Bottom nav: Akun tab selalu visible untuk semua user; admin mendapat tab ekstra (flex layout, tidak lagi grid-cols-5 hardcoded)
 
+- [2026-04-28 sesi 2] Selesai: 3 small fixes:
+  - `statusSuggestRebuy()` → navigate langsung ke product detail page yang matching (by productType + productName + durasi); fallback ke catalog search jika tidak ditemukan
+  - GAS `smartSearch()` → CacheService 5 menit untuk 3 sheets (List Account 365, Family, Adobe CC); drastis kurangi latency untuk pencarian berulang
+  - Admin "Semua Order" → grouped by orderId: 1 card per order number, item list di dalam card, total per order, 1 selector "Ubah Status" untuk semua item sekaligus via `adminUpdateGroupStatus()`
+
 ## Current Focus
-- **Deploy GAS wajib** setelah sesi ini: `smartSearch()` sudah updated untuk Adobe CC + pembelianDari field.
 - **FONNTE_TOKEN** perlu diset di GAS Script Properties agar WA notification aktif.
 - **Google SSO** sudah aktif (GOOGLE_CLIENT_ID sudah diisi di Alpine config).
-- Deploy GAS: `cp worktree/gas/Code.gs gas/Code.gs && cd gas && clasp push && clasp deploy --deploymentId [ID]`
+- Deploy GAS terbaru: `cp worktree/gas/Code.gs gas/Code.gs && cd gas && clasp push && clasp deploy --deploymentId [ID]`
 - **Penting**: Setelah deploy GAS baru, user lama tanpa salt kolom akan auto-upgrade ke salted hash saat login pertama kali.
