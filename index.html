@@ -513,6 +513,8 @@
             <div class="px-5 space-y-7">
                 <!-- Tagline -->
                 <p class="text-xs text-gray-400 leading-relaxed tracking-wide uppercase font-medium">Platform Produk Digital Terpercaya</p>
+                <!-- Payment gateway info -->
+                <p class="text-[10px] text-gray-500 text-center">Payment gateway: <span class="text-gray-300">iPaymu</span></p>
 
                 <!-- Kontak -->
                 <div class="space-y-3">
@@ -1155,6 +1157,17 @@
                             <div x-show="order.status==='Diproses'" class="flex items-center gap-1.5 mt-1.5">
                                 <svg class="w-3 h-3 text-blue-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                 <span class="text-[10px] text-blue-600 font-semibold">Payment terkonfirmasi · Sedang diproses oleh tim kami</span>
+                            </div>
+                            <!-- Payment method & breakdown -->
+                            <div class="flex items-center justify-between text-[10px] text-gray-500 mt-2">
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                    <span x-text="order.paymentMethod ? 'Metode: ' + order.paymentMethod : 'Metode: QRIS'"></span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <span x-text="order.paymentStatus ? 'Status: ' + order.paymentStatus : 'Status: Berhasil'"></span>
+                                </div>
                             </div>
                         </div>
 
@@ -3888,7 +3901,7 @@
                     </div>
 
                     <div class="rounded-2xl bg-brand-50 border border-brand-100 p-4">
-                        <p class="text-gray-600 text-center">Ada pertanyaan? Hubungi kami di <strong class="text-gray-800">halo@serabut.com</strong> atau WA <strong class="text-gray-800">0888-1500-555</strong></p>
+                        <p class="text-gray-600 text-center">Ada pertanyaan? Hubungi kami di <strong class="text-gray-800">halo@serabut.com</strong> atau <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="text-brand-500 hover:underline">WhatsApp kami</a></p>
                     </div>
                 </div>
             </template>
@@ -4013,7 +4026,7 @@
                     </div>
 
                     <div class="rounded-2xl bg-brand-50 border border-brand-100 p-4">
-                        <p class="text-gray-600 text-center">Pertanyaan soal privasi? Hubungi kami di <strong class="text-gray-800">halo@serabut.com</strong> atau WA <strong class="text-gray-800">0888-1500-555</strong></p>
+                        <p class="text-gray-600 text-center">Pertanyaan soal privasi? Hubungi kami di <strong class="text-gray-800">halo@serabut.com</strong> atau <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="text-brand-500 hover:underline">WhatsApp kami</a></p>
                     </div>
                 </div>
             </template>
@@ -4288,7 +4301,7 @@ function serabutStore() {
             { q: 'Apakah produk yang dijual legal dan resmi?', a: 'Ya, semua produk yang kami jual adalah <strong>lisensi resmi</strong> dari vendor. Kami beroperasi sebagai reseller software berlisensi dan mematuhi ketentuan penggunaan dari masing-masing vendor. Produk 100% bisa digunakan untuk keperluan pribadi maupun profesional.' },
             { q: 'Apa perbedaan Office 365 Personal, Family, dan Web?', a: '<strong>Personal</strong>: 1 pengguna, hingga 5 perangkat, full fitur Office + 1TB OneDrive.<br><br><strong>Family</strong>: Hingga 6 pengguna, masing-masing hingga 5 perangkat, full fitur Office + 1TB OneDrive per orang.<br><br><strong>Web</strong>: Akses Office versi web browser (Word, Excel, PowerPoint online), tanpa instalasi desktop, cocok untuk penggunaan ringan.' },
             { q: 'Apakah satu akun bisa digunakan di beberapa perangkat?', a: 'Tergantung produknya:<br>• <strong>Office 365 Personal/Family</strong>: Hingga 5 perangkat aktif per pengguna<br>• <strong>Adobe Creative Cloud</strong>: 2 perangkat aktif bersamaan<br>• <strong>Windows License Key</strong>: 1 perangkat per lisensi<br><br>Jangan bagikan akun ke orang lain di luar ketentuan paket.' },
-            { q: 'Bagaimana cara menghubungi customer service?', a: 'CS kami tersedia setiap hari <strong>08.00–22.00 WIB</strong> melalui:<br>• <strong>WhatsApp</strong>: 0888-1500-555<br>• <strong>Email</strong>: halo@serabut.com<br>• <strong>Live chat</strong>: Klik tombol chat di sudut kanan bawah aplikasi ini.' },
+            { q: 'Bagaimana cara menghubungi customer service?', a: 'CS kami tersedia setiap hari <strong>08.00–22.00 WIB</strong> melalui:<br>• <strong>WhatsApp</strong>: Klik tombol chat di aplikasi ini<br>• <strong>Email</strong>: halo@serabut.com<br>• <strong>Live chat</strong>: Klik tombol chat di sudut kanan bawah aplikasi ini.' },
         ],
         statusOptions: [
             {value:'email',      label:'Email Pembelian',hint:'Email saat order',     placeholder:'contoh@email.com'},

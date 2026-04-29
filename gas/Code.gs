@@ -1832,7 +1832,19 @@ function confirmPayment({ orderId }) {
   }
 
   sendWAToGroup(groupMsg);
-  Logger.log('confirmPayment: WA terkirim untuk order ' + orderId);
+  Logger.log('confirmPayment: WA group terkirim untuk order ' + orderId);
+
+  // Notif ke buyer (WA personal + email)
+  try {
+    const buyerItems = rows.map(r => ({
+      produk:    String(r.row[prodCol] || ''),
+      varian:    String(r.row[varCol]  || '-'),
+      masaAktif: String(r.row[masCol]  || '-'),
+      harga:     Number(r.row[hrgCol]  || 0)
+    }));
+    const totalHarga = buyerItems.reduce((s, it) => s + it.harga, 0);
+    sendBuyerOrderConfirm(userWa, userEmail, userNama, orderId, buyerItems, totalHarga);
+  } catch(e) { Logger.log('confirmPayment: buyer notif error: ' + e.message); }
 
   return { success: true, orderId, productName: productName || '' };
 }
