@@ -5095,12 +5095,13 @@ function serabutStore() {
             });
             try {
                 const data = await this.gasPost({
-                    action:       'createCartOrder',
-                    userNama:     uNama,
-                    userEmail:    uEmail,
-                    userWa:       uWa,
-                    sessionToken: this.currentUser?.sessionToken || '',
-                    itemsJson:    JSON.stringify(items),
+                    action:        'createCartOrder',
+                    userNama:      uNama,
+                    userEmail:     uEmail,
+                    userWa:        uWa,
+                    sessionToken:  this.currentUser?.sessionToken || '',
+                    itemsJson:     JSON.stringify(items),
+                    imageUrlsJson: JSON.stringify(this.cart.map(item => this.getProductLogo(item.product.nama))),
                 });
                 if (data.success) {
                     this.cart = [];
@@ -5186,6 +5187,7 @@ function serabutStore() {
                     emailReminder:  this.orderExtra.emailReminder,
                     adobeEmail:     this.orderExtra.adobeEmail,
                     adobePass:      this.orderExtra.adobePass,
+                    imageUrl:       this.getProductLogo(this.selectedProductGroup.nama),
                 });
                 if(data.success) {
                     this.orderModal = false;

@@ -1231,7 +1231,7 @@ function googleLogin({ idToken, credential }) {
 // ────────────────────────────────────────────────────────
 //  CREATE ORDER — [SEC] validasi harga server-side
 // ────────────────────────────────────────────────────────
-function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk, varian, masaAktif, harga, msNama, username, microsoftEmail, emailAktif, emailReminder }) {
+function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk, varian, masaAktif, harga, msNama, username, microsoftEmail, emailAktif, emailReminder, imageUrl }) {
   // Auth check — guest order masih diperbolehkan (tanpa session)
   const effectiveEmail = userEmail || email || '';
   if (!effectiveEmail || !produk) return { success: false, error: 'Data tidak lengkap' };
@@ -1288,7 +1288,8 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   try {
     const ipRes = createIPaymuPayment({
       orderId,
-      itemsJson: JSON.stringify([{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum }]),
+      itemsJson:     JSON.stringify([{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum }]),
+      imageUrlsJson: JSON.stringify([imageUrl || '']),
       buyerName:  userNama,
       buyerEmail: userEmail,
       buyerPhone: userWa,
@@ -1556,7 +1557,7 @@ function forgotPasswordVerify({ email, otp, newPassword }) {
 // ────────────────────────────────────────────────────────
 //  CREATE CART ORDER — semua item keranjang dalam 1 order ID
 // ────────────────────────────────────────────────────────
-function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, itemsJson }) {
+function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, itemsJson, imageUrlsJson }) {
   const effectiveEmail = userEmail || email || '';
   if (!effectiveEmail || !itemsJson) return { success: false, error: 'Data tidak lengkap' };
 
@@ -1615,7 +1616,8 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
     const ipItems = items.map(it => ({ produk: it.produk, varian: it.varian||'-', masaAktif: it.masaAktif||'-', harga: it.harga }));
     const ipRes = createIPaymuPayment({
       orderId,
-      itemsJson:  JSON.stringify(ipItems),
+      itemsJson:     JSON.stringify(ipItems),
+      imageUrlsJson: imageUrlsJson || '[]',
       buyerName:  userNama,
       buyerEmail: userEmail,
       buyerPhone: userWa,
@@ -1631,20 +1633,23 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
 // ────────────────────────────────────────────────────────
 //  IPAYMU PAYMENT INTEGRATION
 // ────────────────────────────────────────────────────────
-function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerPhone, total }) {
+function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerPhone, total, imageUrlsJson }) {
   const props  = PropertiesService.getScriptProperties();
   const va     = (props.getProperty('IPAYMU_VA')      || '').trim();
   const apiKey = (props.getProperty('IPAYMU_API_KEY') || '').trim();
   if (!va || !apiKey) return { success: false, error: 'iPaymu belum dikonfigurasi. Hubungi admin.' };
   if (!orderId)       return { success: false, error: 'Order ID diperlukan' };
 
-  const items = JSON.parse(itemsJson || '[]');
-  if (!items.length)  return { success: false, error: 'Item pesanan kosong' };
+  const items     = JSON.parse(itemsJson || '[]');
+  if (!items.length) return { success: false, error: 'Item pesanan kosong' };
+
+  const imageUrls = JSON.parse(imageUrlsJson || '[]');
 
   const body = {
     product:   items.map(i => i.produk + (i.varian && i.varian !== '-' ? ' - ' + i.varian : '')),
     qty:       items.map(() => 1),
     price:     items.map(i => Math.round(Number(i.harga) || 0)),
+    imageUrl:  items.map((_, idx) => imageUrls[idx] || ''),
     returnUrl: 'https://serabut.id/?payment=success&orderId=' + orderId,
     cancelUrl: 'https://serabut.id/?payment=cancel&orderId=' + orderId,
     notifyUrl: 'https://serabut.id/',
