@@ -1314,23 +1314,40 @@ function getOrders({ email }) {
   if (!sheet) return { success: true, data: [] };
 
   const data      = sheet.getDataRange().getValues();
+  const headers   = data[0].map(function(h){ return String(h).toLowerCase().trim(); });
   const emailNorm = email.toLowerCase().trim();
   const orderMap  = new Map();
   const orderKeys = [];
 
+  // Cari indeks kolom
+  const idCol   = headers.indexOf('order id');
+  const dateCol = headers.indexOf('date') !== -1 ? headers.indexOf('date') : 1; // fallback kolom 1
+  const namaCol = headers.indexOf('nama');
+  const emailCol= headers.indexOf('email');
+  const prodCol = headers.indexOf('produk');
+  const varCol  = headers.indexOf('varian');
+  const masCol  = headers.indexOf('masa aktif');
+  const hrgCol  = headers.indexOf('harga');
+  const stCol   = headers.indexOf('status');
+  const pmCol   = headers.indexOf('payment method');   // kolom baru
+  const psCol   = headers.indexOf('payment status');   // kolom baru
+
+  // Validasi minimal kolom yang diperlukan
+  if (idCol === -1 || prodCol === -1) return { success: true, data: [] };
+
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (!row[0] || String(row[3]).toLowerCase().trim() !== emailNorm) continue;
+    if (!row[idCol] || String(row[emailCol] || '').toLowerCase().trim() !== emailNorm) continue;
 
-    const orderId = String(row[0]).trim();
-    const produk  = String(row[5] || '').trim();
+    const orderId = String(row[idCol]).trim();
+    const produk  = String(row[prodCol] || '').trim();
     if (!orderId || !produk) continue;
 
     const item = {
       produk,
-      varian:    String(row[6] || '-').trim(),
-      masaAktif: String(row[7] || '-').trim(),
-      harga:     Number(row[8]) || 0,
+      varian:    varCol >= 0 ? String(row[varCol] || '-').trim() : '-',
+      masaAktif: masCol >= 0 ? String(row[masCol] || '-').trim() : '-',
+      harga:     hrgCol >= 0 ? Number(row[hrgCol]) || 0 : 0,
     };
 
     if (orderMap.has(orderId)) {
@@ -1338,11 +1355,17 @@ function getOrders({ email }) {
       o.items.push(item);
       o.total += item.harga;
     } else {
+      // Ambil payment method & status dari kolom yang benar
+      const paymentMethod = pmCol >= 0 && row[pmCol] ? String(row[pmCol]).trim() : 'QRIS';
+      const paymentStatus = psCol >= 0 && row[psCol] ? String(row[psCol]).trim() : 'Berhasil';
+      
       orderMap.set(orderId, {
         orderId,
-        tanggal: String(row[1]),
-        status:  String(row[9] || 'Pending').trim(),
+        tanggal: dateCol >= 0 ? String(row[dateCol] || '') : '',
+        status:  stCol >= 0 ? String(row[stCol] || 'Pending').trim() : 'Pending',
         total:   item.harga,
+        paymentMethod,
+        paymentStatus,
         items:   [item],
       });
       orderKeys.push(orderId);
@@ -1689,7 +1712,7 @@ function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerP
 }
 
 function ipaymuCallback(params) {
-  // iPaymu POST callback: { trx_id, status, status_code, reference_id, ... }
+  // iPaymu POST callback: { trx_id, status, status_code, reference_id, payment_method, ... }
   const referenceId = params.reference_id || params.referenceId || params.trx_id;
   const statusCode  = String(params.status_code || params.status || '');
   if (!referenceId) return { success: false };
@@ -1708,12 +1731,37 @@ function ipaymuCallback(params) {
   const stCol   = headers.indexOf('status');
   if (idCol < 0 || stCol < 0) return { success: false };
 
+  // Cari kolom Payment Method & Payment Status, buat jika belum ada
+  let pmCol = headers.indexOf('payment method');
+  let psCol = headers.indexOf('payment status');
+  
+  // Jika kolom belum ada, tambahkan di akhir
+  if (pmCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Payment Method');
+    pmCol = headers.length;
+    headers.push('payment method');
+  }
+  if (psCol === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Payment Status');
+    psCol = headers.length;
+    headers.push('payment status');
+  }
+
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idCol]).trim() === String(referenceId).trim()) {
       if (data[i][stCol] === 'Pending') {
         sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
         Logger.log('ipaymuCallback: order ' + referenceId + ' → Diproses');
       }
+      
+      // Update payment method & status dari iPaymu
+      const paymentMethod = params.payment_method || 'QRIS'; // default QRIS
+      const paymentStatus = isPaid ? 'Berhasil' : 'Pending';
+      
+      sheet.getRange(i + 1, pmCol + 1).setValue(paymentMethod);
+      sheet.getRange(i + 1, psCol + 1).setValue(paymentStatus);
+      
+      Logger.log('ipaymuCallback: order ' + referenceId + ' → ' + paymentMethod + ', ' + paymentStatus);
       return { success: true };
     }
   }
