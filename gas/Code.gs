@@ -1780,11 +1780,14 @@ function confirmPayment({ orderId }) {
     const hargaFmt = harga.toLocaleString('id-ID');
 
     if (isFamily) {
-      groupMsg = `ORDER: *${produk}*\n━━━━━━━━━━━━━━━━\n📋 ID: ${orderId}\n👤 Pembeli: ${userNama}\n📱 WA: ${userWa}\n📧 MS Email (invite): ${msEmail || '-'}\n📧 Email Aktif: ${emailAktif || '-'}\n⏱ Durasi: ${masaAktif}\n💰 Harga: Rp ${hargaFmt}\n✅ Status: *PAID*\n━━━━━━━━━━━━━━━━`;
+      productName = produk;
+      groupMsg = `ORDER: *${produk}*\nOrder ID: ${orderId}\nEmail Microsoft (invite): ${msEmail || '-'}\nEmail Aktif: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNama Pembeli: ${userNama}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
     } else if (isWeb) {
-      groupMsg = `ORDER: *${produk}*\n━━━━━━━━━━━━━━━━\n📋 ID: ${orderId}\n👤 Pembeli: ${userNama}\n📱 WA: ${userWa}\n🪪 Nama MS: ${msNama || '-'}\n🔑 Username: ${username || '-'}\n📧 Email Aktif: ${emailAktif || '-'}\n⏱ Durasi: ${masaAktif}\n💰 Harga: Rp ${hargaFmt}\n✅ Status: *PAID*\n━━━━━━━━━━━━━━━━`;
+      productName = produk;
+      groupMsg = `ORDER: *${produk}*\nOrder ID: ${orderId}\nNama MS: ${msNama || '-'}\nUsername Request: ${username || '-'}\nEmail Aktif: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
     } else {
-      groupMsg = `ORDER: *${produk}*\n━━━━━━━━━━━━━━━━\n📋 ID: ${orderId}\n👤 Pembeli: ${userNama}\n📱 WA: ${userWa}\n📧 Email Aktif: ${emailAktif || '-'}\n⏱ Durasi: ${masaAktif}\n💰 Harga: Rp ${hargaFmt}\n✅ Status: *PAID*\n━━━━━━━━━━━━━━━━`;
+      productName = produk + (varian !== '-' ? ' ' + varian : '');
+      groupMsg = `ORDER: *${produk}*\nOrder ID: ${orderId}\nProduk: ${produk}${varian !== '-' ? ' - '+varian : ''}\nEmail Aktif: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNama: ${userNama}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
     }
   } else {
     // Cart order — multiple items
@@ -1809,19 +1812,18 @@ function confirmPayment({ orderId }) {
       totalHarga += harga;
       produkNames.push(produk);
 
-      let line = `*[${idx+1}] ${produk}${varian !== '-' ? ' - '+varian : ''}${masaAktif !== '-' ? ' ('+masaAktif+')' : ''}*`;
-      if (isFamily && msEmail)  line += `\n   > MS Email: ${msEmail}`;
-      if (isWeb && msNama)      line += `\n   > Nama MS: ${msNama}`;
-      if (isWeb && username)    line += `\n   > Username: ${username}`;
-      if (emailAktif && emailAktif !== '-') line += `\n   > Email Aktif: ${emailAktif}`;
-      line += `\n   > Harga: Rp ${harga.toLocaleString('id-ID')}`;
+      let line = `[${idx+1}] *${produk}${varian !== '-' ? ' - '+varian : ''}${masaAktif !== '-' ? ' ('+masaAktif+')' : ''}*`;
+      if (isFamily && msEmail && msEmail !== '-')  line += `\n   Email MS: ${msEmail}`;
+      if (isWeb && msNama && msNama !== '-')        line += `\n   Nama MS: ${msNama}`;
+      if (isWeb && username && username !== '-')    line += `\n   Username: ${username}`;
+      if (emailAktif && emailAktif !== '-')         line += `\n   Email Aktif: ${emailAktif}`;
       waLines.push(line);
     });
 
     const uniq = [...new Set(produkNames)];
     productName = uniq.length <= 2 ? uniq.join(' + ') : uniq[0] + ' +' + (uniq.length - 1) + ' lainnya';
     const totalFmt = totalHarga.toLocaleString('id-ID');
-    groupMsg = `ORDER: *${productName}* (${rows.length} item)\n━━━━━━━━━━━━━━━━\n📋 ID: ${orderId}\n👤 Pembeli: ${userNama}\n📱 WA: ${userWa}\n────────────────────\n${waLines.join('\n')}\n────────────────────\n💰 Total: *Rp ${totalFmt}*\n✅ Status: *PAID*\n━━━━━━━━━━━━━━━━`;
+    groupMsg = `ORDER: *${productName}* (${rows.length} item)\nOrder ID: ${orderId}\nPembeli: ${userNama}\nNo WA: ${userWa}\n────────────────────\n${waLines.join('\n')}\n────────────────────\nTotal: Rp ${totalFmt}\nStatus: *Paid*\nNext: Please proceed!`;
   }
 
   sendWAToGroup(groupMsg);

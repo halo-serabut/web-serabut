@@ -1136,19 +1136,26 @@
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
                         <!-- Header: No. Pesanan + Tanggal + Status -->
-                        <div class="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-                            <div>
-                                <div class="font-mono text-xs font-bold text-gray-800" x-text="order.orderId"></div>
-                                <div class="text-[10px] text-gray-400 mt-0.5" x-text="formatOrderDate(order.tanggal.split(' ')[0])"></div>
+                        <div class="px-4 py-2.5 bg-gray-50 border-b border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-mono text-xs font-bold text-gray-800" x-text="order.orderId"></div>
+                                    <div class="text-[10px] text-gray-400 mt-0.5" x-text="formatOrderDate(order.tanggal.split(' ')[0])"></div>
+                                </div>
+                                <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg"
+                                    :class="{
+                                        'bg-yellow-50 text-yellow-700': order.status==='Pending',
+                                        'bg-blue-50 text-blue-700':    order.status==='Diproses',
+                                        'bg-emerald-50 text-emerald-700': order.status==='Aktif'||order.status==='Selesai',
+                                        'bg-red-50 text-red-600':      order.status==='Dibatalkan',
+                                        'bg-gray-100 text-gray-500':   !['Pending','Diproses','Aktif','Selesai','Dibatalkan'].includes(order.status)
+                                    }" x-text="order.status"></span>
                             </div>
-                            <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg"
-                                :class="{
-                                    'bg-yellow-50 text-yellow-700': order.status==='Pending',
-                                    'bg-blue-50 text-blue-700':    order.status==='Diproses',
-                                    'bg-emerald-50 text-emerald-700': order.status==='Aktif'||order.status==='Selesai',
-                                    'bg-red-50 text-red-600':      order.status==='Dibatalkan',
-                                    'bg-gray-100 text-gray-500':   !['Pending','Diproses','Aktif','Selesai','Dibatalkan'].includes(order.status)
-                                }" x-text="order.status"></span>
+                            <!-- Label khusus untuk status Diproses -->
+                            <div x-show="order.status==='Diproses'" class="flex items-center gap-1.5 mt-1.5">
+                                <svg class="w-3 h-3 text-blue-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span class="text-[10px] text-blue-600 font-semibold">Payment terkonfirmasi · Sedang diproses oleh tim kami</span>
+                            </div>
                         </div>
 
                         <!-- Single item -->
@@ -2078,11 +2085,26 @@
 
             <!-- ── Tab: Semua Order ── -->
             <div x-show="adminTab==='orders'">
-                <div class="flex flex-wrap items-center gap-2 mb-4">
-                    <h2 class="font-bold text-gray-900 flex-1">Semua Order</h2>
-                    <div class="flex gap-1 bg-gray-100 rounded-xl p-1">
-                        <template x-for="f in ['Semua','Pending','Selesai','Dibatalkan']" :key="f">
-                            <button @click="adminOrderFilter=f" :class="adminOrderFilter===f?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all" x-text="f"></button>
+                <div class="mb-4">
+                    <h2 class="font-bold text-gray-900 mb-3">Semua Order</h2>
+                    <!-- Tabs Shopee-style -->
+                    <div class="flex border-b border-gray-200 overflow-x-auto gap-0 -mb-px">
+                        <template x-for="tab in [
+                            {key:'Semua',      label:'Semua'},
+                            {key:'Belum Bayar',label:'Belum Bayar'},
+                            {key:'Perlu Diproses',label:'Perlu Diproses'},
+                            {key:'Selesai',    label:'Selesai'},
+                            {key:'Dibatalkan', label:'Dibatalkan'}
+                        ]" :key="tab.key">
+                            <button @click="adminOrderFilter=tab.key"
+                                    :class="adminOrderFilter===tab.key ? 'border-b-2 border-brand-500 text-brand-600 font-bold' : 'text-gray-500 hover:text-gray-700 border-b-2 border-transparent'"
+                                    class="flex items-center gap-1.5 px-4 py-2.5 text-xs whitespace-nowrap transition-all flex-shrink-0">
+                                <span x-text="tab.label"></span>
+                                <span x-show="adminOrderTabCount(tab.key)>0"
+                                      :class="adminOrderFilter===tab.key ? 'bg-brand-500 text-white' : 'bg-gray-200 text-gray-600'"
+                                      class="text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+                                      x-text="adminOrderTabCount(tab.key)"></span>
+                            </button>
                         </template>
                     </div>
                 </div>
@@ -2116,7 +2138,7 @@
                                 <select @change="adminUpdateOrderStatus(o, $event.target.value); $event.target.value=o.status"
                                         class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-brand-400 bg-white text-gray-700">
                                     <option value="">Ubah Status...</option>
-                                    <template x-for="st in ['Pending','Proses','Selesai','Dibatalkan']" :key="st">
+                                    <template x-for="st in ['Pending','Diproses','Aktif','Selesai','Dibatalkan']" :key="st">
                                         <option :value="st" x-text="st"></option>
                                     </template>
                                 </select>
@@ -4367,6 +4389,12 @@ function serabutStore() {
                     } catch(e) {
                         this.paymentConfirmed = { orderId: payOrderId, productName: '' };
                     }
+                    // Jika sudah login → arahkan ke profil > pesanan
+                    if (this.currentUser) {
+                        this.setPage('profile');
+                        this.profileTab = 'pesanan';
+                        this.loadOrders();
+                    }
                 } else if (payStatus === 'cancel' && payOrderId) {
                     this.iPaymuReturnStatus = { status: 'cancel', orderId: payOrderId };
                     window.history.replaceState({}, '', window.location.pathname);
@@ -5417,8 +5445,21 @@ function serabutStore() {
         // ── Admin computed ────────────────────────────
         get adminFormProduct() { return this.adminNewProduct; },
         get adminFilteredOrders() {
-            if(this.adminOrderFilter==='Semua') return this.adminOrders;
-            return this.adminOrders.filter(o=>o.status===this.adminOrderFilter);
+            const f = this.adminOrderFilter;
+            if (f === 'Semua')          return this.adminOrders;
+            if (f === 'Belum Bayar')    return this.adminOrders.filter(o => o.status === 'Pending');
+            if (f === 'Perlu Diproses') return this.adminOrders.filter(o => o.status === 'Diproses');
+            if (f === 'Selesai')        return this.adminOrders.filter(o => o.status === 'Aktif' || o.status === 'Selesai');
+            if (f === 'Dibatalkan')     return this.adminOrders.filter(o => o.status === 'Dibatalkan');
+            return this.adminOrders;
+        },
+        adminOrderTabCount(tab) {
+            if (tab === 'Semua')          return this.adminOrders.length;
+            if (tab === 'Belum Bayar')    return this.adminOrders.filter(o => o.status === 'Pending').length;
+            if (tab === 'Perlu Diproses') return this.adminOrders.filter(o => o.status === 'Diproses').length;
+            if (tab === 'Selesai')        return this.adminOrders.filter(o => o.status === 'Aktif' || o.status === 'Selesai').length;
+            if (tab === 'Dibatalkan')     return this.adminOrders.filter(o => o.status === 'Dibatalkan').length;
+            return 0;
         },
         get adminFilteredProducts() {
             const q = this.adminProductSearch.toLowerCase().trim();
@@ -6180,7 +6221,7 @@ function serabutStore() {
 
         getStatusIcon(s)    { return {Aktif:'✅',Expired:'⏰',Suspended:'🚫',Pending:'⏳'}[s]||'❓'; },
         getStatusBg(s)      { return {Aktif:'bg-emerald-100',Expired:'bg-orange-100',Suspended:'bg-red-100',Pending:'bg-yellow-100'}[s]||'bg-gray-100'; },
-        getStatusBadge(s)   { return {Aktif:'bg-emerald-100 text-emerald-700',Expired:'bg-orange-100 text-orange-700',Suspended:'bg-red-100 text-red-700',Pending:'bg-yellow-100 text-yellow-700'}[s]||'bg-gray-100 text-gray-600'; },
+        getStatusBadge(s)   { return {Aktif:'bg-emerald-100 text-emerald-700',Selesai:'bg-emerald-100 text-emerald-700',Expired:'bg-orange-100 text-orange-700',Suspended:'bg-red-100 text-red-700',Dibatalkan:'bg-red-100 text-red-600',Pending:'bg-yellow-100 text-yellow-700',Diproses:'bg-blue-100 text-blue-700'}[s]||'bg-gray-100 text-gray-600'; },
         getStatusMessage(s) { return {Aktif:'Akun kamu aktif dan berjalan normal',Expired:'Masa berlaku habis — segera perpanjang!',Suspended:'Akun dinonaktifkan — hubungi support',Pending:'Akun sedang dalam proses aktivasi'}[s]||'Hubungi support untuk info lebih lanjut'; },
         computeSubscriptionStatus(masaBerlaku) {
             if (!masaBerlaku) return 'Active';
