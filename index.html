@@ -3719,6 +3719,30 @@
 <!-- ══════════════════════════════════════════════════════
      ORDER SUCCESS MODAL
 ══════════════════════════════════════════════════════ -->
+<!-- ── Redirect Payment Overlay — countdown sebelum redirect ke iPaymu ── -->
+<div x-show="redirectPayment" class="fixed inset-0 z-[500] flex items-center justify-center px-4 bg-white" style="display:none">
+    <div class="w-full max-w-sm text-center">
+        <!-- Logo + spinner -->
+        <div class="relative w-20 h-20 mx-auto mb-6">
+            <svg class="w-20 h-20 text-gray-100 absolute inset-0" viewBox="0 0 80 80"><circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="6" fill="none"/></svg>
+            <svg class="w-20 h-20 text-brand-500 absolute inset-0 -rotate-90 animate-spin" viewBox="0 0 80 80" style="animation-duration:1s"><circle cx="40" cy="40" r="36" stroke="currentColor" stroke-width="6" fill="none" stroke-dasharray="226" :stroke-dashoffset="226 - (226 * (5 - redirectPayment?.countdown) / 5)"/></svg>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-2xl font-black text-brand-600" x-text="redirectPayment?.countdown"></span>
+            </div>
+        </div>
+        <h3 class="font-black text-gray-900 text-xl mb-2">Pesanan Berhasil Dibuat!</h3>
+        <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-4" x-text="redirectPayment?.orderId"></div>
+        <p class="text-gray-500 text-sm mb-1">Mengarahkan ke halaman pembayaran</p>
+        <p class="text-gray-400 text-xs mb-6">Jangan tutup atau refresh halaman ini</p>
+        <!-- iPaymu logo -->
+        <div class="flex items-center justify-center gap-2 text-gray-400 text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span>Aman & terenkripsi via iPaymu</span>
+        </div>
+        <button @click="redirectPayment=null" class="mt-6 text-gray-400 text-xs hover:text-gray-600 transition-colors underline">Batal</button>
+    </div>
+</div>
+
 <!-- Modal Pembayaran Berhasil — muncul setelah user kembali dari iPaymu -->
 <div x-show="paymentConfirmed" class="fixed inset-0 z-[300] flex items-center justify-center px-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" style="display:none">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
@@ -4101,6 +4125,7 @@ function serabutStore() {
         ordersLoading: false,
 
         // Reset Password (dari profil — butuh password lama)
+        redirectPayment: null, // { orderId, countdown, paymentUrl }
         legalModal:     null,
         privacyScrolled: false,
         resetPwModal:   false,
@@ -4722,17 +4747,18 @@ function serabutStore() {
         },
         getProductLogo(cat) {
             const sz = 64;
-            const f = d => `https://www.google.com/s2/favicons?domain=${d}&sz=${sz}`;
-            const sp = name => `https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/svg/${name}_48x1.svg`;
+            const f  = d => `https://www.google.com/s2/favicons?domain=${d}&sz=${sz}`;
+            // PNG format untuk kompatibilitas iPaymu
+            const sp = name => `https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/png/${name}_48x1.png`;
             const m = {
                 'office 365':    sp('office'),
                 'microsoft 365': sp('office'),
-                'office':        sp('office'),
+                'office':        sp('officehome'),
                 'visio':         sp('visio'),
                 'project':       sp('project'),
-                'windows':       f('microsoft.com'),
-                'windows server':f('microsoft.com'),
-                'adobe':         f('adobe.com'),
+                'windows':       sp('windows'),
+                'windows server':sp('windows'),
+                'adobe':         'https://www.adobe.com/favicon.ico',
                 'google':        f('google.com'),
                 'google one':    f('one.google.com'),
                 'coreldraw':     f('coreldraw.com'),
@@ -4745,7 +4771,7 @@ function serabutStore() {
                 'iqiyi':         f('iqiyi.com'),
                 'zoom':          f('zoom.us'),
             };
-            return m[(cat||'').toLowerCase()] || f('microsoft.com');
+            return m[(cat||'').toLowerCase()] || sp('office');
         },
         getCategoryBg(cat) {
             const m={'Office 365':'bg-blue-50','Adobe':'bg-red-50','Windows':'bg-sky-50','Office':'bg-orange-50','Google':'bg-green-50','CorelDRAW':'bg-yellow-50','Project':'bg-purple-50','Visio':'bg-indigo-50'};
@@ -5101,20 +5127,31 @@ function serabutStore() {
                     userWa:        uWa,
                     sessionToken:  this.currentUser?.sessionToken || '',
                     itemsJson:     JSON.stringify(items),
-                    imageUrlsJson: JSON.stringify(this.cart.map(item => this.getProductLogo(item.product.nama))),
+                    imageUrlsJson: JSON.stringify(this.cart.map(item => this.getProductLogo(item.product.category || item.product.nama))),
                 });
                 if (data.success) {
                     this.cart = [];
                     this.saveCart();
                     this.cartCheckoutModal = false;
                     if (data.paymentUrl) {
-                        window.location.href = data.paymentUrl;
+                        this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
                     } else {
                         this.cartCheckoutError = 'Pesanan dibuat tapi gagal membuat sesi pembayaran. Hubungi CS.';
                     }
                 } else { this.cartCheckoutError = data.error||'Gagal memproses pesanan'; }
             } catch { this.cartCheckoutError = 'Gagal terhubung ke server'; }
             this.cartCheckoutLoading = false;
+        },
+
+        startPaymentRedirect(orderId, paymentUrl) {
+            this.redirectPayment = { orderId, paymentUrl, countdown: 5 };
+            const tick = setInterval(() => {
+                this.redirectPayment.countdown--;
+                if (this.redirectPayment.countdown <= 0) {
+                    clearInterval(tick);
+                    window.location.href = paymentUrl;
+                }
+            }, 1000);
         },
 
         async payViaIPaymu() {
@@ -5187,12 +5224,12 @@ function serabutStore() {
                     emailReminder:  this.orderExtra.emailReminder,
                     adobeEmail:     this.orderExtra.adobeEmail,
                     adobePass:      this.orderExtra.adobePass,
-                    imageUrl:       this.getProductLogo(this.selectedProductGroup.nama),
+                    imageUrl:       this.getProductLogo(this.selectedProductGroup.category || this.selectedProductGroup.nama),
                 });
                 if(data.success) {
                     this.orderModal = false;
                     if (data.paymentUrl) {
-                        window.location.href = data.paymentUrl;
+                        this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
                     } else {
                         this.orderError = 'Pesanan dibuat tapi gagal membuat sesi pembayaran. Hubungi CS.';
                     }
