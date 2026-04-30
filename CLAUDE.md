@@ -161,9 +161,15 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - **FAQ page**: halaman `/faq` dengan 11 Q&A accordion; FAQ masuk navItems (mobile bottom nav + desktop nav); link FAQ di semua footer
   - **Alamat**: "Jakarta Selatan, DKI Jakarta" di footer desktop, footer mobile (home section), dan desktop footer mobile-view
 
+- [2026-04-30] Selesai: Fix product logo Office/Windows/Windows Server — 'office' pakai `sp('office')`; 'windows'/'windows server' pakai inline SVG data URI (Windows logo #0078D4, btoa encoded)
+- [2026-04-30] Selesai: Footer iPaymu — hapus dari mobile footer & copyright; pindah inline di samping "Syarat & Ketentuan" di desktop footer bottom bar
+- [2026-04-30] Selesai: FAQ redesign modern — category filter pills (Office 365, Windows, Adobe, Pembayaran, Akun & Garansi), dot warna per kategori, 15 FAQ product-focused, CTA "Hubungi Live Agent" (bukan WhatsApp)
+- [2026-04-30] Selesai: iPaymu iframe payment flow — 5s countdown → full-screen iframe modal; countdown 15 menit MM:SS + progress bar (hijau→kuning→merah); same-origin iframe detection untuk success/cancel; timeout auto-redirect ke Pesanan; `payViaIPaymu` juga pakai iframe; fallback "Buka di tab baru"
+
 ## Current Focus
 - **Deploy GAS wajib**: `createIPaymuPayment` + `ipaymuCallback` sudah di Code.gs — push ke GAS dulu.
 - **Script Properties iPaymu**: Set `IPAYMU_VA` dan `IPAYMU_API_KEY` di GAS Script Properties setelah akun iPaymu approved.
+- **iPaymu iframe**: Pastikan return URL iPaymu dikonfigurasi ke `https://serabut.id/?payment=success&orderId={orderId}` agar same-origin detection bekerja.
 - **FONNTE_TOKEN** perlu diset di GAS Script Properties agar WA notification aktif.
 - **Google SSO** sudah aktif (GOOGLE_CLIENT_ID sudah diisi di Alpine config).
 - Deploy GAS: `cp worktree/gas/Code.gs gas/Code.gs && cd gas && clasp push && clasp deploy --deploymentId [ID]`

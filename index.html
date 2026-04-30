@@ -520,7 +520,6 @@
                     </div>
                 </div>
                 <p class="text-xs text-gray-400 leading-relaxed">Platform jual beli software original terpercaya — hemat hingga 70% dari harga resmi.</p>
-                <div class="text-[10px] text-gray-500 pt-2 border-t border-gray-800 text-center">Payment gateway: iPaymu • Aman & terenkripsi</div>
 
                 <!-- Kontak -->
                 <div class="space-y-3">
@@ -1242,52 +1241,82 @@
 
     <!-- ───────── FAQ ───────── -->
     <section x-show="activePage==='faq'" class="page-enter">
-        <div class="max-w-3xl mx-auto px-4 py-8 pb-28 md:pb-10">
+        <div x-data="{ faqFilter: 'semua', faqOpen: null }" class="max-w-3xl mx-auto px-4 py-8 pb-28 md:pb-12">
 
-            <!-- Header -->
+            <!-- Hero Header -->
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-14 h-14 bg-brand-50 rounded-2xl mb-4">
-                    <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl mb-4 shadow-lg shadow-brand-200">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
-                <h1 class="text-2xl font-black text-gray-900 mb-2">Pertanyaan yang Sering Ditanya</h1>
-                <p class="text-gray-500 text-sm">Temukan jawaban atas pertanyaan umum seputar Serabut Store</p>
+                <h1 class="text-2xl md:text-3xl font-black text-gray-900 mb-2">Pertanyaan yang Sering Ditanya</h1>
+                <p class="text-gray-500 text-sm">Temukan jawaban cepat seputar produk & layanan Serabut Store</p>
             </div>
 
-            <!-- FAQ Accordion -->
-            <div class="space-y-3" x-data="{ open: null }">
+            <!-- Product Category Pills -->
+            <div class="flex flex-wrap gap-2 justify-center mb-8">
+                <template x-for="pill in [{id:'semua',label:'Semua',color:'bg-gray-900 text-white'},{id:'office',label:'Office 365',color:'bg-blue-600 text-white'},{id:'windows',label:'Windows',color:'bg-sky-600 text-white'},{id:'adobe',label:'Adobe',color:'bg-red-600 text-white'},{id:'pembayaran',label:'Pembayaran',color:'bg-emerald-600 text-white'},{id:'akun',label:'Akun & Garansi',color:'bg-purple-600 text-white'}]" :key="pill.id">
+                    <button @click="faqFilter=pill.id; faqOpen=null"
+                            :class="faqFilter===pill.id ? pill.color + ' shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'"
+                            class="px-4 py-1.5 rounded-full text-sm font-semibold transition-all active:scale-95"
+                            x-text="pill.label"></button>
+                </template>
+            </div>
 
-                <template x-for="(faq, idx) in faqItems" :key="idx">
+            <!-- FAQ Groups -->
+            <div class="space-y-3">
+                <template x-for="(faq, idx) in faqItems.filter(f => faqFilter==='semua' || f.cat===faqFilter)" :key="idx">
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                        <button @click="open = open===idx ? null : idx"
-                                class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-gray-50 transition-colors">
-                            <span class="font-semibold text-gray-800 text-sm leading-snug" x-text="faq.q"></span>
-                            <svg class="w-4 h-4 text-gray-400 flex-none transition-transform duration-200"
-                                 :class="open===idx ? 'rotate-90' : ''"
+                        <button @click="faqOpen = faqOpen===faq.q ? null : faq.q"
+                                class="w-full flex items-start justify-between gap-4 px-5 py-4 text-left hover:bg-gray-50 transition-colors group">
+                            <div class="flex items-start gap-3 flex-1 min-w-0">
+                                <!-- Category dot -->
+                                <span class="mt-1 w-2 h-2 rounded-full flex-none"
+                                      :class="{'bg-blue-500':faq.cat==='office','bg-sky-500':faq.cat==='windows','bg-red-500':faq.cat==='adobe','bg-emerald-500':faq.cat==='pembayaran','bg-purple-500':faq.cat==='akun','bg-gray-400':!faq.cat}"></span>
+                                <span class="font-semibold text-gray-800 text-sm leading-snug" x-text="faq.q"></span>
+                            </div>
+                            <svg class="w-4 h-4 text-gray-400 flex-none transition-transform duration-200 mt-0.5"
+                                 :class="faqOpen===faq.q ? 'rotate-90 text-brand-500' : ''"
                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
                         </button>
-                        <div x-show="open===idx" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0">
-                            <div class="px-5 pb-4 pt-0">
+                        <div x-show="faqOpen===faq.q"
+                             x-transition:enter="transition ease-out duration-150"
+                             x-transition:enter-start="opacity-0 -translate-y-1"
+                             x-transition:enter-end="opacity-100 translate-y-0">
+                            <div class="px-5 pb-5 pt-0">
                                 <div class="h-px bg-gray-100 mb-3"></div>
-                                <p class="text-sm text-gray-600 leading-relaxed" x-html="faq.a"></p>
+                                <div class="text-sm text-gray-600 leading-relaxed" x-html="faq.a"></div>
+                                <!-- Action button if any -->
+                                <template x-if="faq.action">
+                                    <button @click="faq.action==='catalog' ? setPage('catalog') : (faq.action==='status' ? setPage('status') : null)"
+                                            class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors"
+                                            x-text="faq.actionLabel"></button>
+                                </template>
                             </div>
                         </div>
                     </div>
                 </template>
-
             </div>
 
-            <!-- CTA -->
-            <div class="mt-8 bg-brand-50 border border-brand-100 rounded-2xl p-5 text-center">
-                <p class="text-sm font-semibold text-gray-800 mb-1">Masih ada pertanyaan?</p>
-                <p class="text-xs text-gray-500 mb-4">Tim CS kami siap membantu kamu via WhatsApp</p>
-                <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store, saya ingin bertanya...')"
-                   target="_blank"
-                   class="inline-flex items-center gap-2 bg-brand-500 text-white font-bold text-sm px-6 py-2.5 rounded-xl active:scale-95 transition-all">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                    Chat WhatsApp
-                </a>
+            <!-- Bottom CTA — Live Agent (no WhatsApp button) -->
+            <div class="mt-10 rounded-2xl overflow-hidden">
+                <div class="bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                        <p class="font-bold text-white text-sm mb-0.5">Masih ada pertanyaan?</p>
+                        <p class="text-gray-400 text-xs">CS kami online setiap hari 08.00 – 22.00 WIB</p>
+                    </div>
+                    <div class="flex gap-3 flex-wrap justify-center">
+                        <button @click="setPage('catalog')"
+                                class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold rounded-xl transition-all active:scale-95">
+                            Lihat Produk
+                        </button>
+                        <button @click="csPopupOpen=true; csHidden=false"
+                                class="px-4 py-2 gradient-card text-white text-xs font-semibold rounded-xl transition-all active:scale-95 shadow-md">
+                            Hubungi Live Agent
+                        </button>
+                    </div>
+                </div>
             </div>
 
         </div>
@@ -2306,11 +2335,12 @@
                 </div>
             </div>
             <div class="border-t border-gray-800 mt-5 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-600">
-                <div>
-                    <span x-text="siteSettings.footer.copyright"></span>
-                    <div class="text-[10px] text-gray-500 mt-1">Payment gateway: iPaymu • Aman & terenkripsi</div>
-                </div>
-                <div class="flex gap-5">
+                <span x-text="siteSettings.footer.copyright"></span>
+                <div class="flex items-center gap-4 flex-wrap justify-center">
+                    <span class="text-gray-600 flex items-center gap-1">
+                        <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        Payment via iPaymu
+                    </span>
                     <button @click="legalModal='terms'" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</button>
                     <button @click="legalModal='privacy'" class="hover:text-gray-400 transition-colors">Kebijakan Privasi</button>
                 </div>
@@ -3760,6 +3790,65 @@
     </div>
 </div>
 
+<!-- ── Payment Iframe Modal — 15 menit countdown ── -->
+<div x-show="paymentIframe" class="fixed inset-0 z-[550] flex flex-col bg-white" style="display:none">
+
+    <!-- Top bar -->
+    <div class="bg-gray-900 text-white flex items-center justify-between px-4 py-3 flex-none">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center flex-none">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+            <div>
+                <div class="text-xs font-bold">Pembayaran iPaymu</div>
+                <div class="text-[10px] text-gray-400" x-text="'Order #' + (paymentIframe?.orderId || '')"></div>
+            </div>
+        </div>
+        <!-- Countdown 15 menit -->
+        <div class="flex items-center gap-3">
+            <div class="text-right">
+                <div class="text-[10px] text-gray-400 mb-0.5">Batas waktu pembayaran</div>
+                <div class="font-mono font-bold text-base leading-none"
+                     :class="paymentIframeCountdownSec < 60 ? 'text-red-400' : paymentIframeCountdownSec < 300 ? 'text-yellow-400' : 'text-emerald-400'"
+                     x-text="paymentIframeCountdownDisplay"></div>
+            </div>
+            <button @click="closePaymentIframe()"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                    title="Tutup">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress bar countdown -->
+    <div class="h-1 bg-gray-800 flex-none">
+        <div class="h-full transition-all duration-1000"
+             :style="'width: ' + Math.max(0, paymentIframeCountdownSec / 900 * 100) + '%'"
+             :class="paymentIframeCountdownSec < 60 ? 'bg-red-500' : paymentIframeCountdownSec < 300 ? 'bg-yellow-500' : 'bg-brand-500'"></div>
+    </div>
+
+    <!-- iframe area -->
+    <iframe :src="paymentIframe ? paymentIframe.url : 'about:blank'"
+            class="flex-1 w-full border-none bg-gray-50"
+            @load="checkPaymentIframeLoad($event)"
+            title="Halaman Pembayaran iPaymu"
+            allow="payment"></iframe>
+
+    <!-- Bottom info bar -->
+    <div class="bg-gray-50 border-t border-gray-100 px-4 py-2 flex items-center justify-between flex-none">
+        <span class="text-xs text-gray-400 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-emerald-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            Koneksi aman &amp; terenkripsi — iPaymu
+        </span>
+        <a :href="paymentIframe ? paymentIframe.url : '#'" target="_blank" rel="noopener noreferrer"
+           class="text-xs text-brand-600 font-semibold hover:underline flex items-center gap-1">
+            Buka di tab baru
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+    </div>
+
+</div>
+
 <!-- Modal Pembayaran Berhasil — muncul setelah user kembali dari iPaymu -->
 <div x-show="paymentConfirmed" class="fixed inset-0 z-[300] flex items-center justify-center px-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" style="display:none">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
@@ -4143,6 +4232,9 @@ function serabutStore() {
 
         // Reset Password (dari profil — butuh password lama)
         redirectPayment: null, // { orderId, countdown, paymentUrl }
+        paymentIframe: null,   // { url, orderId } — tampil setelah redirect countdown selesai
+        paymentIframeCountdownSec: 900,
+        paymentIframeTimerId: null,
         legalModal:     null,
         privacyScrolled: false,
         resetPwModal:   false,
@@ -4294,18 +4386,27 @@ function serabutStore() {
             {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>`,title:'Harga Terbaik',     desc:'Hemat hingga 70% dari harga resmi'},
         ],
         faqItems: [
-            { q: 'Apa itu Serabut Store?', a: 'Serabut Store adalah toko digital terpercaya yang menjual lisensi software premium seperti Microsoft Office 365, Adobe Creative Cloud, Windows, dan produk digital lainnya dengan harga terjangkau dan proses aktivasi cepat.' },
-            { q: 'Produk apa saja yang tersedia di Serabut Store?', a: 'Kami menyediakan berbagai produk digital antara lain:<br>• <strong>Microsoft Office 365</strong> (Personal, Family, Web)<br>• <strong>Adobe Creative Cloud</strong><br>• <strong>Microsoft Windows</strong> (10/11 Home/Pro)<br>• <strong>Windows Server</strong><br>• <strong>Microsoft Project & Visio</strong><br>• <strong>CorelDRAW</strong><br>• <strong>Google Workspace</strong><br>dan produk lainnya. Lihat katalog lengkap di halaman Produk.' },
-            { q: 'Bagaimana cara memesan di Serabut Store?', a: '1. Pilih produk yang diinginkan di halaman <strong>Produk</strong><br>2. Pilih varian dan durasi langganan<br>3. Klik tombol <strong>Pesan Sekarang</strong><br>4. Lengkapi data pemesanan<br>5. Lakukan pembayaran sesuai instruksi<br>6. Produk akan diaktifkan dalam <strong>5–30 menit</strong> setelah pembayaran dikonfirmasi.' },
-            { q: 'Metode pembayaran apa yang tersedia?', a: 'Kami menerima berbagai metode pembayaran melalui <strong>iPaymu</strong>, termasuk:<br>• Transfer bank (semua bank utama)<br>• QRIS (GoPay, OVO, Dana, dll)<br>• Virtual Account<br>• Kartu Kredit/Debit Visa & Mastercard<br>• Gerai minimarket (Alfamart, Indomaret)<br><br>Pembayaran diproses secara otomatis dan aman.' },
-            { q: 'Berapa lama proses aktivasi setelah pembayaran?', a: 'Produk diaktifkan dalam waktu <strong>5–30 menit</strong> pada hari kerja setelah pembayaran dikonfirmasi. Untuk pesanan di luar jam operasional (08.00–22.00 WIB), akan diproses di awal hari kerja berikutnya.' },
-            { q: 'Apakah ada garansi untuk produk yang dibeli?', a: 'Ya! Semua produk bergaransi sesuai masa aktif yang tertera. Jika produk bermasalah dari pihak kami (akun tidak aktif, lisensi tidak valid), kami <strong>wajib perbaiki atau ganti</strong> tanpa biaya tambahan.<br><br>Garansi tidak berlaku jika masalah disebabkan oleh perubahan password, penyalahgunaan akun, atau penggunaan di luar ketentuan produk.' },
-            { q: 'Bagaimana cara mengajukan refund?', a: 'Refund dapat diajukan dalam <strong>3×24 jam</strong> setelah pembelian jika:<br>• Produk tidak sesuai deskripsi yang tertera<br>• Produk tidak dapat diaktifkan setelah troubleshooting<br><br>Untuk mengajukan refund, hubungi CS kami via WhatsApp dengan menyertakan bukti yang jelas. Proses refund memakan waktu <strong>3–7 hari kerja</strong>.' },
-            { q: 'Bagaimana cara mengecek status berlangganan saya?', a: 'Gunakan fitur <strong>Cek Status</strong> di aplikasi ini. Masukkan email pembelian, nama, atau nomor WhatsApp kamu — sistem akan menampilkan status dan masa berlaku akun secara real-time.' },
-            { q: 'Apakah produk yang dijual legal dan resmi?', a: 'Ya, semua produk yang kami jual adalah <strong>lisensi resmi</strong> dari vendor. Kami beroperasi sebagai reseller software berlisensi dan mematuhi ketentuan penggunaan dari masing-masing vendor. Produk 100% bisa digunakan untuk keperluan pribadi maupun profesional.' },
-            { q: 'Apa perbedaan Office 365 Personal, Family, dan Web?', a: '<strong>Personal</strong>: 1 pengguna, hingga 5 perangkat, full fitur Office + 1TB OneDrive.<br><br><strong>Family</strong>: Hingga 6 pengguna, masing-masing hingga 5 perangkat, full fitur Office + 1TB OneDrive per orang.<br><br><strong>Web</strong>: Akses Office versi web browser (Word, Excel, PowerPoint online), tanpa instalasi desktop, cocok untuk penggunaan ringan.' },
-            { q: 'Apakah satu akun bisa digunakan di beberapa perangkat?', a: 'Tergantung produknya:<br>• <strong>Office 365 Personal/Family</strong>: Hingga 5 perangkat aktif per pengguna<br>• <strong>Adobe Creative Cloud</strong>: 2 perangkat aktif bersamaan<br>• <strong>Windows License Key</strong>: 1 perangkat per lisensi<br><br>Jangan bagikan akun ke orang lain di luar ketentuan paket.' },
-            { q: 'Bagaimana cara menghubungi customer service?', a: 'CS kami tersedia setiap hari <strong>08.00–22.00 WIB</strong> melalui:<br>• <strong>WhatsApp</strong>: Klik tombol chat di aplikasi ini<br>• <strong>Email</strong>: halo@serabut.com<br>• <strong>Live chat</strong>: Klik tombol chat di sudut kanan bawah aplikasi ini.' },
+            // Office 365
+            { cat:'office', q: 'Apa perbedaan Office 365 Personal, Family, dan Web?', a: '<strong>Personal</strong>: 1 pengguna, hingga 5 perangkat, full Office apps + 1TB OneDrive.<br><br><strong>Family</strong>: Hingga 6 pengguna, masing-masing hingga 5 perangkat, full fitur + 1TB OneDrive per orang. Cocok untuk keluarga atau tim kecil.<br><br><strong>Web</strong>: Akses Office versi browser (Word, Excel, PowerPoint online), tanpa instalasi. Cocok untuk penggunaan ringan.' },
+            { cat:'office', q: 'Berapa perangkat yang bisa digunakan untuk Office 365?', a: 'Office 365 Personal & Family mendukung hingga <strong>5 perangkat aktif bersamaan</strong> per akun pengguna (Windows, Mac, iPad, Android, iOS).<br><br>Office 365 Web hanya bisa diakses lewat browser, tidak perlu instalasi.' },
+            { cat:'office', q: 'Apa yang terjadi jika masa aktif Office 365 habis?', a: 'Setelah masa aktif berakhir, aplikasi Office beralih ke mode <strong>read-only</strong> — dokumen masih bisa dibaca tapi tidak bisa diedit. OneDrive tetap bisa diakses selama 30 hari setelah kedaluwarsa.<br><br>Perpanjang (renewal) di menu Produk untuk melanjutkan akses penuh.', action: 'catalog', actionLabel: 'Perpanjang Sekarang →' },
+            { cat:'office', q: 'Apakah Office 365 bisa digunakan untuk keperluan komersial?', a: 'Paket yang kami jual adalah lisensi <strong>personal/home use</strong>. Untuk penggunaan komersial skala besar, sebaiknya gunakan Microsoft 365 Business. Namun untuk freelancer atau UMKM, paket personal umumnya sudah mencukupi.' },
+            // Windows
+            { cat:'windows', q: 'Apakah lisensi Windows yang dijual berlaku seumur hidup?', a: 'Ya! Lisensi Windows yang kami jual adalah <strong>lisensi digital resmi</strong> yang berlaku <strong>seumur hidup</strong> untuk 1 perangkat. Aktivasi dilakukan via Settings → Activation menggunakan product key yang diberikan.' },
+            { cat:'windows', q: 'Apa perbedaan Windows 10 dan Windows 11?', a: '<strong>Windows 11</strong>: Tampilan lebih modern, performa gaming lebih baik (DirectStorage, Auto HDR), keamanan ketat (butuh TPM 2.0).<br><br><strong>Windows 10</strong>: Kompatibel dengan perangkat lama, didukung Microsoft hingga Oktober 2025.<br><br>Rekomendasi: pilih Windows 11 untuk PC/laptop baru, Windows 10 untuk perangkat lama.' },
+            { cat:'windows', q: 'Bagaimana jika aktivasi Windows gagal?', a: 'Langkah troubleshooting:<br>1. Pastikan product key dimasukkan benar (perhatikan O vs 0, I vs 1)<br>2. Coba via CMD (Admin): <code style="background:#f3f4f6;padding:1px 5px;border-radius:3px;font-size:11px">slmgr /ipk XXXXX-XXXXX-XXXXX-XXXXX</code><br>3. Error 0xC004F050: key tidak kompatibel dengan edisi yang terinstall<br><br>Hubungi CS dengan screenshot error untuk dibantu lebih lanjut.' },
+            // Adobe
+            { cat:'adobe', q: 'Apa yang termasuk dalam paket Adobe Creative Cloud?', a: 'Paket Adobe CC mencakup akses ke <strong>20+ aplikasi Adobe</strong> sesuai paket yang dibeli: Photoshop, Illustrator, Premiere Pro, After Effects, InDesign, Lightroom, XD, dan lainnya. Storage cloud 100GB juga termasuk.' },
+            { cat:'adobe', q: 'Apakah akun Adobe bisa dipakai di 2 komputer?', a: 'Ya, satu akun Adobe Creative Cloud bisa aktif di <strong>2 perangkat bersamaan</strong>. Login di perangkat ke-3 akan meminta logout dari salah satu perangkat aktif sebelumnya.' },
+            { cat:'adobe', q: 'Bolehkah mengubah password akun Adobe yang diberikan?', a: '<strong>Tidak boleh.</strong> Akun Adobe kami adalah shared account dalam sistem kami. Mengubah password, email, atau info profil akan memblokir akses dan membatalkan garansi produk.<br><br>Jika ada masalah login, segera hubungi CS kami.' },
+            // Pembayaran
+            { cat:'pembayaran', q: 'Metode pembayaran apa saja yang tersedia?', a: 'Semua pembayaran diproses aman melalui <strong>iPaymu</strong>:<br>• Transfer bank (BCA, BNI, BRI, Mandiri, 100+ bank lain)<br>• QRIS (GoPay, OVO, Dana, ShopeePay, dll)<br>• Virtual Account (instan, 24 jam)<br>• Kartu Kredit/Debit Visa & Mastercard<br>• Minimarket (Alfamart & Indomaret)' },
+            { cat:'pembayaran', q: 'Berapa lama proses aktivasi setelah pembayaran?', a: 'Pesanan diproses dalam <strong>5–30 menit</strong> setelah pembayaran dikonfirmasi, setiap hari 08.00–22.00 WIB.<br><br>Pesanan di luar jam operasional diproses di awal hari berikutnya. Notifikasi dikirim via <strong>WhatsApp & Email</strong>.' },
+            { cat:'pembayaran', q: 'Bagaimana cara mengajukan refund?', a: 'Refund bisa diajukan dalam <strong>3×24 jam</strong> setelah pembelian jika produk tidak sesuai deskripsi atau tidak bisa diaktifkan setelah troubleshooting.<br><br>Hubungi CS dengan: ID pesanan, bukti pembelian, dan screenshot masalah. Proses refund <strong>3–7 hari kerja</strong>.' },
+            // Akun & Garansi
+            { cat:'akun', q: 'Apakah produk yang dijual legal dan resmi?', a: 'Ya. Semua produk adalah <strong>lisensi resmi</strong> dari vendor (Microsoft, Adobe, dll). Kami beroperasi sebagai reseller software berlisensi dan mematuhi ketentuan penggunaan. Produk 100% legal untuk keperluan pribadi maupun profesional.' },
+            { cat:'akun', q: 'Bagaimana cara mengecek status & masa berlaku akun saya?', a: 'Gunakan fitur <strong>Cek Status</strong> di menu navigasi. Masukkan email pembelian, nama, atau nomor WhatsApp — sistem akan menampilkan status akun, masa berlaku, dan saran renewal secara real-time.', action: 'status', actionLabel: 'Cek Status Akun →' },
+            { cat:'akun', q: 'Apakah ada garansi untuk produk yang dibeli?', a: 'Ya! Semua produk bergaransi sesuai masa aktif. Jika bermasalah karena kesalahan kami (akun tidak aktif, lisensi tidak valid), kami <strong>wajib perbaiki atau ganti</strong> tanpa biaya tambahan.<br><br>Garansi tidak berlaku jika masalah disebabkan oleh perubahan password/email, penyalahgunaan, atau penggunaan di luar ketentuan.' },
         ],
         statusOptions: [
             {value:'email',      label:'Email Pembelian',hint:'Email saat order',     placeholder:'contoh@email.com'},
@@ -4765,16 +4866,17 @@ function serabutStore() {
         getProductLogo(cat) {
             const sz = 64;
             const f  = d => `https://www.google.com/s2/favicons?domain=${d}&sz=${sz}`;
-            // PNG format untuk kompatibilitas iPaymu
             const sp = name => `https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/png/${name}_48x1.png`;
+            // Windows logo via reliable SVG data URI
+            const winLogo = 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22"><path fill="#0078D4" d="M0 3.5 9 2.25v8.5H0zm10 -1.25 12-1.8v10.8H10zM0 11.75h9v8.5L0 18.5zm10 0h12v10.75L10 20.75z"/></svg>');
             const m = {
                 'office 365':    sp('office'),
                 'microsoft 365': sp('office'),
-                'office':        sp('officehome'),
+                'office':        sp('office'),
                 'visio':         sp('visio'),
                 'project':       sp('project'),
-                'windows':       sp('windows'),
-                'windows server':sp('windows'),
+                'windows':       winLogo,
+                'windows server':winLogo,
                 'adobe':         'https://www.adobe.com/favicon.ico',
                 'google':        f('google.com'),
                 'google one':    f('one.google.com'),
@@ -5166,9 +5268,64 @@ function serabutStore() {
                 this.redirectPayment.countdown--;
                 if (this.redirectPayment.countdown <= 0) {
                     clearInterval(tick);
-                    window.location.href = paymentUrl;
+                    this.redirectPayment = null;
+                    this.openPaymentIframe(orderId, paymentUrl);
                 }
             }, 1000);
+        },
+
+        openPaymentIframe(orderId, paymentUrl) {
+            this.paymentIframeCountdownSec = 900; // 15 menit
+            this.paymentIframe = { url: paymentUrl, orderId };
+            this.paymentIframeTimerId = setInterval(() => {
+                this.paymentIframeCountdownSec--;
+                if (this.paymentIframeCountdownSec <= 0) {
+                    clearInterval(this.paymentIframeTimerId);
+                    this.paymentIframe = null;
+                    // Waktu habis → arahkan ke Pesanan dengan pesan
+                    this.iPaymuReturnStatus = { status: 'cancel', orderId };
+                    this.setPage('profile');
+                    this.profileTab = 'pesanan';
+                    this.loadOrders();
+                }
+            }, 1000);
+        },
+
+        get paymentIframeCountdownDisplay() {
+            const s = this.paymentIframeCountdownSec || 0;
+            const m = Math.floor(s / 60);
+            const sec = s % 60;
+            return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+        },
+
+        checkPaymentIframeLoad(event) {
+            try {
+                const loc = event.target.contentWindow.location;
+                const params = new URLSearchParams(loc.search);
+                if (params.get('payment') === 'success') {
+                    const oid = params.get('orderId') || this.paymentIframe?.orderId;
+                    clearInterval(this.paymentIframeTimerId);
+                    this.paymentIframe = null;
+                    this.paymentConfirmed = { orderId: oid, productName: '' };
+                    if (this.currentUser) {
+                        this.setPage('profile');
+                        this.profileTab = 'pesanan';
+                        this.loadOrders();
+                    }
+                } else if (params.get('payment') === 'cancel') {
+                    const oid = params.get('orderId') || this.paymentIframe?.orderId;
+                    clearInterval(this.paymentIframeTimerId);
+                    this.paymentIframe = null;
+                    this.iPaymuReturnStatus = { status: 'cancel', orderId: oid };
+                }
+            } catch (_) {
+                // Cross-origin — masih di halaman iPaymu, normal
+            }
+        },
+
+        closePaymentIframe() {
+            clearInterval(this.paymentIframeTimerId);
+            this.paymentIframe = null;
         },
 
         async payViaIPaymu() {
@@ -5186,7 +5343,7 @@ function serabutStore() {
                     buyerPhone: d.buyerPhone,
                 });
                 if (data.success && data.paymentUrl) {
-                    window.location.href = data.paymentUrl;
+                    this.openPaymentIframe(this.currentOrderId || '', data.paymentUrl);
                 } else {
                     this.iPaymuError = data.error || 'Gagal membuat sesi pembayaran';
                 }
