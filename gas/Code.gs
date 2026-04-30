@@ -103,6 +103,8 @@ function doPost(e) {
       case 'createIPaymuPayment':     result = createIPaymuPayment(params); break;
       case 'ipaymuCallback':          result = ipaymuCallback(params); break;
       case 'confirmPayment':          result = confirmPayment(params); break;
+      case 'checkIPaymuOrderStatus':  result = checkIPaymuOrderStatus(params); break;
+      case 'cancelOrder':             result = cancelOrder(params); break;
       // CS
       case 'csChat':            result = handleCSChat(params); break;
       // Admin
@@ -1381,6 +1383,44 @@ function getOrders({ email }) {
     }
   }
 
+  // Auto-cancel Pending orders yang melebihi 24 jam
+  const H24 = 24 * 3600 * 1000;
+  const nowMs = Date.now();
+  const cancelRowNums = [];
+
+  // Kumpulkan row indices yang perlu di-cancel (first row per orderId)
+  const processedForCancel = new Set();
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[idCol]) continue;
+    const oid = String(row[idCol]).trim();
+    if (!orderMap.has(oid) || processedForCancel.has(oid)) continue;
+    const order = orderMap.get(oid);
+    if (order.status !== 'Pending') continue;
+    processedForCancel.add(oid);
+
+    const created = _parseTanggalGAS(order.tanggal);
+    if (!created) continue;
+    const ageMs = nowMs - created.getTime();
+    if (ageMs >= H24) {
+      order.status = 'Dibatalkan';
+      cancelRowNums.push(i + 1);
+    } else {
+      order.msecLeft = H24 - ageMs;
+    }
+  }
+
+  // Batch-cancel expired rows di sheet (update semua baris dg orderId yg sama)
+  if (cancelRowNums.length > 0 && stCol >= 0) {
+    const cancelledIds = cancelRowNums.map(function(rn){ return String(data[rn - 1][idCol]).trim(); });
+    for (let i = 1; i < data.length; i++) {
+      if (cancelledIds.includes(String(data[i][idCol]).trim()) && String(data[i][stCol] || '').trim() === 'Pending') {
+        sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan');
+      }
+    }
+    try { SpreadsheetApp.flush(); } catch(e) {}
+  }
+
   const orders = orderKeys.map(k => orderMap.get(k)).reverse();
   return { success: true, data: orders };
 }
@@ -1784,6 +1824,108 @@ function ipaymuCallback(params) {
   }
   Logger.log('ipaymuCallback: order tidak ditemukan: ' + referenceId);
   return { success: false, error: 'Order tidak ditemukan' };
+}
+
+// ────────────────────────────────────────────────────────
+//  CHECK IPAYMU ORDER STATUS — cek ke iPaymu & update sheet jika paid
+// ────────────────────────────────────────────────────────
+function checkIPaymuOrderStatus({ orderId, email }) {
+  if (!orderId || !email) return { success: false, error: 'Data tidak lengkap' };
+
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: false, error: 'Sheet tidak ditemukan' };
+
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(function(h){ return String(h).toLowerCase().trim(); });
+  const idCol   = headers.indexOf('order id');
+  const emCol   = headers.indexOf('email');
+  const stCol   = headers.indexOf('status');
+  if (idCol < 0) return { success: false, error: 'Sheet error' };
+
+  // Verifikasi order milik email ini
+  const emailNorm = email.toLowerCase().trim();
+  let firstRow = -1;
+  const currentStatus = (function() {
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][idCol]).trim() === String(orderId).trim() &&
+          String(data[i][emCol] || '').toLowerCase().trim() === emailNorm) {
+        if (firstRow < 0) firstRow = i;
+        return String(data[i][stCol] || '').trim();
+      }
+    }
+    return null;
+  })();
+
+  if (currentStatus === null) return { success: false, error: 'Order tidak ditemukan' };
+  if (currentStatus !== 'Pending') return { success: true, paid: currentStatus !== 'Dibatalkan', currentStatus };
+
+  // Panggil iPaymu status API
+  let result;
+  try {
+    result = _iPaymuRequest('https://my.ipaymu.com/api/v2/payment/status', { referenceId: orderId });
+    Logger.log('checkIPaymuOrderStatus [' + orderId + ']: ' + JSON.stringify(result));
+  } catch(e) {
+    Logger.log('checkIPaymuOrderStatus error: ' + e.message);
+    return { success: false, error: 'Gagal cek status iPaymu' };
+  }
+
+  if (result.Status === 200 && result.Data) {
+    const ipStatus  = String(result.Data.Status || result.Data.status_code || '').toLowerCase();
+    const isPaid    = (ipStatus === 'berhasil' || ipStatus === '1' || ipStatus === 'success');
+    const payMethod = result.Data.PaymentMethod || result.Data.Via || result.Data.payment_channel || 'iPaymu';
+
+    if (isPaid) {
+      // Ensure payment cols exist
+      let pmCol = headers.indexOf('payment method');
+      let psCol = headers.indexOf('payment status');
+      if (pmCol < 0) { sheet.getRange(1, headers.length + 1).setValue('Payment Method'); pmCol = headers.length; headers.push('payment method'); }
+      if (psCol < 0) { sheet.getRange(1, headers.length + 1).setValue('Payment Status'); psCol = headers.length; headers.push('payment status'); }
+
+      // Update semua baris orderId ini
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][idCol]).trim() !== String(orderId).trim()) continue;
+        if (String(data[i][stCol] || '').trim() === 'Pending') sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
+        sheet.getRange(i + 1, pmCol + 1).setValue(payMethod);
+        sheet.getRange(i + 1, psCol + 1).setValue('Berhasil');
+      }
+      try { SpreadsheetApp.flush(); } catch(e) {}
+      return { success: true, paid: true, paymentMethod: payMethod, paymentStatus: 'Berhasil', orderStatus: 'Diproses' };
+    }
+    return { success: true, paid: false, ipStatus };
+  }
+
+  return { success: true, paid: false, message: result.Message || 'Belum dibayar' };
+}
+
+// ────────────────────────────────────────────────────────
+//  CANCEL ORDER — user batalkan pesanan Pending miliknya
+// ────────────────────────────────────────────────────────
+function cancelOrder({ orderId, email }) {
+  if (!orderId || !email) return { success: false, error: 'Data tidak lengkap' };
+
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: false, error: 'Sheet tidak ditemukan' };
+
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(function(h){ return String(h).toLowerCase().trim(); });
+  const idCol   = headers.indexOf('order id');
+  const emCol   = headers.indexOf('email');
+  const stCol   = headers.indexOf('status');
+
+  const emailNorm = email.toLowerCase().trim();
+  let found = false;
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]).trim() !== String(orderId).trim()) continue;
+    if (String(data[i][emCol] || '').toLowerCase().trim() !== emailNorm) continue;
+    if (String(data[i][stCol] || '').trim() !== 'Pending') continue;
+    sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan');
+    found = true;
+  }
+  if (!found) return { success: false, error: 'Order tidak ditemukan atau sudah diproses' };
+  try { SpreadsheetApp.flush(); } catch(e) {}
+  return { success: true };
 }
 
 // ────────────────────────────────────────────────────────
@@ -2422,6 +2564,40 @@ function getOTPExpiry() {
 
 function formatJkt(date, fmt) {
   return Utilities.formatDate(date, 'Asia/Jakarta', fmt);
+}
+
+// Parse "dd/MM/yyyy HH:mm" (WIB) → UTC Date
+function _parseTanggalGAS(str) {
+  if (!str) return null;
+  const parts = String(str).trim().split(' ');
+  const dp = (parts[0] || '').split('/');
+  const tp = (parts[1] || '00:00').split(':');
+  if (dp.length < 3 || !dp[2]) return null;
+  // WIB = UTC+7
+  return new Date(Date.UTC(+dp[2], +dp[1] - 1, +dp[0], +tp[0] - 7, +tp[1] || 0));
+}
+
+// Signature helper reusable untuk iPaymu API calls
+function _iPaymuRequest(endpoint, body) {
+  const props  = PropertiesService.getScriptProperties();
+  const va     = (props.getProperty('IPAYMU_VA')      || '').trim();
+  const apiKey = (props.getProperty('IPAYMU_API_KEY') || '').trim();
+  if (!va || !apiKey) return { success: false, error: 'iPaymu belum dikonfigurasi' };
+
+  const bodyStr  = JSON.stringify(body);
+  const ts       = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyyMMddHHmmss');
+  function _hex(arr) { return arr.map(function(b){ return ((b & 0xff) < 16 ? '0' : '') + (b & 0xff).toString(16); }).join(''); }
+  const bodyHash = _hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bodyStr));
+  const sts      = 'POST:' + va + ':' + bodyHash + ':' + apiKey;
+  const sig      = _hex(Utilities.computeHmacSha256Signature(sts, apiKey));
+
+  const resp = UrlFetchApp.fetch(endpoint, {
+    method: 'post',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'va': va, 'signature': sig, 'timestamp': ts },
+    payload: bodyStr,
+    muteHttpExceptions: true
+  });
+  return JSON.parse(resp.getContentText());
 }
 
 function _parseJSON(str, fallback) {

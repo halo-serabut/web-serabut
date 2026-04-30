@@ -1152,7 +1152,7 @@
                 <div class="space-y-3">
                     <template x-for="order in ordersPaginated" :key="order.orderId">
                         <!-- Clickable card -->
-                        <div @click="orderDetailModal = order"
+                        <div @click="openOrderDetail(order)"
                              class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden cursor-pointer active:scale-[0.99] transition-transform hover:border-brand-200 hover:shadow-md">
 
                             <!-- Header row: ID + date + status -->
@@ -1200,6 +1200,19 @@
                                               :class="isExpired(calcExpiry(order.tanggal, order.items[0].masaAktif)) ? 'text-red-500 bg-red-50' : isExpiringSoon(calcExpiry(order.tanggal, order.items[0].masaAktif)) ? 'text-orange-500 bg-orange-50' : 'text-emerald-600 bg-emerald-50'">
                                             <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                             <span x-text="isExpired(calcExpiry(order.tanggal, order.items[0].masaAktif)) ? 'Expired' : 'Aktif s/d ' + formatOrderDate(calcExpiry(order.tanggal, order.items[0].masaAktif))"></span>
+                                        </span>
+                                    </template>
+                                    <!-- Pending: sisa waktu / expired -->
+                                    <template x-if="order.status==='Pending' && orderMsLeft(order) > 0">
+                                        <span class="inline-flex items-center gap-1 text-[10px] text-orange-600 bg-orange-50 font-semibold px-2 py-0.5 rounded-lg">
+                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            Sisa <span x-text="orderTimeLeftStr(order)"></span>
+                                        </span>
+                                    </template>
+                                    <template x-if="order.status==='Pending' && orderMsLeft(order) <= 0">
+                                        <span class="inline-flex items-center gap-1 text-[10px] text-red-500 bg-red-50 font-semibold px-2 py-0.5 rounded-lg">
+                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                            Auto-cancelled
                                         </span>
                                     </template>
                                     <!-- Payment method badge -->
@@ -1276,7 +1289,7 @@
 
                 <div class="px-5 py-4 space-y-5">
 
-                    <!-- Payment info -->
+                    <!-- Payment info — jika sudah ada data dari iPaymu -->
                     <div x-show="orderDetailModal?.paymentMethod || orderDetailModal?.paymentStatus" class="bg-gray-50 rounded-2xl px-4 py-3 flex items-center gap-4">
                         <svg class="w-5 h-5 text-gray-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
                         <div class="flex-1 min-w-0">
@@ -1290,11 +1303,52 @@
                             </div>
                         </div>
                     </div>
-                    <!-- No payment info yet -->
-                    <div x-show="!orderDetailModal?.paymentMethod && !orderDetailModal?.paymentStatus" class="bg-yellow-50 rounded-2xl px-4 py-3 flex items-center gap-3">
-                        <svg class="w-4 h-4 text-yellow-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="text-xs text-yellow-700 font-medium">Menunggu konfirmasi pembayaran</p>
-                    </div>
+
+                    <!-- Pending + masih dalam 24 jam → Lanjutkan Pembayaran -->
+                    <template x-if="orderDetailModal?.status==='Pending' && !orderDetailModal?.paymentMethod && orderMsLeft(orderDetailModal) > 0">
+                        <div class="bg-orange-50 border border-orange-100 rounded-2xl p-4 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-bold text-orange-700">Menunggu Pembayaran</p>
+                                    <p class="text-[11px] text-orange-500 mt-0.5 flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        Sisa waktu: <span x-text="orderTimeLeftStr(orderDetailModal)" class="font-bold"></span>
+                                    </p>
+                                </div>
+                                <div x-show="orderDetailSyncing" class="w-5 h-5 border-2 border-orange-300 border-t-orange-600 rounded-full animate-spin flex-none"></div>
+                            </div>
+                            <button @click.stop="continuePendingPayment(orderDetailModal)"
+                                    :disabled="orderDetailSyncing"
+                                    class="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold text-sm rounded-xl active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                Lanjutkan Pembayaran
+                            </button>
+                            <button @click.stop="checkOrderPaymentStatus(orderDetailModal)"
+                                    :disabled="orderDetailSyncing"
+                                    class="w-full py-2 text-xs text-orange-600 font-semibold hover:underline disabled:opacity-50">
+                                Sudah bayar? Cek status →
+                            </button>
+                        </div>
+                    </template>
+
+                    <!-- Pending + melebihi 24 jam → Auto-cancelled -->
+                    <template x-if="orderDetailModal?.status==='Pending' && !orderDetailModal?.paymentMethod && orderMsLeft(orderDetailModal) <= 0">
+                        <div class="bg-red-50 border border-red-100 rounded-2xl px-4 py-3 flex items-center gap-3">
+                            <svg class="w-4 h-4 text-red-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <div>
+                                <p class="text-xs text-red-600 font-bold">Pesanan dibatalkan otomatis</p>
+                                <p class="text-[10px] text-red-400 mt-0.5">Melebihi batas 24 jam pembayaran</p>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Dibatalkan -->
+                    <template x-if="orderDetailModal?.status==='Dibatalkan'">
+                        <div class="bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 flex items-center gap-3">
+                            <svg class="w-4 h-4 text-gray-400 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            <p class="text-xs text-gray-500 font-medium">Pesanan ini telah dibatalkan</p>
+                        </div>
+                    </template>
 
                     <!-- Items -->
                     <div>
@@ -4402,9 +4456,10 @@ function serabutStore() {
         profileExtra:  {},
         orders:          [],
         ordersLoading:   false,
-        ordersPerPage:   5,
+        ordersPerPage:    5,
         ordersCurrentPage: 1,
         orderDetailModal: null,
+        orderDetailSyncing: false,
 
         // Reset Password (dari profil — butuh password lama)
         redirectPayment: null, // { orderId, countdown, paymentUrl }
@@ -6473,6 +6528,102 @@ function serabutStore() {
             };
             return icons[key] || icons['other'];
         },
+        // ── Order date helpers ─────────────────────────────
+        parseTanggalWIB(str) {
+            // "dd/MM/yyyy HH:mm" (WIB = UTC+7) → Date
+            if (!str) return null;
+            const [datePart, timePart] = String(str).trim().split(' ');
+            const [d, m, y] = (datePart||'').split('/');
+            const [h, min]  = (timePart||'00:00').split(':');
+            if (!y) return null;
+            return new Date(Date.UTC(+y, +m - 1, +d, +h - 7, +min || 0));
+        },
+        orderMsLeft(order) {
+            const created = this.parseTanggalWIB(order?.tanggal);
+            if (!created) return 0;
+            return Math.max(0, created.getTime() + 24 * 3600 * 1000 - Date.now());
+        },
+        orderTimeLeftStr(order) {
+            const ms = order?.msecLeft ?? this.orderMsLeft(order);
+            if (ms <= 0) return null;
+            const h = Math.floor(ms / 3600000);
+            const m = Math.floor((ms % 3600000) / 60000);
+            return h + 'j ' + m + 'm';
+        },
+
+        // ── Open order detail (auto-sync jika Pending <24h) ──
+        openOrderDetail(order) {
+            this.orderDetailModal = order;
+            this.orderDetailSyncing = false;
+            if (order.status === 'Pending' && this.orderMsLeft(order) > 0) {
+                this.checkOrderPaymentStatus(order, true);
+            }
+        },
+
+        // ── Cek status ke iPaymu & update UI jika sudah dibayar ──
+        async checkOrderPaymentStatus(order, silent = false) {
+            if (!this.currentUser || !order) return;
+            this.orderDetailSyncing = true;
+            try {
+                const data = await this.gasPost({
+                    action: 'checkIPaymuOrderStatus',
+                    orderId: order.orderId,
+                    email: this.currentUser.email,
+                    sessionToken: this.currentUser.sessionToken
+                });
+                if (data.success && data.paid) {
+                    const updated = { ...order, status: data.orderStatus || 'Diproses', paymentMethod: data.paymentMethod || '', paymentStatus: data.paymentStatus || 'Berhasil' };
+                    const idx = this.orders.findIndex(o => o.orderId === order.orderId);
+                    if (idx >= 0) this.orders[idx] = updated;
+                    if (this.orderDetailModal?.orderId === order.orderId) this.orderDetailModal = updated;
+                } else if (!silent && data.error) {
+                    console.warn('[checkOrderPaymentStatus]', data.error);
+                }
+            } catch(e) { console.error('[checkOrderPaymentStatus]', e); }
+            this.orderDetailSyncing = false;
+        },
+
+        // ── Lanjutkan pembayaran Pending ──
+        async continuePendingPayment(order) {
+            if (!this.currentUser || !order) return;
+            this.orderDetailSyncing = true;
+            try {
+                // Cek dulu apakah sudah dibayar
+                const statusData = await this.gasPost({
+                    action: 'checkIPaymuOrderStatus',
+                    orderId: order.orderId,
+                    email: this.currentUser.email,
+                    sessionToken: this.currentUser.sessionToken
+                });
+                if (statusData.success && statusData.paid) {
+                    const updated = { ...order, status: statusData.orderStatus || 'Diproses', paymentMethod: statusData.paymentMethod || '', paymentStatus: 'Berhasil' };
+                    const idx = this.orders.findIndex(o => o.orderId === order.orderId);
+                    if (idx >= 0) this.orders[idx] = updated;
+                    this.orderDetailModal = updated;
+                    this.orderDetailSyncing = false;
+                    return;
+                }
+                // Buat sesi iPaymu baru
+                const data = await this.gasPost({
+                    action:        'createIPaymuPayment',
+                    orderId:       order.orderId,
+                    itemsJson:     JSON.stringify(order.items.map(i => ({ produk: i.produk, varian: i.varian || '-', masaAktif: i.masaAktif || '-', harga: i.harga }))),
+                    imageUrlsJson: JSON.stringify(order.items.map(i => this.getProductLogo(i.produk))),
+                    buyerName:     this.currentUser.nama || '',
+                    buyerEmail:    this.currentUser.email || '',
+                    buyerPhone:    this.currentUser.wa || '',
+                    total:         order.total
+                });
+                if (data.success && data.paymentUrl) {
+                    this.orderDetailModal = null;
+                    this.openPaymentIframe(order.orderId, data.paymentUrl);
+                } else {
+                    alert(data.error || 'Gagal membuat sesi pembayaran. Coba lagi atau hubungi CS.');
+                }
+            } catch(e) { alert('Gagal terhubung ke server'); }
+            this.orderDetailSyncing = false;
+        },
+
         async loadOrders() {
             if(!this.currentUser || this.ordersLoading) return;
             this.ordersLoading=true;
