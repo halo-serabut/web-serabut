@@ -1304,7 +1304,7 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
 
 // ────────────────────────────────────────────────────────
 //  GET ORDERS — filter by email, group by orderId
-//  Return: [{ orderId, tanggal, status, total, items:[{produk,varian,masaAktif,harga}] }]
+//  Return: [{ orderId, tanggal, buyerNama, buyerWa, status, paymentMethod, paymentStatus, total, items:[...] }]
 // ────────────────────────────────────────────────────────
 function getOrders({ email }) {
   if (!email) return { success: false, error: 'Email diperlukan' };
@@ -1319,20 +1319,24 @@ function getOrders({ email }) {
   const orderMap  = new Map();
   const orderKeys = [];
 
-  // Cari indeks kolom
-  const idCol   = headers.indexOf('order id');
-  const dateCol = headers.indexOf('date') !== -1 ? headers.indexOf('date') : 1; // fallback kolom 1
-  const namaCol = headers.indexOf('nama');
-  const emailCol= headers.indexOf('email');
-  const prodCol = headers.indexOf('produk');
-  const varCol  = headers.indexOf('varian');
-  const masCol  = headers.indexOf('masa aktif');
-  const hrgCol  = headers.indexOf('harga');
-  const stCol   = headers.indexOf('status');
-  const pmCol   = headers.indexOf('payment method');   // kolom baru
-  const psCol   = headers.indexOf('payment status');   // kolom baru
+  const idCol    = headers.indexOf('order id');
+  const dateCol  = headers.indexOf('tanggal') >= 0 ? headers.indexOf('tanggal') : (headers.indexOf('date') >= 0 ? headers.indexOf('date') : 1);
+  const namaCol  = headers.indexOf('nama');
+  const waCol    = headers.indexOf('no wa');
+  const emailCol = headers.indexOf('email');
+  const prodCol  = headers.indexOf('produk');
+  const varCol   = headers.indexOf('varian');
+  const masCol   = headers.indexOf('masa aktif');
+  const hrgCol   = headers.indexOf('harga');
+  const stCol    = headers.indexOf('status');
+  const pmCol    = headers.indexOf('payment method');
+  const psCol    = headers.indexOf('payment status');
+  const msnCol   = headers.indexOf('nama ms');
+  const usnCol   = headers.indexOf('username');
+  const msemCol  = headers.indexOf('email microsoft');
+  const eaCol    = headers.indexOf('email aktif');
+  const erCol    = headers.indexOf('email reminder');
 
-  // Validasi minimal kolom yang diperlukan
   if (idCol === -1 || prodCol === -1) return { success: true, data: [] };
 
   for (let i = 1; i < data.length; i++) {
@@ -1343,11 +1347,18 @@ function getOrders({ email }) {
     const produk  = String(row[prodCol] || '').trim();
     if (!orderId || !produk) continue;
 
+    const _str = function(col) { return col >= 0 ? String(row[col] || '').trim() : ''; };
+
     const item = {
       produk,
-      varian:    varCol >= 0 ? String(row[varCol] || '-').trim() : '-',
-      masaAktif: masCol >= 0 ? String(row[masCol] || '-').trim() : '-',
-      harga:     hrgCol >= 0 ? Number(row[hrgCol]) || 0 : 0,
+      varian:         _str(varCol)  || '-',
+      masaAktif:      _str(masCol)  || '-',
+      harga:          hrgCol >= 0 ? Number(row[hrgCol]) || 0 : 0,
+      msNama:         _str(msnCol)  || '-',
+      username:       _str(usnCol)  || '-',
+      microsoftEmail: _str(msemCol) || '-',
+      emailAktif:     _str(eaCol)   || '-',
+      emailReminder:  _str(erCol)   || '-',
     };
 
     if (orderMap.has(orderId)) {
@@ -1355,18 +1366,16 @@ function getOrders({ email }) {
       o.items.push(item);
       o.total += item.harga;
     } else {
-      // Ambil payment method & status dari kolom yang benar
-      const paymentMethod = pmCol >= 0 && row[pmCol] ? String(row[pmCol]).trim() : 'QRIS';
-      const paymentStatus = psCol >= 0 && row[psCol] ? String(row[psCol]).trim() : 'Berhasil';
-      
       orderMap.set(orderId, {
         orderId,
-        tanggal: dateCol >= 0 ? String(row[dateCol] || '') : '',
-        status:  stCol >= 0 ? String(row[stCol] || 'Pending').trim() : 'Pending',
-        total:   item.harga,
-        paymentMethod,
-        paymentStatus,
-        items:   [item],
+        tanggal:       _str(dateCol),
+        buyerNama:     _str(namaCol),
+        buyerWa:       _str(waCol),
+        status:        stCol >= 0 ? String(row[stCol] || 'Pending').trim() : 'Pending',
+        paymentMethod: pmCol >= 0 && row[pmCol] ? String(row[pmCol]).trim() : '',
+        paymentStatus: psCol >= 0 && row[psCol] ? String(row[psCol]).trim() : '',
+        total:         item.harga,
+        items:         [item],
       });
       orderKeys.push(orderId);
     }
@@ -1668,14 +1677,22 @@ function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerP
 
   const imageUrls = JSON.parse(imageUrlsJson || '[]');
 
+  const prices   = items.map(i => Math.round(Number(i.harga) || 0));
+  const totalAmt = Math.round(Number(total) || 0) || prices.reduce(function(s,p){ return s+p; }, 0);
+
+  // notifyUrl: gunakan GAS deployment URL agar callback iPaymu bekerja
+  let notifyUrl = 'https://serabut.id/';
+  try { notifyUrl = ScriptApp.getService().getUrl(); } catch(e) {}
+
   const body = {
-    product:   items.map(i => i.produk + (i.varian && i.varian !== '-' ? ' - ' + i.varian : '')),
-    qty:       items.map(() => 1),
-    price:     items.map(i => Math.round(Number(i.harga) || 0)),
-    imageUrl:  items.map((_, idx) => imageUrls[idx] || ''),
-    returnUrl: 'https://serabut.id/?payment=success&orderId=' + orderId,
-    cancelUrl: 'https://serabut.id/?payment=cancel&orderId=' + orderId,
-    notifyUrl: 'https://serabut.id/',
+    product:     items.map(function(i){ return i.produk + (i.varian && i.varian !== '-' ? ' - ' + i.varian : ''); }),
+    qty:         items.map(function(){ return 1; }),
+    price:       prices,
+    amount:      totalAmt,
+    imageUrl:    items.map(function(_, idx){ return imageUrls[idx] || ''; }),
+    returnUrl:   'https://serabut.id/?payment=success&orderId=' + orderId,
+    cancelUrl:   'https://serabut.id/?payment=cancel&orderId=' + orderId,
+    notifyUrl:   notifyUrl,
     referenceId: orderId,
     buyerName:   (buyerName  || 'Pembeli').substring(0, 50),
     buyerEmail:  buyerEmail  || '',
