@@ -125,6 +125,7 @@ function doPost(e) {
       case 'iPaymuAdminGetBalance':     result = iPaymuAdminGetBalance(params); break;
       case 'iPaymuAdminGetHistory':     result = iPaymuAdminGetHistory(params); break;
       case 'iPaymuAdminGetTransaction': result = iPaymuAdminGetTransaction(params); break;
+      case 'iPaymuAdminSyncOrders':     result = iPaymuAdminSyncOrders(params); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -2661,9 +2662,10 @@ function _parseJSON(str, fallback) {
 //  IPAYMU ADMIN APIs — balance, history, cek transaksi
 // ────────────────────────────────────────────────────────
 function iPaymuAdminGetBalance(params) {
-  if (!_isAdmin(params)) return { success: false, error: 'Unauthorized' };
-  const props  = PropertiesService.getScriptProperties();
-  const va     = (props.getProperty('IPAYMU_VA') || '').trim();
+  const authErr = _requireAdmin(params.adminEmail, params.adminToken);
+  if (authErr) return { success: false, error: authErr };
+  const props = PropertiesService.getScriptProperties();
+  const va    = (props.getProperty('IPAYMU_VA') || '').trim();
   if (!va) return { success: false, error: 'IPAYMU_VA belum dikonfigurasi' };
   const res = _iPaymuRequest('https://my.ipaymu.com/api/v2/balance', { account: va });
   if (Number(res.Status) === 200) {
@@ -2673,9 +2675,10 @@ function iPaymuAdminGetBalance(params) {
 }
 
 function iPaymuAdminGetHistory(params) {
-  if (!_isAdmin(params)) return { success: false, error: 'Unauthorized' };
-  const props  = PropertiesService.getScriptProperties();
-  const va     = (props.getProperty('IPAYMU_VA') || '').trim();
+  const authErr = _requireAdmin(params.adminEmail, params.adminToken);
+  if (authErr) return { success: false, error: authErr };
+  const props = PropertiesService.getScriptProperties();
+  const va    = (props.getProperty('IPAYMU_VA') || '').trim();
   if (!va) return { success: false, error: 'IPAYMU_VA belum dikonfigurasi' };
 
   const body = { account: va };
@@ -2689,16 +2692,19 @@ function iPaymuAdminGetHistory(params) {
   body.date    = params.date    || 'created_at';
 
   const res = _iPaymuRequest('https://my.ipaymu.com/api/v2/history', body);
-  if (Number(res.Status) === 200) {
-    return { success: true, data: res.Data, total: res.Total };
+  if (Number(res.Status) === 200 && res.Data) {
+    const trxList   = res.Data.Transaction   || [];
+    const pagination = res.Data.Pagination   || {};
+    return { success: true, data: trxList, pagination };
   }
   return { success: false, error: res.Message || 'Gagal ambil history' };
 }
 
 function iPaymuAdminGetTransaction(params) {
-  if (!_isAdmin(params)) return { success: false, error: 'Unauthorized' };
-  const props  = PropertiesService.getScriptProperties();
-  const va     = (props.getProperty('IPAYMU_VA') || '').trim();
+  const authErr = _requireAdmin(params.adminEmail, params.adminToken);
+  if (authErr) return { success: false, error: authErr };
+  const props = PropertiesService.getScriptProperties();
+  const va    = (props.getProperty('IPAYMU_VA') || '').trim();
   if (!va) return { success: false, error: 'IPAYMU_VA belum dikonfigurasi' };
   if (!params.transactionId) return { success: false, error: 'transactionId diperlukan' };
 
@@ -2710,6 +2716,71 @@ function iPaymuAdminGetTransaction(params) {
     return { success: true, data: res.Data };
   }
   return { success: false, error: res.Message || 'Transaksi tidak ditemukan' };
+}
+
+// Sync semua order Pending/Dibatalkan ke iPaymu — update status jika sudah dibayar
+function iPaymuAdminSyncOrders(params) {
+  const authErr = _requireAdmin(params.adminEmail, params.adminToken);
+  if (authErr) return { success: false, error: authErr };
+
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: false, error: 'Sheet tidak ditemukan' };
+
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(function(h){ return String(h).toLowerCase().trim(); });
+  const idCol   = headers.indexOf('order id');
+  const stCol   = headers.indexOf('status');
+  if (idCol < 0 || stCol < 0) return { success: false, error: 'Kolom tidak ditemukan' };
+
+  // Kumpulkan orderId unik yang Pending atau Dibatalkan
+  const pendingIds = {};
+  for (let i = 1; i < data.length; i++) {
+    const st = String(data[i][stCol] || '').trim();
+    if (st === 'Pending' || st === 'Dibatalkan') {
+      const oid = String(data[i][idCol] || '').trim();
+      if (oid) pendingIds[oid] = true;
+    }
+  }
+
+  const props  = PropertiesService.getScriptProperties();
+  const va     = (props.getProperty('IPAYMU_VA') || '').trim();
+  let updated  = 0;
+  let checked  = 0;
+
+  // Ensure payment cols exist
+  let pmCol = headers.indexOf('payment method');
+  let psCol = headers.indexOf('payment status');
+  if (pmCol < 0) { sheet.getRange(1, headers.length + 1).setValue('Payment Method'); pmCol = headers.length; headers.push('payment method'); }
+  if (psCol < 0) { sheet.getRange(1, headers.length + 1).setValue('Payment Status'); psCol = headers.length; headers.push('payment status'); }
+
+  for (const orderId of Object.keys(pendingIds)) {
+    checked++;
+    try {
+      const result = _iPaymuRequest('https://my.ipaymu.com/api/v2/payment/status', { account: va, referenceId: orderId });
+      if (Number(result.Status) !== 200 || !result.Data) continue;
+      const ipStatus  = String(result.Data.Status || result.Data.status_code || '').toLowerCase();
+      const isPaid    = (ipStatus === 'berhasil' || ipStatus === '1' || ipStatus === 'success');
+      if (!isPaid) continue;
+
+      const payMethod = result.Data.PaymentMethod || result.Data.PaymentChannel || 'iPaymu';
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][idCol]).trim() !== orderId) continue;
+        const rowSt = String(data[i][stCol] || '').trim();
+        if (rowSt === 'Pending' || rowSt === 'Dibatalkan') {
+          sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
+        }
+        sheet.getRange(i + 1, pmCol + 1).setValue(payMethod);
+        sheet.getRange(i + 1, psCol + 1).setValue('Berhasil');
+      }
+      updated++;
+      Logger.log('syncOrders: ' + orderId + ' → Diproses via ' + payMethod);
+    } catch(e) {
+      Logger.log('syncOrders error for ' + orderId + ': ' + e.message);
+    }
+  }
+
+  return { success: true, checked, updated };
 }
 
 function findColIdx(headers, keywords) {
