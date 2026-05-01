@@ -588,10 +588,28 @@
                 <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
                 <input x-model="searchQuery" type="search" placeholder="Cari produk..." class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
             </div>
-            <div class="flex gap-2 overflow-x-auto pb-3 mb-5 no-scrollbar">
+            <!-- Mobile: horizontal pills -->
+            <div class="flex gap-2 overflow-x-auto pb-3 mb-5 no-scrollbar md:hidden">
                 <button @click="activeCategory='Semua'" :class="activeCategory==='Semua'?'bg-brand-500 text-white shadow-sm':'bg-white text-gray-600 border border-gray-200'" class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all">Semua</button>
                 <template x-for="cat in categoryList" :key="cat"><button @click="activeCategory=cat" :class="activeCategory===cat?'bg-brand-500 text-white shadow-sm':'bg-white text-gray-600 border border-gray-200'" class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all" x-text="cat"></button></template>
             </div>
+            <!-- Desktop: sidebar + grid -->
+            <div class="md:flex md:gap-5 md:items-start">
+            <nav class="hidden md:flex flex-col gap-0.5 w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-20">
+                <button @click="activeCategory='Semua'" :class="activeCategory==='Semua'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <span>Semua</span>
+                    <div x-show="activeCategory==='Semua'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <template x-for="cat in categoryList" :key="cat">
+                    <button @click="activeCategory=cat" :class="activeCategory===cat?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
+                        <img :src="getProductLogo(cat)" :alt="cat" class="w-4 h-4 object-contain flex-none" onerror="this.style.display='none'">
+                        <span x-text="cat" class="truncate flex-1"></span>
+                        <div x-show="activeCategory===cat" class="w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                    </button>
+                </template>
+            </nav>
+            <div class="md:flex-1 md:min-w-0">
             <div x-show="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 <template x-for="i in 8"><div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3"><div class="skeleton h-20 w-full rounded-xl mb-2"></div><div class="skeleton h-5 w-16 rounded-lg"></div><div class="skeleton h-4 w-full rounded"></div><div class="skeleton h-4 w-2/3 rounded"></div><div class="skeleton h-6 w-24 rounded"></div><div class="skeleton h-10 w-full rounded-xl"></div></div></template>
             </div>
@@ -659,6 +677,8 @@
                     <button @click="searchQuery='';activeCategory='Semua'" class="mt-4 text-brand-500 font-semibold text-sm underline underline-offset-2">Reset filter</button>
                 </div>
             </div>
+            </div><!-- end content area -->
+            </div><!-- end desktop flex -->
         </div>
     </section>
 
@@ -831,14 +851,27 @@
 
     <!-- ───────── PANDUAN ───────── -->
     <section x-show="activePage==='panduan'" class="page-enter">
-        <div class="max-w-3xl mx-auto px-4 py-6">
+        <div class="max-w-5xl mx-auto px-4 py-6">
             <h1 class="text-2xl font-black text-gray-900 mb-1">Panduan</h1>
-            <p class="text-sm text-gray-400 mb-6">Tutorial instalasi & penggunaan software</p>
-            <div class="flex gap-2 overflow-x-auto pb-2 mb-6 no-scrollbar">
+            <p class="text-sm text-gray-400 mb-5">Tutorial instalasi & penggunaan software</p>
+            <!-- Mobile: horizontal pills -->
+            <div class="flex gap-2 overflow-x-auto pb-2 mb-5 no-scrollbar md:hidden">
                 <template x-for="tab in guideTabs" :key="tab.id">
                     <button @click="activeGuide=tab.id" :class="activeGuide===tab.id?'bg-brand-500 text-white':'bg-white text-gray-600 border border-gray-200'" class="flex-none px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-1.5"><span x-html="tab.icon"></span><span x-text="tab.label"></span></button>
                 </template>
             </div>
+            <!-- Desktop: sidebar + content -->
+            <div class="md:flex md:gap-5 md:items-start">
+            <nav class="hidden md:flex flex-col gap-0.5 w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-20">
+                <template x-for="tab in guideTabs" :key="tab.id">
+                    <button @click="activeGuide=tab.id" :class="activeGuide===tab.id?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
+                        <span x-html="tab.icon" class="flex-none opacity-70"></span>
+                        <span x-text="tab.label"></span>
+                        <div x-show="activeGuide===tab.id" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                    </button>
+                </template>
+            </nav>
+            <div class="md:flex-1 md:min-w-0">
             <template x-for="tab in guideTabs" :key="tab.id">
                 <div x-show="activeGuide===tab.id" class="space-y-3">
                     <template x-for="(guide,index) in guides[tab.id]" :key="guide.title">
@@ -859,6 +892,8 @@
                     </template>
                 </div>
             </template>
+            </div><!-- end content area -->
+            </div><!-- end desktop flex -->
         </div>
     </section>
 
@@ -1547,10 +1582,10 @@
 
     <!-- ───────── FAQ ───────── -->
     <section x-show="activePage==='faq'" class="page-enter">
-        <div x-data="{ faqFilter: 'semua', faqOpen: null }" class="max-w-3xl mx-auto px-4 py-8 pb-28 md:pb-12">
+        <div x-data="{ faqFilter: 'semua', faqOpen: null }" class="max-w-5xl mx-auto px-4 py-8 pb-28 md:pb-12">
 
             <!-- Hero Header -->
-            <div class="text-center mb-8">
+            <div class="text-center mb-6">
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl mb-4 shadow-lg shadow-brand-200">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
@@ -1558,8 +1593,8 @@
                 <p class="text-gray-500 text-sm">Temukan jawaban cepat seputar produk & layanan Serabut Store</p>
             </div>
 
-            <!-- Product Category Pills -->
-            <div class="flex flex-wrap gap-2 justify-center mb-8">
+            <!-- Mobile: horizontal pills -->
+            <div class="flex flex-wrap gap-2 justify-center mb-6 md:hidden">
                 <template x-for="pill in [{id:'semua',label:'Semua',color:'bg-gray-900 text-white'},{id:'office',label:'Office 365',color:'bg-blue-600 text-white'},{id:'windows',label:'Windows',color:'bg-sky-600 text-white'},{id:'adobe',label:'Adobe',color:'bg-red-600 text-white'},{id:'pembayaran',label:'Pembayaran',color:'bg-emerald-600 text-white'},{id:'akun',label:'Akun & Garansi',color:'bg-purple-600 text-white'}]" :key="pill.id">
                     <button @click="faqFilter=pill.id; faqOpen=null"
                             :class="faqFilter===pill.id ? pill.color + ' shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'"
@@ -1568,8 +1603,24 @@
                 </template>
             </div>
 
+            <!-- Desktop: sidebar + content -->
+            <div class="md:flex md:gap-5 md:items-start">
+
+            <!-- Sidebar Desktop -->
+            <nav class="hidden md:flex flex-col gap-0.5 w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-20">
+                <template x-for="pill in [{id:'semua',label:'Semua',dot:'bg-gray-500'},{id:'office',label:'Office 365',dot:'bg-blue-500'},{id:'windows',label:'Windows',dot:'bg-sky-500'},{id:'adobe',label:'Adobe',dot:'bg-red-500'},{id:'pembayaran',label:'Pembayaran',dot:'bg-emerald-500'},{id:'akun',label:'Akun & Garansi',dot:'bg-purple-500'}]" :key="pill.id">
+                    <button @click="faqFilter=pill.id; faqOpen=null"
+                            :class="faqFilter===pill.id ? 'bg-brand-50 text-brand-600 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'"
+                            class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
+                        <span class="w-2 h-2 rounded-full flex-none" :class="pill.dot"></span>
+                        <span x-text="pill.label" class="truncate flex-1"></span>
+                        <div x-show="faqFilter===pill.id" class="w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                    </button>
+                </template>
+            </nav>
+
             <!-- FAQ Groups -->
-            <div class="space-y-3">
+            <div class="md:flex-1 md:min-w-0 space-y-3">
                 <template x-for="(faq, idx) in faqItems.filter(f => faqFilter==='semua' || f.cat===faqFilter)" :key="idx">
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                         <button @click="faqOpen = faqOpen===faq.q ? null : faq.q"
@@ -1604,6 +1655,8 @@
                     </div>
                 </template>
             </div>
+
+            </div><!-- end desktop flex -->
 
             <!-- Bottom CTA — Live Agent (no WhatsApp button) -->
             <div class="mt-10 rounded-2xl overflow-hidden">
