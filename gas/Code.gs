@@ -1706,7 +1706,6 @@ function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerP
     qty:         items.map(function(){ return 1; }),
     price:       prices,
     amount:      totalAmt,
-    imageUrl:    items.map(function(_, idx){ return imageUrls[idx] || ''; }),
     returnUrl:   'https://serabut.id/?payment=success&orderId=' + orderId,
     cancelUrl:   'https://serabut.id/?payment=cancel&orderId=' + orderId,
     notifyUrl:   notifyUrl,
@@ -1715,6 +1714,13 @@ function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerP
     buyerEmail:  buyerEmail  || '',
     buyerPhone:  buyerPhone  || ''
   };
+
+  // Hanya sertakan imageUrl jika semua item punya URL http/https valid
+  // iPaymu menolak data: URI dan empty string
+  const cleanUrls = imageUrls.map(function(u){ return (u && typeof u === 'string' && u.indexOf('http') === 0) ? u : ''; });
+  if (cleanUrls.some(function(u){ return u !== ''; })) {
+    body.imageUrl = cleanUrls;
+  }
 
   const bodyStr = JSON.stringify(body);
   const timestamp = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyyMMddHHmmss');
@@ -1835,7 +1841,12 @@ function checkIPaymuOrderStatus({ orderId, email }) {
   })();
 
   if (currentStatus === null) return { success: false, error: 'Order tidak ditemukan' };
-  if (currentStatus !== 'Pending') return { success: true, paid: currentStatus !== 'Dibatalkan', currentStatus };
+  // Jika sudah settled (Diproses/Aktif/Selesai) → skip cek iPaymu, anggap paid
+  if (['Diproses', 'Aktif', 'Selesai'].includes(currentStatus)) {
+    return { success: true, paid: true, currentStatus };
+  }
+  // Jika Pending atau Dibatalkan → cek ke iPaymu untuk verifikasi aktual
+  // (Dibatalkan bisa terjadi karena bug auto-cancel lama, perlu restore jika sudah dibayar)
 
   // Panggil iPaymu status API
   let result;
@@ -1859,14 +1870,18 @@ function checkIPaymuOrderStatus({ orderId, email }) {
       if (pmCol < 0) { sheet.getRange(1, headers.length + 1).setValue('Payment Method'); pmCol = headers.length; headers.push('payment method'); }
       if (psCol < 0) { sheet.getRange(1, headers.length + 1).setValue('Payment Status'); psCol = headers.length; headers.push('payment status'); }
 
-      // Update semua baris orderId ini
+      // Update semua baris orderId ini (Pending & Dibatalkan → Diproses)
       for (let i = 1; i < data.length; i++) {
         if (String(data[i][idCol]).trim() !== String(orderId).trim()) continue;
-        if (String(data[i][stCol] || '').trim() === 'Pending') sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
+        const rowSt = String(data[i][stCol] || '').trim();
+        if (rowSt === 'Pending' || rowSt === 'Dibatalkan') {
+          sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
+        }
         sheet.getRange(i + 1, pmCol + 1).setValue(payMethod);
         sheet.getRange(i + 1, psCol + 1).setValue('Berhasil');
       }
       try { SpreadsheetApp.flush(); } catch(e) {}
+      Logger.log('checkIPaymuOrderStatus: order ' + orderId + ' restored → Diproses (' + payMethod + ')');
       return { success: true, paid: true, paymentMethod: payMethod, paymentStatus: 'Berhasil', orderStatus: 'Diproses' };
     }
     return { success: true, paid: false, ipStatus };
