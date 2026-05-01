@@ -4080,28 +4080,49 @@
 <div x-show="paymentConfirmed" class="fixed inset-0 z-[300] flex items-center justify-center px-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" style="display:none">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
     <div class="relative bg-white rounded-3xl p-7 max-w-sm w-full text-center shadow-2xl">
-        <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-        </div>
-        <h3 class="font-black text-gray-900 text-xl mb-1">Pembayaran Berhasil!</h3>
-        <p class="text-sm text-gray-500 mb-3" x-text="paymentConfirmed?.productName || ''"></p>
-        <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-5" x-text="paymentConfirmed?.orderId"></div>
-        <div class="bg-gray-50 rounded-2xl p-4 text-left mb-5 space-y-2.5">
-            <div class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">✓</span>
-                <p class="text-sm text-gray-600">Pembayaran <strong class="text-gray-800">dikonfirmasi</strong> — tim kami sudah menerima notifikasi</p>
+        <!-- Pembayaran terverifikasi -->
+        <template x-if="!paymentConfirmed?.pending">
+            <div>
+                <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h3 class="font-black text-gray-900 text-xl mb-1">Pembayaran Berhasil!</h3>
+                <p class="text-sm text-gray-500 mb-3" x-text="paymentConfirmed?.productName || ''"></p>
+                <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-5" x-text="paymentConfirmed?.orderId"></div>
+                <div class="bg-gray-50 rounded-2xl p-4 text-left mb-5 space-y-2.5">
+                    <div class="flex items-start gap-3">
+                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">✓</span>
+                        <p class="text-sm text-gray-600">Pembayaran <strong class="text-gray-800">dikonfirmasi</strong> — tim kami sudah menerima notifikasi</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">2</span>
+                        <p class="text-sm text-gray-600">Pesanan diproses dalam <strong class="text-gray-800">5–30 menit</strong></p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">3</span>
+                        <p class="text-sm text-gray-600">Detail akun akan dikirim via <strong class="text-gray-800">WhatsApp & Email</strong></p>
+                    </div>
+                </div>
+                <button @click="setPage('profile'); paymentConfirmed=null; productModal=false; renewalMode=false" class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all shadow-md mb-2.5">Lihat Pesanan Saya</button>
+                <button @click="paymentConfirmed=null; productModal=false; renewalMode=false; setPage('home')" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Kembali ke Beranda</button>
             </div>
-            <div class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">2</span>
-                <p class="text-sm text-gray-600">Pesanan diproses dalam <strong class="text-gray-800">5–30 menit</strong></p>
+        </template>
+        <!-- Pembayaran belum terverifikasi -->
+        <template x-if="paymentConfirmed?.pending">
+            <div>
+                <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h3 class="font-black text-gray-900 text-xl mb-1">Menunggu Konfirmasi</h3>
+                <p class="text-sm text-gray-500 mb-3">Pembayaran belum terkonfirmasi di sistem kami</p>
+                <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-5" x-text="paymentConfirmed?.orderId"></div>
+                <div class="bg-amber-50 rounded-2xl p-4 text-left mb-5">
+                    <p class="text-sm text-amber-800">Jika kamu sudah membayar, konfirmasi biasanya membutuhkan beberapa menit. Kamu bisa cek status pesanan atau hubungi CS jika lebih dari 10 menit.</p>
+                </div>
+                <button @click="setPage('profile'); profileTab='pesanan'; paymentConfirmed=null; loadOrders()" class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all shadow-md mb-2.5">Cek Status Pesanan</button>
+                <button @click="paymentConfirmed=null; setPage('home')" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Kembali ke Beranda</button>
             </div>
-            <div class="flex items-start gap-3">
-                <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">3</span>
-                <p class="text-sm text-gray-600">Detail akun akan dikirim via <strong class="text-gray-800">WhatsApp & Email</strong></p>
-            </div>
-        </div>
-        <button @click="setPage('profile'); paymentConfirmed=null; productModal=false; renewalMode=false" class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all shadow-md mb-2.5">Lihat Pesanan Saya</button>
-        <button @click="paymentConfirmed=null; productModal=false; renewalMode=false; setPage('home')" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Kembali ke Beranda</button>
+        </template>
     </div>
 </div>
 
@@ -4762,18 +4783,7 @@ function serabutStore() {
                 const payOrderId = urlParams.get('orderId');
                 if (payStatus === 'success' && payOrderId) {
                     window.history.replaceState({}, '', window.location.pathname);
-                    try {
-                        const res = await this.gasPost({ action: 'confirmPayment', orderId: payOrderId });
-                        this.paymentConfirmed = { orderId: payOrderId, productName: res.productName || '' };
-                    } catch(e) {
-                        this.paymentConfirmed = { orderId: payOrderId, productName: '' };
-                    }
-                    // Jika sudah login → arahkan ke profil > pesanan
-                    if (this.currentUser) {
-                        this.setPage('profile');
-                        this.profileTab = 'pesanan';
-                        this.loadOrders();
-                    }
+                    await this.verifyAndConfirmPayment(payOrderId);
                 } else if (payStatus === 'cancel' && payOrderId) {
                     this.iPaymuReturnStatus = { status: 'cancel', orderId: payOrderId };
                     window.history.replaceState({}, '', window.location.pathname);
@@ -5337,12 +5347,13 @@ function serabutStore() {
 
         // ── Order ─────────────────────────────────────
         get orderExtraType() {
-            const cat = (this.selectedProductGroup?.category || '').toLowerCase();
-            const v   = (this.selectedVariant?.varian || '').toLowerCase();
-            if (cat === 'adobe')                      return 'adobe';
-            if (v.includes('family'))                 return 'family';
-            if (v.includes('web') && this.renewalMode) return 'renewal';
-            if (v.includes('web'))                    return 'web';
+            const cat  = (this.selectedProductGroup?.category || '').toLowerCase();
+            const v    = (this.selectedVariant?.varian || '').toLowerCase();
+            const name = (this.selectedProductGroup?.nama || '').toLowerCase();
+            if (cat === 'adobe')                                                    return 'adobe';
+            if (v.includes('family'))                                               return 'family';
+            if (v.includes('web') && (name.includes('renewal') || this.renewalMode)) return 'renewal';
+            if (v.includes('web'))                                                  return 'web';
             return 'other';
         },
         get isOneTimeProduct() {
@@ -5543,12 +5554,7 @@ function serabutStore() {
                     const oid = params.get('orderId') || this.paymentIframe?.orderId;
                     clearInterval(this.paymentIframeTimerId);
                     this.paymentIframe = null;
-                    this.paymentConfirmed = { orderId: oid, productName: '' };
-                    if (this.currentUser) {
-                        this.setPage('profile');
-                        this.profileTab = 'pesanan';
-                        this.loadOrders();
-                    }
+                    this.verifyAndConfirmPayment(oid);
                 } else if (params.get('payment') === 'cancel') {
                     const oid = params.get('orderId') || this.paymentIframe?.orderId;
                     clearInterval(this.paymentIframeTimerId);
@@ -5557,6 +5563,26 @@ function serabutStore() {
                 }
             } catch (_) {
                 // Cross-origin — masih di halaman iPaymu, normal
+            }
+        },
+
+        async verifyAndConfirmPayment(orderId) {
+            if (!orderId) return;
+            try {
+                const res = await this.gasPost({ action: 'confirmPayment', orderId });
+                if (res.success) {
+                    this.paymentConfirmed = { orderId, productName: res.productName || '' };
+                } else {
+                    // pending: true = iPaymu belum konfirmasi; tetap tampilkan modal tapi beda pesan
+                    this.paymentConfirmed = { orderId, productName: '', pending: !!res.pending };
+                }
+            } catch(e) {
+                this.paymentConfirmed = { orderId, productName: '' };
+            }
+            if (this.currentUser) {
+                this.setPage('profile');
+                this.profileTab = 'pesanan';
+                this.loadOrders();
             }
         },
 
@@ -5638,11 +5664,11 @@ function serabutStore() {
                     imageUrl:       this.getProductLogo(this.selectedProductGroup.category || this.selectedProductGroup.nama),
                 });
                 if(data.success) {
-                    this.orderModal = false;
                     if (data.paymentUrl) {
+                        this.orderModal = false;
                         this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
                     } else {
-                        this.orderError = 'Pesanan dibuat tapi gagal membuat sesi pembayaran. Hubungi CS.';
+                        this.orderError = 'Gagal membuat sesi pembayaran. Silakan coba lagi atau hubungi CS.';
                     }
                 } else { this.orderError = data.error||'Gagal membuat pesanan'; }
             } catch { this.orderError='Gagal terhubung ke server'; }

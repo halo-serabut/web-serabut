@@ -1383,42 +1383,19 @@ function getOrders({ email }) {
     }
   }
 
-  // Auto-cancel Pending orders yang melebihi 24 jam
+  // Hitung sisa waktu untuk Pending orders — TIDAK auto-cancel di sini
+  // (cancel hanya via user action atau admin, agar order yg sudah dibayar tidak ikut di-cancel)
   const H24 = 24 * 3600 * 1000;
   const nowMs = Date.now();
-  const cancelRowNums = [];
-
-  // Kumpulkan row indices yang perlu di-cancel (first row per orderId)
-  const processedForCancel = new Set();
+  const processedMs = new Set();
   for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    if (!row[idCol]) continue;
-    const oid = String(row[idCol]).trim();
-    if (!orderMap.has(oid) || processedForCancel.has(oid)) continue;
+    const oid = String(data[i]?.[idCol] || '').trim();
+    if (!oid || !orderMap.has(oid) || processedMs.has(oid)) continue;
     const order = orderMap.get(oid);
     if (order.status !== 'Pending') continue;
-    processedForCancel.add(oid);
-
+    processedMs.add(oid);
     const created = _parseTanggalGAS(order.tanggal);
-    if (!created) continue;
-    const ageMs = nowMs - created.getTime();
-    if (ageMs >= H24) {
-      order.status = 'Dibatalkan';
-      cancelRowNums.push(i + 1);
-    } else {
-      order.msecLeft = H24 - ageMs;
-    }
-  }
-
-  // Batch-cancel expired rows di sheet (update semua baris dg orderId yg sama)
-  if (cancelRowNums.length > 0 && stCol >= 0) {
-    const cancelledIds = cancelRowNums.map(function(rn){ return String(data[rn - 1][idCol]).trim(); });
-    for (let i = 1; i < data.length; i++) {
-      if (cancelledIds.includes(String(data[i][idCol]).trim()) && String(data[i][stCol] || '').trim() === 'Pending') {
-        sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan');
-      }
-    }
-    try { SpreadsheetApp.flush(); } catch(e) {}
+    if (created) order.msecLeft = Math.max(0, H24 - (nowMs - created.getTime()));
   }
 
   const orders = orderKeys.map(k => orderMap.get(k)).reverse();
@@ -1963,6 +1940,37 @@ function confirmPayment({ orderId }) {
     if (String(data[i][idCol]).trim() === String(orderId).trim()) rows.push({ idx: i + 1, row: data[i] });
   }
   if (!rows.length) return { success: false, error: 'Order tidak ditemukan' };
+
+  // Cek apakah sudah "Diproses" sebelumnya (idempotent) — skip verify iPaymu
+  const existingStatus = String(rows[0].row[stCol] || '').trim();
+  let iPaymuVerified = (existingStatus === 'Diproses' || existingStatus === 'Aktif' || existingStatus === 'Selesai');
+  let payMethod = '';
+
+  if (!iPaymuVerified) {
+    // Verifikasi pembayaran ke iPaymu sebelum kirim WA
+    try {
+      const ipResult = _iPaymuRequest('https://my.ipaymu.com/api/v2/payment/status', { referenceId: orderId });
+      Logger.log('confirmPayment iPaymu verify [' + orderId + ']: ' + JSON.stringify(ipResult));
+      if (ipResult.Status === 200 && ipResult.Data) {
+        const ipStatus = String(ipResult.Data.Status || ipResult.Data.status_code || '').toLowerCase();
+        iPaymuVerified = (ipStatus === 'berhasil' || ipStatus === '1' || ipStatus === 'success');
+        payMethod = ipResult.Data.PaymentMethod || ipResult.Data.Via || ipResult.Data.payment_channel || 'iPaymu';
+      }
+    } catch(e) {
+      Logger.log('confirmPayment: iPaymu verify error: ' + e.message);
+    }
+    if (!iPaymuVerified) return { success: false, pending: true, error: 'Pembayaran belum terverifikasi di iPaymu' };
+
+    // Simpan payment method/status ke sheet
+    let pmCol = h.indexOf('payment method');
+    let psCol = h.indexOf('payment status');
+    if (pmCol < 0) { sheet.getRange(1, h.length + 1).setValue('Payment Method'); pmCol = h.length; h.push('payment method'); }
+    if (psCol < 0) { sheet.getRange(1, h.length + 1).setValue('Payment Status'); psCol = h.length; h.push('payment status'); }
+    rows.forEach(r => {
+      if (payMethod) sheet.getRange(r.idx, pmCol + 1).setValue(payMethod);
+      sheet.getRange(r.idx, psCol + 1).setValue('Berhasil');
+    });
+  }
 
   // Update status semua baris → Diproses
   rows.forEach(r => sheet.getRange(r.idx, stCol + 1).setValue('Diproses'));
