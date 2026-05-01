@@ -557,23 +557,28 @@ function getAllOrders({ adminEmail, adminToken }) {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
   if (!sheet) return { success: true, data: [] };
 
-  const data   = sheet.getDataRange().getValues();
-  const orders = [];
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const pmCol   = headers.indexOf('payment method');
+  const psCol   = headers.indexOf('payment status');
+  const orders  = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row[0]) continue;
     orders.push({
-      rowIndex:  i + 1,
-      orderId:   String(row[0]),
-      tanggal:   String(row[1]),
-      nama:      String(row[2]),
-      email:     String(row[3]),
-      wa:        String(row[4]),
-      produk:    String(row[5]),
-      varian:    String(row[6]),
-      masaAktif: String(row[7]),
-      harga:     Number(row[8]) || 0,
-      status:    String(row[9]),
+      rowIndex:      i + 1,
+      orderId:       String(row[0]),
+      tanggal:       String(row[1]),
+      nama:          String(row[2]),
+      email:         String(row[3]),
+      wa:            String(row[4]),
+      produk:        String(row[5]),
+      varian:        String(row[6]),
+      masaAktif:     String(row[7]),
+      harga:         Number(row[8]) || 0,
+      status:        String(row[9]),
+      paymentMethod: pmCol >= 0 && row[pmCol] ? String(row[pmCol]).trim() : '',
+      paymentStatus: psCol >= 0 && row[psCol] ? String(row[psCol]).trim() : '',
     });
   }
   orders.reverse();
