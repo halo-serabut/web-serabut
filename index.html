@@ -1562,13 +1562,17 @@
             </div>
 
             <!-- Tab Navigation -->
-            <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 overflow-x-auto no-scrollbar">
-                <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'ipaymu',label:'iPaymu'}]" :key="tab.id">
-                    <button @click="adminTab=tab.id; adminInitTab(tab.id)"
-                            :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
-                            class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
-                            x-text="tab.label"></button>
-                </template>
+            <div class="relative mb-6">
+                <div class="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar" id="adminTabBar">
+                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'ipaymu',label:'iPaymu'}]" :key="tab.id">
+                        <button @click="adminTab=tab.id; adminInitTab(tab.id); $el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})"
+                                :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
+                                class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
+                                x-text="tab.label"></button>
+                    </template>
+                </div>
+                <!-- Fade kanan — indikator ada tab lagi -->
+                <div class="pointer-events-none absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-white/80 to-transparent rounded-r-xl"></div>
             </div>
 
             <!-- ── Tab: Flash Sale ── -->
@@ -4180,50 +4184,83 @@
 <!-- iPaymu tidak support iframe (X-Frame-Options: sameorigin) — gunakan redirect langsung -->
 
 <!-- Modal Pembayaran Berhasil — muncul setelah user kembali dari iPaymu -->
-<div x-show="paymentConfirmed" class="fixed inset-0 z-[300] flex items-center justify-center px-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" style="display:none">
+<div x-show="paymentConfirmed" class="fixed inset-0 z-[300] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" style="display:none">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-    <div class="relative bg-white rounded-3xl p-7 max-w-sm w-full text-center shadow-2xl">
-        <!-- Pembayaran terverifikasi -->
+    <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl shadow-2xl max-h-[92vh] overflow-y-auto">
+        <div class="w-10 h-1 bg-gray-200 rounded-full mx-auto mt-3 mb-1 md:hidden"></div>
+
+        <!-- ── Berhasil ── -->
         <template x-if="!paymentConfirmed?.pending">
-            <div>
-                <div class="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div class="p-6">
+                <!-- Icon -->
+                <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
                     <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                 </div>
-                <h3 class="font-black text-gray-900 text-xl mb-1">Pembayaran Berhasil!</h3>
-                <p class="text-sm text-gray-500 mb-3" x-text="paymentConfirmed?.productName || ''"></p>
-                <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-5" x-text="paymentConfirmed?.orderId"></div>
-                <div class="bg-gray-50 rounded-2xl p-4 text-left mb-5 space-y-2.5">
+                <h3 class="font-black text-gray-900 text-xl text-center mb-1">Pembayaran Berhasil!</h3>
+                <p class="text-sm text-gray-400 text-center mb-3">Transaksi kamu sudah dikonfirmasi</p>
+
+                <!-- Order ID + payment method -->
+                <div class="flex items-center justify-center gap-2 flex-wrap mb-4">
+                    <span class="bg-brand-50 text-brand-600 font-bold text-sm px-3 py-1 rounded-full" x-text="paymentConfirmed?.orderId"></span>
+                    <span x-show="paymentConfirmed?.paymentMethod" class="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full" x-text="paymentConfirmed?.paymentMethod"></span>
+                </div>
+
+                <!-- Item list -->
+                <div x-show="paymentConfirmed?.items?.length" class="bg-gray-50 rounded-2xl p-4 mb-4 space-y-2">
+                    <template x-for="(item, i) in (paymentConfirmed?.items || [])" :key="i">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-800 truncate" x-text="item.produk + (item.varian && item.varian!=='-' ? ' '+item.varian : '')"></p>
+                                <p class="text-xs text-gray-400" x-text="item.masaAktif && item.masaAktif!=='-' ? item.masaAktif : ''"></p>
+                            </div>
+                            <span class="text-sm font-semibold text-gray-900 flex-none" x-text="'Rp '+Number(item.harga).toLocaleString('id-ID')"></span>
+                        </div>
+                    </template>
+                    <div x-show="paymentConfirmed?.totalHarga" class="pt-2 border-t border-gray-200 flex justify-between items-center">
+                        <span class="text-sm font-semibold text-gray-700">Total Dibayar</span>
+                        <span class="text-sm font-black text-brand-600" x-text="'Rp '+Number(paymentConfirmed?.totalHarga).toLocaleString('id-ID')"></span>
+                    </div>
+                </div>
+
+                <!-- Next steps -->
+                <div class="space-y-2.5 mb-5">
                     <div class="flex items-start gap-3">
-                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">✓</span>
-                        <p class="text-sm text-gray-600">Pembayaran <strong class="text-gray-800">dikonfirmasi</strong> — tim kami sudah menerima notifikasi</p>
+                        <span class="w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center flex-none mt-0.5">✓</span>
+                        <p class="text-sm text-gray-600">Pembayaran <strong class="text-gray-800">dikonfirmasi</strong> — tim sudah menerima notifikasi</p>
                     </div>
                     <div class="flex items-start gap-3">
-                        <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">2</span>
+                        <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-[10px] font-bold flex items-center justify-center flex-none mt-0.5">2</span>
                         <p class="text-sm text-gray-600">Pesanan diproses dalam <strong class="text-gray-800">5–30 menit</strong></p>
                     </div>
                     <div class="flex items-start gap-3">
-                        <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-none mt-0.5">3</span>
-                        <p class="text-sm text-gray-600">Detail akun akan dikirim via <strong class="text-gray-800">WhatsApp & Email</strong></p>
+                        <span class="w-5 h-5 rounded-full bg-brand-500 text-white text-[10px] font-bold flex items-center justify-center flex-none mt-0.5">3</span>
+                        <p class="text-sm text-gray-600">Detail akun dikirim via <strong class="text-gray-800">WhatsApp & Email</strong></p>
                     </div>
                 </div>
-                <button @click="setPage('profile'); paymentConfirmed=null; productModal=false; renewalMode=false" class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all shadow-md mb-2.5">Lihat Pesanan Saya</button>
-                <button @click="paymentConfirmed=null; productModal=false; renewalMode=false; setPage('home')" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Kembali ke Beranda</button>
+
+                <button @click="openConfirmedOrderDetail()" class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all shadow-md mb-2.5">
+                    Lihat Detail Pesanan
+                </button>
+                <button @click="paymentConfirmed=null; productModal=false; renewalMode=false; setPage('home')" class="block w-full text-gray-400 text-sm py-2.5 hover:text-gray-600 transition-colors">Kembali ke Beranda</button>
             </div>
         </template>
-        <!-- Pembayaran belum terverifikasi -->
+
+        <!-- ── Pending / belum terverifikasi ── -->
         <template x-if="paymentConfirmed?.pending">
-            <div>
-                <div class="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div class="p-6">
+                <div class="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-3">
                     <svg class="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
-                <h3 class="font-black text-gray-900 text-xl mb-1">Menunggu Konfirmasi</h3>
-                <p class="text-sm text-gray-500 mb-3">Pembayaran belum terkonfirmasi di sistem kami</p>
-                <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full mb-5" x-text="paymentConfirmed?.orderId"></div>
-                <div class="bg-amber-50 rounded-2xl p-4 text-left mb-5">
-                    <p class="text-sm text-amber-800">Jika kamu sudah membayar, konfirmasi biasanya membutuhkan beberapa menit. Kamu bisa cek status pesanan atau hubungi CS jika lebih dari 10 menit.</p>
+                <h3 class="font-black text-gray-900 text-xl text-center mb-1">Menunggu Konfirmasi</h3>
+                <p class="text-sm text-gray-400 text-center mb-3">Pembayaran belum terkonfirmasi di sistem kami</p>
+                <div class="bg-brand-50 text-brand-600 font-bold text-sm px-3 py-1 rounded-full text-center mb-4 w-fit mx-auto" x-text="paymentConfirmed?.orderId"></div>
+                <div class="bg-amber-50 rounded-2xl p-4 mb-5 space-y-2">
+                    <p class="text-sm font-semibold text-amber-800 mb-1">Sudah bayar tapi belum terkonfirmasi?</p>
+                    <p class="text-sm text-amber-700">Konfirmasi otomatis biasanya butuh beberapa menit. Sistem kami akan update secara otomatis saat iPaymu mengirim notifikasi.</p>
+                    <p class="text-sm text-amber-700 mt-1">Jika lebih dari 10 menit, hubungi CS kami.</p>
                 </div>
-                <button @click="setPage('profile'); profileTab='pesanan'; paymentConfirmed=null; loadOrders()" class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all shadow-md mb-2.5">Cek Status Pesanan</button>
-                <button @click="paymentConfirmed=null; setPage('home')" class="block w-full text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Kembali ke Beranda</button>
+                <button @click="openConfirmedOrderDetail()" class="w-full gradient-card text-white font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition-all shadow-md mb-2.5">Cek Status Pesanan</button>
+                <button @click="paymentConfirmed=null; setPage('home')" class="block w-full text-gray-400 text-sm py-2.5 hover:text-gray-600 transition-colors">Kembali ke Beranda</button>
             </div>
         </template>
     </div>
@@ -4499,7 +4536,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260428-2',
+        APP_VERSION:      '20260501-1',
 
         // PWA Install
         pwaPopup:            false,
@@ -4570,6 +4607,7 @@ function serabutStore() {
         iPaymuReturnStatus: null,
         currentOrderIPaymuData: null,
         paymentConfirmed: null,
+        pendingOrderDetailId: null,
 
         // Profile
         profileTab:    'diri',
@@ -4890,24 +4928,36 @@ function serabutStore() {
         // ── Init ──────────────────────────────────────
         async init() {
             this.initPageFromURL();
-            // ── iPaymu return URL handler ──
+
+            // ── iPaymu return URL — capture & simpan ke sessionStorage SEBELUM reload ──
+            let pendingPayment = null;
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const payStatus = urlParams.get('payment');
+                const urlParams  = new URLSearchParams(window.location.search);
+                const payStatus  = urlParams.get('payment');
                 const payOrderId = urlParams.get('orderId');
-                if (payStatus === 'success' && payOrderId) {
-                    window.history.replaceState({}, '', window.location.pathname);
-                    await this.verifyAndConfirmPayment(payOrderId);
-                } else if (payStatus === 'cancel' && payOrderId) {
-                    this.iPaymuReturnStatus = { status: 'cancel', orderId: payOrderId };
-                    window.history.replaceState({}, '', window.location.pathname);
+                if (payStatus && payOrderId) {
+                    pendingPayment = { status: payStatus, orderId: payOrderId };
+                    sessionStorage.setItem('srb_pending_payment', JSON.stringify(pendingPayment));
                 }
+                if (payStatus || payOrderId) window.history.replaceState({}, '', window.location.pathname);
             } catch {}
+            // Ambil dari sessionStorage jika tidak ada di URL (misal setelah cache-bust reload)
+            if (!pendingPayment) {
+                try {
+                    const ss = sessionStorage.getItem('srb_pending_payment');
+                    if (ss) pendingPayment = JSON.parse(ss);
+                } catch {}
+            }
+            try { sessionStorage.removeItem('srb_pending_payment'); } catch {}
+
             // ── Cache busting — auto-reload jika versi baru terdeteksi ──
+            // sessionStorage survive reload → pendingPayment aman
             try {
                 const storedV = localStorage.getItem('srb_app_v');
                 if (storedV && storedV !== this.APP_VERSION) {
                     localStorage.setItem('srb_app_v', this.APP_VERSION);
+                    // simpan ulang ke sessionStorage agar survive reload
+                    if (pendingPayment) sessionStorage.setItem('srb_pending_payment', JSON.stringify(pendingPayment));
                     location.reload(true);
                     return;
                 }
@@ -4993,6 +5043,16 @@ function serabutStore() {
             if(this.currentUser) {
                 await this.refreshUserRole();
             }
+
+            // ── iPaymu return — jalankan SETELAH user di-load ──
+            if (pendingPayment) {
+                if (pendingPayment.status === 'success') {
+                    await this.verifyAndConfirmPayment(pendingPayment.orderId);
+                } else if (pendingPayment.status === 'cancel') {
+                    this.iPaymuReturnStatus = { status: 'cancel', orderId: pendingPayment.orderId };
+                }
+            }
+
             await Promise.all([this.fetchProducts(), this.loadSiteSettings()]);
             setInterval(() => {
                 if(!this.flashSale.aktif) return;
@@ -5649,19 +5709,39 @@ function serabutStore() {
             try {
                 const res = await this.gasPost({ action: 'confirmPayment', orderId });
                 if (res.success) {
-                    this.paymentConfirmed = { orderId, productName: res.productName || '' };
+                    this.paymentConfirmed = {
+                        orderId,
+                        productName:   res.productName   || '',
+                        paymentMethod: res.paymentMethod || '',
+                        totalHarga:    res.totalHarga    || 0,
+                        items:         res.items         || [],
+                        buyerNama:     res.buyerNama     || '',
+                        pending: false
+                    };
                 } else {
-                    // pending: true = iPaymu belum konfirmasi; tetap tampilkan modal tapi beda pesan
                     this.paymentConfirmed = { orderId, productName: '', pending: !!res.pending };
                 }
             } catch(e) {
-                this.paymentConfirmed = { orderId, productName: '' };
+                this.paymentConfirmed = { orderId, productName: '', pending: true };
             }
             if (this.currentUser) {
                 this.setPage('profile');
                 this.profileTab = 'pesanan';
-                this.loadOrders();
+                this.pendingOrderDetailId = orderId;
+                await this.loadOrders();
             }
+        },
+
+        async openConfirmedOrderDetail() {
+            const orderId = this.paymentConfirmed?.orderId;
+            this.paymentConfirmed = null;
+            this.productModal = false;
+            this.renewalMode  = false;
+            this.setPage('profile');
+            this.profileTab = 'pesanan';
+            if (this.currentUser && !this.orders.length) await this.loadOrders();
+            const order = this.orders.find(o => o.orderId === orderId);
+            if (order) this.$nextTick(() => this.openOrderDetail(order));
         },
 
         async payViaIPaymu() {
@@ -6784,9 +6864,15 @@ function serabutStore() {
             this.ordersCurrentPage=1;
             try {
                 const data = await this.gasPost({ action:'getOrders', email:this.currentUser.email, sessionToken:this.currentUser.sessionToken });
-                console.log('[loadOrders] response:', JSON.stringify(data));
                 if(!data.success) console.warn('[loadOrders] error dari GAS:', data.error);
                 this.orders = data.data || [];
+                // Auto-open order detail jika kembali dari payment redirect
+                if (this.pendingOrderDetailId) {
+                    const targetId = this.pendingOrderDetailId;
+                    this.pendingOrderDetailId = null;
+                    const order = this.orders.find(o => o.orderId === targetId);
+                    if (order) this.$nextTick(() => this.openOrderDetail(order));
+                }
             } catch(err) { console.error('[loadOrders] exception:', err); this.orders=[]; }
             finally { this.ordersLoading=false; }
         },

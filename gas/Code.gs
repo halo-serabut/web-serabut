@@ -1879,7 +1879,8 @@ function checkIPaymuOrderStatus({ orderId, email }) {
   // Panggil iPaymu status API
   let result;
   try {
-    result = _iPaymuRequest('https://my.ipaymu.com/api/v2/payment/status', { referenceId: orderId });
+    const va2 = (PropertiesService.getScriptProperties().getProperty('IPAYMU_VA') || '').trim();
+    result = _iPaymuRequest('https://my.ipaymu.com/api/v2/payment/status', { account: va2, referenceId: orderId });
     Logger.log('checkIPaymuOrderStatus [' + orderId + ']: ' + JSON.stringify(result));
   } catch(e) {
     Logger.log('checkIPaymuOrderStatus error: ' + e.message);
@@ -1992,7 +1993,8 @@ function confirmPayment({ orderId }) {
   if (!iPaymuVerified) {
     // Verifikasi pembayaran ke iPaymu sebelum kirim WA
     try {
-      const ipResult = _iPaymuRequest('https://my.ipaymu.com/api/v2/payment/status', { referenceId: orderId });
+      const va2 = (PropertiesService.getScriptProperties().getProperty('IPAYMU_VA') || '').trim();
+      const ipResult = _iPaymuRequest('https://my.ipaymu.com/api/v2/payment/status', { account: va2, referenceId: orderId });
       Logger.log('confirmPayment iPaymu verify [' + orderId + ']: ' + JSON.stringify(ipResult));
       if (ipResult.Status === 200 && ipResult.Data) {
         const ipStatus = String(ipResult.Data.Status || ipResult.Data.status_code || '').toLowerCase();
@@ -2093,18 +2095,18 @@ function confirmPayment({ orderId }) {
   Logger.log('confirmPayment: WA group terkirim untuk order ' + orderId);
 
   // Notif ke buyer (WA personal + email)
+  const buyerItems = rows.map(r => ({
+    produk:    String(r.row[prodCol] || ''),
+    varian:    String(r.row[varCol]  || '-'),
+    masaAktif: String(r.row[masCol]  || '-'),
+    harga:     Number(r.row[hrgCol]  || 0)
+  }));
+  const totalHarga = buyerItems.reduce((s, it) => s + it.harga, 0);
   try {
-    const buyerItems = rows.map(r => ({
-      produk:    String(r.row[prodCol] || ''),
-      varian:    String(r.row[varCol]  || '-'),
-      masaAktif: String(r.row[masCol]  || '-'),
-      harga:     Number(r.row[hrgCol]  || 0)
-    }));
-    const totalHarga = buyerItems.reduce((s, it) => s + it.harga, 0);
     sendBuyerOrderConfirm(userWa, userEmail, userNama, orderId, buyerItems, totalHarga);
   } catch(e) { Logger.log('confirmPayment: buyer notif error: ' + e.message); }
 
-  return { success: true, orderId, productName: productName || '' };
+  return { success: true, orderId, productName: productName || '', paymentMethod: payMethod || '', totalHarga, items: buyerItems, buyerNama: userNama };
 }
 
 // ────────────────────────────────────────────────────────
