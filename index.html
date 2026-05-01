@@ -2502,7 +2502,7 @@
                             <div x-show="adminIPaymuSyncMsg" class="text-xs font-medium mb-2 px-3 py-2 rounded-lg"
                                  :class="adminIPaymuSyncMsg.startsWith('✓') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'"
                                  x-text="adminIPaymuSyncMsg"></div>
-                            <button @click="adminIPaymuSyncOrders()"
+                            <button @click="adminIPaymuSyncConfirm=true"
                                     :disabled="adminIPaymuSyncLoading"
                                     class="w-full bg-brand-500 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-brand-600 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
                                 <svg class="w-4 h-4" :class="adminIPaymuSyncLoading?'animate-spin':''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
@@ -4211,6 +4211,22 @@
 <!-- iPaymu tidak support iframe (X-Frame-Options: sameorigin) — gunakan redirect langsung -->
 
 <!-- Modal Pembayaran Berhasil — muncul setelah user kembali dari iPaymu -->
+<!-- ── Custom Confirm Modal: Sync Order Pending ── -->
+<div x-show="adminIPaymuSyncConfirm" class="fixed inset-0 z-[400] flex items-center justify-center px-4" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" style="display:none">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="adminIPaymuSyncConfirm=false"></div>
+    <div class="relative bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center">
+        <div class="w-12 h-12 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-6 h-6 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </div>
+        <h3 class="font-black text-gray-900 text-lg mb-2">Sync Order Pending?</h3>
+        <p class="text-sm text-gray-500 mb-5">Sistem akan mengambil riwayat pembayaran dari iPaymu dan memperbarui status order yang sudah dibayar menjadi <strong>Diproses</strong>.</p>
+        <div class="flex gap-3">
+            <button @click="adminIPaymuSyncConfirm=false" class="flex-1 border border-gray-200 text-gray-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors">Batal</button>
+            <button @click="adminIPaymuSyncConfirm=false; adminIPaymuSyncOrders()" class="flex-1 bg-brand-500 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-brand-600 transition-colors active:scale-95">Ya, Sync Sekarang</button>
+        </div>
+    </div>
+</div>
+
 <div x-show="paymentConfirmed" class="fixed inset-0 z-[300] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" style="display:none">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
     <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl shadow-2xl max-h-[92vh] overflow-y-auto">
@@ -4791,6 +4807,7 @@ function serabutStore() {
         adminIPaymuPagination:     {},
         adminIPaymuSyncLoading:    false,
         adminIPaymuSyncMsg:        '',
+        adminIPaymuSyncConfirm:    false,
         adminIPaymuFilter:         { startdate:'', enddate:'', status:'', page:1, limit:20 },
 
         // ── Static Data ──────────────────────────────
@@ -6222,7 +6239,6 @@ function serabutStore() {
             this.adminIPaymuHistoryLoading = false;
         },
         async adminIPaymuSyncOrders() {
-            if (!confirm('Sync semua order Pending/Dibatalkan ke iPaymu? Ini akan mengecek satu per satu dan memakan waktu.')) return;
             this.adminIPaymuSyncLoading = true;
             this.adminIPaymuSyncMsg     = '';
             try {
