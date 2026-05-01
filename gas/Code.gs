@@ -2744,39 +2744,60 @@ function iPaymuAdminSyncOrders(params) {
   }
 
   const pendingCount = Object.keys(pendingIds).length;
-  Logger.log('syncOrders: ' + pendingCount + ' pending orders to check');
+  Logger.log('syncOrders: ' + pendingCount + ' pending orders, list: ' + JSON.stringify(Object.keys(pendingIds)));
+
+  if (pendingCount === 0) return { success: true, checked: 0, updated: 0 };
 
   const props = PropertiesService.getScriptProperties();
   const va    = (props.getProperty('IPAYMU_VA') || '').trim();
 
-  // Ambil history iPaymu — status=1 (Berhasil), limit tinggi untuk cover semua
-  // Pakai beberapa halaman jika perlu
+  // Ambil history iPaymu TANPA filter status — filter paid di kode kita
+  // (status filter iPaymu kadang return kosong — lebih aman ambil semua lalu filter)
   const paidMap = {}; // referenceId → paymentMethod
   let page = 1;
-  while (page <= 5) { // max 5 halaman = 500 transaksi terakhir
+  let apiError = '';
+  while (page <= 10) {
     try {
       const histRes = _iPaymuRequest('https://my.ipaymu.com/api/v2/history', {
-        account: va, status: 1, page: page, limit: 100, orderBy: 'id', order: 'DESC', date: 'created_at'
+        account: va, page: page, limit: 100, orderBy: 'id', order: 'DESC', date: 'created_at'
       });
-      if (Number(histRes.Status) !== 200 || !histRes.Data || !histRes.Data.Transaction) break;
+      Logger.log('syncOrders history page ' + page + ' HTTP=' + histRes.Status + ' trx=' + JSON.stringify((histRes.Data || {}).Transaction || []).substring(0, 300));
+      if (Number(histRes.Status) !== 200 || !histRes.Data || !histRes.Data.Transaction) {
+        apiError = histRes.Message || ('HTTP ' + histRes.Status);
+        break;
+      }
       const trxList = histRes.Data.Transaction;
-      if (trxList.length === 0) break;
+      if (!trxList || trxList.length === 0) break;
+
       trxList.forEach(function(t) {
-        const ref = String(t.ReferenceId || '').trim();
-        if (ref && ref.startsWith('SRB-')) {
+        const ref        = String(t.ReferenceId || '').trim();
+        const stNum      = Number(t.Status);
+        const stDesc     = String(t.StatusDesc || '').toLowerCase();
+        const paidStatus = String(t.PaidStatus || '').toLowerCase();
+        // Status 1 = Berhasil, 6 = Berhasil Unsettled, 7 = Escrow
+        const isPaid = (stNum === 1 || stNum === 6 || stNum === 7 ||
+                        stDesc === 'berhasil' || paidStatus === 'paid');
+        if (ref && ref.startsWith('SRB-') && isPaid) {
           paidMap[ref] = t.PaymentMethod || t.PaymentChannel || 'iPaymu';
+          Logger.log('syncOrders: found paid ref=' + ref + ' method=' + paidMap[ref] + ' status=' + stNum + '/' + stDesc);
         }
       });
+
       const totalPages = (histRes.Data.Pagination || {}).total_pages || 1;
-      if (page >= totalPages) break;
+      if (page >= totalPages || trxList.length < 100) break;
       page++;
     } catch(e) {
-      Logger.log('syncOrders history fetch error page ' + page + ': ' + e.message);
+      Logger.log('syncOrders history error page ' + page + ': ' + e.message);
+      apiError = e.message;
       break;
     }
   }
 
-  Logger.log('syncOrders: paidMap ReferenceIds found: ' + JSON.stringify(Object.keys(paidMap)));
+  Logger.log('syncOrders: paidMap = ' + JSON.stringify(paidMap));
+
+  if (apiError && Object.keys(paidMap).length === 0) {
+    return { success: false, error: 'Gagal ambil history iPaymu: ' + apiError };
+  }
 
   // Ensure payment cols exist
   let pmCol = headers.indexOf('payment method');
@@ -2786,7 +2807,7 @@ function iPaymuAdminSyncOrders(params) {
 
   let updated = 0;
   for (const orderId of Object.keys(pendingIds)) {
-    if (!paidMap[orderId]) continue; // tidak ada di iPaymu history paid
+    if (!paidMap[orderId]) continue;
     const payMethod = paidMap[orderId];
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][idCol]).trim() !== orderId) continue;
@@ -2798,10 +2819,29 @@ function iPaymuAdminSyncOrders(params) {
       sheet.getRange(i + 1, psCol + 1).setValue('Berhasil');
     }
     updated++;
-    Logger.log('syncOrders: ' + orderId + ' → Diproses via ' + payMethod);
+    Logger.log('syncOrders: updated ' + orderId + ' → Diproses via ' + payMethod);
   }
 
+  SpreadsheetApp.flush(); // pastikan semua write ter-commit sebelum return
+  Logger.log('syncOrders: done. checked=' + pendingCount + ' updated=' + updated);
   return { success: true, checked: pendingCount, updated };
+}
+
+// Test helper — jalankan di GAS editor untuk debug sync
+function testSyncOrders() {
+  const props = PropertiesService.getScriptProperties();
+  const va    = (props.getProperty('IPAYMU_VA') || '').trim();
+  Logger.log('=== Test Sync Orders ===');
+  // Step 1: history tanpa filter
+  const res = _iPaymuRequest('https://my.ipaymu.com/api/v2/history', {
+    account: va, page: 1, limit: 20, orderBy: 'id', order: 'DESC', date: 'created_at'
+  });
+  Logger.log('HTTP: ' + res.Status);
+  Logger.log('Total: ' + ((res.Data || {}).Pagination || {}).total);
+  const trxList = (res.Data || {}).Transaction || [];
+  trxList.forEach(function(t) {
+    Logger.log('Ref: ' + t.ReferenceId + ' | Status: ' + t.Status + '/' + t.StatusDesc + ' | PaidStatus: ' + t.PaidStatus + ' | Method: ' + t.PaymentMethod);
+  });
 }
 
 function findColIdx(headers, keywords) {
