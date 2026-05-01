@@ -2888,6 +2888,23 @@ function iPaymuAdminSyncOrders(params) {
 }
 
 // Test helper — jalankan di GAS editor untuk debug sync
+// Test kirim WA grup tanpa harus bayar — jalankan dari GAS Editor
+function testWAGroupNotif() {
+  const msg = `✅ *PEMBAYARAN BERHASIL* [TEST]\n` +
+    `Order ID: *SRB-TEST-001*\n` +
+    `Produk: *Microsoft Office 365 · Personal*\n` +
+    `Durasi: 1 Tahun\n` +
+    `Total Bayar: *Rp 35.000*\n` +
+    `Metode: QRIS\n` +
+    `Email Aktif: test@gmail.com\n` +
+    `Nama: Eko Harianto\n` +
+    `No WA: 628123456789\n` +
+    `Status: *Diproses* ⚙️`;
+  Logger.log('Mengirim test WA ke grup...');
+  sendWAToGroup(msg);
+  Logger.log('Selesai. Cek grup WA.');
+}
+
 function testSyncOrders() {
   const props = PropertiesService.getScriptProperties();
   const va    = (props.getProperty('IPAYMU_VA') || '').trim();
