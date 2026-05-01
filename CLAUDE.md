@@ -166,10 +166,19 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 - [2026-04-30] Selesai: FAQ redesign modern — category filter pills (Office 365, Windows, Adobe, Pembayaran, Akun & Garansi), dot warna per kategori, 15 FAQ product-focused, CTA "Hubungi Live Agent" (bukan WhatsApp)
 - [2026-04-30] Selesai: iPaymu iframe payment flow — 5s countdown → full-screen iframe modal; countdown 15 menit MM:SS + progress bar (hijau→kuning→merah); same-origin iframe detection untuk success/cancel; timeout auto-redirect ke Pesanan; `payViaIPaymu` juga pakai iframe; fallback "Buka di tab baru"
 
+- [2026-05-01] Selesai: iPaymu Admin Panel + Sync + Payment UX:
+  - Fix `_requireAdmin` (ganti `_isAdmin` yang tidak exist) di semua endpoint iPaymu admin
+  - Fix history API: `limit: 100` → `limit: 20` (max iPaymu), break condition disesuaikan
+  - Fix `getAllOrders` baca `paymentMethod` & `paymentStatus` dinamis dari header sheet (sebelumnya hardcode index 0–9)
+  - Kolom **Bayar Via** di tabel Semua Order (desktop tabel + mobile card): metode + status bayar
+  - Cache tab admin: Semua Order & iPaymu hanya load sekali, refresh manual via tombol Refresh; cache invalidate otomatis setelah sync/update
+  - `iPaymuAdminSyncOrders`: hapus status filter → cek isPaid di kode; `SpreadsheetApp.flush()`; **kirim WA grup** per orderId saat terdeteksi bayar (produk, durasi, total, metode, extra fields)
+  - Payment return UX: modal popup → **banner inline** di tab Pesanan (hijau=berhasil, kuning=pending); close button → home; `sessionStorage` survive cache-bust reload
+  - Helper: `testWAGroupNotif()` dan `testSyncOrders()` di GAS untuk debug tanpa bayar
+  - GAS deployment: @90
+
 ## Current Focus
-- **Deploy GAS wajib**: `createIPaymuPayment` + `ipaymuCallback` sudah di Code.gs — push ke GAS dulu.
-- **Script Properties iPaymu**: Set `IPAYMU_VA` dan `IPAYMU_API_KEY` di GAS Script Properties setelah akun iPaymu approved.
-- **iPaymu iframe**: Pastikan return URL iPaymu dikonfigurasi ke `https://serabut.id/?payment=success&orderId={orderId}` agar same-origin detection bekerja.
-- **FONNTE_TOKEN** perlu diset di GAS Script Properties agar WA notification aktif.
-- **Google SSO** sudah aktif (GOOGLE_CLIENT_ID sudah diisi di Alpine config).
-- Deploy GAS: `cp worktree/gas/Code.gs gas/Code.gs && cd gas && clasp push && clasp deploy --deploymentId [ID]`
+- iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
+- **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
+- **Google SSO** sudah aktif (GOOGLE_CLIENT_ID sudah diisi di Alpine config)
+- Deploy command: `cp worktree/gas/Code.gs gas/Code.gs && cd gas && clasp push && clasp deploy --deploymentId AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w`
