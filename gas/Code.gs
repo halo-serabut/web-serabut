@@ -121,7 +121,10 @@ function doPost(e) {
       case 'setUserRole':       result = setUserRole(params); break;
       case 'updateProductStock':    result = updateProductStock(params); break;
       case 'updateProductAktif':    result = updateProductAktif(params); break;
-      case 'saveProductBenefits':   result = saveProductBenefits(params); break;
+      case 'saveProductBenefits':       result = saveProductBenefits(params); break;
+      case 'iPaymuAdminGetBalance':     result = iPaymuAdminGetBalance(params); break;
+      case 'iPaymuAdminGetHistory':     result = iPaymuAdminGetHistory(params); break;
+      case 'iPaymuAdminGetTransaction': result = iPaymuAdminGetTransaction(params); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -1287,6 +1290,7 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
   // Buat sesi iPaymu langsung
   let paymentUrl = null;
+  let paymentError = null;
   try {
     const ipRes = createIPaymuPayment({
       orderId,
@@ -1298,10 +1302,16 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
       total: hargaNum
     });
     if (ipRes.success) paymentUrl = ipRes.paymentUrl;
-    else Logger.log('createOrder iPaymu error: ' + ipRes.error);
-  } catch(e) { Logger.log('createOrder iPaymu exception: ' + e.message); }
+    else {
+      paymentError = ipRes.error || 'Gagal membuat sesi pembayaran';
+      Logger.log('createOrder iPaymu error: ' + paymentError);
+    }
+  } catch(e) {
+    paymentError = 'iPaymu exception: ' + e.message;
+    Logger.log('createOrder iPaymu exception: ' + e.message);
+  }
 
-  return { success: true, orderId, harga: hargaNum, paymentUrl };
+  return { success: true, orderId, harga: hargaNum, paymentUrl, paymentError };
 }
 
 // ────────────────────────────────────────────────────────
@@ -1659,10 +1669,16 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   }
 
   // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
-  // Buat sesi iPaymu langsung
+  // Buat sesi iPaymu langsung — ipItems pakai harga server-validated (bukan client)
   let paymentUrl = null;
+  let paymentError = null;
   try {
-    const ipItems = items.map(it => ({ produk: it.produk, varian: it.varian||'-', masaAktif: it.masaAktif||'-', harga: it.harga }));
+    const ipItems = items.map(it => ({
+      produk: it.produk,
+      varian: it.varian||'-',
+      masaAktif: it.masaAktif||'-',
+      harga: _getCatalogPrice(it.produk, it.varian, it.masaAktif) * (Number(it.qty) || 1)
+    }));
     const ipRes = createIPaymuPayment({
       orderId,
       itemsJson:     JSON.stringify(ipItems),
@@ -1673,10 +1689,16 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
       total: totalHarga
     });
     if (ipRes.success) paymentUrl = ipRes.paymentUrl;
-    else Logger.log('createCartOrder iPaymu error: ' + ipRes.error);
-  } catch(e) { Logger.log('createCartOrder iPaymu exception: ' + e.message); }
+    else {
+      paymentError = ipRes.error || 'Gagal membuat sesi pembayaran';
+      Logger.log('createCartOrder iPaymu error: ' + paymentError);
+    }
+  } catch(e) {
+    paymentError = 'iPaymu exception: ' + e.message;
+    Logger.log('createCartOrder iPaymu exception: ' + e.message);
+  }
 
-  return { success: true, orderId, total: totalHarga, paymentUrl };
+  return { success: true, orderId, total: totalHarga, paymentUrl, paymentError };
 }
 
 // ────────────────────────────────────────────────────────
@@ -1697,9 +1719,9 @@ function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerP
   const prices   = items.map(i => Math.round(Number(i.harga) || 0));
   const totalAmt = Math.round(Number(total) || 0) || prices.reduce(function(s,p){ return s+p; }, 0);
 
-  // notifyUrl: gunakan GAS deployment URL agar callback iPaymu bekerja
-  let notifyUrl = 'https://serabut.id/';
-  try { notifyUrl = ScriptApp.getService().getUrl(); } catch(e) {}
+  // notifyUrl: HARUS domain yang terdaftar di merchant iPaymu (bukan script.google.com)
+  // Set IPAYMU_NOTIFY_URL di Script Properties jika ada endpoint khusus
+  const notifyUrl = (props.getProperty('IPAYMU_NOTIFY_URL') || '').trim() || 'https://serabut.id/';
 
   const body = {
     product:     items.map(function(i){ return i.produk + (i.varian && i.varian !== '-' ? ' - ' + i.varian : ''); }),
@@ -1715,10 +1737,9 @@ function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerP
     buyerPhone:  buyerPhone  || ''
   };
 
-  // Hanya sertakan imageUrl jika semua item punya URL http/https valid
-  // iPaymu menolak data: URI dan empty string
-  const cleanUrls = imageUrls.map(function(u){ return (u && typeof u === 'string' && u.indexOf('http') === 0) ? u : ''; });
-  if (cleanUrls.some(function(u){ return u !== ''; })) {
+  // Hanya sertakan imageUrl yang valid (http/https); iPaymu menolak data: URI dan empty string
+  const cleanUrls = imageUrls.filter(function(u){ return u && typeof u === 'string' && u.indexOf('http') === 0; });
+  if (cleanUrls.length > 0) {
     body.imageUrl = cleanUrls;
   }
 
@@ -1742,13 +1763,20 @@ function createIPaymuPayment({ orderId, itemsJson, buyerName, buyerEmail, buyerP
     muteHttpExceptions: true
   });
 
-  const result = JSON.parse(resp.getContentText());
+  let result;
+  try {
+    result = JSON.parse(resp.getContentText());
+  } catch(e) {
+    Logger.log('iPaymu createPayment parse error: ' + resp.getContentText().substring(0, 500));
+    return { success: false, error: 'Response iPaymu tidak valid: ' + e.message };
+  }
   Logger.log('iPaymu createPayment response: ' + JSON.stringify(result));
 
-  if (result.Status === 200) {
+  // iPaymu bisa return Status sebagai number (200) atau string ("200")
+  if (Number(result.Status) === 200 && result.Data && result.Data.Url) {
     return { success: true, paymentUrl: result.Data.Url, sessionId: result.Data.SessionID };
   }
-  return { success: false, error: (result.Message || 'Gagal membuat sesi pembayaran iPaymu') };
+  return { success: false, error: (result.Message || 'Status: ' + result.Status + ' — Gagal membuat sesi pembayaran iPaymu') };
 }
 
 function ipaymuCallback(params) {
@@ -2627,6 +2655,61 @@ function _parseJSON(str, fallback) {
   try { return JSON.parse(str); } catch { return fallback; }
 }
 
+// ────────────────────────────────────────────────────────
+//  IPAYMU ADMIN APIs — balance, history, cek transaksi
+// ────────────────────────────────────────────────────────
+function iPaymuAdminGetBalance(params) {
+  if (!_isAdmin(params)) return { success: false, error: 'Unauthorized' };
+  const props  = PropertiesService.getScriptProperties();
+  const va     = (props.getProperty('IPAYMU_VA') || '').trim();
+  if (!va) return { success: false, error: 'IPAYMU_VA belum dikonfigurasi' };
+  const res = _iPaymuRequest('https://my.ipaymu.com/api/v2/balance', { account: va });
+  if (Number(res.Status) === 200) {
+    return { success: true, data: res.Data };
+  }
+  return { success: false, error: res.Message || 'Gagal cek balance' };
+}
+
+function iPaymuAdminGetHistory(params) {
+  if (!_isAdmin(params)) return { success: false, error: 'Unauthorized' };
+  const props  = PropertiesService.getScriptProperties();
+  const va     = (props.getProperty('IPAYMU_VA') || '').trim();
+  if (!va) return { success: false, error: 'IPAYMU_VA belum dikonfigurasi' };
+
+  const body = { account: va };
+  if (params.startdate) body.startdate = params.startdate;
+  if (params.enddate)   body.enddate   = params.enddate;
+  if (params.status !== undefined && params.status !== '') body.status = Number(params.status);
+  body.page    = Number(params.page)  || 1;
+  body.limit   = Number(params.limit) || 20;
+  body.orderBy = params.orderBy || 'id';
+  body.order   = params.order   || 'DESC';
+  body.date    = params.date    || 'created_at';
+
+  const res = _iPaymuRequest('https://my.ipaymu.com/api/v2/history', body);
+  if (Number(res.Status) === 200) {
+    return { success: true, data: res.Data, total: res.Total };
+  }
+  return { success: false, error: res.Message || 'Gagal ambil history' };
+}
+
+function iPaymuAdminGetTransaction(params) {
+  if (!_isAdmin(params)) return { success: false, error: 'Unauthorized' };
+  const props  = PropertiesService.getScriptProperties();
+  const va     = (props.getProperty('IPAYMU_VA') || '').trim();
+  if (!va) return { success: false, error: 'IPAYMU_VA belum dikonfigurasi' };
+  if (!params.transactionId) return { success: false, error: 'transactionId diperlukan' };
+
+  const res = _iPaymuRequest('https://my.ipaymu.com/api/v2/transaction', {
+    transactionId: params.transactionId,
+    account: va
+  });
+  if (Number(res.Status) === 200) {
+    return { success: true, data: res.Data };
+  }
+  return { success: false, error: res.Message || 'Transaksi tidak ditemukan' };
+}
+
 function findColIdx(headers, keywords) {
   for (const kw of keywords) {
     const idx = headers.findIndex(h => h === kw || h.includes(kw));
@@ -2747,7 +2830,103 @@ function testGasEgressIP() {
   Logger.log('GAS Egress IP: ' + resp.getContentText());
 }
 
-// Test iPaymu PRODUCTION — run dari GAS editor
+// Test iPaymu Check Balance — run dari GAS editor
+function testIPaymuBalance() {
+  var props  = PropertiesService.getScriptProperties();
+  var va     = (props.getProperty('IPAYMU_VA')      || '').trim();
+  var apiKey = (props.getProperty('IPAYMU_API_KEY') || '').trim();
+  if (!va || !apiKey) { Logger.log('ERROR: Set IPAYMU_VA dan IPAYMU_API_KEY dulu'); return; }
+
+  var body    = { account: va };
+  var bodyStr = JSON.stringify(body);
+  var ts      = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyyMMddHHmmss');
+  function _hex(a) { return a.map(function(b){ return ((b&0xff)<16?'0':'')+(b&0xff).toString(16); }).join(''); }
+  var hash = _hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bodyStr));
+  var sig  = _hex(Utilities.computeHmacSha256Signature('POST:'+va+':'+hash+':'+apiKey, apiKey));
+
+  var resp = UrlFetchApp.fetch('https://my.ipaymu.com/api/v2/balance', {
+    method: 'post',
+    headers: { 'Content-Type':'application/json','Accept':'application/json','va':va,'signature':sig,'timestamp':ts },
+    payload: bodyStr,
+    muteHttpExceptions: true
+  });
+
+  Logger.log('=== iPaymu Balance ===');
+  Logger.log('HTTP Code: ' + resp.getResponseCode());
+  Logger.log('Response : ' + resp.getContentText());
+  try {
+    var r = JSON.parse(resp.getContentText());
+    if (Number(r.Status) === 200) {
+      Logger.log('VA             : ' + r.Data.Va);
+      Logger.log('Saldo Merchant : Rp ' + Number(r.Data.MerchantBalance).toLocaleString());
+      Logger.log('Saldo Member   : Rp ' + Number(r.Data.MemberBalance).toLocaleString());
+    } else {
+      Logger.log('Error: ' + r.Message);
+    }
+  } catch(e) { Logger.log('Parse error: ' + e.message); }
+}
+
+// Test iPaymu History Transaction — run dari GAS editor
+// Ubah startdate/enddate/status sesuai kebutuhan sebelum run
+function testIPaymuHistory() {
+  var props  = PropertiesService.getScriptProperties();
+  var va     = (props.getProperty('IPAYMU_VA')      || '').trim();
+  var apiKey = (props.getProperty('IPAYMU_API_KEY') || '').trim();
+  if (!va || !apiKey) { Logger.log('ERROR: Set IPAYMU_VA dan IPAYMU_API_KEY dulu'); return; }
+
+  // ── Sesuaikan filter di sini ──────────────────────
+  var body = {
+    account:   va,
+    startdate: '2026-05-01',   // format YYYY-MM-DD
+    enddate:   '2026-05-31',
+    // status: 1,              // 0=Pending 1=Berhasil 2=Batal 3=Refund 5=Gagal 6=Berhasil(Unsettled) 7=Escrow -2=Expired
+    page:      1,
+    limit:     20,
+    orderBy:   'id',
+    order:     'DESC',
+    date:      'created_at'
+  };
+  // ─────────────────────────────────────────────────
+
+  var bodyStr = JSON.stringify(body);
+  var ts      = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyyMMddHHmmss');
+  function _hex(a) { return a.map(function(b){ return ((b&0xff)<16?'0':'')+(b&0xff).toString(16); }).join(''); }
+  var hash = _hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bodyStr));
+  var sig  = _hex(Utilities.computeHmacSha256Signature('POST:'+va+':'+hash+':'+apiKey, apiKey));
+
+  var resp = UrlFetchApp.fetch('https://my.ipaymu.com/api/v2/history', {
+    method: 'post',
+    headers: { 'Content-Type':'application/json','Accept':'application/json','va':va,'signature':sig,'timestamp':ts },
+    payload: bodyStr,
+    muteHttpExceptions: true
+  });
+
+  Logger.log('=== iPaymu History ===');
+  Logger.log('HTTP Code: ' + resp.getResponseCode());
+  var raw = resp.getContentText();
+  Logger.log('Response : ' + raw);
+  try {
+    var r = JSON.parse(raw);
+    if (Number(r.Status) === 200) {
+      var statusMap = {'-2':'Expired','0':'Pending','1':'Berhasil','2':'Batal','3':'Refund','4':'Error','5':'Gagal','6':'Berhasil(Unsettled)','7':'Escrow'};
+      var data = Array.isArray(r.Data) ? r.Data : [];
+      Logger.log('Transaksi ditemukan: ' + data.length);
+      data.forEach(function(trx, i) {
+        var st = statusMap[String(trx.Status || trx.status)] || String(trx.Status || '-');
+        Logger.log('['+( i+1)+'] ID:'+(trx.TransactionId||trx.id||'-')+
+          ' | Ref:'+(trx.ReferenceId||trx.reference_id||'-')+
+          ' | '+st+
+          ' | Rp '+(trx.Amount||trx.amount||0)+
+          ' | '+(trx.PaymentMethod||trx.Via||'-')+
+          ' | '+(String(trx.CreatedAt||trx.created_at||'-').substring(0,16)));
+      });
+    } else {
+      Logger.log('Error: ' + r.Message);
+    }
+  } catch(e) { Logger.log('Parse error: ' + e.message); }
+}
+
+// Test iPaymu PRODUCTION — run dari GAS editor, lihat hasil di Execution Log
 function testIPaymuProduction() {
   var props   = PropertiesService.getScriptProperties();
   var va      = (props.getProperty('IPAYMU_VA')      || '').trim();
@@ -2758,17 +2937,21 @@ function testIPaymuProduction() {
     return;
   }
 
+  Logger.log('VA      : [' + va + ']');
+  Logger.log('API Key : [' + apiKey + ']');
+
   var body = {
-    product:     ['Test Product'],
+    product:     ['Test Office 365'],
     qty:         [1],
-    price:       [10000],
-    returnUrl:   'https://serabut.id',
-    cancelUrl:   'https://serabut.id',
-    notifyUrl:   'https://serabut.id',
-    referenceId: 'PROD-TEST-' + Date.now(),
+    price:       [35000],
+    amount:      35000,
+    returnUrl:   'https://serabut.id/?payment=success&orderId=TEST-001',
+    cancelUrl:   'https://serabut.id/?payment=cancel&orderId=TEST-001',
+    notifyUrl:   'https://serabut.id/',
+    referenceId: 'TEST-' + Date.now(),
     buyerName:   'Test Buyer',
     buyerEmail:  'test@serabut.id',
-    buyerPhone:  '08881500555'
+    buyerPhone:  '6282300011736'
   };
 
   var bodyStr   = JSON.stringify(body);
@@ -2778,30 +2961,36 @@ function testIPaymuProduction() {
     return arr.map(function(b){ return ((b & 0xff) < 16 ? '0' : '') + (b & 0xff).toString(16); }).join('');
   }
 
-  var bodyHash    = _hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bodyStr));
-  var toSign      = 'POST:' + va + ':' + bodyHash + ':' + apiKey;
-  var signature   = _hex(Utilities.computeHmacSha256Signature(toSign, apiKey));
+  var bodyHash  = _hex(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, bodyStr));
+  var toSign    = 'POST:' + va + ':' + bodyHash + ':' + apiKey;
+  var signature = _hex(Utilities.computeHmacSha256Signature(toSign, apiKey));
 
   Logger.log('=== iPaymu PRODUCTION Test ===');
-  Logger.log('VA       : ' + va);
-  Logger.log('timestamp: ' + timestamp);
+  Logger.log('bodyStr  : ' + bodyStr);
   Logger.log('bodyHash : ' + bodyHash);
   Logger.log('toSign   : ' + toSign);
   Logger.log('signature: ' + signature);
+  Logger.log('timestamp: ' + timestamp);
 
-  var resp   = UrlFetchApp.fetch('https://my.ipaymu.com/api/v2/payment', {
+  var resp = UrlFetchApp.fetch('https://my.ipaymu.com/api/v2/payment', {
     method: 'post',
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'va': va, 'signature': signature, 'timestamp': timestamp },
     payload: bodyStr,
     muteHttpExceptions: true
   });
 
-  Logger.log('HTTP status: ' + resp.getResponseCode());
-  Logger.log('Response   : ' + resp.getContentText());
+  var httpCode = resp.getResponseCode();
+  var rawBody  = resp.getContentText();
+  Logger.log('HTTP Code: ' + httpCode);
+  Logger.log('Response : ' + rawBody);
+
+  try {
+    var parsed = JSON.parse(rawBody);
+    Logger.log('Status field type: ' + typeof parsed.Status + ' = ' + parsed.Status);
+    Logger.log('Data.Url : ' + (parsed.Data && parsed.Data.Url ? parsed.Data.Url : 'NOT FOUND'));
+    Logger.log('Message  : ' + (parsed.Message || '-'));
+  } catch(e) {
+    Logger.log('Parse error: ' + e.message);
+  }
 }
 
-// Cek IP publik yang dipakai GAS saat keluar ke internet
-function testGasEgressIP() {
-  var resp = UrlFetchApp.fetch('https://api.ipify.org?format=json', { muteHttpExceptions: true });
-  Logger.log('GAS Egress IP: ' + resp.getContentText());
-}

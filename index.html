@@ -1563,7 +1563,7 @@
 
             <!-- Tab Navigation -->
             <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 overflow-x-auto no-scrollbar">
-                <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'}]" :key="tab.id">
+                <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'ipaymu',label:'iPaymu'}]" :key="tab.id">
                     <button @click="adminTab=tab.id; adminInitTab(tab.id)"
                             :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
                             class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
@@ -2454,6 +2454,158 @@
 
                 </div>
             </div>
+
+            <!-- ── Tab: iPaymu ── -->
+            <div x-show="adminTab==='ipaymu'" class="space-y-5">
+
+                <!-- Balance Card -->
+                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-bold text-gray-900">Saldo iPaymu</h2>
+                        <button @click="adminIPaymuLoadBalance()"
+                                class="flex items-center gap-1.5 text-xs text-brand-600 font-semibold bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" :class="adminIPaymuBalanceLoading?'animate-spin':''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            Refresh
+                        </button>
+                    </div>
+                    <div x-show="adminIPaymuBalanceLoading" class="text-center py-6 text-gray-400 text-sm">Memuat saldo...</div>
+                    <div x-show="!adminIPaymuBalanceLoading && adminIPaymuBalance">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-emerald-50 rounded-xl p-4 text-center">
+                                <div class="text-xs text-emerald-600 font-medium mb-1">Saldo Merchant</div>
+                                <div class="text-xl font-bold text-emerald-700" x-text="'Rp ' + Number(adminIPaymuBalance?.MerchantBalance||0).toLocaleString('id-ID')"></div>
+                            </div>
+                            <div class="bg-blue-50 rounded-xl p-4 text-center">
+                                <div class="text-xs text-blue-600 font-medium mb-1">Saldo Member</div>
+                                <div class="text-xl font-bold text-blue-700" x-text="'Rp ' + Number(adminIPaymuBalance?.MemberBalance||0).toLocaleString('id-ID')"></div>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-center text-xs text-gray-400">VA: <span class="font-mono" x-text="adminIPaymuBalance?.Va"></span></div>
+                    </div>
+                    <div x-show="!adminIPaymuBalanceLoading && !adminIPaymuBalance" class="text-center py-6 text-gray-400 text-sm">
+                        <span x-text="adminIPaymuBalanceError || 'Klik Refresh untuk muat saldo'"></span>
+                    </div>
+                </div>
+
+                <!-- Cek Transaksi by ID -->
+                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+                    <h2 class="font-bold text-gray-900 mb-4">Cek Transaksi</h2>
+                    <div class="flex gap-2 mb-4">
+                        <input x-model="adminIPaymuTrxId" type="text" placeholder="Masukkan Transaction ID iPaymu..."
+                               class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"
+                               @keydown.enter="adminIPaymuCheckTrx()">
+                        <button @click="adminIPaymuCheckTrx()"
+                                :disabled="adminIPaymuTrxLoading || !adminIPaymuTrxId.trim()"
+                                class="bg-brand-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-brand-600 disabled:opacity-50 transition-colors">
+                            <span x-show="!adminIPaymuTrxLoading">Cek</span>
+                            <span x-show="adminIPaymuTrxLoading">...</span>
+                        </button>
+                    </div>
+                    <div x-show="adminIPaymuTrxData" class="bg-gray-50 rounded-xl p-4 space-y-2 text-sm">
+                        <template x-if="adminIPaymuTrxData">
+                            <div class="space-y-2">
+                                <div class="flex justify-between"><span class="text-gray-500">Trx ID</span><span class="font-mono text-xs font-semibold" x-text="adminIPaymuTrxData.TransactionId || adminIPaymuTrxData.id || '-'"></span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Reference ID</span><span class="font-mono text-xs" x-text="adminIPaymuTrxData.ReferenceId || adminIPaymuTrxData.reference_id || '-'"></span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Status</span>
+                                    <span :class="adminIPaymuTrxStatusBadge(adminIPaymuTrxData.Status||adminIPaymuTrxData.status)" class="font-semibold text-xs px-2 py-0.5 rounded-full" x-text="adminIPaymuTrxStatusLabel(adminIPaymuTrxData.Status||adminIPaymuTrxData.status)"></span>
+                                </div>
+                                <div class="flex justify-between"><span class="text-gray-500">Metode</span><span class="font-semibold" x-text="adminIPaymuTrxData.PaymentMethod || adminIPaymuTrxData.Via || '-'"></span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Jumlah</span><span class="font-bold text-emerald-700" x-text="'Rp ' + Number(adminIPaymuTrxData.Amount||adminIPaymuTrxData.amount||0).toLocaleString('id-ID')"></span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Tanggal</span><span x-text="adminIPaymuTrxData.CreatedAt || adminIPaymuTrxData.created_at || '-'"></span></div>
+                            </div>
+                        </template>
+                    </div>
+                    <div x-show="adminIPaymuTrxError" class="text-center text-red-500 text-sm py-2" x-text="adminIPaymuTrxError"></div>
+                </div>
+
+                <!-- History Transaksi -->
+                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-bold text-gray-900">Riwayat Transaksi</h2>
+                        <button @click="adminIPaymuLoadHistory()" class="text-xs text-brand-600 font-semibold bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors">Muat</button>
+                    </div>
+                    <!-- Filters -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                        <input x-model="adminIPaymuFilter.startdate" type="date"
+                               class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400">
+                        <input x-model="adminIPaymuFilter.enddate" type="date"
+                               class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400">
+                        <select x-model="adminIPaymuFilter.status" class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 bg-white">
+                            <option value="">Semua Status</option>
+                            <option value="-2">Expired</option>
+                            <option value="0">Pending</option>
+                            <option value="1">Berhasil</option>
+                            <option value="2">Batal</option>
+                            <option value="3">Refund</option>
+                            <option value="5">Gagal</option>
+                            <option value="6">Berhasil (Unsettled)</option>
+                            <option value="7">Escrow</option>
+                        </select>
+                        <select x-model="adminIPaymuFilter.limit" class="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 bg-white">
+                            <option value="10">10 per halaman</option>
+                            <option value="20" selected>20 per halaman</option>
+                        </select>
+                    </div>
+                    <div x-show="adminIPaymuHistoryLoading" class="text-center py-8 text-gray-400 text-sm">Memuat riwayat...</div>
+                    <div x-show="!adminIPaymuHistoryLoading && adminIPaymuHistory.length > 0">
+                        <!-- Mobile cards -->
+                        <div class="md:hidden space-y-2">
+                            <template x-for="(trx, i) in adminIPaymuHistory" :key="i">
+                                <div class="bg-gray-50 rounded-xl p-3">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="font-mono text-xs text-gray-500" x-text="trx.ReferenceId || trx.reference_id || trx.TransactionId || '-'"></span>
+                                        <span :class="adminIPaymuTrxStatusBadge(trx.Status||trx.status)" class="text-[10px] font-bold px-2 py-0.5 rounded-full" x-text="adminIPaymuTrxStatusLabel(trx.Status||trx.status)"></span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-500" x-text="(trx.PaymentMethod||trx.Via||'-') + ' · ' + (trx.CreatedAt||trx.created_at||'-').substring(0,10)"></span>
+                                        <span class="font-bold text-sm text-gray-800" x-text="'Rp ' + Number(trx.Amount||trx.amount||0).toLocaleString('id-ID')"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <!-- Desktop tabel -->
+                        <div class="hidden md:block overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 border-b border-gray-100">
+                                    <tr>
+                                        <th class="text-left px-3 py-2 text-xs font-bold text-gray-500">Trx ID / Ref</th>
+                                        <th class="text-left px-3 py-2 text-xs font-bold text-gray-500">Tanggal</th>
+                                        <th class="text-left px-3 py-2 text-xs font-bold text-gray-500">Metode</th>
+                                        <th class="text-right px-3 py-2 text-xs font-bold text-gray-500">Jumlah</th>
+                                        <th class="text-center px-3 py-2 text-xs font-bold text-gray-500">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(trx, i) in adminIPaymuHistory" :key="i">
+                                        <tr class="border-b border-gray-50 hover:bg-gray-50">
+                                            <td class="px-3 py-2 font-mono text-xs text-gray-600">
+                                                <div x-text="trx.TransactionId || trx.id || '-'"></div>
+                                                <div class="text-gray-400 text-[11px]" x-text="trx.ReferenceId || trx.reference_id || ''"></div>
+                                            </td>
+                                            <td class="px-3 py-2 text-xs text-gray-600" x-text="(trx.CreatedAt||trx.created_at||'-').substring(0,16)"></td>
+                                            <td class="px-3 py-2 text-xs text-gray-600" x-text="trx.PaymentMethod || trx.Via || '-'"></td>
+                                            <td class="px-3 py-2 text-right font-semibold text-gray-800 text-xs" x-text="'Rp ' + Number(trx.Amount||trx.amount||0).toLocaleString('id-ID')"></td>
+                                            <td class="px-3 py-2 text-center">
+                                                <span :class="adminIPaymuTrxStatusBadge(trx.Status||trx.status)" class="text-[10px] font-bold px-2 py-0.5 rounded-full" x-text="adminIPaymuTrxStatusLabel(trx.Status||trx.status)"></span>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="flex justify-between items-center mt-3">
+                            <button x-show="adminIPaymuFilter.page > 1" @click="adminIPaymuFilter.page--; adminIPaymuLoadHistory()" class="text-xs text-brand-600 font-semibold">← Sebelumnya</button>
+                            <span class="text-xs text-gray-400">Halaman <span x-text="adminIPaymuFilter.page"></span></span>
+                            <button x-show="adminIPaymuHistory.length >= adminIPaymuFilter.limit" @click="adminIPaymuFilter.page++; adminIPaymuLoadHistory()" class="text-xs text-brand-600 font-semibold">Berikutnya →</button>
+                        </div>
+                    </div>
+                    <div x-show="!adminIPaymuHistoryLoading && adminIPaymuHistory.length === 0" class="text-center py-8 text-gray-400 text-sm">
+                        <span x-text="adminIPaymuHistoryError || 'Klik Muat untuk tampilkan riwayat'"></span>
+                    </div>
+                </div>
+
+            </div><!-- end tab ipaymu -->
 
         </div>
         </template>
@@ -4025,64 +4177,7 @@
     </div>
 </div>
 
-<!-- ── Payment Iframe Modal — 15 menit countdown ── -->
-<div x-show="paymentIframe" class="fixed inset-0 z-[550] flex flex-col bg-white" style="display:none">
-
-    <!-- Top bar -->
-    <div class="bg-gray-900 text-white flex items-center justify-between px-4 py-3 flex-none">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center flex-none">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            </div>
-            <div>
-                <div class="text-xs font-bold">Pembayaran iPaymu</div>
-                <div class="text-[10px] text-gray-400" x-text="'Order #' + (paymentIframe?.orderId || '')"></div>
-            </div>
-        </div>
-        <!-- Countdown 15 menit -->
-        <div class="flex items-center gap-3">
-            <div class="text-right">
-                <div class="text-[10px] text-gray-400 mb-0.5">Batas waktu pembayaran</div>
-                <div class="font-mono font-bold text-base leading-none"
-                     :class="paymentIframeCountdownSec < 60 ? 'text-red-400' : paymentIframeCountdownSec < 300 ? 'text-yellow-400' : 'text-emerald-400'"
-                     x-text="paymentIframeCountdownDisplay"></div>
-            </div>
-            <button @click="closePaymentIframe()"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
-                    title="Tutup">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-        </div>
-    </div>
-
-    <!-- Progress bar countdown -->
-    <div class="h-1 bg-gray-800 flex-none">
-        <div class="h-full transition-all duration-1000"
-             :style="'width: ' + Math.max(0, paymentIframeCountdownSec / 900 * 100) + '%'"
-             :class="paymentIframeCountdownSec < 60 ? 'bg-red-500' : paymentIframeCountdownSec < 300 ? 'bg-yellow-500' : 'bg-brand-500'"></div>
-    </div>
-
-    <!-- iframe area -->
-    <iframe :src="paymentIframe ? paymentIframe.url : 'about:blank'"
-            class="flex-1 w-full border-none bg-gray-50"
-            @load="checkPaymentIframeLoad($event)"
-            title="Halaman Pembayaran iPaymu"
-            allow="payment"></iframe>
-
-    <!-- Bottom info bar -->
-    <div class="bg-gray-50 border-t border-gray-100 px-4 py-2 flex items-center justify-between flex-none">
-        <span class="text-xs text-gray-400 flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5 text-emerald-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            Koneksi aman &amp; terenkripsi — iPaymu
-        </span>
-        <a :href="paymentIframe ? paymentIframe.url : '#'" target="_blank" rel="noopener noreferrer"
-           class="text-xs text-brand-600 font-semibold hover:underline flex items-center gap-1">
-            Buka di tab baru
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-        </a>
-    </div>
-
-</div>
+<!-- iPaymu tidak support iframe (X-Frame-Options: sameorigin) — gunakan redirect langsung -->
 
 <!-- Modal Pembayaran Berhasil — muncul setelah user kembali dari iPaymu -->
 <div x-show="paymentConfirmed" class="fixed inset-0 z-[300] flex items-center justify-center px-4" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" style="display:none">
@@ -4492,9 +4587,7 @@ function serabutStore() {
 
         // Reset Password (dari profil — butuh password lama)
         redirectPayment: null, // { orderId, countdown, paymentUrl }
-        paymentIframe: null,   // { url, orderId } — tampil setelah redirect countdown selesai
-        paymentIframeCountdownSec: 900,
-        paymentIframeTimerId: null,
+        paymentIframe: null,
         legalModal:     null,
         privacyScrolled: false,
         resetPwModal:   false,
@@ -4618,6 +4711,19 @@ function serabutStore() {
         adminFeaturedSearch:  '',
         adminFeaturedResults: [],
         adminNewCatName:      '',
+
+        // ── iPaymu Admin ──────────────────────────────
+        adminIPaymuBalance:        null,
+        adminIPaymuBalanceLoading: false,
+        adminIPaymuBalanceError:   '',
+        adminIPaymuTrxId:          '',
+        adminIPaymuTrxData:        null,
+        adminIPaymuTrxLoading:     false,
+        adminIPaymuTrxError:       '',
+        adminIPaymuHistory:        [],
+        adminIPaymuHistoryLoading: false,
+        adminIPaymuHistoryError:   '',
+        adminIPaymuFilter:         { startdate:'', enddate:'', status:'', page:1, limit:20 },
 
         // ── Static Data ──────────────────────────────
         navItems: [
@@ -5511,7 +5617,7 @@ function serabutStore() {
                     if (data.paymentUrl) {
                         this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
                     } else {
-                        this.cartCheckoutError = 'Pesanan dibuat tapi gagal membuat sesi pembayaran. Hubungi CS.';
+                        this.cartCheckoutError = data.paymentError || 'Pesanan dibuat tapi gagal membuat sesi pembayaran. Hubungi CS.';
                     }
                 } else { this.cartCheckoutError = data.error||'Gagal memproses pesanan'; }
             } catch { this.cartCheckoutError = 'Gagal terhubung ke server'; }
@@ -5519,60 +5625,24 @@ function serabutStore() {
         },
 
         startPaymentRedirect(orderId, paymentUrl) {
+            // iPaymu tidak support iframe (X-Frame-Options: sameorigin) → redirect langsung
             this.redirectPayment = { orderId, paymentUrl, countdown: 5 };
             const tick = setInterval(() => {
                 this.redirectPayment.countdown--;
                 if (this.redirectPayment.countdown <= 0) {
                     clearInterval(tick);
                     this.redirectPayment = null;
-                    this.openPaymentIframe(orderId, paymentUrl);
+                    window.location.href = paymentUrl;
                 }
             }, 1000);
         },
 
         openPaymentIframe(orderId, paymentUrl) {
-            this.paymentIframeCountdownSec = 900; // 15 menit
-            this.paymentIframe = { url: paymentUrl, orderId };
-            this.paymentIframeTimerId = setInterval(() => {
-                this.paymentIframeCountdownSec--;
-                if (this.paymentIframeCountdownSec <= 0) {
-                    clearInterval(this.paymentIframeTimerId);
-                    this.paymentIframe = null;
-                    // Waktu habis → arahkan ke Pesanan dengan pesan
-                    this.iPaymuReturnStatus = { status: 'cancel', orderId };
-                    this.setPage('profile');
-                    this.profileTab = 'pesanan';
-                    this.loadOrders();
-                }
-            }, 1000);
+            // Alias — langsung redirect (iPaymu blok iframe)
+            window.location.href = paymentUrl;
         },
 
-        get paymentIframeCountdownDisplay() {
-            const s = this.paymentIframeCountdownSec || 0;
-            const m = Math.floor(s / 60);
-            const sec = s % 60;
-            return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
-        },
-
-        checkPaymentIframeLoad(event) {
-            try {
-                const loc = event.target.contentWindow.location;
-                const params = new URLSearchParams(loc.search);
-                if (params.get('payment') === 'success') {
-                    const oid = params.get('orderId') || this.paymentIframe?.orderId;
-                    clearInterval(this.paymentIframeTimerId);
-                    this.paymentIframe = null;
-                    this.verifyAndConfirmPayment(oid);
-                } else if (params.get('payment') === 'cancel') {
-                    const oid = params.get('orderId') || this.paymentIframe?.orderId;
-                    clearInterval(this.paymentIframeTimerId);
-                    this.paymentIframe = null;
-                    this.iPaymuReturnStatus = { status: 'cancel', orderId: oid };
-                }
-            } catch (_) {
-                // Cross-origin — masih di halaman iPaymu, normal
-            }
-        },
+        closePaymentIframe() { this.paymentIframe = null; },
 
         async verifyAndConfirmPayment(orderId) {
             if (!orderId) return;
@@ -5592,11 +5662,6 @@ function serabutStore() {
                 this.profileTab = 'pesanan';
                 this.loadOrders();
             }
-        },
-
-        closePaymentIframe() {
-            clearInterval(this.paymentIframeTimerId);
-            this.paymentIframe = null;
         },
 
         async payViaIPaymu() {
@@ -5676,7 +5741,7 @@ function serabutStore() {
                         this.orderModal = false;
                         this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
                     } else {
-                        this.orderError = 'Gagal membuat sesi pembayaran. Silakan coba lagi atau hubungi CS.';
+                        this.orderError = data.paymentError || 'Gagal membuat sesi pembayaran. Silakan coba lagi atau hubungi CS.';
                     }
                 } else { this.orderError = data.error||'Gagal membuat pesanan'; }
             } catch { this.orderError='Gagal terhubung ke server'; }
@@ -5991,7 +6056,61 @@ function serabutStore() {
                 this.adminLoadGuides();
             } else if(tab==='orders') {
                 this.adminLoadOrders();
+            } else if(tab==='ipaymu') {
+                this.adminIPaymuLoadBalance();
             }
+        },
+
+        // ── Admin iPaymu ──────────────────────────────
+        async adminIPaymuLoadBalance() {
+            this.adminIPaymuBalanceLoading = true;
+            this.adminIPaymuBalanceError   = '';
+            this.adminIPaymuBalance        = null;
+            const res = await this.gasPost({ action:'iPaymuAdminGetBalance', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken });
+            if (res.success) this.adminIPaymuBalance = res.data;
+            else this.adminIPaymuBalanceError = res.error || 'Gagal memuat saldo';
+            this.adminIPaymuBalanceLoading = false;
+        },
+        async adminIPaymuCheckTrx() {
+            const id = this.adminIPaymuTrxId.trim();
+            if (!id) return;
+            this.adminIPaymuTrxLoading = true;
+            this.adminIPaymuTrxError   = '';
+            this.adminIPaymuTrxData    = null;
+            const res = await this.gasPost({ action:'iPaymuAdminGetTransaction', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, transactionId: id });
+            if (res.success) this.adminIPaymuTrxData = res.data;
+            else this.adminIPaymuTrxError = res.error || 'Transaksi tidak ditemukan';
+            this.adminIPaymuTrxLoading = false;
+        },
+        async adminIPaymuLoadHistory() {
+            this.adminIPaymuHistoryLoading = true;
+            this.adminIPaymuHistoryError   = '';
+            const f = this.adminIPaymuFilter;
+            const res = await this.gasPost({
+                action:     'iPaymuAdminGetHistory',
+                adminEmail: this.currentUser.email,
+                adminToken: this.currentUser.sessionToken,
+                startdate:  f.startdate,
+                enddate:    f.enddate,
+                status:     f.status,
+                page:       f.page,
+                limit:      f.limit,
+            });
+            if (res.success) this.adminIPaymuHistory = Array.isArray(res.data) ? res.data : [];
+            else { this.adminIPaymuHistoryError = res.error || 'Gagal memuat riwayat'; this.adminIPaymuHistory = []; }
+            this.adminIPaymuHistoryLoading = false;
+        },
+        adminIPaymuTrxStatusLabel(status) {
+            const map = { '-2':'Expired', '0':'Pending', '1':'Berhasil', '2':'Batal', '3':'Refund', '4':'Error', '5':'Gagal', '6':'Berhasil', '7':'Escrow' };
+            return map[String(status)] || ('Status ' + status);
+        },
+        adminIPaymuTrxStatusBadge(status) {
+            const s = String(status);
+            if (s === '1' || s === '6' || s === '7') return 'bg-emerald-100 text-emerald-700';
+            if (s === '0') return 'bg-yellow-100 text-yellow-700';
+            if (s === '-2' || s === '2' || s === '4' || s === '5') return 'bg-red-100 text-red-700';
+            if (s === '3') return 'bg-blue-100 text-blue-700';
+            return 'bg-gray-100 text-gray-600';
         },
 
         // ── Admin save helper ─────────────────────────
