@@ -2738,6 +2738,19 @@ function iPaymuAdminSyncOrders(params) {
   const stCol   = headers.indexOf('status');
   if (idCol < 0 || stCol < 0) return { success: false, error: 'Kolom tidak ditemukan' };
 
+  // Map kolom detail order untuk WA notif
+  const namaCol  = headers.indexOf('nama');
+  const waCol    = headers.indexOf('no wa');
+  const prodCol  = headers.indexOf('produk');
+  const varCol   = headers.indexOf('varian');
+  const masCol   = headers.indexOf('masa aktif');
+  const hrgCol   = headers.indexOf('harga');
+  const msnCol   = headers.indexOf('nama ms');
+  const usnCol   = headers.indexOf('username');
+  const msemCol  = headers.indexOf('email microsoft');
+  const eaCol    = headers.indexOf('email aktif');
+  const erCol    = headers.indexOf('email reminder');
+
   // Kumpulkan orderId unik yang Pending atau Dibatalkan
   const pendingIds = {};
   for (let i = 1; i < data.length; i++) {
@@ -2814,14 +2827,56 @@ function iPaymuAdminSyncOrders(params) {
   for (const orderId of Object.keys(pendingIds)) {
     if (!paidMap[orderId]) continue;
     const payMethod = paidMap[orderId];
+    let waNotifSent = false;
     for (let i = 1; i < data.length; i++) {
       if (String(data[i][idCol]).trim() !== orderId) continue;
-      const rowSt = String(data[i][stCol] || '').trim();
+      const row   = data[i];
+      const rowSt = String(row[stCol] || '').trim();
       if (rowSt === 'Pending' || rowSt === 'Dibatalkan') {
         sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
       }
       sheet.getRange(i + 1, pmCol + 1).setValue(payMethod);
       sheet.getRange(i + 1, psCol + 1).setValue('Berhasil');
+
+      // Kirim WA grup sekali per orderId (row pertama)
+      if (!waNotifSent) {
+        waNotifSent = true;
+        try {
+          const produk    = prodCol  >= 0 ? String(row[prodCol]  || '') : '';
+          const varian    = varCol   >= 0 ? String(row[varCol]   || '-') : '-';
+          const masaAktif = masCol   >= 0 ? String(row[masCol]   || '-') : '-';
+          const harga     = hrgCol   >= 0 ? Number(row[hrgCol]   || 0) : 0;
+          const nama      = namaCol  >= 0 ? String(row[namaCol]  || '') : '';
+          const waNum     = waCol    >= 0 ? String(row[waCol]    || '') : '';
+          const msNama    = msnCol   >= 0 ? String(row[msnCol]   || '') : '';
+          const username  = usnCol   >= 0 ? String(row[usnCol]   || '') : '';
+          const msEmail   = msemCol  >= 0 ? String(row[msemCol]  || '') : '';
+          const emailAkt  = eaCol    >= 0 ? String(row[eaCol]    || '') : '';
+          const emailRem  = erCol    >= 0 ? String(row[erCol]    || '') : '';
+
+          const hargaFmt = 'Rp ' + harga.toLocaleString('id-ID');
+          let detailLines = '';
+          if (msNama)   detailLines += `\nNama MS: ${msNama}`;
+          if (username) detailLines += `\nUsername: ${username}`;
+          if (msEmail)  detailLines += `\nEmail MS: ${msEmail}`;
+          if (emailAkt) detailLines += `\nEmail Aktif: ${emailAkt}`;
+          if (emailRem) detailLines += `\nEmail Reminder: ${emailRem}`;
+
+          const msg = `✅ *PEMBAYARAN BERHASIL*\n` +
+            `Order ID: *${orderId}*\n` +
+            `Produk: *${produk}${varian && varian!=='-' ? ' · ' + varian : ''}*\n` +
+            `Durasi: ${masaAktif}\n` +
+            `Total Bayar: *${hargaFmt}*\n` +
+            `Metode: ${payMethod}${detailLines}\n` +
+            `Nama: ${nama}\n` +
+            (waNum ? `No WA: ${waNum}\n` : '') +
+            `Status: *Diproses* ⚙️`;
+
+          sendWAToGroup(msg);
+        } catch(eWa) {
+          Logger.log('syncOrders WA notif error: ' + eWa.message);
+        }
+      }
     }
     updated++;
     Logger.log('syncOrders: updated ' + orderId + ' → Diproses via ' + payMethod);
