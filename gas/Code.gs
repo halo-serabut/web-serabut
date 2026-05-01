@@ -2759,7 +2759,7 @@ function iPaymuAdminSyncOrders(params) {
   while (page <= 10) {
     try {
       const histRes = _iPaymuRequest('https://my.ipaymu.com/api/v2/history', {
-        account: va, page: page, limit: 100, orderBy: 'id', order: 'DESC', date: 'created_at'
+        account: va, page: page, limit: 20, orderBy: 'id', order: 'DESC', date: 'created_at'
       });
       Logger.log('syncOrders history page ' + page + ' HTTP=' + histRes.Status + ' trx=' + JSON.stringify((histRes.Data || {}).Transaction || []).substring(0, 300));
       if (Number(histRes.Status) !== 200 || !histRes.Data || !histRes.Data.Transaction) {
@@ -2784,7 +2784,7 @@ function iPaymuAdminSyncOrders(params) {
       });
 
       const totalPages = (histRes.Data.Pagination || {}).total_pages || 1;
-      if (page >= totalPages || trxList.length < 100) break;
+      if (page >= totalPages || trxList.length < 20) break;
       page++;
     } catch(e) {
       Logger.log('syncOrders history error page ' + page + ': ' + e.message);
