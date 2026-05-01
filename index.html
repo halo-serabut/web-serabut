@@ -2349,7 +2349,13 @@
             <!-- ── Tab: Semua Order ── -->
             <div x-show="adminTab==='orders'">
                 <div class="mb-4">
-                    <h2 class="font-bold text-gray-900 mb-3">Semua Order</h2>
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="font-bold text-gray-900">Semua Order</h2>
+                        <button @click="adminOrdersLoaded=false; adminLoadOrders()" class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-brand-600 border border-gray-200 hover:border-brand-300 px-3 py-1.5 rounded-lg transition-all">
+                            <svg class="w-3.5 h-3.5" :class="adminOrdersLoading?'animate-spin':''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Refresh
+                        </button>
+                    </div>
                     <!-- Tabs Shopee-style -->
                     <div class="flex border-b border-gray-200 overflow-x-auto gap-0 -mb-px">
                         <template x-for="tab in [
@@ -2393,10 +2399,16 @@
                                     </div>
                                 </div>
                                 <!-- Row 3: Produk + Harga -->
-                                <div class="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2 mb-3">
+                                <div class="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2 mb-2">
                                     <div class="text-xs text-gray-600 truncate max-w-[60%]" x-text="o.produk + (o.varian&&o.varian!=='-'?' · '+o.varian:'')"></div>
                                     <div class="font-bold text-brand-600 text-sm flex-shrink-0" x-text="formatPrice(o.harga)"></div>
                                 </div>
+                                <!-- Row 3b: Payment info -->
+                                <div x-show="o.paymentMethod" class="flex items-center gap-2 mb-3">
+                                    <span class="text-[11px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md" x-text="o.paymentMethod"></span>
+                                    <span x-show="o.paymentStatus" class="text-[10px] text-emerald-600 font-medium" x-text="o.paymentStatus"></span>
+                                </div>
+                                <div x-show="!o.paymentMethod" class="mb-3"></div>
                                 <!-- Row 4: Ubah status -->
                                 <select @change="adminUpdateOrderStatus(o, $event.target.value); $event.target.value=o.status"
                                         class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-brand-400 bg-white text-gray-700">
@@ -2420,6 +2432,7 @@
                                         <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Pembeli</th>
                                         <th class="text-left px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Produk</th>
                                         <th class="text-right px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Harga</th>
+                                        <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Bayar Via</th>
                                         <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
                                         <th class="text-center px-4 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">Ubah Status</th>
                                     </tr>
@@ -2434,6 +2447,15 @@
                                             </td>
                                             <td class="px-4 py-3 text-xs text-gray-600 max-w-[140px] truncate" x-text="o.produk + (o.varian&&o.varian!=='-'?' · '+o.varian:'')"></td>
                                             <td class="px-4 py-3 text-right font-semibold text-gray-800 text-xs" x-text="formatPrice(o.harga)"></td>
+                                            <td class="px-4 py-3 text-center">
+                                                <template x-if="o.paymentMethod">
+                                                    <div class="flex flex-col items-center gap-0.5">
+                                                        <span class="text-[11px] font-semibold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md" x-text="o.paymentMethod"></span>
+                                                        <span x-show="o.paymentStatus" class="text-[10px] text-emerald-600 font-medium" x-text="o.paymentStatus"></span>
+                                                    </div>
+                                                </template>
+                                                <span x-show="!o.paymentMethod" class="text-gray-300 text-xs">—</span>
+                                            </td>
                                             <td class="px-4 py-3 text-center">
                                                 <span :class="getStatusBadge(o.status)" class="text-xs font-semibold px-2 py-0.5 rounded-full" x-text="o.status"></span>
                                             </td>
@@ -2519,7 +2541,7 @@
                             <h2 class="font-bold text-gray-900">Riwayat Transaksi iPaymu</h2>
                             <p class="text-xs text-gray-400 mt-0.5" x-text="adminIPaymuPagination.total ? 'Total: ' + adminIPaymuPagination.total + ' transaksi' : ''"></p>
                         </div>
-                        <button @click="adminIPaymuFilter.page=1; adminIPaymuLoadHistory()"
+                        <button @click="adminIPaymuLoaded=false; adminIPaymuFilter.page=1; adminIPaymuLoadHistory()"
                                 class="flex items-center gap-1.5 text-xs text-brand-600 font-semibold bg-brand-50 px-2.5 py-1.5 rounded-lg hover:bg-brand-100 transition-colors">
                             <svg class="w-3 h-3" :class="adminIPaymuHistoryLoading?'animate-spin':''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
                             Refresh
@@ -4756,6 +4778,7 @@ function serabutStore() {
         adminProductSearch: '',
         adminOrders:     [],
         adminOrdersLoading: false,
+        adminOrdersLoaded: false,
         adminOrderFilter: 'Semua',
         adminEditProduct: null,
         adminAddMode:    false,
@@ -4805,6 +4828,7 @@ function serabutStore() {
         adminIPaymuHistoryLoading: false,
         adminIPaymuHistoryError:   '',
         adminIPaymuPagination:     {},
+        adminIPaymuLoaded:         false,
         adminIPaymuSyncLoading:    false,
         adminIPaymuSyncMsg:        '',
         adminIPaymuSyncConfirm:    false,
@@ -6182,10 +6206,12 @@ function serabutStore() {
             } else if(tab==='panduan') {
                 this.adminLoadGuides();
             } else if(tab==='orders') {
-                this.adminLoadOrders();
+                if (!this.adminOrdersLoaded) this.adminLoadOrders();
             } else if(tab==='ipaymu') {
-                this.adminIPaymuLoadBalance();
-                this.adminIPaymuLoadHistory();
+                if (!this.adminIPaymuLoaded) {
+                    this.adminIPaymuLoadBalance();
+                    this.adminIPaymuLoadHistory();
+                }
             }
         },
 
@@ -6228,6 +6254,7 @@ function serabutStore() {
                 if (res.success) {
                     this.adminIPaymuHistory    = Array.isArray(res.data) ? res.data : [];
                     this.adminIPaymuPagination = res.pagination || {};
+                    this.adminIPaymuLoaded     = true;
                 } else {
                     this.adminIPaymuHistoryError = res.error || 'Gagal memuat riwayat';
                     this.adminIPaymuHistory = [];
@@ -6245,7 +6272,7 @@ function serabutStore() {
                 const res = await this.gasPost({ action: 'iPaymuAdminSyncOrders', adminEmail: this.currentUser.email, adminToken: this.currentUser.sessionToken });
                 if (res.success) {
                     this.adminIPaymuSyncMsg = `✓ Selesai: ${res.checked} order dicek, ${res.updated} diupdate ke Diproses`;
-                    if (res.updated > 0) this.adminLoadOrders();
+                    if (res.updated > 0) { this.adminOrdersLoaded = false; this.adminLoadOrders(); }
                 } else {
                     this.adminIPaymuSyncMsg = 'Error: ' + (res.error || 'Gagal sync');
                 }
@@ -6806,6 +6833,7 @@ function serabutStore() {
             try {
                 const data = await this.gasPost({ action:'getAllOrders', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken });
                 this.adminOrders = data.success ? data.data : [];
+                this.adminOrdersLoaded = true;
             } catch { this.adminOrders=[]; }
             this.adminOrdersLoading=false;
         },
