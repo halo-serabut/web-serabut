@@ -102,6 +102,8 @@ function doPost(e) {
       case 'createCartOrder':         result = createCartOrder(params); break;
       case 'createIPaymuPayment':     result = createIPaymuPayment(params); break;
       case 'ipaymuCallback':          result = ipaymuCallback(params); break;
+      case 'createXenditInvoice':     result = createXenditInvoice(params); break;
+      case 'xenditCallback':          result = xenditCallback(params, e); break;
       case 'confirmPayment':          result = confirmPayment(params); break;
       case 'checkIPaymuOrderStatus':  result = checkIPaymuOrderStatus(params); break;
       case 'cancelOrder':             result = cancelOrder(params); break;
@@ -1294,27 +1296,26 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   }
 
   // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
-  // Buat sesi iPaymu langsung
+  // Buat invoice Xendit
   let paymentUrl = null;
   let paymentError = null;
   try {
-    const ipRes = createIPaymuPayment({
+    const xnRes = createXenditInvoice({
       orderId,
-      itemsJson:     JSON.stringify([{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum }]),
-      imageUrlsJson: JSON.stringify([imageUrl || '']),
+      items:     [{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum, qty: 1 }],
       buyerName:  userNama,
       buyerEmail: userEmail,
       buyerPhone: userWa,
       total: hargaNum
     });
-    if (ipRes.success) paymentUrl = ipRes.paymentUrl;
+    if (xnRes.success) paymentUrl = xnRes.paymentUrl;
     else {
-      paymentError = ipRes.error || 'Gagal membuat sesi pembayaran';
-      Logger.log('createOrder iPaymu error: ' + paymentError);
+      paymentError = xnRes.error || 'Gagal membuat sesi pembayaran';
+      Logger.log('createOrder Xendit error: ' + paymentError);
     }
   } catch(e) {
-    paymentError = 'iPaymu exception: ' + e.message;
-    Logger.log('createOrder iPaymu exception: ' + e.message);
+    paymentError = 'Xendit exception: ' + e.message;
+    Logger.log('createOrder Xendit exception: ' + e.message);
   }
 
   return { success: true, orderId, harga: hargaNum, paymentUrl, paymentError };
@@ -1675,33 +1676,33 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   }
 
   // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
-  // Buat sesi iPaymu langsung — ipItems pakai harga server-validated (bukan client)
+  // Buat invoice Xendit — pakai harga server-validated (bukan client)
   let paymentUrl = null;
   let paymentError = null;
   try {
-    const ipItems = items.map(it => ({
+    const xnItems = items.map(it => ({
       produk: it.produk,
       varian: it.varian||'-',
       masaAktif: it.masaAktif||'-',
-      harga: _getCatalogPrice(it.produk, it.varian, it.masaAktif) * (Number(it.qty) || 1)
+      harga: _getCatalogPrice(it.produk, it.varian, it.masaAktif) * (Number(it.qty) || 1),
+      qty: Number(it.qty) || 1
     }));
-    const ipRes = createIPaymuPayment({
+    const xnRes = createXenditInvoice({
       orderId,
-      itemsJson:     JSON.stringify(ipItems),
-      imageUrlsJson: imageUrlsJson || '[]',
+      items:     xnItems,
       buyerName:  userNama,
       buyerEmail: userEmail,
       buyerPhone: userWa,
       total: totalHarga
     });
-    if (ipRes.success) paymentUrl = ipRes.paymentUrl;
+    if (xnRes.success) paymentUrl = xnRes.paymentUrl;
     else {
-      paymentError = ipRes.error || 'Gagal membuat sesi pembayaran';
-      Logger.log('createCartOrder iPaymu error: ' + paymentError);
+      paymentError = xnRes.error || 'Gagal membuat sesi pembayaran';
+      Logger.log('createCartOrder Xendit error: ' + paymentError);
     }
   } catch(e) {
-    paymentError = 'iPaymu exception: ' + e.message;
-    Logger.log('createCartOrder iPaymu exception: ' + e.message);
+    paymentError = 'Xendit exception: ' + e.message;
+    Logger.log('createCartOrder Xendit exception: ' + e.message);
   }
 
   return { success: true, orderId, total: totalHarga, paymentUrl, paymentError };
@@ -2638,9 +2639,11 @@ function _parseTanggalGAS(str) {
 
 // Signature helper reusable untuk iPaymu API calls
 function _iPaymuRequest(endpoint, body) {
-  const props  = PropertiesService.getScriptProperties();
-  const va     = (props.getProperty('IPAYMU_VA')      || '').trim();
-  const apiKey = (props.getProperty('IPAYMU_API_KEY') || '').trim();
+  const props   = PropertiesService.getScriptProperties();
+  const va      = (props.getProperty('IPAYMU_VA')           || '').trim();
+  const apiKey  = (props.getProperty('IPAYMU_API_KEY')      || '').trim();
+  const proxyUrl    = (props.getProperty('IPAYMU_PROXY_URL')    || '').trim();
+  const proxySecret = (props.getProperty('IPAYMU_PROXY_SECRET') || '').trim();
   if (!va || !apiKey) return { success: false, error: 'iPaymu belum dikonfigurasi' };
 
   const bodyStr  = JSON.stringify(body);
@@ -2650,17 +2653,248 @@ function _iPaymuRequest(endpoint, body) {
   const sts      = 'POST:' + va + ':' + bodyHash + ':' + apiKey;
   const sig      = _hex(Utilities.computeHmacSha256Signature(sts, apiKey));
 
-  const resp = UrlFetchApp.fetch(endpoint, {
+  const useProxy = !!(proxyUrl && proxySecret);
+  const fetchUrl = useProxy ? proxyUrl : endpoint;
+  const headers  = { 'Content-Type': 'application/json', 'Accept': 'application/json', 'va': va, 'signature': sig, 'timestamp': ts };
+  if (useProxy) { headers['X-Proxy-Secret'] = proxySecret; headers['X-Target-URL'] = endpoint; }
+
+  Logger.log('_iPaymuRequest: ' + (useProxy ? 'via CF proxy → ' : 'direct → ') + endpoint);
+  const resp = UrlFetchApp.fetch(fetchUrl, { method: 'post', headers: headers, payload: bodyStr, muteHttpExceptions: true });
+  return JSON.parse(resp.getContentText());
+}
+
+// Jalankan di GAS Editor untuk cek IP outgoing CF Worker → daftarkan ke iPaymu
+function checkCFWorkerIP() {
+  const props       = PropertiesService.getScriptProperties();
+  const proxyUrl    = (props.getProperty('IPAYMU_PROXY_URL')    || '').trim();
+  const proxySecret = (props.getProperty('IPAYMU_PROXY_SECRET') || '').trim();
+  if (!proxyUrl || !proxySecret) { Logger.log('ERROR: Set IPAYMU_PROXY_URL dan IPAYMU_PROXY_SECRET dulu'); return; }
+
+  // Kirim tanpa X-Target-URL → Worker return IP outgoing-nya
+  const resp = UrlFetchApp.fetch(proxyUrl, {
     method: 'post',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'va': va, 'signature': sig, 'timestamp': ts },
-    payload: bodyStr,
+    headers: { 'Content-Type': 'application/json', 'X-Proxy-Secret': proxySecret },
+    payload: '{}',
     muteHttpExceptions: true
   });
-  return JSON.parse(resp.getContentText());
+  Logger.log('=== IP CF Worker (daftarkan ke iPaymu) ===');
+  Logger.log(resp.getContentText());
+  Logger.log('==========================================');
 }
 
 function _parseJSON(str, fallback) {
   try { return JSON.parse(str); } catch { return fallback; }
+}
+
+// ============================================================
+//  XENDIT PAYMENT INTEGRATION
+//  Script Properties: XENDIT_API_KEY
+// ============================================================
+
+function _xenditRequest(endpoint, body) {
+  const props  = PropertiesService.getScriptProperties();
+  const apiKey = (props.getProperty('XENDIT_API_KEY') || '').trim();
+  if (!apiKey) return { success: false, error: 'XENDIT_API_KEY belum dikonfigurasi' };
+
+  const auth = Utilities.base64Encode(apiKey + ':');
+  const resp = UrlFetchApp.fetch('https://api.xendit.co' + endpoint, {
+    method: 'post',
+    headers: {
+      'Authorization': 'Basic ' + auth,
+      'Content-Type':  'application/json',
+    },
+    payload: JSON.stringify(body),
+    muteHttpExceptions: true
+  });
+  const result = JSON.parse(resp.getContentText());
+  Logger.log('Xendit [' + resp.getResponseCode() + ']: ' + JSON.stringify(result).substring(0, 300));
+  return result;
+}
+
+// Buat invoice/payment link Xendit
+// items: [{produk, varian, masaAktif, harga, qty}]
+function createXenditInvoice({ orderId, items, buyerName, buyerEmail, buyerPhone, total }) {
+  const xenItems = items.map(it => ({
+    name:     it.produk + (it.varian && it.varian!=='-' ? ' - '+it.varian : '') + (it.masaAktif && it.masaAktif!=='-' ? ' ('+it.masaAktif+')' : ''),
+    quantity: it.qty || 1,
+    price:    it.harga,
+    category: 'Digital Product',
+  }));
+
+  const body = {
+    external_id:          orderId,
+    amount:               total,
+    description:          'Serabut Store - Order ' + orderId,
+    invoice_duration:     86400, // 24 jam
+    customer: {
+      given_names: buyerName,
+      email:       buyerEmail || undefined,
+      mobile_number: buyerPhone ? '+' + String(buyerPhone).replace(/^\+/,'') : undefined,
+    },
+    customer_notification_preference: {
+      invoice_created:  buyerEmail ? ['email','whatsapp'] : ['whatsapp'],
+      invoice_reminder: buyerEmail ? ['email','whatsapp'] : ['whatsapp'],
+      invoice_paid:     buyerEmail ? ['email','whatsapp'] : ['whatsapp'],
+    },
+    success_redirect_url: 'https://serabut.id/?payment=success&orderId=' + orderId,
+    failure_redirect_url: 'https://serabut.id/?payment=cancel&orderId=' + orderId,
+    currency: 'IDR',
+    items:    xenItems,
+    fees: [],
+  };
+
+  const result = _xenditRequest('/v2/invoices', body);
+  if (result && result.invoice_url) {
+    return { success: true, paymentUrl: result.invoice_url, invoiceId: result.id, expiryDate: result.expiry_date };
+  }
+  return { success: false, error: result.message || result.error_code || 'Gagal membuat invoice Xendit' };
+}
+
+// Validasi callback webhook dari Xendit
+function xenditWebhookValid(callbackToken) {
+  const props = PropertiesService.getScriptProperties();
+  const token = (props.getProperty('XENDIT_WEBHOOK_TOKEN') || '').trim();
+  if (!token) return true; // skip validasi jika token belum diset
+  return callbackToken === token;
+}
+
+// ────────────────────────────────────────────────────────
+//  XENDIT WEBHOOK CALLBACK
+// ────────────────────────────────────────────────────────
+function xenditCallback(params, e) {
+  // Validasi: GAS tidak expose HTTP headers, jadi pakai query param ?token=... di webhook URL
+  // Set webhook URL di Xendit: https://script.google.com/.../exec?action=xenditCallback&token=WEBHOOK_TOKEN
+  try {
+    const qToken = (e && e.parameter && e.parameter.token) || '';
+    if (!xenditWebhookValid(qToken)) {
+      Logger.log('xenditCallback: invalid token');
+      return { success: false, error: 'Unauthorized' };
+    }
+  } catch(ex) {
+    Logger.log('xenditCallback token check error: ' + ex.message);
+  }
+
+  // Xendit sends `status` field: PAID, EXPIRED, PENDING
+  const status   = String(params.status || '').toUpperCase();
+  const extId    = String(params.external_id || params.id || '').trim();
+  const method   = String(params.payment_method || params.payment_channel || 'Xendit').trim();
+
+  if (!extId) return { success: false, error: 'external_id kosong' };
+
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: false, error: 'Orders sheet not found' };
+
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const idCol   = headers.indexOf('order id');
+  const stCol   = headers.indexOf('status');
+  const pmCol   = headers.indexOf('payment method') >= 0 ? headers.indexOf('payment method') : -1;
+  const psCol   = headers.indexOf('payment status') >= 0 ? headers.indexOf('payment status') : -1;
+
+  if (idCol < 0 || stCol < 0) return { success: false, error: 'Kolom tidak ditemukan' };
+
+  let found = false;
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][idCol]).trim() !== extId) continue;
+    found = true;
+    const curStatus = String(data[i][stCol]).trim();
+    Logger.log('xenditCallback: orderId=' + extId + ' status=' + status + ' curStatus=' + curStatus);
+
+    if (status === 'PAID') {
+      // Update status → Diproses jika masih Pending
+      if (curStatus === 'Pending' || curStatus === 'Dibatalkan') {
+        sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
+      }
+      if (pmCol >= 0) sheet.getRange(i + 1, pmCol + 1).setValue(method);
+      if (psCol >= 0) sheet.getRange(i + 1, psCol + 1).setValue('Lunas');
+      SpreadsheetApp.flush();
+
+      // Hanya kirim notif jika baru bayar (was Pending)
+      if (curStatus === 'Pending') {
+        const buyerNama  = String(data[i][headers.indexOf('nama')] || '');
+        const buyerEmail = String(data[i][headers.indexOf('email')] || '');
+        const buyerWa    = String(data[i][headers.indexOf('no wa')] || '');
+        const produk     = String(data[i][headers.indexOf('produk')] || '');
+        const varian     = String(data[i][headers.indexOf('varian')] || '-');
+        const masaAktif  = String(data[i][headers.indexOf('masa aktif')] || '-');
+        const harga      = data[i][headers.indexOf('harga')] || 0;
+        const tanggal    = String(data[i][headers.indexOf('tanggal')] || '-');
+
+        // WA group notif
+        const groupMsg = `✅ *PEMBAYARAN DITERIMA*\nOrder ID: *${extId}*\nProduk: ${produk} ${varian!=='-'?'- '+varian:''} ${masaAktif!=='-'?'('+masaAktif+')':''}\nPembeli: ${buyerNama}\nMetode: ${method}\nTotal: Rp ${Number(harga).toLocaleString('id-ID')}\nTanggal: ${tanggal}`;
+        sendWAGroup(groupMsg);
+
+        // WA + email ke buyer
+        sendBuyerOrderConfirmed(buyerNama, buyerEmail, buyerWa ? _normalizeWA(buyerWa) : '', extId, produk, varian, masaAktif, harga, method, tanggal);
+      }
+    } else if (status === 'EXPIRED') {
+      if (curStatus === 'Pending') {
+        sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan');
+        if (psCol >= 0) sheet.getRange(i + 1, psCol + 1).setValue('Expired');
+        SpreadsheetApp.flush();
+      }
+    }
+    break;
+  }
+
+  if (!found) Logger.log('xenditCallback: order tidak ditemukan: ' + extId);
+  return { success: true };
+}
+
+// Helper kirim notif ke buyer setelah pembayaran dikonfirmasi
+function sendBuyerOrderConfirmed(nama, email, wa, orderId, produk, varian, masaAktif, harga, method, tanggal) {
+  const produkStr = produk + (varian && varian!=='-' ? ' - '+varian : '') + (masaAktif && masaAktif!=='-' ? ' ('+masaAktif+')' : '');
+  const hargaStr  = 'Rp ' + Number(harga).toLocaleString('id-ID');
+  const waMsg = `Halo *${nama}*! 🎉\n\nPembayaran kamu sudah kami terima!\n\n*Detail Order:*\nOrder ID: ${orderId}\nProduk: ${produkStr}\nTotal: ${hargaStr}\nMetode: ${method}\nTanggal: ${tanggal}\n\nTim kami sedang memproses pesananmu. Estimasi aktivasi: *5–30 menit*.\n\nTerima kasih sudah berbelanja di Serabut Store! 🙏`;
+  if (wa) _sendWA(wa, waMsg);
+  if (email) {
+    const subject = `[Serabut Store] Pembayaran Diterima — ${orderId}`;
+    const body    = `<p>Halo <b>${nama}</b>,</p><p>Pembayaran kamu sudah kami terima ✅</p><p><b>Detail Order:</b><br>Order ID: ${orderId}<br>Produk: ${produkStr}<br>Total: ${hargaStr}<br>Metode: ${method}<br>Tanggal: ${tanggal}</p><p>Tim kami sedang memproses pesanan. Estimasi aktivasi: <b>5–30 menit</b>.</p><p>Terima kasih sudah berbelanja di <b>Serabut Store</b> 🙏</p>`;
+    try { GmailApp.sendEmail(email, subject, '', { htmlBody: body, name: STORE_NAME }); } catch(ex) { Logger.log('sendBuyerOrderConfirmed email error: ' + ex.message); }
+  }
+}
+
+// Debug raw response Xendit
+function debugXenditRaw() {
+  const props  = PropertiesService.getScriptProperties();
+  const apiKey = (props.getProperty('XENDIT_API_KEY') || '').trim();
+  Logger.log('API Key ada: ' + (apiKey ? 'YA (' + apiKey.substring(0,20) + '...)' : 'TIDAK'));
+
+  const auth = Utilities.base64Encode(apiKey + ':');
+  const body = { external_id: 'debug-' + Date.now(), amount: 10000, description: 'test', currency: 'IDR' };
+  const resp = UrlFetchApp.fetch('https://api.xendit.co/v2/invoices', {
+    method: 'post',
+    headers: { 'Authorization': 'Basic ' + auth, 'Content-Type': 'application/json' },
+    payload: JSON.stringify(body),
+    muteHttpExceptions: true
+  });
+  Logger.log('HTTP Code : ' + resp.getResponseCode());
+  Logger.log('Response  : ' + resp.getContentText());
+}
+
+// ============================================================
+//  TEST XENDIT — jalankan di GAS Editor untuk cek koneksi
+// ============================================================
+function testXenditConnection() {
+  Logger.log('=== TEST XENDIT CONNECTION ===');
+  const result = createXenditInvoice({
+    orderId:    'TEST-' + Date.now().toString().slice(-6),
+    items:      [{ produk: 'Microsoft Office 365', varian: 'Personal', masaAktif: '1 Tahun', harga: 35000, qty: 1 }],
+    buyerName:  'Test Buyer',
+    buyerEmail: 'test@serabut.id',
+    buyerPhone: '6282300011736',
+    total:      35000,
+  });
+
+  if (result.success) {
+    Logger.log('✅ BERHASIL! Payment URL: ' + result.paymentUrl);
+    Logger.log('Invoice ID  : ' + result.invoiceId);
+    Logger.log('Expiry      : ' + result.expiryDate);
+  } else {
+    Logger.log('❌ GAGAL: ' + result.error);
+  }
+  Logger.log('=============================');
 }
 
 // ────────────────────────────────────────────────────────
@@ -3203,5 +3437,81 @@ function testIPaymuProduction() {
   } catch(e) {
     Logger.log('Parse error: ' + e.message);
   }
+}
+
+// ============================================================
+//  AUTO CHECK IP GAS — jalankan via Time-driven Trigger (tiap 1 jam)
+//  Setup: Apps Script Editor → Triggers → + Add Trigger
+//         Function: autoCheckGASIp | Event: Time-driven | Every hour
+// ============================================================
+function autoCheckGASIp() {
+  var props   = PropertiesService.getScriptProperties();
+  var savedIp = (props.getProperty('GAS_LAST_IP') || '').trim();
+
+  var currentIp = '';
+  try {
+    var resp = UrlFetchApp.fetch('https://api.ipify.org?format=json', { muteHttpExceptions: true });
+    currentIp = (JSON.parse(resp.getContentText()).ip || '').trim();
+  } catch(e) {
+    Logger.log('autoCheckGASIp: gagal ambil IP — ' + e.message);
+    return;
+  }
+
+  if (!currentIp) { Logger.log('autoCheckGASIp: IP kosong, skip'); return; }
+
+  Logger.log('autoCheckGASIp: saved=' + savedIp + ' | current=' + currentIp);
+
+  if (currentIp === savedIp) {
+    Logger.log('autoCheckGASIp: IP tidak berubah, skip notif');
+    return;
+  }
+
+  // IP berubah — simpan & kirim notif ke WA group
+  props.setProperty('GAS_LAST_IP', currentIp);
+
+  var msg = '⚠️ *[Serabut Store] IP GAS Berubah!*\n\n'
+    + '🔴 IP Lama: ' + (savedIp || '(belum ada)') + '\n'
+    + '🟢 IP Baru: ' + currentIp + '\n\n'
+    + '📌 *Action required:*\n'
+    + 'Login ke iPaymu → Pengaturan → Whitelist IP\n'
+    + 'Tambahkan IP baru: *' + currentIp + '*\n'
+    + 'Non-aktifkan IP lama jika sudah tidak dipakai.\n\n'
+    + '⏰ ' + Utilities.formatDate(new Date(), 'Asia/Jakarta', 'dd/MM/yyyy HH:mm') + ' WIB';
+
+  sendWAToGroup(msg);
+  Logger.log('autoCheckGASIp: notif WA group terkirim — IP baru ' + currentIp);
+}
+
+// ============================================================
+//  CEK IP ADDRESS GAS SERVER
+//  Jalankan via Apps Script Editor → Run → checkGASIpAddress
+//  Lihat hasilnya di Execution Log (Ctrl+Enter)
+// ============================================================
+function checkGASIpAddress() {
+  var services = [
+    'https://api.ipify.org?format=json',
+    'https://api64.ipify.org?format=json',
+    'https://ifconfig.me/ip',
+    'https://checkip.amazonaws.com'
+  ];
+
+  Logger.log('=== CEK IP ADDRESS GAS SERVER ===');
+  Logger.log('Timestamp: ' + new Date().toISOString());
+
+  services.forEach(function(url) {
+    try {
+      var resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+      var body = resp.getContentText().trim();
+      var ip   = body;
+      try { ip = JSON.parse(body).ip || body; } catch(e) {}
+      Logger.log(url.split('/')[2] + ' → IP: ' + ip);
+    } catch(e) {
+      Logger.log(url.split('/')[2] + ' → ERROR: ' + e.message);
+    }
+  });
+
+  Logger.log('=================================');
+  Logger.log('Daftarkan semua IP di atas ke whitelist iPaymu:');
+  Logger.log('Dashboard iPaymu → Pengaturan → Whitelist IP');
 }
 
