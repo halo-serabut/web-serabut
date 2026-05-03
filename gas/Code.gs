@@ -1245,7 +1245,7 @@ function googleLogin({ idToken, credential }) {
 // ────────────────────────────────────────────────────────
 //  CREATE ORDER — [SEC] validasi harga server-side
 // ────────────────────────────────────────────────────────
-function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk, varian, masaAktif, harga, msNama, username, microsoftEmail, emailAktif, emailReminder, imageUrl }) {
+function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk, varian, masaAktif, harga, msNama, username, microsoftEmail, emailAktif, emailReminder, imageUrl, env }) {
   // Auth check — guest order masih diperbolehkan (tanpa session)
   const effectiveEmail = userEmail || email || '';
   if (!effectiveEmail || !produk) return { success: false, error: 'Data tidak lengkap' };
@@ -1297,7 +1297,7 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   }
 
   // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
-  const isUat      = String(params.env || '').toLowerCase() === 'uat';
+  const isUat      = String(env || '').toLowerCase() === 'uat';
   const paymentMode = isUat ? 'xendit' : (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
   let paymentUrl = null;
   let paymentError = null;
@@ -1629,7 +1629,7 @@ function forgotPasswordVerify({ email, otp, newPassword }) {
 // ────────────────────────────────────────────────────────
 //  CREATE CART ORDER — semua item keranjang dalam 1 order ID
 // ────────────────────────────────────────────────────────
-function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, itemsJson, imageUrlsJson }) {
+function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, itemsJson, imageUrlsJson, env }) {
   const effectiveEmail = userEmail || email || '';
   if (!effectiveEmail || !itemsJson) return { success: false, error: 'Data tidak lengkap' };
 
@@ -1682,7 +1682,7 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   }
 
   // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
-  const isUat       = String(params.env || '').toLowerCase() === 'uat';
+  const isUat       = String(env || '').toLowerCase() === 'uat';
   const paymentMode = isUat ? 'xendit' : (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
   let paymentUrl = null;
   let paymentError = null;
