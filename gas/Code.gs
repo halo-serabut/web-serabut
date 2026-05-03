@@ -1297,7 +1297,8 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   }
 
   // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
-  const paymentMode = (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
+  const isUat      = String(params.env || '').toLowerCase() === 'uat';
+  const paymentMode = isUat ? 'xendit' : (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
   let paymentUrl = null;
   let paymentError = null;
 
@@ -1681,7 +1682,8 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   }
 
   // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
-  const paymentMode = (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
+  const isUat       = String(params.env || '').toLowerCase() === 'uat';
+  const paymentMode = isUat ? 'xendit' : (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
   let paymentUrl = null;
   let paymentError = null;
 
