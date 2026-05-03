@@ -74,7 +74,8 @@ function doPost(e) {
   let params;
   try { params = JSON.parse(e.postData.contents); } catch (_) { params = {}; }
 
-  const action = params.action;
+  // Xendit webhook kirim action via query string, bukan di body
+  const action = params.action || (e.parameter && e.parameter.action) || '';
   let result;
 
   // [SEC] CSRF defense-in-depth: unauthenticated endpoints wajib sertakan _srb marker
@@ -1296,29 +1297,33 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   }
 
   // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
-  // Buat invoice Xendit
+  const paymentMode = (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
   let paymentUrl = null;
   let paymentError = null;
-  try {
-    const xnRes = createXenditInvoice({
-      orderId,
-      items:     [{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum, qty: 1 }],
-      buyerName:  userNama,
-      buyerEmail: userEmail,
-      buyerPhone: userWa,
-      total: hargaNum
-    });
-    if (xnRes.success) paymentUrl = xnRes.paymentUrl;
-    else {
-      paymentError = xnRes.error || 'Gagal membuat sesi pembayaran';
-      Logger.log('createOrder Xendit error: ' + paymentError);
-    }
-  } catch(e) {
-    paymentError = 'Xendit exception: ' + e.message;
-    Logger.log('createOrder Xendit exception: ' + e.message);
-  }
 
-  return { success: true, orderId, harga: hargaNum, paymentUrl, paymentError };
+  if (paymentMode === 'xendit') {
+    try {
+      const xnRes = createXenditInvoice({
+        orderId,
+        items:     [{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum, qty: 1 }],
+        buyerName:  userNama,
+        buyerEmail: userEmail,
+        buyerPhone: userWa,
+        total: hargaNum
+      });
+      if (xnRes.success) paymentUrl = xnRes.paymentUrl;
+      else {
+        paymentError = xnRes.error || 'Gagal membuat sesi pembayaran';
+        Logger.log('createOrder Xendit error: ' + paymentError);
+      }
+    } catch(e) {
+      paymentError = 'Xendit exception: ' + e.message;
+      Logger.log('createOrder Xendit exception: ' + e.message);
+    }
+  }
+  // mode manual: paymentUrl tetap null → frontend tampilkan WA payment info
+
+  return { success: true, orderId, harga: hargaNum, paymentUrl, paymentError, paymentMode };
 }
 
 // ────────────────────────────────────────────────────────
@@ -1676,36 +1681,39 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   }
 
   // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
-  // Buat invoice Xendit — pakai harga server-validated (bukan client)
+  const paymentMode = (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
   let paymentUrl = null;
   let paymentError = null;
-  try {
-    const xnItems = items.map(it => ({
-      produk: it.produk,
-      varian: it.varian||'-',
-      masaAktif: it.masaAktif||'-',
-      harga: _getCatalogPrice(it.produk, it.varian, it.masaAktif) * (Number(it.qty) || 1),
-      qty: Number(it.qty) || 1
-    }));
-    const xnRes = createXenditInvoice({
-      orderId,
-      items:     xnItems,
-      buyerName:  userNama,
-      buyerEmail: userEmail,
-      buyerPhone: userWa,
-      total: totalHarga
-    });
-    if (xnRes.success) paymentUrl = xnRes.paymentUrl;
-    else {
-      paymentError = xnRes.error || 'Gagal membuat sesi pembayaran';
-      Logger.log('createCartOrder Xendit error: ' + paymentError);
+
+  if (paymentMode === 'xendit') {
+    try {
+      const xnItems = items.map(it => ({
+        produk: it.produk,
+        varian: it.varian||'-',
+        masaAktif: it.masaAktif||'-',
+        harga: _getCatalogPrice(it.produk, it.varian, it.masaAktif) * (Number(it.qty) || 1),
+        qty: Number(it.qty) || 1
+      }));
+      const xnRes = createXenditInvoice({
+        orderId,
+        items:     xnItems,
+        buyerName:  userNama,
+        buyerEmail: userEmail,
+        buyerPhone: userWa,
+        total: totalHarga
+      });
+      if (xnRes.success) paymentUrl = xnRes.paymentUrl;
+      else {
+        paymentError = xnRes.error || 'Gagal membuat sesi pembayaran';
+        Logger.log('createCartOrder Xendit error: ' + paymentError);
+      }
+    } catch(e) {
+      paymentError = 'Xendit exception: ' + e.message;
+      Logger.log('createCartOrder Xendit exception: ' + e.message);
     }
-  } catch(e) {
-    paymentError = 'Xendit exception: ' + e.message;
-    Logger.log('createCartOrder Xendit exception: ' + e.message);
   }
 
-  return { success: true, orderId, total: totalHarga, paymentUrl, paymentError };
+  return { success: true, orderId, total: totalHarga, paymentUrl, paymentError, paymentMode };
 }
 
 // ────────────────────────────────────────────────────────
