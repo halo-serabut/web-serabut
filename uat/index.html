@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- UAT ENVIRONMENT — Xendit Test Mode Active -->
 <html lang="id" x-data="serabutStore()" x-init="init()" @scroll.window="scrollY = window.scrollY">
 <head>
     <meta charset="UTF-8">
@@ -189,6 +190,11 @@
 </head>
 
 <body class="font-sans bg-gray-50 min-h-screen antialiased flex flex-col" x-cloak>
+<!-- UAT Banner -->
+<div class="fixed top-0 left-0 right-0 z-[9999] bg-amber-400 text-amber-900 text-center text-[11px] font-bold py-1 tracking-wide">
+    ⚠️ UAT ENVIRONMENT · Test Mode Bukan nyata
+</div>
+<div class="h-6"></div>
 
 <!-- ══════════════════════════════════════════════════════
      DESKTOP NAVBAR
@@ -4653,7 +4659,8 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260502-1',
+        APP_VERSION:      '20260502-1-uat',
+        APP_ENV:          'uat',
 
         // PWA Install
         pwaPopup:            false,
@@ -5031,8 +5038,8 @@ function serabutStore() {
         // ── POST helper ───────────────────────────────
         async gasPost(payload) {
             try {
-                // [SEC] CSRF marker — wajib ada _srb di semua POST ke GAS
-                const body = Object.assign({ _srb: '1' }, payload);
+                // [SEC] CSRF marker + UAT env flag
+                const body = Object.assign({ _srb: '1', env: this.APP_ENV }, payload);
                 const res = await fetch(this.GAS_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
