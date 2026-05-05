@@ -2640,47 +2640,86 @@
                         <template x-for="g in adminPagedOrders" :key="g.orderId">
                             <div class="bg-white rounded-2xl border shadow-sm overflow-hidden" :class="_orderCardBorder(g.status)">
 
-                                <!-- Group header -->
-                                <div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b" :class="_orderCardHeader(g.status)">
-                                    <span class="font-mono text-xs font-bold text-gray-700 bg-white border border-gray-200 px-2 py-0.5 rounded-lg" x-text="g.orderId"></span>
-                                    <span :class="getStatusBadge(g.status)" class="text-xs font-semibold px-2.5 py-0.5 rounded-full" x-text="g.status"></span>
-                                    <div class="flex items-center gap-1.5 flex-1 min-w-0">
-                                        <div class="w-6 h-6 rounded-full bg-brand-100 text-brand-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0" x-text="g.nama?.charAt(0)?.toUpperCase()||'?'"></div>
-                                        <div class="truncate">
-                                            <span class="text-xs font-semibold text-gray-800" x-text="g.nama"></span>
-                                            <span class="text-gray-400 text-[11px] ml-1.5" x-text="formatOrderDate(g.tanggal)"></span>
+                                <!-- Group header: No Pesanan kiri, status+buyer tengah, ubah status kanan -->
+                                <div class="px-4 py-3 border-b" :class="_orderCardHeader(g.status)">
+                                    <!-- Row 1: No Pesanan + Ubah Status -->
+                                    <div class="flex items-center justify-between gap-2 mb-2">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="font-mono text-xs font-bold text-gray-700 bg-white border border-gray-200 px-2 py-0.5 rounded-lg" x-text="g.orderId"></span>
+                                            <span :class="getStatusBadge(g.status)" class="text-xs font-semibold px-2.5 py-0.5 rounded-full" x-text="g.status"></span>
+                                        </div>
+                                        <select @change="adminUpdateGroupStatus(g, $event.target.value); $event.target.value=''"
+                                                class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700 flex-shrink-0">
+                                            <option value="">Ubah Status...</option>
+                                            <template x-for="st in ['Pending','Diproses','Aktif','Selesai','Dibatalkan']" :key="st">
+                                                <option :value="st" x-text="st"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <!-- Row 2: Avatar + Nama + Tanggal -->
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 text-xs font-bold flex items-center justify-center flex-shrink-0" x-text="g.nama?.charAt(0)?.toUpperCase()||'?'"></div>
+                                        <div>
+                                            <div class="text-sm font-semibold text-gray-800" x-text="g.nama"></div>
+                                            <div class="text-[11px] text-gray-400" x-text="adminFormatDate(g.tanggal)"></div>
                                         </div>
                                     </div>
-                                    <select @change="adminUpdateGroupStatus(g, $event.target.value); $event.target.value=''"
-                                            class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700 flex-shrink-0">
-                                        <option value="">Ubah Status...</option>
-                                        <template x-for="st in ['Pending','Diproses','Aktif','Selesai','Dibatalkan']" :key="st">
-                                            <option :value="st" x-text="st"></option>
-                                        </template>
-                                    </select>
                                 </div>
 
                                 <!-- Items list -->
                                 <div class="divide-y divide-gray-50">
-                                    <template x-for="(item, idx) in g.items" :key="item.rowIndex">
-                                        <div class="flex items-center gap-3 px-4 py-2.5">
-                                            <span class="text-[10px] text-gray-400 font-mono w-4 flex-shrink-0" x-text="idx+1+'.'"></span>
-                                            <div class="flex-1 min-w-0">
-                                                <span class="text-xs text-gray-700 font-medium" x-text="item.produk"></span>
-                                                <template x-if="item.varian && item.varian!=='-'"><span class="text-[11px] text-gray-400 ml-1" x-text="'· '+item.varian"></span></template>
-                                                <template x-if="item.masaAktif && item.masaAktif!=='-'"><span class="text-[11px] text-gray-400 ml-1" x-text="'· '+item.masaAktif"></span></template>
-                                                <template x-if="item.paymentMethod">
-                                                    <span class="ml-1.5 text-[10px] font-semibold bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded" x-text="item.paymentMethod"></span>
-                                                </template>
+                                    <template x-for="(item, idx) in g.items" :key="item.rowIndex||idx">
+                                        <div class="px-4 py-3">
+                                            <!-- Produk row -->
+                                            <div class="flex items-start gap-3">
+                                                <span class="text-[10px] text-gray-400 font-mono w-4 flex-shrink-0 mt-0.5" x-text="idx+1+'.'"></span>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-start justify-between gap-2">
+                                                        <div>
+                                                            <span class="text-sm font-semibold text-gray-800" x-text="item.produk"></span>
+                                                            <template x-if="item.varian && item.varian!=='-'"><span class="text-xs text-gray-500 ml-1" x-text="'– '+item.varian"></span></template>
+                                                            <template x-if="item.masaAktif && item.masaAktif!=='-'"><span class="text-xs text-gray-400 ml-1" x-text="'· '+item.masaAktif"></span></template>
+                                                            <span class="ml-1 text-[10px] text-gray-400">x1</span>
+                                                        </div>
+                                                        <span class="text-sm font-bold text-gray-800 flex-shrink-0" x-text="formatPrice(item.harga)"></span>
+                                                    </div>
+                                                    <!-- Detail fields — tampil sesuai tipe order, skip "-" dan kosong -->
+                                                    <div class="mt-2 grid grid-cols-1 gap-0.5" x-show="_adminOrderHasDetails(item)">
+                                                        <template x-if="_isVal(item.emailAktif)">
+                                                            <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Email Aktif</span><span class="text-gray-700 font-medium break-all" x-text="item.emailAktif"></span></div>
+                                                        </template>
+                                                        <template x-if="_isVal(item.microsoftEmail)">
+                                                            <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Email MS</span><span class="text-gray-700 font-medium break-all" x-text="item.microsoftEmail"></span></div>
+                                                        </template>
+                                                        <template x-if="_isVal(item.msNama)">
+                                                            <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Nama MS</span><span class="text-gray-700 font-medium" x-text="item.msNama"></span></div>
+                                                        </template>
+                                                        <template x-if="_isVal(item.username)">
+                                                            <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Username Req.</span><span class="text-gray-700 font-medium" x-text="item.username"></span></div>
+                                                        </template>
+                                                        <template x-if="_isVal(item.emailReminder)">
+                                                            <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Email Reminder</span><span class="text-gray-700 font-medium break-all" x-text="item.emailReminder"></span></div>
+                                                        </template>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <span class="text-xs font-semibold text-gray-800 flex-shrink-0" x-text="formatPrice(item.harga)"></span>
                                         </div>
                                     </template>
                                 </div>
 
-                                <!-- Total footer -->
-                                <div class="flex items-center justify-between px-4 py-2.5 border-t border-gray-100" :class="_orderCardFooter(g.status)">
-                                    <span class="text-[11px] text-gray-400" x-text="g.items.length + ' item'"></span>
+                                <!-- Footer: payment info + total -->
+                                <div class="flex items-center justify-between gap-3 px-4 py-2.5 border-t" :class="_orderCardFooter(g.status)">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="text-[11px] text-gray-400" x-text="g.items.length + ' item'"></span>
+                                        <template x-if="g.items[0]?.paymentMethod">
+                                            <span class="text-[10px] font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full" x-text="g.items[0].paymentMethod"></span>
+                                        </template>
+                                        <template x-if="g.items[0]?.paymentStatus">
+                                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                                  :class="g.items[0].paymentStatus==='Lunas'||g.items[0].paymentStatus==='Berhasil' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'"
+                                                  x-text="g.items[0].paymentStatus"></span>
+                                        </template>
+                                    </div>
                                     <span class="text-sm font-bold text-brand-600" x-text="formatPrice(g.total)"></span>
                                 </div>
 
@@ -7268,6 +7307,30 @@ function serabutStore() {
         _orderCardBorder(s) { return {Pending:'border-amber-300',Diproses:'border-indigo-300',Aktif:'border-emerald-300',Selesai:'border-blue-300',Dibatalkan:'border-red-200'}[s]||'border-gray-100'; },
         _orderCardHeader(s) { return {Pending:'bg-amber-50 border-amber-200',Diproses:'bg-indigo-50 border-indigo-200',Aktif:'bg-emerald-50 border-emerald-200',Selesai:'bg-blue-50 border-blue-200',Dibatalkan:'bg-red-50 border-red-100'}[s]||'bg-gray-50 border-gray-100'; },
         _orderCardFooter(s) { return {Pending:'bg-amber-50/50',Diproses:'bg-indigo-50/50',Aktif:'bg-emerald-50/50',Selesai:'bg-blue-50/50',Dibatalkan:'bg-red-50/50'}[s]||'bg-gray-50/50'; },
+        _isVal(v) { return v && String(v).trim() !== '' && String(v).trim() !== '-'; },
+        _adminOrderHasDetails(item) {
+            return this._isVal(item.emailAktif) || this._isVal(item.microsoftEmail) ||
+                   this._isVal(item.msNama) || this._isVal(item.username) || this._isVal(item.emailReminder);
+        },
+        adminFormatDate(str) {
+            if (!str) return '';
+            // Handle "dd/MM/yyyy HH:mm" (GAS format)
+            const m = String(str).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{2}:\d{2})/);
+            if (m) {
+                const days = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+                const d = new Date(+m[3], +m[2]-1, +m[1]);
+                return `${days[d.getDay()]}, ${+m[1]} ${['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'][+m[2]-1]} ${m[3]} ${m[4]} WIB`;
+            }
+            // Handle ISO / JS Date string fallback
+            const d = new Date(str);
+            if (!isNaN(d)) {
+                const days = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+                const mons = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                const pad = n => String(n).padStart(2,'0');
+                return `${days[d.getDay()]}, ${d.getDate()} ${mons[d.getMonth()]} ${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())} WIB`;
+            }
+            return str;
+        },
         getStatusMessage(s) { return {Aktif:'Akun kamu aktif dan berjalan normal',Expired:'Masa berlaku habis — segera perpanjang!',Suspended:'Akun dinonaktifkan — hubungi support',Pending:'Akun sedang dalam proses aktivasi'}[s]||'Hubungi support untuk info lebih lanjut'; },
         _parseDateStr(str) {
             if (!str) return null;
