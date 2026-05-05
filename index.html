@@ -1055,7 +1055,7 @@
 
         <!-- Header -->
         <div class="flex items-center gap-4 mb-6">
-            <div class="w-16 h-16 gradient-card rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-md" x-text="currentUser?.nama?.[0]?.toUpperCase()||'?'"></div>
+            <div :class="currentUser?.role?.toLowerCase()==='admin' ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-900' : 'gradient-card text-white'" class="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-2xl shadow-md" x-text="currentUser?.nama?.[0]?.toUpperCase()||'?'"></div>
             <div>
                 <div class="flex items-center gap-2">
                     <span class="font-black text-gray-900 text-lg leading-tight" x-text="currentUser?.nama||'—'"></span>
@@ -1307,9 +1307,24 @@
             <!-- Order list + pagination -->
             <div x-show="!ordersLoading && orders.length>0">
 
+                <!-- Filter tabs -->
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1 mb-4">
+                    <template x-for="tab in ['Semua','Belum Bayar','Diproses','Selesai','Dibatalkan']" :key="tab">
+                        <button @click="ordersFilter=tab; ordersCurrentPage=1"
+                                :class="ordersFilter===tab ? 'bg-brand-500 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-500 hover:border-brand-300'"
+                                class="flex-none flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap">
+                            <span x-text="tab"></span>
+                            <span x-show="tab!=='Semua' && orderFilterCounts[tab]>0"
+                                  :class="ordersFilter===tab ? 'bg-white/30 text-white' : 'bg-gray-100 text-gray-600'"
+                                  class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                                  x-text="orderFilterCounts[tab]"></span>
+                        </button>
+                    </template>
+                </div>
+
                 <!-- Per-page & count -->
                 <div class="flex items-center justify-between mb-3">
-                    <p class="text-xs text-gray-400"><span x-text="orders.length"></span> pesanan</p>
+                    <p class="text-xs text-gray-400"><span x-text="ordersFiltered.length"></span> pesanan</p>
                     <div class="flex items-center gap-1">
                         <span class="text-xs text-gray-400 mr-1">Tampil:</span>
                         <template x-for="n in [5,10,15]" :key="n">
@@ -4815,6 +4830,7 @@ function serabutStore() {
         profileExtra:  {},
         orders:          [],
         ordersLoading:   false,
+        ordersFilter:     'Semua',
         ordersPerPage:    5,
         ordersCurrentPage: 1,
         orderDetailModal: null,
@@ -5065,10 +5081,27 @@ function serabutStore() {
         },
         // true hanya jika user login dengan akun nyata (bukan tamu CS chat)
         get isMember() { return !!(this.currentUser && !this.currentUser.isGuest); },
-        get ordersTotalPages() { return Math.max(1, Math.ceil(this.orders.length / this.ordersPerPage)); },
+        get ordersFiltered() {
+            const f = this.ordersFilter;
+            if (f === 'Semua')       return this.orders;
+            if (f === 'Belum Bayar') return this.orders.filter(o => o.status === 'Pending' && this.orderMsLeft(o) > 0);
+            if (f === 'Diproses')    return this.orders.filter(o => o.status === 'Diproses');
+            if (f === 'Selesai')     return this.orders.filter(o => o.status === 'Aktif' || o.status === 'Selesai');
+            if (f === 'Dibatalkan')  return this.orders.filter(o => this.orderIsCancelled(o) && o.status !== 'Pending');
+            return this.orders;
+        },
+        get orderFilterCounts() {
+            return {
+                'Belum Bayar': this.orders.filter(o => o.status === 'Pending' && this.orderMsLeft(o) > 0).length,
+                'Diproses':    this.orders.filter(o => o.status === 'Diproses').length,
+                'Selesai':     this.orders.filter(o => o.status === 'Aktif' || o.status === 'Selesai').length,
+                'Dibatalkan':  this.orders.filter(o => this.orderIsCancelled(o) && o.status !== 'Pending').length,
+            };
+        },
+        get ordersTotalPages() { return Math.max(1, Math.ceil(this.ordersFiltered.length / this.ordersPerPage)); },
         get ordersPaginated() {
             const s = (this.ordersCurrentPage - 1) * this.ordersPerPage;
-            return this.orders.slice(s, s + this.ordersPerPage);
+            return this.ordersFiltered.slice(s, s + this.ordersPerPage);
         },
         get cartCount() { return this.cart.reduce((s,i) => s + (i.qty||1), 0); },
         get cartTotal() { return this.cart.reduce((s,i) => s + this.cartItemUnitPrice(i) * (i.qty||1), 0); },
