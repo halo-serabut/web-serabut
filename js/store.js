@@ -10,7 +10,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260502-1',
+        APP_VERSION:      '20260505-1',
         APP_ENV:          window._SRB_ENV || ''  ,
 
         // PWA Install
@@ -93,6 +93,7 @@ function serabutStore() {
         profileExtra:  {},
         orders:          [],
         ordersLoading:   false,
+        ordersLoaded:    false,
         ordersPerPage:    5,
         ordersCurrentPage: 1,
         orderDetailModal: null,
@@ -2476,6 +2477,7 @@ function serabutStore() {
         async loadOrders() {
             if(!this.currentUser || this.ordersLoading) return;
             this.ordersLoading=true;
+            this.ordersLoaded=true;
             this.ordersCurrentPage=1;
             try {
                 const data = await this.gasPost({ action:'getOrders', email:this.currentUser.email, sessionToken:this.currentUser.sessionToken });

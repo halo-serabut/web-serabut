@@ -1,4 +1,4 @@
-const CACHE_NAME = 'serabut-v2';
+const CACHE_NAME = 'serabut-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
