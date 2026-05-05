@@ -564,24 +564,35 @@ function getAllOrders({ adminEmail, adminToken }) {
   const headers = data[0].map(h => String(h).toLowerCase().trim());
   const pmCol   = headers.indexOf('payment method');
   const psCol   = headers.indexOf('payment status');
+  const msnCol  = _colIndex(headers, 'nama ms');
+  const usnCol  = _colIndex(headers, 'username');
+  const msemCol = _colIndex(headers, 'email microsoft');
+  const eaCol   = _colIndex(headers, 'email aktif');
+  const erCol   = _colIndex(headers, 'email reminder');
+  const _s = (row, col) => col >= 0 && row[col] ? String(row[col]).trim() : '';
   const orders  = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row[0]) continue;
     orders.push({
-      rowIndex:      i + 1,
-      orderId:       String(row[0]),
-      tanggal:       String(row[1]),
-      nama:          String(row[2]),
-      email:         String(row[3]),
-      wa:            String(row[4]),
-      produk:        String(row[5]),
-      varian:        String(row[6]),
-      masaAktif:     String(row[7]),
-      harga:         Number(row[8]) || 0,
-      status:        String(row[9]),
-      paymentMethod: pmCol >= 0 && row[pmCol] ? String(row[pmCol]).trim() : '',
-      paymentStatus: psCol >= 0 && row[psCol] ? String(row[psCol]).trim() : '',
+      rowIndex:       i + 1,
+      orderId:        String(row[0]),
+      tanggal:        String(row[1]),
+      nama:           String(row[2]),
+      email:          String(row[3]),
+      wa:             String(row[4]),
+      produk:         String(row[5]),
+      varian:         String(row[6]),
+      masaAktif:      String(row[7]),
+      harga:          Number(row[8]) || 0,
+      status:         String(row[9]),
+      msNama:         _s(row, msnCol),
+      username:       _s(row, usnCol),
+      microsoftEmail: _s(row, msemCol),
+      emailAktif:     _s(row, eaCol),
+      emailReminder:  _s(row, erCol),
+      paymentMethod:  _s(row, pmCol),
+      paymentStatus:  _s(row, psCol),
     });
   }
   orders.reverse();
@@ -1262,14 +1273,18 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   let sheet = ss.getSheetByName(TAB_ORDERS);
   if (!sheet) {
     sheet = ss.insertSheet(TAB_ORDERS);
-    sheet.appendRow(['Order ID', 'Tanggal', 'Nama', 'Email', 'No WA', 'Produk', 'Varian', 'Masa Aktif', 'Harga', 'Status', 'Nama MS', 'Username', 'Email Microsoft', 'Email Aktif', 'Email Reminder']);
-    sheet.getRange(1, 1, 1, 15).setFontWeight('bold');
+    sheet.appendRow(['Order ID', 'Tanggal', 'Nama', 'Email', 'No WA', 'Produk', 'Varian', 'Masa Aktif', 'Harga', 'Status', 'Nama MS', 'Username', 'Email Microsoft', 'Email Aktif', 'Email Reminder', 'Sent WAG']);
+    sheet.getRange(1, 1, 1, 16).setFontWeight('bold');
   } else {
     const existingHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toLowerCase());
     if (!existingHeaders.includes('username')) {
       const lc = sheet.getLastColumn();
       sheet.getRange(1, lc + 1, 1, 5).setValues([['Nama MS', 'Username', 'Email Microsoft', 'Email Aktif', 'Email Reminder']]);
       sheet.getRange(1, lc + 1, 1, 5).setFontWeight('bold');
+    }
+    if (!existingHeaders.includes('sent wag')) {
+      const lc2 = sheet.getLastColumn();
+      sheet.getRange(1, lc2 + 1).setValue('Sent WAG').setFontWeight('bold');
     }
   }
 
@@ -1279,7 +1294,7 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   sheet.appendRow([
     orderId, tanggal, userNama, userEmail, userWa,
     produk, varian || '-', masaAktif || '-', hargaNum, 'Pending',
-    msNama || '-', username || '-', microsoftEmail || '-', emailAktif || '-', emailReminder || '-'
+    msNama || '-', username || '-', microsoftEmail || '-', emailAktif || '-', emailReminder || '-', ''
   ]);
 
   const varLower    = (varian || '').toLowerCase();
@@ -1287,16 +1302,15 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   const isWeb       = varLower.includes('web');
   const reminderLine = emailReminder ? `\nEmail Reminder: ${emailReminder}` : '';
 
-  let groupMsg;
-  if (isFamily) {
-    groupMsg = `*ORDER 365 FAMILY*\nOrder ID: *${orderId}*\nEmail Microsoft (invite): *${microsoftEmail || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNama Pembeli: ${userNama}\nNo WA: ${userWa}\nStatus: *Pending*`;
-  } else if (isWeb) {
-    groupMsg = `*ORDER 365 WEB*\nOrder ID: *${orderId}*\nNama MS: ${msNama || '-'}\nUsername Request: *${username || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNo WA: ${userWa}\nStatus: *Pending*`;
-  } else {
-    groupMsg = `*ORDER BARU*\nOrder ID: *${orderId}*\nProduk: ${produk}\nVarian: ${varian || '-'}\nDurasi: ${masaAktif || '-'}\nNama: ${userNama}\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nNo WA: ${userWa}\nStatus: *Pending*`;
-  }
+  const groupMsg = _buildWAGOrderMsg(orderId, produk, isFamily, isWeb, msNama, username, microsoftEmail, emailAktif, masaAktif, userWa, hargaNum, '', '');
 
-  // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
+  // Kirim notif ke WA group saat order masuk + catat di kolom Sent WAG
+  const wagSent = sendWAToGroup(groupMsg);
+  const wagHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toLowerCase().trim());
+  const wagCol = wagHeaders.indexOf('sent wag');
+  if (wagCol >= 0) {
+    sheet.getRange(sheet.getLastRow(), wagCol + 1).setValue(wagSent ? 'Yes' : 'No');
+  }
   const isUat      = String(env || '').toLowerCase() === 'uat';
   const paymentMode = isUat ? 'xendit' : (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
   let paymentUrl = null;
@@ -1322,7 +1336,11 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
       Logger.log('createOrder Xendit exception: ' + e.message);
     }
   }
-  // mode manual: paymentUrl tetap null → frontend tampilkan WA payment info
+  // Kirim notif ke buyer (WA + email) saat order masuk
+  try {
+    const buyerItems = [{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum }];
+    sendBuyerNewOrder(userWa, userEmail, userNama, orderId, buyerItems, hargaNum, paymentUrl);
+  } catch(e) { Logger.log('createOrder buyer notif error: ' + e.message); }
 
   return { success: true, orderId, harga: hargaNum, paymentUrl, paymentError, paymentMode };
 }
@@ -1641,8 +1659,14 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   let sheet = ss.getSheetByName(TAB_ORDERS);
   if (!sheet) {
     sheet = ss.insertSheet(TAB_ORDERS);
-    sheet.appendRow(['Order ID','Tanggal','Nama','Email','No WA','Produk','Varian','Masa Aktif','Harga','Status','Nama MS','Username','Email Microsoft','Email Aktif','Email Reminder']);
-    sheet.getRange(1, 1, 1, 15).setFontWeight('bold');
+    sheet.appendRow(['Order ID','Tanggal','Nama','Email','No WA','Produk','Varian','Masa Aktif','Harga','Status','Nama MS','Username','Email Microsoft','Email Aktif','Email Reminder','Sent WAG']);
+    sheet.getRange(1, 1, 1, 16).setFontWeight('bold');
+  } else {
+    const existingH = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toLowerCase());
+    if (!existingH.includes('sent wag')) {
+      const lc = sheet.getLastColumn();
+      sheet.getRange(1, lc + 1).setValue('Sent WAG').setFontWeight('bold');
+    }
   }
 
   const orderId = 'SRB-' + new Date().getTime().toString().slice(-8);
@@ -1663,7 +1687,7 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
     sheet.appendRow([
       orderId, tanggal, userNama, userEmail, userWa,
       it.produk, it.varian||'-', it.masaAktif||'-', hargaNum, 'Pending',
-      it.msNama||'-', it.username||'-', it.microsoftEmail||'-', it.emailAktif||'-', '-'
+      it.msNama||'-', it.username||'-', it.microsoftEmail||'-', it.emailAktif||'-', '-', ''
     ]);
 
     const varLower  = (it.varian || '').toLowerCase();
@@ -1681,7 +1705,19 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
     waLines.push(line);
   }
 
-  // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
+  // Kirim notif ke WA group saat order cart masuk + catat di kolom Sent WAG
+  const cartGroupMsg = `*ORDER VIA WEB (CART)*\nOrder ID: *${orderId}*\nPembeli: ${userNama}\nNo WA: ${userWa}\nTotal: Rp ${totalHarga.toLocaleString('id-ID')}\n\n${waLines.join('\n')}\n\nStatus: *Pending*`;
+  const cartWagSent = sendWAToGroup(cartGroupMsg);
+  const cartWagHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toLowerCase().trim());
+  const cartWagCol = cartWagHeaders.indexOf('sent wag');
+  if (cartWagCol >= 0) {
+    const lastRow = sheet.getLastRow();
+    const firstRow = lastRow - items.length + 1;
+    for (let r = firstRow; r <= lastRow; r++) {
+      sheet.getRange(r, cartWagCol + 1).setValue(cartWagSent ? 'Yes' : 'No');
+    }
+  }
+
   const isUat       = String(env || '').toLowerCase() === 'uat';
   const paymentMode = isUat ? 'xendit' : (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
   let paymentUrl = null;
@@ -1714,6 +1750,17 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
       Logger.log('createCartOrder Xendit exception: ' + e.message);
     }
   }
+
+  // Kirim notif ke buyer (WA + email) saat order cart masuk
+  try {
+    const buyerItems = items.map(it => ({
+      produk:    it.produk,
+      varian:    it.varian||'-',
+      masaAktif: it.masaAktif||'-',
+      harga:     _getCatalogPrice(it.produk, it.varian, it.masaAktif) * (Number(it.qty) || 1),
+    }));
+    sendBuyerNewOrder(userWa, userEmail, userNama, orderId, buyerItems, totalHarga, paymentUrl);
+  } catch(e) { Logger.log('createCartOrder buyer notif error: ' + e.message); }
 
   return { success: true, orderId, total: totalHarga, paymentUrl, paymentError, paymentMode };
 }
@@ -2395,10 +2442,37 @@ function sendWANotification(message) {
   } catch (e) { Logger.log('WA notif error: ' + e.message); }
 }
 
+// Build WAG order message — skip field yg kosong atau "-"
+// paymentMethod & paymentStatus kosong saat order baru, diisi saat sudah bayar
+function _buildWAGOrderMsg(orderId, produk, isFamily, isWeb, msNama, username, microsoftEmail, emailAktif, masaAktif, waNum, harga, paymentMethod, paymentStatus) {
+  const _f = v => (!v || String(v).trim() === '-' || String(v).trim() === '') ? '' : String(v).trim();
+  const lines = [`*ORDER VIA WEB: ${produk}*`, `Order ID: *${orderId}*`];
+
+  if (isFamily) {
+    if (_f(microsoftEmail)) lines.push(`Email MS (invite): ${_f(microsoftEmail)}`);
+    if (_f(emailAktif))     lines.push(`Email Aktif: ${_f(emailAktif)}`);
+  } else if (isWeb) {
+    if (_f(msNama))    lines.push(`Nama MS: ${_f(msNama)}`);
+    if (_f(username))  lines.push(`Username Request: ${_f(username)}`);
+    if (_f(emailAktif)) lines.push(`Email Aktif: ${_f(emailAktif)}`);
+  } else {
+    if (_f(emailAktif)) lines.push(`Email Aktif: ${_f(emailAktif)}`);
+  }
+
+  if (_f(masaAktif)) lines.push(`Durasi: ${_f(masaAktif)}`);
+  if (_f(waNum))     lines.push(`No WA: ${_f(waNum)}`);
+  lines.push(`Harga: Rp ${Number(harga || 0).toLocaleString('id-ID')}`);
+  if (_f(paymentMethod)) lines.push(`Metode Bayar: ${_f(paymentMethod)}`);
+  if (_f(paymentStatus)) lines.push(`Status Bayar: ${_f(paymentStatus)}`);
+  lines.push(`Status: *Pending*`);
+
+  return lines.join('\n');
+}
+
 function sendWAToGroup(message) {
   if (!FONNTE_TOKEN || !WA_GROUP_ESCALATION) {
     Logger.log('sendWAToGroup: TOKEN atau GROUP_ID kosong');
-    return;
+    return false;
   }
   try {
     const resp = UrlFetchApp.fetch('https://api.fonnte.com/send', {
@@ -2408,7 +2482,12 @@ function sendWAToGroup(message) {
       muteHttpExceptions: true,
     });
     Logger.log('Fonnte response [' + resp.getResponseCode() + ']: ' + resp.getContentText());
-  } catch (e) { Logger.log('WA group notif error: ' + e.message); }
+    const code = resp.getResponseCode();
+    return (code >= 200 && code < 300);
+  } catch (e) {
+    Logger.log('WA group notif error: ' + e.message);
+    return false;
+  }
 }
 
 function sendWAWelcome(waNumber, nama) {
@@ -2427,6 +2506,100 @@ function sendWAWelcome(waNumber, nama) {
 // ────────────────────────────────────────────────────────
 //  BUYER NOTIFICATIONS
 // ────────────────────────────────────────────────────────
+
+// Kirim notif order baru ke buyer saat order pertama masuk (status Pending)
+// paymentUrl: link bayar jika ada (Xendit), null jika manual
+function sendBuyerNewOrder(waNumber, email, nama, orderId, items, total, paymentUrl) {
+  const itemLines = items.map((it, i) => {
+    let line = `[${i+1}] *${it.produk}*`;
+    if (it.varian && it.varian !== '-') line += ` - ${it.varian}`;
+    if (it.masaAktif && it.masaAktif !== '-') line += ` (${it.masaAktif})`;
+    line += `\n    Rp ${Number(it.harga).toLocaleString('id-ID')}`;
+    return line;
+  }).join('\n');
+
+  const paymentLine = paymentUrl
+    ? `\n\n💳 *Selesaikan pembayaran di sini:*\n${paymentUrl}\n_(Link aktif 24 jam)_`
+    : `\n\nSilakan konfirmasi pembayaran via WhatsApp ke +62 888 1500 555 setelah transfer.`;
+
+  const waMsg =
+    `Halo *${nama}*! 👋\n\n` +
+    `Pesanan kamu di *Serabut Store* telah diterima 🛍️\n\n` +
+    `*Order ID: ${orderId}*\n` +
+    `────────────────────\n` +
+    `${itemLines}\n` +
+    `────────────────────\n` +
+    `Total: *Rp ${Number(total).toLocaleString('id-ID')}*\n` +
+    `Status Pembayaran: *Menunggu Pembayaran ⏳*` +
+    `${paymentLine}\n\n` +
+    `Ada pertanyaan? Chat kami di +62 888 1500 555\n\n— Serabut Store`;
+
+  if (FONNTE_TOKEN && waNumber) {
+    try {
+      UrlFetchApp.fetch('https://api.fonnte.com/send', {
+        method: 'post',
+        headers: { 'Authorization': FONNTE_TOKEN },
+        payload: { target: _normalizeWA(waNumber), message: waMsg },
+        muteHttpExceptions: true,
+      });
+    } catch(e) { Logger.log('WA buyer new order error: ' + e.message); }
+  }
+
+  if (email) {
+    try {
+      GmailApp.sendEmail(email,
+        `📦 Pesanan #${orderId} Diterima — Serabut Store`,
+        '',
+        {
+          name: STORE_NAME,
+          htmlBody: buildNewOrderEmailHTML(nama, orderId, items, total, paymentUrl),
+          replyTo: 'halo@serabut.id'
+        }
+      );
+    } catch(e) { Logger.log('Email buyer new order error: ' + e.message); }
+  }
+}
+
+function buildNewOrderEmailHTML(nama, orderId, items, total, paymentUrl) {
+  const rows = items.map((it, i) => {
+    const produkStr = `${it.produk}${it.varian && it.varian!=='-' ? ' – '+it.varian : ''}`;
+    const dur = it.masaAktif && it.masaAktif!=='-' ? ` <span style="color:#6b7280;font-size:12px;">(${it.masaAktif})</span>` : '';
+    return `<tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">${i+1}. ${produkStr}${dur}</td><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#111827;font-weight:700;text-align:right;">Rp ${Number(it.harga).toLocaleString('id-ID')}</td></tr>`;
+  }).join('');
+
+  const paymentBlock = paymentUrl
+    ? `<div style="background:#fef3c7;border-radius:10px;padding:14px 18px;margin-bottom:20px;">
+        <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:#92400e;">💳 Selesaikan Pembayaran</p>
+        <p style="margin:0 0 10px;font-size:13px;color:#92400e;">Klik tombol di bawah untuk melanjutkan ke halaman pembayaran. Link aktif selama <strong>24 jam</strong>.</p>
+        <a href="${paymentUrl}" style="display:inline-block;background:#16a34a;color:#fff;font-size:13px;font-weight:700;text-decoration:none;padding:10px 28px;border-radius:8px;">Bayar Sekarang →</a>
+       </div>`
+    : `<div style="background:#fef3c7;border-radius:10px;padding:12px 16px;margin-bottom:20px;">
+        <p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">💬 Silakan konfirmasi pembayaran via WhatsApp ke <strong>+62 888 1500 555</strong> setelah transfer.</p>
+       </div>`;
+
+  return `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Pesanan Diterima</title></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 16px;"><tr><td align="center">
+<table width="100%" style="max-width:460px;" cellpadding="0" cellspacing="0">
+<tr><td style="background:linear-gradient(135deg,#dc2626,#b91c1c);padding:28px 40px;text-align:center;border-radius:16px 16px 0 0;">
+<div style="font-size:20px;font-weight:900;color:#fff;letter-spacing:3px;">SERABUT STORE</div></td></tr>
+<tr><td style="background:#fff;padding:32px 36px;border-radius:0 0 16px 16px;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
+<p style="margin:0 0 4px;font-size:20px;font-weight:700;color:#111827;">Halo, ${nama}!</p>
+<p style="margin:0 0 24px;font-size:14px;color:#6b7280;">Pesanan kamu sudah kami terima. Berikut detailnya.</p>
+<div style="background:#f8fafc;border:1.5px solid #e5e7eb;border-radius:12px;padding:16px 20px;margin-bottom:20px;">
+<div style="font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">ORDER ID</div>
+<div style="font-size:20px;font-weight:900;color:#dc2626;">${orderId}</div>
+<div style="margin-top:8px;display:inline-block;background:#fef9c3;border:1px solid #fde68a;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;color:#92400e;">⏳ Menunggu Pembayaran</div>
+</div>
+<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">${rows}
+<tr><td style="padding:12px 0 4px;font-size:15px;font-weight:700;color:#111827;">Total</td><td style="padding:12px 0 4px;font-size:16px;font-weight:900;color:#dc2626;text-align:right;">Rp ${Number(total).toLocaleString('id-ID')}</td></tr>
+</table>
+${paymentBlock}
+<div style="height:1px;background:#f3f4f6;margin:0 0 16px;"></div>
+<p style="margin:0;font-size:12px;color:#9ca3af;">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#dc2626;">+62 888 1500 555</a></p>
+</td></tr><tr><td style="padding:20px 0;text-align:center;"><p style="margin:0;font-size:11px;color:#9ca3af;">&copy; 2019–2026 PT Serabut Solusi Digital &middot; <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a></p></td></tr>
+</table></td></tr></table></body></html>`;
+}
 
 // Kirim konfirmasi order baru ke buyer via WA + email
 // items: [{produk, varian, masaAktif, harga}]
@@ -2833,7 +3006,7 @@ function xenditCallback(params, e) {
 
         // WA group notif
         const groupMsg = `✅ *PEMBAYARAN DITERIMA*\nOrder ID: *${extId}*\nProduk: ${produk} ${varian!=='-'?'- '+varian:''} ${masaAktif!=='-'?'('+masaAktif+')':''}\nPembeli: ${buyerNama}\nMetode: ${method}\nTotal: Rp ${Number(harga).toLocaleString('id-ID')}\nTanggal: ${tanggal}`;
-        sendWAGroup(groupMsg);
+        sendWAToGroup(groupMsg);
 
         // WA + email ke buyer
         sendBuyerOrderConfirmed(buyerNama, buyerEmail, buyerWa ? _normalizeWA(buyerWa) : '', extId, produk, varian, masaAktif, harga, method, tanggal);
@@ -3523,5 +3696,157 @@ function checkGASIpAddress() {
   Logger.log('=================================');
   Logger.log('Daftarkan semua IP di atas ke whitelist iPaymu:');
   Logger.log('Dashboard iPaymu → Pengaturan → Whitelist IP');
+}
+
+// ────────────────────────────────────────────────────────
+//  AUTO-EXPIRE ORDERS — time-driven trigger (every 1 hour)
+// ────────────────────────────────────────────────────────
+function autoExpireOrders() {
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_ORDERS);
+  if (!sheet) return;
+
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const statusCol    = 9; // col J (0-indexed)
+  const psCol        = headers.indexOf('payment status');
+  const sentWAGCol   = _colIndex(headers, 'sent wag', 'sentwag');
+  const pmCol        = headers.indexOf('payment method');
+  const now          = new Date();
+  const LIMIT_MS     = 24 * 60 * 60 * 1000; // 24 jam
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[0]) continue;
+
+    const status = String(row[statusCol]).trim();
+    if (status !== 'Pending') continue;
+
+    // Cek usia order
+    const tanggalRaw = row[1];
+    let orderDate;
+    if (tanggalRaw instanceof Date) {
+      orderDate = tanggalRaw;
+    } else {
+      // format "dd/MM/yyyy HH:mm" atau ISO
+      const str = String(tanggalRaw);
+      const m = str.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
+      if (m) {
+        orderDate = new Date(Number(m[3]), Number(m[2])-1, Number(m[1]), Number(m[4]), Number(m[5]));
+      } else {
+        orderDate = new Date(str);
+      }
+    }
+    if (isNaN(orderDate.getTime())) continue;
+    if (now - orderDate < LIMIT_MS) continue;
+
+    // Tandai expired di sheet
+    const ri = i + 1;
+    sheet.getRange(ri, statusCol + 1).setValue('Dibatalkan');
+    if (psCol >= 0) sheet.getRange(ri, psCol + 1).setValue('Expired');
+
+    // Data untuk notifikasi
+    const orderId = String(row[0]);
+    const nama    = String(row[2]);
+    const email   = String(row[3]);
+    const wa      = String(row[4]);
+    const produk  = String(row[5]);
+    const varian  = String(row[6]);
+    const masaAktif = String(row[7]);
+    const harga   = Number(row[8]) || 0;
+    const payMethod = pmCol >= 0 ? String(row[pmCol]) : '';
+
+    // Notif ke buyer
+    sendBuyerAutoCancelNotif(wa, email, nama, orderId, produk, varian, masaAktif, harga);
+
+    // Notif ke WAG
+    const itemDesc = [produk, varian !== '-' ? varian : '', masaAktif !== '-' ? masaAktif : ''].filter(Boolean).join(' · ');
+    const groupMsg =
+      `⚠️ *ORDER AUTO-CANCEL*\n` +
+      `Order ID: *${orderId}*\n` +
+      `Pembeli: ${nama}\n` +
+      `Produk: ${itemDesc}\n` +
+      `Total: Rp ${harga.toLocaleString('id-ID')}\n` +
+      `Alasan: Tidak ada pembayaran dalam 24 jam\n` +
+      `Status diubah → *Dibatalkan*`;
+    sendWAToGroup(groupMsg);
+
+    Logger.log('Auto-expire: ' + orderId + ' (' + nama + ')');
+  }
+
+  SpreadsheetApp.flush();
+}
+
+// Jalankan sekali untuk pasang trigger hourly
+function setupAutoExpireTrigger() {
+  // Hapus trigger lama (jika ada) agar tidak duplikat
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (t.getHandlerFunction() === 'autoExpireOrders') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('autoExpireOrders')
+    .timeBased()
+    .everyHours(1)
+    .create();
+  Logger.log('Trigger autoExpireOrders tiap 1 jam berhasil dibuat.');
+}
+
+// ────────────────────────────────────────────────────────
+//  NOTIFIKASI AUTO-CANCEL KE BUYER
+// ────────────────────────────────────────────────────────
+function sendBuyerAutoCancelNotif(waNumber, email, nama, orderId, produk, varian, masaAktif, harga) {
+  const itemDesc = [produk, varian && varian !== '-' ? varian : '', masaAktif && masaAktif !== '-' ? masaAktif : '']
+    .filter(Boolean).join(' · ');
+
+  const waMsg =
+    `Halo *${nama}* 👋\n\n` +
+    `Pesananmu di *Serabut Store* telah *otomatis dibatalkan* karena belum ada pembayaran dalam 24 jam.\n\n` +
+    `*Order ID: ${orderId}*\n` +
+    `Produk: ${itemDesc}\n` +
+    `Total: Rp ${harga.toLocaleString('id-ID')}\n\n` +
+    `Jika masih ingin memesan, kamu bisa order ulang kapan saja di serabut.id 🛒\n\n` +
+    `Ada pertanyaan? Chat kami di +62 888 1500 555\n— Serabut Store`;
+
+  if (FONNTE_TOKEN && waNumber && waNumber !== '-') {
+    try {
+      UrlFetchApp.fetch('https://api.fonnte.com/send', {
+        method: 'post',
+        headers: { 'Authorization': FONNTE_TOKEN },
+        payload: { target: _normalizeWA(waNumber), message: waMsg },
+        muteHttpExceptions: true,
+      });
+    } catch(e) { Logger.log('WA auto-cancel error: ' + e.message); }
+  }
+
+  if (email && email !== '-') {
+    const htmlBody =
+      `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;background:#f9fafb;padding:24px;border-radius:12px">` +
+      `<div style="background:#fff;border-radius:10px;padding:24px;border:1px solid #e5e7eb">` +
+      `<div style="text-align:center;margin-bottom:20px">` +
+      `<span style="font-size:32px">⚠️</span>` +
+      `<h2 style="color:#dc2626;margin:8px 0 4px">Pesanan Dibatalkan</h2>` +
+      `<p style="color:#6b7280;font-size:14px;margin:0">Order #${orderId}</p>` +
+      `</div>` +
+      `<p style="color:#374151">Halo <strong>${nama}</strong>,</p>` +
+      `<p style="color:#374151">Pesananmu telah <strong>otomatis dibatalkan</strong> karena belum ada konfirmasi pembayaran dalam <strong>24 jam</strong>.</p>` +
+      `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0">` +
+      `<p style="margin:0 0 8px;font-weight:bold;color:#dc2626">Detail Pesanan</p>` +
+      `<p style="margin:0;color:#374151;font-size:14px">${itemDesc}</p>` +
+      `<p style="margin:4px 0 0;color:#374151;font-size:14px">Total: <strong>Rp ${harga.toLocaleString('id-ID')}</strong></p>` +
+      `</div>` +
+      `<p style="color:#374151">Jika masih ingin memesan, silakan kunjungi <a href="https://serabut.id" style="color:#dc2626">serabut.id</a> dan order ulang kapan saja.</p>` +
+      `<div style="text-align:center;margin-top:20px">` +
+      `<a href="https://serabut.id" style="background:#dc2626;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">Pesan Ulang Sekarang</a>` +
+      `</div>` +
+      `<p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:20px">Ada pertanyaan? Hubungi kami di halo@serabut.id atau WhatsApp +62 888 1500 555</p>` +
+      `</div></div>`;
+
+    try {
+      GmailApp.sendEmail(email,
+        `Pesanan #${orderId} Dibatalkan — Serabut Store`,
+        '',
+        { name: STORE_NAME, htmlBody, replyTo: 'halo@serabut.id' }
+      );
+    } catch(e) { Logger.log('Email auto-cancel error: ' + e.message); }
+  }
 }
 
