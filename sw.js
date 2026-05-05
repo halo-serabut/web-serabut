@@ -1,7 +1,9 @@
-const CACHE_NAME = 'serabut-v1';
+const CACHE_NAME = 'serabut-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/js/store.js',
+  '/css/app.css',
   '/logo.png',
   '/manifest.json'
 ];

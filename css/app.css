@@ -1,0 +1,47 @@
+[x-cloak] { display: none !important; }
+.gradient-hero  { background: linear-gradient(135deg, #7F1D1D 0%, #DC2626 60%, #EF4444 100%); }
+.gradient-card  { background: linear-gradient(135deg, #DC2626, #EF4444); }
+.card-hover     { transition: transform .18s ease, box-shadow .18s ease; }
+.card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(220,38,38,.12); }
+.card-hover:active { transform: translateY(-1px); }
+.pb-safe { padding-bottom: max(env(safe-area-inset-bottom), .75rem); }
+@supports (-webkit-touch-callout: none) {
+    input, select, textarea { font-size: 16px !important; }
+}
+.page-enter { animation: pageIn .22s cubic-bezier(.4,0,.2,1); }
+@keyframes pageIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.skeleton { background: linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; }
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.no-scrollbar::-webkit-scrollbar { display:none; }
+.no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+.modal-enter { animation: modalUp .28s cubic-bezier(.4,0,.2,1); }
+@keyframes modalUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:translateY(0)} }
+input[type="radio"] { accent-color:#DC2626; }
+/* CS button peek-from-wall — hanya mobile */
+@media (max-width: 767px) {
+    .cs-peek { transform: translateX(38px); }
+    .cs-peek .cs-fab { animation: cs-attention 4s ease-in-out infinite; }
+}
+@keyframes cs-float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-6px); }
+}
+@keyframes cs-attention {
+    0%, 60%, 100% { transform: translateX(0); }
+    70%            { transform: translateX(-18px); }
+    80%            { transform: translateX(-12px); }
+    90%            { transform: translateX(-18px); }
+}
+@keyframes cs-ping {
+    0%        { transform: scale(1); opacity: .8; }
+    70%, 100% { transform: scale(2.2); opacity: 0; }
+}
+.cs-fab-float { animation: cs-float 3s ease-in-out infinite; }
+.cs-ping::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: #4ade80;
+    animation: cs-ping 1.5s cubic-bezier(0,0,.2,1) infinite;
+}
