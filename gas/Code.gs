@@ -310,6 +310,14 @@ function _formatDateCell(val) {
   return String(val).trim();
 }
 
+// Format date cell → "dd/MM/yyyy HH:mm" agar konsisten di frontend
+function _fmtOrderDate(val) {
+  if (!val) return '';
+  const d = val instanceof Date ? val : new Date(val);
+  if (isNaN(d.getTime())) return String(val);
+  return Utilities.formatDate(d, 'Asia/Jakarta', 'dd/MM/yyyy HH:mm');
+}
+
 function _colIndex(headers, ...names) {
   for (const name of names) {
     const n   = name.toLowerCase();
@@ -577,7 +585,7 @@ function getAllOrders({ adminEmail, adminToken }) {
     orders.push({
       rowIndex:       i + 1,
       orderId:        String(row[0]),
-      tanggal:        String(row[1]),
+      tanggal:        _fmtOrderDate(row[1]),
       nama:           String(row[2]),
       email:          String(row[3]),
       wa:             String(row[4]),
@@ -1411,7 +1419,7 @@ function getOrders({ email }) {
     } else {
       orderMap.set(orderId, {
         orderId,
-        tanggal:       _str(dateCol),
+        tanggal:       _fmtOrderDate(row[dateCol]),
         buyerNama:     _str(namaCol),
         buyerWa:       _str(waCol),
         status:        stCol >= 0 ? String(row[stCol] || 'Pending').trim() : 'Pending',
