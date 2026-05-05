@@ -106,6 +106,9 @@ function serabutStore() {
         privacyScrolled: false,
         resetPwModal:   false,
         logoutConfirm:  false,
+        welcomeToast:   false,
+        welcomeToastName: '',
+        ordersFilter:   'Semua',
         resetPwForm:    { oldPassword:'', newPassword:'', konfirmasi:'' },
         resetPwLoading: false,
         resetPwError:   '',
@@ -344,9 +347,27 @@ function serabutStore() {
         // true hanya jika user login dengan akun nyata (bukan tamu CS chat)
         get isMember() { return !!(this.currentUser && !this.currentUser.isGuest); },
         get ordersTotalPages() { return Math.max(1, Math.ceil(this.orders.length / this.ordersPerPage)); },
+        get ordersFiltered() {
+            const f = this.ordersFilter;
+            if (f === 'Semua')      return this.orders;
+            if (f === 'Belum Bayar') return this.orders.filter(o => o.status === 'Pending' && this.orderMsLeft(o) > 0);
+            if (f === 'Diproses')   return this.orders.filter(o => o.status === 'Diproses');
+            if (f === 'Selesai')    return this.orders.filter(o => o.status === 'Aktif' || o.status === 'Selesai');
+            if (f === 'Dibatalkan') return this.orders.filter(o => this.orderIsCancelled(o) && o.status !== 'Pending');
+            return this.orders;
+        },
+        get orderFilterCounts() {
+            return {
+                'Semua':      this.orders.length,
+                'Belum Bayar': this.orders.filter(o => o.status === 'Pending' && this.orderMsLeft(o) > 0).length,
+                'Diproses':   this.orders.filter(o => o.status === 'Diproses').length,
+                'Selesai':    this.orders.filter(o => o.status === 'Aktif' || o.status === 'Selesai').length,
+                'Dibatalkan': this.orders.filter(o => this.orderIsCancelled(o) && o.status !== 'Pending').length,
+            };
+        },
         get ordersPaginated() {
             const s = (this.ordersCurrentPage - 1) * this.ordersPerPage;
-            return this.orders.slice(s, s + this.ordersPerPage);
+            return this.ordersFiltered.slice(s, s + this.ordersPerPage);
         },
         get cartCount() { return this.cart.reduce((s,i) => s + (i.qty||1), 0); },
         get cartTotal() { return this.cart.reduce((s,i) => s + this.cartItemUnitPrice(i) * (i.qty||1), 0); },
@@ -937,6 +958,7 @@ function serabutStore() {
                     localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
                     this.closeAuthModal();
                     this.loginForm = {email:'',password:''};
+                    this._showWelcomeToast(data.user.nama);
                     if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
                 } else { this.authError = data.error||'Login gagal'; }
             } catch { this.authError='Gagal terhubung ke server'; }
@@ -1911,10 +1933,17 @@ function serabutStore() {
                 this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
                 localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
                 this.closeAuthModal();
+                this._showWelcomeToast(data.user.nama);
                 if(data.user.role==='admin') this.setPage('admin');
             } else {
                 this.authError = data.error || 'Gagal login dengan Google.';
             }
+        },
+
+        _showWelcomeToast(nama) {
+            this.welcomeToastName = nama || 'Kamu';
+            this.welcomeToast = true;
+            setTimeout(() => { this.welcomeToast = false; }, 4000);
         },
 
         // ── Guide Drag & Drop ────────────────────────
