@@ -177,6 +177,10 @@
             70%, 100% { transform: scale(2.2); opacity: 0; }
         }
         .cs-fab-float { animation: cs-float 3s ease-in-out infinite; }
+        .cs-chat-panel { height:calc(100svh - 88px); max-height:calc(100svh - 88px); }
+        @media (min-width:768px) {
+            .cs-chat-panel { height:min(560px,calc(100svh - 180px)); max-height:min(560px,calc(100svh - 180px)); }
+        }
         .cs-ping::before {
             content: '';
             position: absolute;
@@ -2945,7 +2949,7 @@
 ══════════════════════════════════════════════════════ -->
 
 <!-- Popup card: mobile = floating card with margin, desktop = positioned card -->
-<div class="fixed inset-x-0 bottom-0 px-3 pb-3 z-[91] md:inset-auto md:bottom-28 md:right-8 md:px-0 md:pb-0"
+<div class="fixed inset-x-0 bottom-16 px-3 pb-2 z-[91] md:inset-auto md:bottom-24 md:right-8 md:px-0 md:pb-0"
      x-show="csPopup"
      x-transition:enter="transition ease-out duration-200"
      x-transition:enter-start="opacity-0 translate-y-4"
@@ -2955,7 +2959,7 @@
      x-transition:leave-end="opacity-0 translate-y-4">
     <!-- Mobile backdrop -->
     <div class="fixed inset-0 bg-black/40 md:hidden -z-10" @click="csPopup=false"></div>
-    <div class="relative bg-white rounded-3xl md:rounded-2xl shadow-2xl border border-gray-100 w-full md:w-96 flex flex-col h-[60vh] md:h-[500px] max-h-[60vh] md:max-h-[500px] overflow-hidden">
+    <div class="relative bg-white rounded-3xl md:rounded-2xl shadow-2xl border border-gray-100 w-full md:w-96 flex flex-col overflow-hidden cs-chat-panel">
         <!-- Drag handle mobile only -->
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-none">
             <div class="w-10 h-1 bg-gray-300 rounded-full"></div>

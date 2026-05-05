@@ -37,6 +37,17 @@ input[type="radio"] { accent-color:#DC2626; }
     70%, 100% { transform: scale(2.2); opacity: 0; }
 }
 .cs-fab-float { animation: cs-float 3s ease-in-out infinite; }
+/* Chat panel — fixed responsive height */
+.cs-chat-panel {
+    height: calc(100svh - 88px);
+    max-height: calc(100svh - 88px);
+}
+@media (min-width: 768px) {
+    .cs-chat-panel {
+        height: min(560px, calc(100svh - 180px));
+        max-height: min(560px, calc(100svh - 180px));
+    }
+}
 .cs-ping::before {
     content: '';
     position: absolute;
