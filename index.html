@@ -961,8 +961,9 @@
                                 <!-- Reviews dari GAS (per produk, hanya yang published) -->
                                 <template x-if="!reviewsLoading && productReviews.length > 0">
                                     <div class="space-y-4">
-                                        <template x-for="review in productReviews" :key="review.id">
+                                        <template x-for="review in (reviewsShowAll ? productReviews : productReviews.slice(0,3))" :key="review.id">
                                             <div class="border-b border-gray-50 pb-4 last:border-0">
+                                                <!-- Header: avatar + nama + bintang -->
                                                 <div class="flex items-start justify-between gap-2 mb-1.5">
                                                     <div class="flex items-center gap-2">
                                                         <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center flex-none">
@@ -980,10 +981,40 @@
                                                         <template x-for="i in (review.rating||5)" :key="i"><svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
                                                     </div>
                                                 </div>
+                                                <!-- Produk badge -->
                                                 <div class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-block mb-1.5"
                                                      x-text="review.produk + (review.varian && review.varian!=='-' ? ' · '+review.varian : '')"></div>
-                                                <p class="text-sm text-gray-600 leading-relaxed" x-text="review.komentar"></p>
+                                                <!-- Komentar -->
+                                                <p class="text-sm text-gray-600 leading-relaxed mb-2.5" x-text="review.komentar"></p>
+                                                <!-- Love button -->
+                                                <button @click="likeReview(review)"
+                                                        class="flex items-center gap-1.5 text-[11px] font-semibold rounded-full px-2.5 py-1 transition-all border"
+                                                        :class="review._liked
+                                                            ? 'bg-red-50 border-red-200 text-red-500'
+                                                            : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-red-50 hover:border-red-200 hover:text-red-400'">
+                                                    <svg class="w-3.5 h-3.5 transition-all" :class="review._liked ? 'fill-red-500' : 'fill-none stroke-current'" viewBox="0 0 24 24" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                                    </svg>
+                                                    <span x-text="(review.likes||0) > 0 ? (review.likes||0) : 'Helpful?'"></span>
+                                                </button>
                                             </div>
+                                        </template>
+
+                                        <!-- Load more / Show less -->
+                                        <template x-if="productReviews.length > 3">
+                                            <button @click="reviewsShowAll = !reviewsShowAll"
+                                                    class="w-full py-2.5 text-xs font-semibold text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-300 rounded-xl bg-brand-50 hover:bg-brand-100 transition-all flex items-center justify-center gap-1.5">
+                                                <template x-if="!reviewsShowAll">
+                                                    <span>Lihat semua <span x-text="productReviews.length"></span> ulasan
+                                                        <svg class="w-3.5 h-3.5 inline ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                    </span>
+                                                </template>
+                                                <template x-if="reviewsShowAll">
+                                                    <span>Sembunyikan
+                                                        <svg class="w-3.5 h-3.5 inline ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                                    </span>
+                                                </template>
+                                            </button>
                                         </template>
                                     </div>
                                 </template>
@@ -5507,7 +5538,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260511-2',
+        APP_VERSION:      '20260511-3',
 
         // PWA Install
         pwaPopup:            false,
@@ -5596,6 +5627,8 @@ function serabutStore() {
         reviewEditMode:     false,
         productReviews:     [], // reviews dari GAS untuk produk aktif
         reviewsLoading:     false,
+        reviewsShowAll:     false,
+        _likedReviews:      {}, // set of reviewId yang sudah di-like (localStorage)
         adminReviews:       [],
         adminReviewsLoading: false,
         adminReviewsLoaded:  false,
@@ -6439,6 +6472,8 @@ function serabutStore() {
             this.activePage = 'product-detail';
             this.pdTab = 'deskripsi';
             this.productReviews = [];
+            this.reviewsShowAll = false;
+            this._loadLikedReviews();
             this._loadProductReviews(product.nama);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
@@ -7506,10 +7541,34 @@ function serabutStore() {
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
                 if(data.success && Array.isArray(data.data)) {
-                    this.productReviews = data.data;
+                    // Tandai review yang sudah di-like oleh user ini
+                    this.productReviews = data.data.map(r => ({
+                        ...r,
+                        _liked: !!this._likedReviews[r.id]
+                    }));
                 }
             } catch(e) { /* silent */ }
             finally { this.reviewsLoading = false; }
+        },
+        _loadLikedReviews() {
+            try {
+                this._likedReviews = JSON.parse(localStorage.getItem('srb_liked_reviews') || '{}');
+            } catch(e) { this._likedReviews = {}; }
+        },
+        async likeReview(review) {
+            if(review._liked) return; // sudah pernah like
+            // Optimistic update
+            const idx = this.productReviews.findIndex(r => r.id === review.id);
+            if(idx < 0) return;
+            this.productReviews[idx] = { ...review, likes: (review.likes||0) + 1, _liked: true };
+            this.productReviews = [...this.productReviews];
+            // Simpan ke localStorage
+            this._likedReviews[review.id] = true;
+            try { localStorage.setItem('srb_liked_reviews', JSON.stringify(this._likedReviews)); } catch(e) {}
+            // Kirim ke GAS
+            try {
+                await this.gasPost({ action: 'likeReview', reviewId: review.id });
+            } catch(e) { /* silent — optimistic tetap jalan */ }
         },
         /** Returns the first eligible order to review for a product name */
         eligibleReviewOrder(produkNama) {

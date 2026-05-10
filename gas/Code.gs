@@ -134,6 +134,7 @@ function doPost(e) {
       // Reviews
       case 'submitReview':              result = submitReview(params); break;
       case 'getBuyerReviews':           result = getBuyerReviews(params); break;
+      case 'likeReview':                result = likeReview(params); break;
       case 'sendReviewReminder':        result = sendReviewReminder(params); break;
       case 'editReview':                result = editReview(params); break;
       case 'toggleReview':              result = toggleReview(params); break;
@@ -3657,9 +3658,15 @@ function _ensureReviewsSheet() {
   let sheet = ss.getSheetByName(TAB_REVIEWS);
   if (!sheet) {
     sheet = ss.insertSheet(TAB_REVIEWS);
-    sheet.appendRow(['Review ID','Tanggal','Order ID','Email','Nama Tampil','Produk','Varian','Rating','Komentar','Published','Reminder Sent']);
-    sheet.getRange(1, 1, 1, 11).setFontWeight('bold');
+    sheet.appendRow(['Review ID','Tanggal','Order ID','Email','Nama Tampil','Produk','Varian','Rating','Komentar','Published','Reminder Sent','Likes']);
+    sheet.getRange(1, 1, 1, 12).setFontWeight('bold');
     sheet.setFrozenRows(1);
+  } else {
+    // Pastikan kolom Likes ada
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toLowerCase().trim());
+    if (!headers.includes('likes')) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue('Likes');
+    }
   }
   return sheet;
 }
@@ -3679,6 +3686,7 @@ function getReviews(produk) {
   const cRating   = _colIndex(headers, 'rating');
   const cKomentar = _colIndex(headers, 'komentar');
   const cPub      = _colIndex(headers, 'published');
+  const cLikes    = _colIndex(headers, 'likes');
 
   const normStr = s => String(s || '').trim().toLowerCase();
   const reviews = [];
@@ -3702,6 +3710,7 @@ function getReviews(produk) {
       varian:   String(row[cVarian] || ''),
       rating:   Number(row[cRating]) || 5,
       komentar: String(row[cKomentar] || ''),
+      likes:    cLikes >= 0 ? (Number(row[cLikes]) || 0) : 0,
     });
   }
 
@@ -4063,6 +4072,33 @@ function getAdminReviews({ adminEmail, adminToken }) {
 
   reviews.sort((a, b) => b.id.localeCompare(a.id));
   return { success: true, data: reviews };
+}
+
+// ── PUBLIC: like/helpful review ──
+function likeReview({ reviewId }) {
+  if (!reviewId) return { success: false, error: 'reviewId diperlukan' };
+  const sheet   = _ensureReviewsSheet();
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const cId     = _colIndex(headers, 'review id');
+  let   cLikes  = _colIndex(headers, 'likes');
+
+  // Tambah kolom Likes jika belum ada
+  if (cLikes < 0) {
+    const col = sheet.getLastColumn() + 1;
+    sheet.getRange(1, col).setValue('Likes');
+    cLikes = col - 1;
+  }
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][cId]) === String(reviewId)) {
+      const current = Number(data[i][cLikes]) || 0;
+      sheet.getRange(i + 1, cLikes + 1).setValue(current + 1);
+      SpreadsheetApp.flush();
+      return { success: true, likes: current + 1 };
+    }
+  }
+  return { success: false, error: 'Review tidak ditemukan' };
 }
 
 // ── ADMIN: hapus review permanen ──
