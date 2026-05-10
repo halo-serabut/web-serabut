@@ -1938,13 +1938,64 @@
                         <span class="text-lg font-black text-brand-500" x-text="formatPrice(orderDetailModal?.total||0)"></span>
                     </div>
 
-                    <!-- Tulis Ulasan button (eligible orders) -->
+                    <!-- ── Inline Review Form (eligible orders) ── -->
                     <template x-if="canReviewOrder(orderDetailModal)">
-                        <button @click="openReviewModal(orderDetailModal)"
-                                class="w-full py-3 flex items-center justify-center gap-2 bg-yellow-50 border border-yellow-300 hover:bg-yellow-100 text-yellow-700 font-bold text-sm rounded-2xl active:scale-95 transition-all">
-                            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                            Tulis Ulasan Produk
-                        </button>
+                        <div class="border-t border-gray-100 pt-4">
+                            <template x-if="!reviewSuccess">
+                                <div>
+                                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Bagaimana pengalamanmu?</p>
+                                    <!-- Stars -->
+                                    <div class="flex items-center gap-1 mb-3">
+                                        <template x-for="star in [1,2,3,4,5]" :key="star">
+                                            <button type="button" @click="reviewOrderId=orderDetailModal.orderId; reviewProduk=orderDetailModal.items?.[0]?.produk||''; reviewVarian=orderDetailModal.items?.[0]?.varian||''; reviewRating=star"
+                                                    @mouseenter="reviewHover=star" @mouseleave="reviewHover=0"
+                                                    class="transition-transform hover:scale-110 active:scale-95">
+                                                <svg class="w-8 h-8 transition-colors" viewBox="0 0 20 20"
+                                                     :class="star<=(reviewHover||reviewRating)?'fill-yellow-400':'fill-gray-200'">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                </svg>
+                                            </button>
+                                        </template>
+                                        <span class="ml-1 text-sm font-semibold text-gray-500" x-text="['','Sangat Buruk','Buruk','Cukup','Bagus','Sangat Bagus'][reviewHover||reviewRating]||''"></span>
+                                    </div>
+                                    <!-- Textarea — muncul setelah pilih bintang -->
+                                    <template x-if="reviewRating>0 && reviewOrderId===orderDetailModal?.orderId">
+                                        <div class="space-y-2">
+                                            <textarea x-model="reviewKomentar" rows="3"
+                                                      placeholder="Ceritakan pengalamanmu..."
+                                                      class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-300 resize-none"
+                                                      style="font-size:16px!important"></textarea>
+                                            <!-- Anonim toggle -->
+                                            <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                                                <div class="relative flex-none">
+                                                    <input type="checkbox" x-model="reviewAnonim" class="sr-only">
+                                                    <div class="w-9 h-5 rounded-full transition-colors" :class="reviewAnonim?'bg-brand-500':'bg-gray-200'"></div>
+                                                    <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform" :class="reviewAnonim?'translate-x-4':'translate-x-0'"></div>
+                                                </div>
+                                                <span class="text-xs text-gray-500">Tampilkan sebagai Anonim</span>
+                                            </label>
+                                            <div x-show="reviewError" class="text-xs text-red-500 font-medium" x-text="reviewError"></div>
+                                            <button @click="submitReviewForm()"
+                                                    :disabled="reviewLoading"
+                                                    class="w-full py-2.5 rounded-xl font-bold text-sm bg-brand-500 hover:bg-brand-600 text-white transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+                                                <svg x-show="reviewLoading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                                <span x-text="reviewLoading?'Mengirim...':'Kirim Ulasan'"></span>
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                            <!-- Success state inline -->
+                            <template x-if="reviewSuccess && reviewOrderId===orderDetailModal?.orderId">
+                                <div class="flex items-center gap-3 bg-emerald-50 rounded-xl px-4 py-3">
+                                    <svg class="w-5 h-5 text-emerald-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                    <div>
+                                        <p class="text-sm font-bold text-emerald-700">Ulasan terkirim!</p>
+                                        <p class="text-xs text-emerald-600">Terima kasih atas ulasanmu 🙏</p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </template>
 
                     <!-- Action buttons -->
@@ -7744,6 +7795,14 @@ function serabutStore() {
         openOrderDetail(order) {
             this.orderDetailModal = order;
             this.orderDetailSyncing = false;
+            // Reset inline review form
+            this.reviewRating   = 0;
+            this.reviewHover    = 0;
+            this.reviewKomentar = '';
+            this.reviewAnonim   = false;
+            this.reviewError    = '';
+            this.reviewSuccess  = false;
+            this.reviewOrderId  = '';
             // Auto-sync: Pending dalam 24 jam, atau Dibatalkan (mungkin korban auto-cancel bug)
             if (order.status === 'Pending' || order.status === 'Dibatalkan') {
                 this.checkOrderPaymentStatus(order, true);

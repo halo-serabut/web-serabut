@@ -1469,7 +1469,9 @@ function getOrders({ email }) {
     } else {
       orderMap.set(orderId, {
         orderId,
-        tanggal:       _str(dateCol),
+        tanggal:       (dateCol >= 0 && row[dateCol] instanceof Date)
+                         ? Utilities.formatDate(row[dateCol], 'Asia/Jakarta', 'dd/MM/yyyy HH:mm')
+                         : _str(dateCol),
         buyerNama:     _str(namaCol),
         buyerWa:       _str(waCol),
         status:        stCol >= 0 ? String(row[stCol] || 'Pending').trim() : 'Pending',
