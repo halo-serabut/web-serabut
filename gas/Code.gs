@@ -1395,14 +1395,28 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
 
   let groupMsg;
   if (isFamily) {
-    groupMsg = `*ORDER 365 FAMILY*\nOrder ID: *${orderId}*\nEmail Microsoft (invite): *${microsoftEmail || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNama Pembeli: ${userNama}\nNo WA: ${userWa}\nStatus: *Pending*`;
+    groupMsg = `*ORDER 365 FAMILY: ${produk}*\nOrder ID: *${orderId}*\nEmail Microsoft (invite): *${microsoftEmail || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNama Pembeli: ${userNama}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *Belum payment, please follow up!*`;
   } else if (isWeb) {
-    groupMsg = `*ORDER 365 WEB*\nOrder ID: *${orderId}*\nNama MS: ${msNama || '-'}\nUsername Request: *${username || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNo WA: ${userWa}\nStatus: *Pending*`;
+    groupMsg = `*ORDER WEB: ${produk}*\nOrder ID: *${orderId}*\nNama MS: ${msNama || '-'}\nUsername Request: *${username || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *Belum payment, please follow up!*`;
   } else {
-    groupMsg = `*ORDER BARU*\nOrder ID: *${orderId}*\nProduk: ${produk}\nVarian: ${varian || '-'}\nDurasi: ${masaAktif || '-'}\nNama: ${userNama}\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nNo WA: ${userWa}\nStatus: *Pending*`;
+    groupMsg = `*ORDER BARU: ${produk}*\nOrder ID: *${orderId}*\nVarian: ${varian || '-'}\nDurasi: ${masaAktif || '-'}\nNama: ${userNama}\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *Belum payment, please follow up!*`;
   }
 
-  // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
+  // Kirim notif WAG segera saat order dibuat
+  sendWAToGroup(groupMsg);
+
+  // Kirim WA + email ke buyer: "pesanan diterima"
+  if (userWa || userEmail) {
+    sendBuyerOrderConfirm(
+      userWa ? _normalizeWA(userWa) : '',
+      userEmail || '',
+      userNama || 'Pembeli',
+      orderId,
+      [{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum }],
+      hargaNum
+    );
+  }
+
   const isUat      = String(env || '').toLowerCase() === 'uat';
   const paymentMode = isUat ? 'xendit' : (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
   let paymentUrl = null;
@@ -1756,7 +1770,8 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   const orderId = 'SRB-' + new Date().getTime().toString().slice(-8);
   const tanggal = formatJkt(new Date(), 'yyyy-MM-dd HH:mm');
   let totalHarga = 0;
-  const waLines  = [];
+  const waLines       = [];
+  const computedItems = []; // simpan item + harga final (sudah discount)
 
   for (let idx = 0; idx < items.length; idx++) {
     const it = items[idx];
@@ -1765,7 +1780,15 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
       Logger.log('createCartOrder REJECTED: produk tidak ditemukan: ' + it.produk + '|' + it.varian + '|' + it.masaAktif);
       return { success: false, error: 'Produk "' + (it.produk || '') + '" tidak tersedia. Silakan refresh halaman dan coba lagi.' };
     }
-    const hargaNum = catalogPrice * (Number(it.qty) || 1);
+    let unitPrice = catalogPrice;
+    if (sessionToken) {
+      const campaignPrice = _getActiveCampaignPrice(it.produk, it.varian, it.masaAktif);
+      if (campaignPrice !== null && campaignPrice < catalogPrice && campaignPrice > 0) {
+        unitPrice = campaignPrice;
+        Logger.log('createCartOrder: member price applied for ' + it.produk + ' — catalog=' + catalogPrice + ' campaign=' + campaignPrice);
+      }
+    }
+    const hargaNum = unitPrice * (Number(it.qty) || 1);
     totalHarga += hargaNum;
 
     sheet.appendRow([
@@ -1785,11 +1808,37 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
     if (isWeb && it.username)           line += `\n   > Username: ${it.username}`;
     if (isAdobe && it.adobeEmail)       line += `\n   > Adobe: ${it.adobeEmail}`;
     if (it.emailAktif)                  line += `\n   > Email Aktif: ${it.emailAktif}`;
+    line += `\n   > No WA: ${userWa || '-'}`;
     line += `\n   > Harga: Rp ${hargaNum.toLocaleString('id-ID')}`;
     waLines.push(line);
+    computedItems.push({ produk: it.produk, varian: it.varian||'-', masaAktif: it.masaAktif||'-', harga: hargaNum, qty: Number(it.qty)||1 });
   }
 
-  // WA & email notif dikirim setelah payment dikonfirmasi via confirmPayment()
+  // Kirim notif WAG segera saat order dibuat
+  const firstVar    = (items[0]?.varian || '').toLowerCase();
+  const firstProduk = items[0]?.produk || '';
+  const cartTitle   = firstVar.includes('family') ? `ORDER 365 FAMILY: ${firstProduk}` :
+                      firstVar.includes('web')    ? `ORDER WEB: ${firstProduk}` :
+                      firstProduk.toLowerCase().includes('adobe') ? `ORDER ADOBE: ${firstProduk}` :
+                      items.length > 1 ? `ORDER BARU (${items.length} item)` : `ORDER BARU: ${firstProduk}`;
+  const cartGroupMsg = `*${cartTitle}*\nOrder ID: *${orderId}*\nPembeli: ${userNama}\n────────────────────\n${waLines.join('\n')}\n────────────────────\nTotal: Rp ${totalHarga.toLocaleString('id-ID')}\nStatus: *Belum payment, please follow up!*`;
+  sendWAToGroup(cartGroupMsg);
+
+  // Kirim WA + email ke buyer: "pesanan diterima"
+  const buyerNotifItems = computedItems;
+  if (userWa || userEmail) {
+    try {
+      sendBuyerOrderConfirm(
+        userWa ? _normalizeWA(userWa) : '',
+        userEmail || '',
+        userNama || 'Pembeli',
+        orderId,
+        buyerNotifItems,
+        totalHarga
+      );
+    } catch(e) { Logger.log('createCartOrder: buyer notif error: ' + e.message); }
+  }
+
   const isUat       = String(env || '').toLowerCase() === 'uat';
   const paymentMode = isUat ? 'xendit' : (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
   let paymentUrl = null;
@@ -1797,13 +1846,7 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
 
   if (paymentMode === 'xendit') {
     try {
-      const xnItems = items.map(it => ({
-        produk: it.produk,
-        varian: it.varian||'-',
-        masaAktif: it.masaAktif||'-',
-        harga: _getCatalogPrice(it.produk, it.varian, it.masaAktif) * (Number(it.qty) || 1),
-        qty: Number(it.qty) || 1
-      }));
+      const xnItems = computedItems;
       const xnRes = createXenditInvoice({
         orderId,
         items:     xnItems,
@@ -2547,7 +2590,7 @@ function sendBuyerOrderConfirm(waNumber, email, nama, orderId, items, total) {
     return line;
   }).join('\n');
 
-  const waMsg = `Halo *${nama}*! 👋\n\nTerima kasih sudah order di *Serabut Store*! 🛍️\n\nBerikut detail pesanan kamu:\n\n*Order ID: ${orderId}*\n────────────────────\n${itemLines}\n────────────────────\nTotal: *Rp ${Number(total).toLocaleString('id-ID')}*\n\nTim kami akan segera menghubungi kamu untuk konfirmasi & proses pesanan.\n\nAda pertanyaan? Chat kami di +62 888 1500 555\n\n— Serabut Store`;
+  const waMsg = `Halo Kak *${nama}*! 👋\n\nTerima kasih sudah order di *Serabut Store*! 🛍️\n\nBerikut detail pesanan kamu:\n\n*Order ID: ${orderId}*\n────────────────────\n${itemLines}\n────────────────────\nTotal: *Rp ${Number(total).toLocaleString('id-ID')}*\n\nTim kami akan segera menghubungi kamu untuk konfirmasi & proses pesanan.\nMohon tunggu ya! 🙏\n\n— Serabut Store`;
 
   if (FONNTE_TOKEN && waNumber) {
     try {
@@ -2955,7 +2998,7 @@ function xenditCallback(params, e) {
 
         // WA group notif
         const groupMsg = `✅ *PEMBAYARAN DITERIMA*\nOrder ID: *${extId}*\nProduk: ${produk} ${varian!=='-'?'- '+varian:''} ${masaAktif!=='-'?'('+masaAktif+')':''}\nPembeli: ${buyerNama}\nMetode: ${method}\nTotal: Rp ${Number(harga).toLocaleString('id-ID')}\nTanggal: ${tanggal}`;
-        sendWAGroup(groupMsg);
+        sendWAToGroup(groupMsg);
 
         // WA + email ke buyer
         sendBuyerOrderConfirmed(buyerNama, buyerEmail, buyerWa ? _normalizeWA(buyerWa) : '', extId, produk, varian, masaAktif, harga, method, tanggal);
