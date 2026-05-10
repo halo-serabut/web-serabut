@@ -681,42 +681,48 @@
         <template x-if="selectedProductGroup">
             <div>
                 <!-- ── Hero Banner ── -->
+                <!-- ── Hero Banner ── -->
                 <div class="relative overflow-hidden" :class="getCategoryBg(selectedProductGroup.category)">
-                    <!-- Back button -->
-                    <button @click="setPage('catalog')" class="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-white/80 backdrop-blur-sm text-gray-600 hover:text-brand-500 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm transition-colors">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    <!-- decorative blobs -->
+                    <div class="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-20 blur-2xl" :class="getCategoryBg(selectedProductGroup.category)" style="background:currentColor"></div>
+                    <div class="absolute bottom-0 -left-6 w-28 h-28 rounded-full opacity-10 blur-2xl bg-black"></div>
+
+                    <!-- Back -->
+                    <button @click="setPage('catalog')" class="absolute top-4 left-4 z-10 flex items-center gap-1.5 bg-white/75 backdrop-blur-md text-gray-700 text-xs font-semibold px-3 py-1.5 rounded-full shadow-sm border border-white/50 transition-all active:scale-95">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
                         Katalog
                     </button>
                     <!-- Share -->
-                    <button @click="shareCurrentProduct($el)" class="absolute top-4 right-4 z-10 bg-white/80 backdrop-blur-sm text-gray-600 hover:text-brand-500 p-2 rounded-full shadow-sm transition-colors">
+                    <button @click="shareCurrentProduct($el)" class="absolute top-4 right-4 z-10 bg-white/75 backdrop-blur-md text-gray-700 p-2 rounded-full shadow-sm border border-white/50 transition-all active:scale-95">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                     </button>
-                    <div class="max-w-5xl mx-auto px-5 pt-14 pb-7 flex items-end gap-5">
-                        <!-- Logo -->
-                        <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center flex-none shadow-md">
-                            <img :src="getProductLogo(selectedProductGroup.category)" :alt="selectedProductGroup.category" class="w-14 h-14 object-contain" onerror="this.style.display='none'">
+
+                    <div class="max-w-5xl mx-auto px-5 pt-16 pb-6">
+                        <!-- Logo + nama horizontal -->
+                        <div class="flex items-center gap-4 mb-4">
+                            <!-- Logo: circle with shadow + subtle border -->
+                            <div class="w-[72px] h-[72px] rounded-2xl bg-white shadow-lg border border-white/80 flex items-center justify-center flex-none" style="box-shadow: 0 8px 24px rgba(0,0,0,0.12)">
+                                <img :src="getProductLogo(selectedProductGroup.category)" :alt="selectedProductGroup.category" class="w-12 h-12 object-contain" onerror="this.style.display='none'">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md mb-1.5 tracking-wide" :class="getCategoryColor(selectedProductGroup.category)" x-text="selectedProductGroup.category"></span>
+                                <h1 class="font-black text-gray-900 text-lg md:text-xl leading-tight" x-text="selectedProductGroup.nama"></h1>
+                            </div>
                         </div>
-                        <!-- Info -->
-                        <div class="flex-1 min-w-0 pb-1">
-                            <span class="inline-block text-xs font-bold px-2.5 py-1 rounded-full mb-1.5" :class="getCategoryColor(selectedProductGroup.category)" x-text="selectedProductGroup.category"></span>
-                            <h1 class="font-black text-gray-900 text-xl leading-snug" x-text="selectedProductGroup.nama"></h1>
-                            <!-- Rating + terjual -->
-                            <div class="flex items-center gap-3 mt-2 flex-wrap">
-                                <div class="flex items-center gap-1">
-                                    <div class="flex text-yellow-400">
-                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    </div>
-                                    <span class="text-xs font-bold text-gray-700">4.9</span>
-                                    <span class="text-xs text-gray-400">(128)</span>
-                                </div>
-                                <span class="text-xs text-gray-400">•</span>
-                                <span class="text-xs text-gray-500">🛒 <strong class="text-gray-700">398</strong> terjual</span>
-                                <span class="text-xs text-gray-400">•</span>
-                                <span class="text-xs text-green-600 font-semibold">✓ Stok tersedia</span>
+                        <!-- Rating + stats row — compact chip style -->
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-1 bg-white/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/60">
+                                <svg class="w-3 h-3 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                <span class="text-xs font-bold text-gray-800">4.9</span>
+                                <span class="text-[10px] text-gray-500">(128)</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-white/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/60">
+                                <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                <span class="text-[10px] font-semibold text-gray-700">398 terjual</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-green-500/15 backdrop-blur-sm px-2.5 py-1 rounded-full border border-green-400/30">
+                                <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-none"></div>
+                                <span class="text-[10px] font-semibold text-green-700">Stok tersedia</span>
                             </div>
                         </div>
                     </div>
@@ -778,13 +784,23 @@
 
                         <!-- ── Tab navigation ── -->
                         <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-                            <!-- Tab pills -->
-                            <div class="flex border-b border-gray-100">
-                                <button @click="pdTab='deskripsi'" :class="pdTab==='deskripsi'?'border-b-2 border-brand-500 text-brand-600 font-bold':'text-gray-500 hover:text-gray-700'" class="flex-1 py-3 text-sm text-center transition-colors">Deskripsi</button>
-                                <button @click="pdTab='skema'" :class="pdTab==='skema'?'border-b-2 border-brand-500 text-brand-600 font-bold':'text-gray-500 hover:text-gray-700'" class="flex-1 py-3 text-sm text-center transition-colors">Skema Harga</button>
-                                <button @click="pdTab='ulasan'" :class="pdTab==='ulasan'?'border-b-2 border-brand-500 text-brand-600 font-bold':'text-gray-500 hover:text-gray-700'" class="flex-1 py-3 text-sm text-center transition-colors">
+                            <!-- Tab segmented control (iOS-style pill) -->
+                            <div class="p-1.5 bg-gray-100 rounded-2xl flex gap-1">
+                                <button @click="pdTab='deskripsi'"
+                                    :class="pdTab==='deskripsi' ? 'bg-white text-gray-900 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'"
+                                    class="flex-1 py-2 px-1 text-xs text-center rounded-xl transition-all duration-200 font-medium">
+                                    Deskripsi
+                                </button>
+                                <button @click="pdTab='skema'"
+                                    :class="pdTab==='skema' ? 'bg-white text-gray-900 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'"
+                                    class="flex-1 py-2 px-1 text-xs text-center rounded-xl transition-all duration-200 font-medium whitespace-nowrap">
+                                    Skema Harga
+                                </button>
+                                <button @click="pdTab='ulasan'"
+                                    :class="pdTab==='ulasan' ? 'bg-white text-gray-900 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'"
+                                    class="flex-1 py-2 px-1 text-xs text-center rounded-xl transition-all duration-200 font-medium flex items-center justify-center gap-1">
                                     Ulasan
-                                    <span class="ml-1 text-[10px] bg-brand-100 text-brand-600 font-bold px-1.5 py-0.5 rounded-full">128</span>
+                                    <span class="text-[9px] bg-brand-500 text-white font-black px-1.5 py-0.5 rounded-full leading-none">128</span>
                                 </button>
                             </div>
 
@@ -948,9 +964,10 @@
                         <!-- end tabs -->
 
                         <!-- Shopee link (mobile only) -->
-                        <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener" class="md:hidden flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-orange-300 text-gray-500 hover:text-orange-500 font-medium text-sm rounded-2xl px-4 py-3 transition-all">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm1-13h-2v5l4.25 2.5.75-1.23-3-1.77V7z"/></svg>
-                            Atau beli di Shopee →
+                        <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener" class="md:hidden flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-orange-300 text-gray-400 hover:text-orange-500 font-medium text-sm rounded-2xl px-4 py-3 transition-all">
+                            <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
+                            Atau beli di Shopee
+                            <svg class="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                         </a>
 
                     </div>
@@ -3316,8 +3333,8 @@
 </div>
 
 <!-- FAB Button: auto-hide di mobile, tempel ke dinding -->
-<div class="fixed bottom-20 md:bottom-8 right-0 md:right-8 z-[90] transition-transform duration-500"
-     :class="csHidden ? 'cs-peek' : ''">
+<div class="fixed md:bottom-8 right-0 md:right-8 z-[90] transition-all duration-500"
+     :class="[csHidden ? 'cs-peek' : '', activePage==='product-detail' ? 'bottom-40' : 'bottom-20']">
     <button @click="csHidden ? (csHidden=false) : (csPopup ? (csPopup=false, csHidden=true) : (csPopup=true))"
             :class="!csPopup && !csHidden ? 'cs-fab-float' : ''"
             class="cs-fab w-14 h-14 gradient-card rounded-full shadow-2xl flex items-center justify-center text-white transition-all duration-200 active:scale-90 active:shadow-md relative">
