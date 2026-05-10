@@ -275,6 +275,63 @@ function _verifyGoogleToken(idToken) {
   }
 }
 
+// [SEC] Lookup harga diskon dari campaign aktif (jika ada) — untuk member
+// Return: harga diskon (Number) atau null jika tidak ada campaign aktif yang cocok
+function _getActiveCampaignPrice(produk, varian, masaAktif) {
+  try {
+    const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(TAB_SETTINGS);
+    if (!sheet) return null;
+    const data     = sheet.getDataRange().getValues();
+    const settings = {};
+    for (let i = 1; i < data.length; i++) {
+      const k = String(data[i][0] || '').trim();
+      const v = String(data[i][1] || '').trim();
+      if (k) settings[k] = v;
+    }
+    const normStr = s => String(s || '').trim().toLowerCase();
+    const now = new Date();
+
+    // Format baru: flashSale.campaigns (array of campaign objects)
+    const campaigns = JSON.parse(settings['flashSale.campaigns'] || '[]');
+    for (const camp of campaigns) {
+      if (!camp.aktif) continue;
+      const start    = camp.startDate ? new Date(camp.startDate) : null;
+      const deadline = camp.deadline  ? new Date(camp.deadline)  : null;
+      if (start    && now < start)    continue;
+      if (deadline && now > deadline) continue;
+      const items = camp.items || [];
+      for (const item of items) {
+        if (normStr(item.produk)    === normStr(produk) &&
+            normStr(item.varian)    === normStr(varian) &&
+            normStr(item.masaAktif) === normStr(masaAktif)) {
+          const h = Number(item.harga);
+          if (h > 0) return h;
+        }
+      }
+    }
+
+    // Format lama: flashSale.aktif + flashSale.items (single campaign)
+    if (settings['flashSale.aktif'] === 'true') {
+      const deadline = settings['flashSale.deadline'] ? new Date(settings['flashSale.deadline']) : null;
+      if (!deadline || now <= deadline) {
+        const items = JSON.parse(settings['flashSale.items'] || '[]');
+        for (const item of items) {
+          if (normStr(item.produk)    === normStr(produk) &&
+              normStr(item.varian)    === normStr(varian) &&
+              normStr(item.masaAktif) === normStr(masaAktif)) {
+            const h = Number(item.harga);
+            if (h > 0) return h;
+          }
+        }
+      }
+    }
+  } catch(e) {
+    Logger.log('_getActiveCampaignPrice error: ' + e.message);
+  }
+  return null;
+}
+
 // [SEC] Lookup harga produk dari Catalog (untuk validasi server-side)
 function _getCatalogPrice(produk, varian, masaAktif) {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
@@ -1250,13 +1307,23 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   const effectiveEmail = userEmail || email || '';
   if (!effectiveEmail || !produk) return { success: false, error: 'Data tidak lengkap' };
 
-  // [SEC] Harga WAJIB dari catalog server — tidak pernah percaya harga dari client
+  // [SEC] Harga WAJIB dari catalog server — tidak pernah percaya harga mentah dari client
   const catalogPrice = _getCatalogPrice(produk, varian, masaAktif);
   if (catalogPrice === null) {
     Logger.log('createOrder REJECTED: produk tidak ditemukan di catalog: ' + produk + '|' + varian + '|' + masaAktif);
     return { success: false, error: 'Produk tidak tersedia. Silakan refresh halaman dan coba lagi.' };
   }
-  const hargaNum = catalogPrice;
+
+  // Cek apakah buyer adalah member valid (ada sessionToken) → boleh dapat harga campaign
+  let hargaNum = catalogPrice;
+  if (sessionToken) {
+    const campaignPrice = _getActiveCampaignPrice(produk, varian, masaAktif);
+    // Pakai harga campaign hanya jika lebih murah dari harga catalog (sanity check)
+    if (campaignPrice !== null && campaignPrice < catalogPrice && campaignPrice > 0) {
+      hargaNum = campaignPrice;
+      Logger.log('createOrder: member price applied — catalog=' + catalogPrice + ' campaign=' + campaignPrice);
+    }
+  }
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(TAB_ORDERS);
