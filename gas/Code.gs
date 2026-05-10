@@ -134,6 +134,7 @@ function doPost(e) {
       // Reviews
       case 'submitReview':              result = submitReview(params); break;
       case 'sendReviewReminder':        result = sendReviewReminder(params); break;
+      case 'editReview':                result = editReview(params); break;
       case 'toggleReview':              result = toggleReview(params); break;
       case 'getAdminReviews':           result = getAdminReviews(params); break;
       default: result = { success: false, error: 'Unknown action' };
@@ -3720,6 +3721,59 @@ function submitReview({ sessionToken, email, orderId, produk, varian, rating, ko
 
   Logger.log('Review submitted: ' + reviewId + ' untuk ' + produk);
   return { success: true, reviewId };
+}
+
+// ── EDIT REVIEW (buyer, dalam 7 hari) ──
+function editReview({ sessionToken, email, reviewId, rating, komentar, anonim }) {
+  if (!reviewId || !rating || !komentar) return { success: false, error: 'Data tidak lengkap' };
+  if (rating < 1 || rating > 5)          return { success: false, error: 'Rating tidak valid' };
+  if (!komentar || komentar.trim().length < 5) return { success: false, error: 'Komentar minimal 5 karakter' };
+
+  const sheet    = _ensureReviewsSheet();
+  const data     = sheet.getDataRange().getValues();
+  const headers  = data[0].map(h => String(h).toLowerCase().trim());
+  const cId      = _colIndex(headers, 'review id');
+  const cTgl     = _colIndex(headers, 'tanggal');
+  const cEmail   = _colIndex(headers, 'email');
+  const cNama    = _colIndex(headers, 'nama tampil');
+  const cRating  = _colIndex(headers, 'rating');
+  const cKomen   = _colIndex(headers, 'komentar');
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][cId]) !== String(reviewId)) continue;
+    // Validasi email pemilik review
+    if (String(data[i][cEmail]).toLowerCase() !== String(email || '').toLowerCase()) {
+      return { success: false, error: 'Tidak bisa mengedit ulasan orang lain' };
+    }
+    // Validasi 7 hari
+    const tgl = data[i][cTgl] instanceof Date ? data[i][cTgl] : new Date(data[i][cTgl]);
+    const ms7 = 7 * 24 * 60 * 60 * 1000;
+    if (Date.now() - tgl.getTime() > ms7) {
+      return { success: false, error: 'Masa edit ulasan sudah berakhir (7 hari)' };
+    }
+    // Update nama tampil jika anonim berubah
+    let namaTampil = data[i][cNama];
+    if (anonim) {
+      namaTampil = 'Anonim';
+    } else if (namaTampil === 'Anonim' && email) {
+      // Restore nama dari Users-web
+      const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+      const users = ss.getSheetByName(TAB_USERS);
+      if (users) {
+        const uData = users.getDataRange().getValues();
+        const uRow  = uData.find(r => String(r[0]).trim().toLowerCase() === String(email).trim().toLowerCase());
+        if (uRow) namaTampil = String(uRow[1] || '').trim().split(' ').map(w => w.length > 1 ? w[0] + '***' : w).join(' ');
+      }
+    }
+    // Update baris
+    sheet.getRange(i + 1, cRating + 1).setValue(Number(rating));
+    sheet.getRange(i + 1, cKomen + 1).setValue(String(komentar).trim());
+    sheet.getRange(i + 1, cNama + 1).setValue(namaTampil);
+    SpreadsheetApp.flush();
+    Logger.log('Review edited: ' + reviewId);
+    return { success: true };
+  }
+  return { success: false, error: 'Ulasan tidak ditemukan' };
 }
 
 // ── INCREMENT TERJUAL di Catalog col P ──

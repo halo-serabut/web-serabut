@@ -915,7 +915,7 @@
                                         <div class="flex justify-center text-yellow-400 mt-1">
                                             <template x-for="i in 5" :key="i"><svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
                                         </div>
-                                        <div class="text-xs text-gray-400 mt-1">128 ulasan</div>
+                                        <div class="text-xs text-gray-400 mt-1" x-text="(128 + productReviews.length) + ' ulasan'"></div>
                                     </div>
                                     <div class="flex-1 space-y-1">
                                         <template x-for="bar in [{star:5,pct:91},{star:4,pct:7},{star:3,pct:1},{star:2,pct:1},{star:1,pct:0}]" :key="bar.star">
@@ -959,11 +959,11 @@
                                                                 <div class="text-xs font-bold text-gray-700" x-text="review.nama"></div>
                                                                 <span class="text-[9px] bg-emerald-100 text-emerald-600 font-bold px-1.5 py-0.5 rounded-full">Pembeli Terverifikasi</span>
                                                             </div>
-                                                            <div class="text-[10px] text-gray-400" x-text="review.tanggal"></div>
+                                                            <div class="text-[10px] text-gray-400" x-text="review.tgl"></div>
                                                         </div>
                                                     </div>
                                                     <div class="flex text-yellow-400">
-                                                        <template x-for="i in (review.bintang||5)" :key="i"><svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
+                                                        <template x-for="i in (review.rating||5)" :key="i"><svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
                                                     </div>
                                                 </div>
                                                 <div class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-block mb-1.5" x-text="review.produk+(review.varian&&review.varian!=='-'?' · '+review.varian:'')"></div>
@@ -1948,7 +1948,84 @@
                         <span class="text-lg font-black text-brand-500" x-text="formatPrice(orderDetailModal?.total||0)"></span>
                     </div>
 
-                    <!-- ── Inline Review Form (eligible orders) ── -->
+                    <!-- ── Tampilkan ulasan buyer yang sudah dikirim ── -->
+                    <template x-if="hasMyReview(orderDetailModal)">
+                        <div class="border-t border-gray-100 pt-4">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Ulasanmu</p>
+                            <!-- View mode -->
+                            <template x-if="!reviewEditMode">
+                                <div class="bg-gray-50 rounded-xl p-3 space-y-2">
+                                    <!-- Bintang -->
+                                    <div class="flex items-center gap-1">
+                                        <template x-for="i in 5" :key="i">
+                                            <svg class="w-5 h-5" viewBox="0 0 20 20"
+                                                 :class="i<=(hasMyReview(orderDetailModal)?.rating||0)?'fill-yellow-400':'fill-gray-200'">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                            </svg>
+                                        </template>
+                                        <span class="ml-1 text-xs font-semibold text-gray-500" x-text="['','Sangat Buruk','Buruk','Cukup','Bagus','Sangat Bagus'][hasMyReview(orderDetailModal)?.rating||0]||''"></span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 leading-relaxed" x-text="hasMyReview(orderDetailModal)?.komentar"></p>
+                                    <!-- Edit button jika dalam 7 hari -->
+                                    <template x-if="canEditMyReview(orderDetailModal)">
+                                        <button @click="(function(rv){ reviewRating=rv.rating; reviewKomentar=rv.komentar; reviewAnonim=rv.anonim; reviewError=''; reviewEditMode=true; })(hasMyReview(orderDetailModal))"
+                                                class="text-xs text-brand-500 font-bold flex items-center gap-1 mt-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            Edit Ulasan (bisa diedit dalam 7 hari)
+                                        </button>
+                                    </template>
+                                    <template x-if="!canEditMyReview(orderDetailModal)">
+                                        <p class="text-[10px] text-gray-400 italic">Masa edit ulasan sudah berakhir (7 hari).</p>
+                                    </template>
+                                </div>
+                            </template>
+                            <!-- Edit mode -->
+                            <template x-if="reviewEditMode">
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-1 mb-1">
+                                        <template x-for="star in [1,2,3,4,5]" :key="star">
+                                            <button type="button" @click="reviewRating=star"
+                                                    @mouseenter="reviewHover=star" @mouseleave="reviewHover=0"
+                                                    class="transition-transform hover:scale-110 active:scale-95">
+                                                <svg class="w-8 h-8 transition-colors" viewBox="0 0 20 20"
+                                                     :class="star<=(reviewHover||reviewRating)?'fill-yellow-400':'fill-gray-200'">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                </svg>
+                                            </button>
+                                        </template>
+                                        <span class="ml-1 text-sm font-semibold text-gray-500" x-text="['','Sangat Buruk','Buruk','Cukup','Bagus','Sangat Bagus'][reviewHover||reviewRating]||''"></span>
+                                    </div>
+                                    <textarea x-model="reviewKomentar" rows="3"
+                                              placeholder="Ceritakan pengalamanmu..."
+                                              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-300 resize-none"
+                                              style="font-size:16px!important"></textarea>
+                                    <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                                        <div class="relative flex-none">
+                                            <input type="checkbox" x-model="reviewAnonim" class="sr-only">
+                                            <div class="w-9 h-5 rounded-full transition-colors" :class="reviewAnonim?'bg-brand-500':'bg-gray-200'"></div>
+                                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform" :class="reviewAnonim?'translate-x-4':'translate-x-0'"></div>
+                                        </div>
+                                        <span class="text-xs text-gray-500">Tampilkan sebagai Anonim</span>
+                                    </label>
+                                    <div x-show="reviewError" class="text-xs text-red-500 font-medium" x-text="reviewError"></div>
+                                    <div class="flex gap-2">
+                                        <button @click="reviewEditMode=false; reviewError=''"
+                                                class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 transition-all">
+                                            Batal
+                                        </button>
+                                        <button @click="submitEditReview(orderDetailModal)"
+                                                :disabled="reviewLoading"
+                                                class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-brand-500 hover:bg-brand-600 text-white transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+                                            <svg x-show="reviewLoading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                            <span x-text="reviewLoading?'Menyimpan...':'Simpan Edit'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- ── Inline Review Form (belum review) ── -->
                     <template x-if="canReviewOrder(orderDetailModal)">
                         <div class="border-t border-gray-100 pt-4">
                             <template x-if="!reviewSuccess">
@@ -5286,7 +5363,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260510-1',
+        APP_VERSION:      '20260510-2',
 
         // PWA Install
         pwaPopup:            false,
@@ -5368,7 +5445,9 @@ function serabutStore() {
         reviewLoading:      false,
         reviewError:        '',
         reviewSuccess:      false,
-        reviewedOrders:     [], // orderId yang sudah direview di sesi ini
+        reviewedOrders:     [], // orderId yang sudah direview (untuk canReviewOrder)
+        myReviews:          {}, // orderId → {rating,komentar,anonim,reviewId,submittedAt,nama}
+        reviewEditMode:     false,
         productReviews:     [], // reviews dari GAS untuk produk aktif
         adminReviews:       [],
         adminReviewsLoading: false,
@@ -7193,8 +7272,8 @@ function serabutStore() {
             if(!produkNama) return;
             try {
                 const data = await this.gasCall({ action:'getReviews', produk: encodeURIComponent(produkNama) });
-                if(data.success && Array.isArray(data.reviews)) {
-                    this.productReviews = data.reviews;
+                if(data.success && Array.isArray(data.data)) {
+                    this.productReviews = data.data;
                 }
             } catch(e) { /* silent */ }
         },
@@ -7210,14 +7289,27 @@ function serabutStore() {
                 return order.items.some(it => it.produk === produkNama);
             }) || null;
         },
-        /** Whether a pesanan card should show review form */
+        /** Whether a pesanan card should show review form (no review yet) */
         canReviewOrder(order) {
             if(!this.isMember || !order) return false;
             if(!['Aktif','Selesai'].includes(order.status)) return false;
+            if(this.myReviews[order.orderId]) return false; // sudah punya ulasan
             if(this.reviewedOrders.includes(order.orderId)) return false;
             const ms3days = 3 * 24 * 60 * 60 * 1000;
             const age = Date.now() - (this.parseTanggalWIB(order.tanggal)?.getTime() || 0);
             return age >= ms3days;
+        },
+        /** Returns submitted review for an order (if any) */
+        hasMyReview(order) {
+            if(!order?.orderId) return null;
+            return this.myReviews[order.orderId] || null;
+        },
+        /** Can buyer still edit their review (within 7 days of submission) */
+        canEditMyReview(order) {
+            const rv = this.hasMyReview(order);
+            if(!rv) return false;
+            const ms7days = 7 * 24 * 60 * 60 * 1000;
+            return (Date.now() - rv.submittedAt) < ms7days;
         },
         openReviewModal(order) {
             if(!order) return;
@@ -7258,11 +7350,55 @@ function serabutStore() {
                 if(data.success) {
                     this.reviewSuccess = true;
                     this.reviewedOrders.push(order.orderId);
-                    if(this.activePage === 'product-detail' && this.selectedProductGroup?.nama) {
-                        this._loadProductReviews(this.selectedProductGroup.nama);
-                    }
+                    // Simpan review ke myReviews agar bisa tampil + edit
+                    this.myReviews[order.orderId] = {
+                        rating:      this.reviewRating,
+                        komentar:    this.reviewKomentar.trim(),
+                        anonim:      this.reviewAnonim,
+                        reviewId:    data.reviewId || '',
+                        submittedAt: Date.now()
+                    };
+                    this.reviewEditMode = false;
+                    // Reload reviews di product detail
+                    const produkNama = firstItem.produk || this.selectedProductGroup?.nama;
+                    if(produkNama) this._loadProductReviews(produkNama);
                 } else {
                     this.reviewError = data.error || 'Gagal mengirim ulasan.';
+                }
+            } catch(e) {
+                this.reviewError = 'Terjadi kesalahan, coba lagi.';
+            } finally {
+                this.reviewLoading = false;
+            }
+        },
+        // Edit ulasan yang sudah dikirim (dalam 7 hari)
+        async submitEditReview(order) {
+            if(!order) return;
+            if(this.reviewRating === 0) { this.reviewError = 'Pilih rating dulu.'; return; }
+            if(!this.reviewKomentar.trim()) { this.reviewError = 'Isi ulasan tidak boleh kosong.'; return; }
+            const rv = this.hasMyReview(order);
+            if(!rv?.reviewId) { this.reviewError = 'Data ulasan tidak ditemukan.'; return; }
+            this.reviewLoading = true;
+            this.reviewError   = '';
+            try {
+                const data = await this.gasPost({
+                    action:       'editReview',
+                    sessionToken: this.currentUser?.sessionToken || '',
+                    email:        this.currentUser?.email || '',
+                    reviewId:     rv.reviewId,
+                    rating:       this.reviewRating,
+                    komentar:     this.reviewKomentar.trim(),
+                    anonim:       this.reviewAnonim
+                });
+                if(data.success) {
+                    // Update local state
+                    this.myReviews[order.orderId] = { ...rv, rating: this.reviewRating, komentar: this.reviewKomentar.trim(), anonim: this.reviewAnonim };
+                    this.reviewEditMode = false;
+                    this.reviewSuccess  = true;
+                    const produkNama = order.items?.[0]?.produk || this.selectedProductGroup?.nama;
+                    if(produkNama) this._loadProductReviews(produkNama);
+                } else {
+                    this.reviewError = data.error || 'Gagal menyimpan edit.';
                 }
             } catch(e) {
                 this.reviewError = 'Terjadi kesalahan, coba lagi.';
@@ -7849,6 +7985,7 @@ function serabutStore() {
             this.reviewError    = '';
             this.reviewSuccess  = false;
             this.reviewOrderId  = '';
+            this.reviewEditMode = false;
             // Auto-sync: Pending dalam 24 jam, atau Dibatalkan (mungkin korban auto-cancel bug)
             if (order.status === 'Pending' || order.status === 'Dibatalkan') {
                 this.checkOrderPaymentStatus(order, true);
