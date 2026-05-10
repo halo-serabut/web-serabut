@@ -3714,8 +3714,12 @@ function getReviews(produk) {
     });
   }
 
-  // Terbaru di atas
-  reviews.sort((a, b) => b.id.localeCompare(a.id));
+  // Urutan: rating tertinggi → likes terbanyak → terbaru
+  reviews.sort((a, b) => {
+    if (b.rating !== a.rating) return b.rating - a.rating;
+    if (b.likes  !== a.likes)  return b.likes  - a.likes;
+    return b.id.localeCompare(a.id);
+  });
   return { success: true, data: reviews };
 }
 

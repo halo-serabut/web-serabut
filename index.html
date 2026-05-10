@@ -5538,7 +5538,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260511-3',
+        APP_VERSION:      '20260511-4',
 
         // PWA Install
         pwaPopup:            false,
@@ -5629,6 +5629,7 @@ function serabutStore() {
         reviewsLoading:     false,
         reviewsShowAll:     false,
         _likedReviews:      {}, // set of reviewId yang sudah di-like (localStorage)
+        _reviewsCache:      {}, // cache reviews per produk nama
         adminReviews:       [],
         adminReviewsLoading: false,
         adminReviewsLoaded:  false,
@@ -6314,6 +6315,8 @@ function serabutStore() {
                         _resolvePendingSlug();
                         // Refresh di background tanpa blocking UI
                         _fetchFresh().then(p=>{ if(p) this.products=p; }).catch(()=>{});
+                        // Preload reviews parallel setelah produk ready
+                        setTimeout(() => this._preloadAllReviews(), 300);
                         return;
                     }
                 } catch {}
@@ -6325,6 +6328,8 @@ function serabutStore() {
             } catch { this.products=this.demoProducts(); }
             this.loading=false;
             _resolvePendingSlug();
+            // Preload reviews parallel setelah produk ready
+            setTimeout(() => this._preloadAllReviews(), 300);
         },
         demoProducts() {
             return [
@@ -7533,22 +7538,49 @@ function serabutStore() {
         },
 
         // ── Reviews ─────────────────────────────────────────
+        async _fetchReviews(produkNama) {
+            const params = new URLSearchParams({ action:'getReviews', produk: produkNama });
+            const res  = await fetch(`${this.GAS_URL}?${params}`);
+            const data = await res.json();
+            if(data.success && Array.isArray(data.data)) {
+                this._reviewsCache[produkNama] = data.data;
+                return data.data;
+            }
+            return null;
+        },
         async _loadProductReviews(produkNama) {
             if(!produkNama) return;
-            this.reviewsLoading = true;
-            try {
-                const params = new URLSearchParams({ action:'getReviews', produk: produkNama });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
-                const data = await res.json();
-                if(data.success && Array.isArray(data.data)) {
-                    // Tandai review yang sudah di-like oleh user ini
-                    this.productReviews = data.data.map(r => ({
-                        ...r,
-                        _liked: !!this._likedReviews[r.id]
-                    }));
-                }
-            } catch(e) { /* silent */ }
-            finally { this.reviewsLoading = false; }
+            const cached = this._reviewsCache[produkNama];
+            if(cached) {
+                // Tampil instan dari cache — tanpa spinner
+                this.productReviews = cached.map(r => ({ ...r, _liked: !!this._likedReviews[r.id] }));
+                // Refresh di background (silent)
+                this._fetchReviews(produkNama).then(fresh => {
+                    if(fresh && this.selectedProductGroup?.nama === produkNama) {
+                        this.productReviews = fresh.map(r => ({ ...r, _liked: !!this._likedReviews[r.id] }));
+                    }
+                }).catch(()=>{});
+            } else {
+                // Belum ada cache — load dengan spinner tipis
+                this.reviewsLoading = true;
+                try {
+                    const fresh = await this._fetchReviews(produkNama);
+                    if(fresh) this.productReviews = fresh.map(r => ({ ...r, _liked: !!this._likedReviews[r.id] }));
+                } catch(e) {}
+                finally { this.reviewsLoading = false; }
+            }
+        },
+        // Preload semua reviews setelah produk selesai dimuat — parallel, silent
+        async _preloadAllReviews() {
+            if(!this.products?.length) return;
+            // Ambil nama unik produk
+            const names = [...new Set(this.products.map(p => p.nama).filter(Boolean))];
+            // Fetch parallel, 5 sekaligus agar tidak overload
+            const chunk = 5;
+            for(let i = 0; i < names.length; i += chunk) {
+                const batch = names.slice(i, i + chunk);
+                await Promise.allSettled(batch.map(n => this._fetchReviews(n)));
+            }
         },
         _loadLikedReviews() {
             try {
