@@ -1732,11 +1732,25 @@
                                     <!-- Multi-item total -->
                                     <span x-show="order.items.length > 1" class="text-xs font-black text-brand-500" x-text="'Total ' + formatPrice(order.total)"></span>
                                 </div>
-                                <div class="flex items-center gap-1 text-[10px] text-brand-500 font-semibold flex-none">
-                                    <!-- dot kuning jika eligible review -->
-                                    <span x-show="canReviewOrder(order)" class="w-1.5 h-1.5 rounded-full bg-yellow-400 flex-none"></span>
-                                    <span>Detail</span>
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                <div class="flex items-center gap-2 flex-none">
+                                    <!-- Bintang jika sudah review -->
+                                    <template x-if="hasMyReview(order)">
+                                        <div class="flex items-center gap-0.5">
+                                            <template x-for="i in 5" :key="i">
+                                                <svg class="w-3 h-3" viewBox="0 0 20 20" :class="i<=(hasMyReview(order)?.rating||0)?'fill-yellow-400':'fill-gray-200'">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                </svg>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <!-- Badge "Beri Ulasan" jika eligible tapi belum review -->
+                                    <template x-if="!hasMyReview(order) && canReviewOrder(order)">
+                                        <span class="text-[9px] font-bold bg-yellow-400 text-white px-1.5 py-0.5 rounded-full">Beri Ulasan</span>
+                                    </template>
+                                    <div class="flex items-center gap-1 text-[10px] text-brand-500 font-semibold">
+                                        <span>Detail</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -5363,7 +5377,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260510-3',
+        APP_VERSION:      '20260510-4',
 
         // PWA Install
         pwaPopup:            false,
@@ -6927,13 +6941,23 @@ function serabutStore() {
         formatOrderDate(str) {
             if(!str) return str;
             const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-            const parts = (str||'').split(' ')[0].split('/');
-            if(parts.length !== 3) return str;
-            return `${parts[0]} ${months[Number(parts[1])-1]} ${parts[2]}`;
+            const datePart = (str||'').split(' ')[0];
+            let d, m, y;
+            if(datePart.indexOf('-') >= 4) {
+                // ISO: yyyy-MM-dd
+                [y, m, d] = datePart.split('-');
+            } else {
+                // Legacy: dd/MM/yyyy
+                [d, m, y] = datePart.split('/');
+            }
+            if(!y) return str;
+            return `${d} ${months[Number(m)-1]} ${y}`;
         },
         formatOrderDateTime(str) {
             if(!str) return '';
-            const [datePart, timePart] = String(str).trim().split(' ');
+            const parts = String(str).trim().split(' ');
+            const datePart = parts[0];
+            const timePart = parts[1];
             const dateStr = this.formatOrderDate(datePart);
             return timePart ? `${dateStr}, ${timePart} WIB` : dateStr;
         },
@@ -7282,6 +7306,36 @@ function serabutStore() {
             try {
                 const raw = localStorage.getItem(this._myReviewsKey());
                 if(raw) this.myReviews = JSON.parse(raw);
+            } catch {}
+        },
+        // Load semua review buyer dari GAS → merge ke myReviews (survive lintas device/refresh)
+        async _syncBuyerReviews() {
+            if(!this.currentUser) return;
+            try {
+                const data = await this.gasPost({
+                    action:       'getBuyerReviews',
+                    email:        this.currentUser.email,
+                    sessionToken: this.currentUser.sessionToken || ''
+                });
+                if(data.success && Array.isArray(data.data)) {
+                    data.data.forEach(rv => {
+                        if(rv.orderId && !this.myReviews[rv.orderId]) {
+                            // Hanya isi jika belum ada di local (jangan overwrite editan lokal)
+                            this.myReviews[rv.orderId] = {
+                                rating:      rv.rating,
+                                komentar:    rv.komentar,
+                                anonim:      rv.anonim,
+                                reviewId:    rv.reviewId,
+                                submittedAt: rv.submittedAt || 0
+                            };
+                        }
+                        // Pastikan orderId masuk reviewedOrders
+                        if(rv.orderId && !this.reviewedOrders.includes(rv.orderId)) {
+                            this.reviewedOrders.push(rv.orderId);
+                        }
+                    });
+                    this._saveMyReviews();
+                }
             } catch {}
         },
 
@@ -7972,11 +8026,19 @@ function serabutStore() {
         },
         // ── Order date helpers ─────────────────────────────
         parseTanggalWIB(str) {
-            // "dd/MM/yyyy HH:mm" (WIB = UTC+7) → Date
+            // Handle "yyyy-MM-dd HH:mm" (ISO) dan "dd/MM/yyyy HH:mm" (lama)
             if (!str) return null;
-            const [datePart, timePart] = String(str).trim().split(' ');
-            const [d, m, y] = (datePart||'').split('/');
-            const [h, min]  = (timePart||'00:00').split(':');
+            const s = String(str).trim();
+            const [datePart, timePart] = s.split(' ');
+            const [h, min] = (timePart||'00:00').split(':');
+            let d, m, y;
+            if (datePart && datePart.indexOf('-') >= 4) {
+                // ISO format: yyyy-MM-dd
+                [y, m, d] = datePart.split('-');
+            } else {
+                // Legacy: dd/MM/yyyy
+                [d, m, y] = (datePart||'').split('/');
+            }
             if (!y) return null;
             return new Date(Date.UTC(+y, +m - 1, +d, +h - 7, +min || 0));
         },
@@ -8086,6 +8148,8 @@ function serabutStore() {
                 if(!data.success) console.warn('[loadOrders] error dari GAS:', data.error);
                 this.orders = data.data || [];
                 this.ordersLoaded = true;
+                // Load review milik buyer dari GAS (survive refresh & lintas device)
+                this._syncBuyerReviews();
                 // Auto-open order detail jika kembali dari payment redirect
                 if (this.pendingOrderDetailId) {
                     const targetId = this.pendingOrderDetailId;

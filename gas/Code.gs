@@ -133,6 +133,7 @@ function doPost(e) {
       case 'iPaymuAdminSyncOrders':     result = iPaymuAdminSyncOrders(params); break;
       // Reviews
       case 'submitReview':              result = submitReview(params); break;
+      case 'getBuyerReviews':           result = getBuyerReviews(params); break;
       case 'sendReviewReminder':        result = sendReviewReminder(params); break;
       case 'editReview':                result = editReview(params); break;
       case 'toggleReview':              result = toggleReview(params); break;
@@ -1351,7 +1352,7 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   }
 
   const orderId  = 'SRB-' + new Date().getTime().toString().slice(-8);
-  const tanggal  = formatJkt(new Date(), 'dd/MM/yyyy HH:mm');
+  const tanggal  = formatJkt(new Date(), 'yyyy-MM-dd HH:mm');
 
   sheet.appendRow([
     orderId, tanggal, userNama, userEmail, userWa,
@@ -1471,7 +1472,7 @@ function getOrders({ email }) {
       orderMap.set(orderId, {
         orderId,
         tanggal:       (dateCol >= 0 && row[dateCol] instanceof Date)
-                         ? Utilities.formatDate(row[dateCol], 'Asia/Jakarta', 'dd/MM/yyyy HH:mm')
+                         ? Utilities.formatDate(row[dateCol], 'Asia/Jakarta', 'yyyy-MM-dd HH:mm')
                          : _str(dateCol),
         buyerNama:     _str(namaCol),
         buyerWa:       _str(waCol),
@@ -1725,7 +1726,7 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   }
 
   const orderId = 'SRB-' + new Date().getTime().toString().slice(-8);
-  const tanggal = formatJkt(new Date(), 'dd/MM/yyyy HH:mm');
+  const tanggal = formatJkt(new Date(), 'yyyy-MM-dd HH:mm');
   let totalHarga = 0;
   const waLines  = [];
 
@@ -3665,6 +3666,47 @@ function getReviews(produk) {
 
   // Terbaru di atas
   reviews.sort((a, b) => b.id.localeCompare(a.id));
+  return { success: true, data: reviews };
+}
+
+// ── GET BUYER'S OWN REVIEWS (semua review milik buyer ini) ──
+function getBuyerReviews({ sessionToken, email }) {
+  if (!email) return { success: false, error: 'Email diperlukan' };
+  const sheet = _ensureReviewsSheet();
+  const data  = sheet.getDataRange().getValues();
+  if (data.length < 2) return { success: true, data: [] };
+
+  const headers  = data[0].map(h => String(h).toLowerCase().trim());
+  const cId      = _colIndex(headers, 'review id');
+  const cTgl     = _colIndex(headers, 'tanggal');
+  const cOid     = _colIndex(headers, 'order id');
+  const cEmail   = _colIndex(headers, 'email');
+  const cRating  = _colIndex(headers, 'rating');
+  const cKomen   = _colIndex(headers, 'komentar');
+  const cAnonim  = _colIndex(headers, 'nama tampil'); // 'Anonim' → anonim=true
+
+  const emailNorm = String(email).toLowerCase().trim();
+  const reviews   = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[cId]) continue;
+    if (String(row[cEmail] || '').toLowerCase().trim() !== emailNorm) continue;
+
+    const tgl = row[cTgl] instanceof Date
+      ? Utilities.formatDate(row[cTgl], 'Asia/Jakarta', 'yyyy-MM-dd HH:mm')
+      : String(row[cTgl] || '').trim();
+
+    reviews.push({
+      reviewId:    String(row[cId]),
+      orderId:     String(row[cOid] || ''),
+      rating:      Number(row[cRating]) || 5,
+      komentar:    String(row[cKomen] || ''),
+      anonim:      String(row[cAnonim] || '') === 'Anonim',
+      submittedAt: row[cTgl] instanceof Date ? row[cTgl].getTime() : 0,
+      tgl,
+    });
+  }
   return { success: true, data: reviews };
 }
 
