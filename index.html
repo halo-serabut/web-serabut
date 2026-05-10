@@ -3316,11 +3316,15 @@
             </div><!-- end tab xendit -->
 
             <!-- ══ Tab: Ulasan ══════════════════════════════════ -->
-            <div x-show="adminTab==='ulasan'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm space-y-4">
+            <div x-show="adminTab==='ulasan'" x-init="if(!adminReviewsLoaded) adminLoadReviews()"
+                 class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm space-y-4">
+
+                <!-- Header -->
                 <div class="flex items-center justify-between gap-3">
                     <h3 class="font-black text-gray-800 text-base">Manajemen Ulasan</h3>
-                    <button @click="adminLoadReviews()" class="flex items-center gap-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-lg transition-all">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <button @click="adminReviewsLoaded=false; adminLoadReviews()"
+                            class="flex items-center gap-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-lg transition-all">
+                        <svg class="w-3.5 h-3.5" :class="adminReviewsLoading?'animate-spin':''" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Refresh
                     </button>
                 </div>
@@ -3330,51 +3334,112 @@
                     <div class="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
 
-                <!-- Empty -->
-                <div x-show="!adminReviewsLoading && adminReviews.length===0" class="text-center py-10 text-gray-400 text-sm">
-                    Belum ada ulasan masuk. Klik Refresh untuk memuat.
-                </div>
+                <template x-if="!adminReviewsLoading && adminReviewsLoaded">
+                <div class="space-y-4">
 
-                <!-- Review list -->
-                <div x-show="!adminReviewsLoading && adminReviews.length>0" class="space-y-3">
-                    <template x-for="(rv, idx) in adminReviews" :key="rv.id||idx">
-                        <div class="border border-gray-100 rounded-2xl p-4 transition-all" :class="rv.published ? 'bg-white' : 'bg-gray-50 opacity-60'">
-                            <!-- Header -->
-                            <div class="flex items-start justify-between gap-3 mb-2">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-none">
-                                        <span class="text-xs font-black text-brand-600" x-text="(rv.nama||'A').charAt(0).toUpperCase()"></span>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="text-sm font-bold text-gray-800" x-text="rv.nama||'Anonim'"></div>
-                                        <div class="text-[10px] text-gray-400" x-text="rv.tanggal||''"></div>
-                                    </div>
-                                </div>
-                                <!-- Toggle published -->
-                                <div class="flex items-center gap-2 flex-none">
-                                    <span class="text-[10px] font-semibold" :class="rv.published ? 'text-emerald-600' : 'text-gray-400'" x-text="rv.published ? 'Tampil' : 'Tersembunyi'"></span>
-                                    <button @click="adminToggleReview(rv, idx)"
-                                            class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none"
-                                            :class="rv.published ? 'bg-emerald-500' : 'bg-gray-300'">
-                                        <span class="inline-block w-3.5 h-3.5 transform rounded-full bg-white shadow transition-transform duration-200"
-                                              :class="rv.published ? 'translate-x-4' : 'translate-x-0.5'"></span>
-                                    </button>
-                                </div>
-                            </div>
-                            <!-- Stars + produk -->
-                            <div class="flex items-center gap-2 mb-1.5">
-                                <div class="flex text-yellow-400">
-                                    <template x-for="i in (rv.bintang||5)" :key="i">
-                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    </template>
-                                </div>
-                                <span class="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full" x-text="rv.produk+(rv.varian&&rv.varian!=='-'?' · '+rv.varian:'')"></span>
-                            </div>
-                            <!-- Komentar -->
-                            <p class="text-sm text-gray-600 leading-relaxed" x-text="rv.komentar||'—'"></p>
+                    <!-- Stats -->
+                    <div class="grid grid-cols-4 gap-2">
+                        <div class="bg-gray-50 rounded-xl p-3 text-center">
+                            <div class="text-lg font-black text-gray-800" x-text="adminReviewStats.total"></div>
+                            <div class="text-[10px] text-gray-400 font-medium">Total</div>
                         </div>
-                    </template>
+                        <div class="bg-emerald-50 rounded-xl p-3 text-center">
+                            <div class="text-lg font-black text-emerald-600" x-text="adminReviewStats.published"></div>
+                            <div class="text-[10px] text-emerald-500 font-medium">Tampil</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-3 text-center">
+                            <div class="text-lg font-black text-gray-400" x-text="adminReviewStats.hidden"></div>
+                            <div class="text-[10px] text-gray-400 font-medium">Hidden</div>
+                        </div>
+                        <div class="bg-yellow-50 rounded-xl p-3 text-center">
+                            <div class="text-lg font-black text-yellow-600 flex items-center justify-center gap-0.5">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                <span x-text="adminReviewStats.avg"></span>
+                            </div>
+                            <div class="text-[10px] text-yellow-500 font-medium">Rata-rata</div>
+                        </div>
+                    </div>
+
+                    <!-- Filter tabs -->
+                    <div class="flex gap-1 bg-gray-100 rounded-xl p-1">
+                        <template x-for="f in [{k:'semua',l:'Semua'},{k:'tampil',l:'Tampil'},{k:'tersembunyi',l:'Tersembunyi'}]" :key="f.k">
+                            <button @click="adminReviewFilter=f.k"
+                                    class="flex-1 text-xs py-1.5 rounded-lg font-semibold transition-all"
+                                    :class="adminReviewFilter===f.k ? 'bg-white shadow text-brand-600' : 'text-gray-500 hover:text-gray-700'"
+                                    x-text="f.l"></button>
+                        </template>
+                    </div>
+
+                    <!-- Empty -->
+                    <div x-show="adminFilteredReviews.length===0" class="text-center py-8 text-gray-400 text-sm">
+                        Tidak ada ulasan.
+                    </div>
+
+                    <!-- Review list -->
+                    <div class="space-y-3">
+                        <template x-for="rv in adminFilteredReviews" :key="rv.id">
+                            <div class="border rounded-2xl overflow-hidden transition-all"
+                                 :class="rv.published ? 'border-gray-100 bg-white' : 'border-dashed border-gray-200 bg-gray-50'">
+
+                                <!-- Card header -->
+                                <div class="flex items-start justify-between gap-3 px-4 pt-3 pb-2">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-none text-sm font-black"
+                                             :class="rv.published ? 'bg-brand-100 text-brand-600' : 'bg-gray-200 text-gray-400'"
+                                             x-text="(rv.nama||'A').charAt(0).toUpperCase()"></div>
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="text-sm font-bold text-gray-800" x-text="rv.nama||'Anonim'"></span>
+                                                <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                                                      :class="rv.published ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-400'"
+                                                      x-text="rv.published ? '● Tampil' : '○ Tersembunyi'"></span>
+                                            </div>
+                                            <div class="text-[10px] text-gray-400 mt-0.5" x-text="rv.tgl"></div>
+                                        </div>
+                                    </div>
+                                    <!-- Actions -->
+                                    <div class="flex items-center gap-1.5 flex-none">
+                                        <!-- Toggle -->
+                                        <button @click="adminToggleReview(rv)"
+                                                :title="rv.published ? 'Sembunyikan' : 'Tampilkan'"
+                                                class="p-1.5 rounded-lg transition-all hover:bg-gray-100">
+                                            <svg x-show="rv.published" class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            <svg x-show="!rv.published" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                        </button>
+                                        <!-- Delete -->
+                                        <button @click="adminDeleteReview(rv)"
+                                                title="Hapus permanen"
+                                                class="p-1.5 rounded-lg hover:bg-red-50 transition-all">
+                                            <svg class="w-4 h-4 text-red-400 hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Meta: produk + orderId -->
+                                <div class="flex items-center gap-2 px-4 pb-2 flex-wrap">
+                                    <div class="flex text-yellow-400 gap-0.5">
+                                        <template x-for="i in (rv.rating||5)" :key="i">
+                                            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        </template>
+                                        <template x-for="i in (5-(rv.rating||5))" :key="'e'+i">
+                                            <svg class="w-3.5 h-3.5 fill-current text-gray-200" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        </template>
+                                    </div>
+                                    <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold" x-text="rv.produk+(rv.varian&&rv.varian!=='-'?' · '+rv.varian:'')"></span>
+                                    <span class="text-[10px] text-gray-400 font-mono" x-text="rv.orderId"></span>
+                                </div>
+
+                                <!-- Komentar -->
+                                <div class="px-4 pb-3">
+                                    <p class="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-xl px-3 py-2 border border-gray-100" x-text="rv.komentar||'—'"></p>
+                                </div>
+
+                            </div>
+                        </template>
+                    </div>
                 </div>
+                </template>
+
             </div><!-- end tab ulasan -->
 
             </div><!-- end content area -->
@@ -5378,7 +5443,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260510-9',
+        APP_VERSION:      '20260510-10',
 
         // PWA Install
         pwaPopup:            false,
@@ -5469,6 +5534,8 @@ function serabutStore() {
         reviewsLoading:     false,
         adminReviews:       [],
         adminReviewsLoading: false,
+        adminReviewsLoaded:  false,
+        adminReviewFilter:   'semua', // semua | tampil | tersembunyi
         currentOrderIPaymuData: null,
         paymentConfirmed: null,
         pendingOrderDetailId: null,
@@ -7534,9 +7601,23 @@ function serabutStore() {
                     adminEmail: this.currentUser?.email,
                     adminToken: this.currentUser?.sessionToken
                 });
-                if(data.success) this.adminReviews = data.reviews || [];
+                if(data.success) {
+                    this.adminReviews = data.data || [];
+                    this.adminReviewsLoaded = true;
+                }
             } catch(e) { /* silent */ }
             finally { this.adminReviewsLoading = false; }
+        },
+        get adminFilteredReviews() {
+            if (this.adminReviewFilter === 'tampil')      return this.adminReviews.filter(r => r.published);
+            if (this.adminReviewFilter === 'tersembunyi') return this.adminReviews.filter(r => !r.published);
+            return this.adminReviews;
+        },
+        get adminReviewStats() {
+            const total     = this.adminReviews.length;
+            const published = this.adminReviews.filter(r => r.published).length;
+            const avg       = total ? (this.adminReviews.reduce((s,r) => s+(r.rating||5), 0) / total).toFixed(1) : '0.0';
+            return { total, published, hidden: total - published, avg };
         },
         async adminToggleReview(rv, idx) {
             const newVal = !rv.published;
@@ -7549,9 +7630,21 @@ function serabutStore() {
                     published: newVal
                 });
                 if(data.success) {
-                    this.adminReviews[idx] = { ...rv, published: newVal };
-                    this.adminReviews = [...this.adminReviews];
+                    const i = this.adminReviews.findIndex(r => r.id === rv.id);
+                    if(i >= 0) { this.adminReviews[i] = { ...rv, published: newVal }; this.adminReviews = [...this.adminReviews]; }
                 }
+            } catch(e) { /* silent */ }
+        },
+        async adminDeleteReview(rv) {
+            if(!confirm('Hapus ulasan ini permanen?')) return;
+            try {
+                const data = await this.gasPost({
+                    action: 'deleteReview',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.currentUser?.sessionToken,
+                    reviewId: rv.id
+                });
+                if(data.success) this.adminReviews = this.adminReviews.filter(r => r.id !== rv.id);
             } catch(e) { /* silent */ }
         },
 

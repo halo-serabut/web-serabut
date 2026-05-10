@@ -137,6 +137,7 @@ function doPost(e) {
       case 'sendReviewReminder':        result = sendReviewReminder(params); break;
       case 'editReview':                result = editReview(params); break;
       case 'toggleReview':              result = toggleReview(params); break;
+      case 'deleteReview':              result = deleteReview(params); break;
       case 'getAdminReviews':           result = getAdminReviews(params); break;
       default: result = { success: false, error: 'Unknown action' };
     }
@@ -1498,7 +1499,7 @@ function getOrders({ email }) {
       orderMap.set(orderId, {
         orderId,
         tanggal:       (dateCol >= 0 && row[dateCol] instanceof Date)
-                         ? Utilities.formatDate(row[dateCol], 'Asia/Jakarta', 'yyyy-MM-dd HH:mm')
+                         ? Utilities.formatDate(_fixDateSwap(row[dateCol]), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm')
                          : _str(dateCol),
         buyerNama:     _str(namaCol),
         buyerWa:       _str(waCol),
@@ -2740,6 +2741,20 @@ function getOTPExpiry() {
 
 function formatJkt(date, fmt) {
   return Utilities.formatDate(date, 'Asia/Jakarta', fmt);
+}
+
+// Auto-fix: jika Google Sheets salah parse DD/MM sebagai MM/DD (date jadi future > 7 hari)
+// swap month↔day agar kembali ke tanggal yang benar
+function _fixDateSwap(d) {
+  if (!(d instanceof Date)) return d;
+  const now = new Date();
+  const sevenDays = 7 * 24 * 3600 * 1000;
+  if (d.getTime() - now.getTime() <= sevenDays) return d; // tanggal wajar, tidak perlu fix
+  // Coba swap: gunakan getDate() sebagai bulan dan getMonth()+1 sebagai tanggal
+  const swapped = new Date(d.getFullYear(), d.getDate() - 1, d.getMonth() + 1, d.getHours(), d.getMinutes(), d.getSeconds());
+  // Hanya pakai hasil swap jika lebih masuk akal (tidak future > 7 hari)
+  if (swapped.getTime() - now.getTime() <= sevenDays) return swapped;
+  return d; // swap juga tidak masuk akal, kembalikan aslinya
 }
 
 // Parse "dd/MM/yyyy HH:mm" (WIB) → UTC Date
@@ -4048,6 +4063,26 @@ function getAdminReviews({ adminEmail, adminToken }) {
 
   reviews.sort((a, b) => b.id.localeCompare(a.id));
   return { success: true, data: reviews };
+}
+
+// ── ADMIN: hapus review permanen ──
+function deleteReview({ adminEmail, adminToken, reviewId }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+
+  const sheet   = _ensureReviewsSheet();
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const cId     = _colIndex(headers, 'review id');
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][cId]) === String(reviewId)) {
+      sheet.deleteRow(i + 1);
+      SpreadsheetApp.flush();
+      return { success: true };
+    }
+  }
+  return { success: false, error: 'Review tidak ditemukan' };
 }
 
 // ── ADMIN: toggle published ──
