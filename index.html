@@ -908,8 +908,17 @@
 
                             <!-- Tab: Ulasan -->
                             <div x-show="pdTab==='ulasan'" class="p-4">
+                                <!-- Loading spinner -->
+                                <template x-if="reviewsLoading">
+                                    <div class="flex justify-center items-center py-12">
+                                        <svg class="w-8 h-8 text-brand-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                        </svg>
+                                    </div>
+                                </template>
                                 <!-- Rating summary — dinamis dari productReviews -->
-                                <template x-if="productReviews.length > 0">
+                                <template x-if="!reviewsLoading && productReviews.length > 0">
                                     <div class="flex gap-5 items-center mb-5 pb-4 border-b border-gray-100">
                                         <div class="text-center">
                                             <div class="text-4xl font-black text-gray-900" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></div>
@@ -936,7 +945,7 @@
                                 </template>
 
                                 <!-- Write review CTA (for logged-in member with eligible order) -->
-                                <template x-if="isMember && eligibleReviewOrder(selectedProductGroup?.nama)">
+                                <template x-if="!reviewsLoading && isMember && eligibleReviewOrder(selectedProductGroup?.nama)">
                                     <div class="mb-4 bg-brand-50 border border-brand-200 rounded-2xl p-4 flex items-center justify-between gap-3">
                                         <div>
                                             <p class="text-sm font-bold text-brand-700">Bagaimana pengalamanmu?</p>
@@ -950,7 +959,7 @@
                                 </template>
 
                                 <!-- Reviews dari GAS (per produk, hanya yang published) -->
-                                <template x-if="productReviews.length > 0">
+                                <template x-if="!reviewsLoading && productReviews.length > 0">
                                     <div class="space-y-4">
                                         <template x-for="review in productReviews" :key="review.id">
                                             <div class="border-b border-gray-50 pb-4 last:border-0">
@@ -980,7 +989,7 @@
                                 </template>
 
                                 <!-- Empty state — belum ada ulasan untuk produk ini -->
-                                <template x-if="productReviews.length === 0">
+                                <template x-if="!reviewsLoading && productReviews.length === 0">
                                     <div class="text-center py-10">
                                         <svg class="w-12 h-12 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                                         <p class="text-sm font-semibold text-gray-400">Belum ada ulasan untuk produk ini</p>
@@ -5359,7 +5368,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260510-6',
+        APP_VERSION:      '20260510-7',
 
         // PWA Install
         pwaPopup:            false,
@@ -5380,6 +5389,7 @@ function serabutStore() {
 
         scrollY: 0,
         now: Date.now(), // reactive timestamp — diupdate tiap 30 detik untuk live countdown
+        _pageLoadTime: Date.now(), // waktu halaman dibuka (tidak berubah)
 
         // Pages
         activePage:   'home',
@@ -5446,6 +5456,7 @@ function serabutStore() {
         myReviews:          {}, // orderId → {rating,komentar,anonim,reviewId,submittedAt,nama}
         reviewEditMode:     false,
         productReviews:     [], // reviews dari GAS untuk produk aktif
+        reviewsLoading:     false,
         adminReviews:       [],
         adminReviewsLoading: false,
         currentOrderIPaymuData: null,
@@ -7327,6 +7338,7 @@ function serabutStore() {
         // ── Reviews ─────────────────────────────────────────
         async _loadProductReviews(produkNama) {
             if(!produkNama) return;
+            this.reviewsLoading = true;
             try {
                 const params = new URLSearchParams({ action:'getReviews', produk: produkNama });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
@@ -7335,6 +7347,7 @@ function serabutStore() {
                     this.productReviews = data.data;
                 }
             } catch(e) { /* silent */ }
+            finally { this.reviewsLoading = false; }
         },
         /** Returns the first eligible order to review for a product name */
         eligibleReviewOrder(produkNama) {
@@ -8032,9 +8045,14 @@ function serabutStore() {
         orderMsLeft(order) {
             const created = this.parseTanggalWIB(order?.tanggal);
             if (!created) return 0;
-            const ms = created.getTime() + 24 * 3600 * 1000 - this.now; // pakai this.now (reaktif)
-            // Guard: jika > 24j berarti tanggal di GSheet salah (format MM/DD tersimpan sbg bulan lain)
-            return Math.max(0, Math.min(ms, 24 * 3600 * 1000));
+            const raw = created.getTime() + 24 * 3600 * 1000 - this.now;
+            if (raw <= 0) return 0;
+            // Guard: date di GSheet salah (tanggal masa depan → raw > 24h)
+            // Hitung mundur dari saat halaman dibuka agar countdown tetap jalan
+            if (raw > 24 * 3600 * 1000) {
+                return Math.max(0, this._pageLoadTime + 24 * 3600 * 1000 - this.now);
+            }
+            return raw;
         },
         orderTimeLeftStr(order) {
             const ms = order?.msecLeft ?? this.orderMsLeft(order);
