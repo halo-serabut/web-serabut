@@ -7595,11 +7595,15 @@ function serabutStore() {
         },
         flashSaleItem(nama, varian, masaAktif) {
             const combined = masaAktif && masaAktif !== '-' ? varian + ' · ' + masaAktif : varian;
-            // Cek semua active discount items (flash sale + regular discount)
+            const norm = s => String(s||'').trim().toLowerCase();
             const allItems = this.flashSale.allDiscountItems?.length
                 ? this.flashSale.allDiscountItems
                 : (this.flashSale.aktif ? (this.flashSale.items || []) : []);
-            return allItems.find(i => i.produk === nama && (i.varian === varian || i.varian === combined)) || null;
+            return allItems.find(i =>
+                norm(i.produk) === norm(nama) &&
+                (norm(i.varian) === norm(varian) || norm(i.varian) === norm(combined) ||
+                 (norm(i.varian) === norm(varian) && norm(i.masaAktif||'') === norm(masaAktif||'')))
+            ) || null;
         },
         formatTerjual(n) {
             if(!n || n <= 0) return '';

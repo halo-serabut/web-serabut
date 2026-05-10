@@ -308,14 +308,20 @@ function _getActiveCampaignPrice(produk, varian, masaAktif) {
     for (const camp of campaigns) {
       if (!camp.aktif) continue;
       const start    = camp.startDate ? new Date(camp.startDate) : null;
-      const deadline = camp.deadline  ? new Date(camp.deadline)  : null;
+      const deadline = camp.endDate   ? new Date(camp.endDate)   :
+                       camp.deadline  ? new Date(camp.deadline)  : null;
       if (start    && now < start)    continue;
       if (deadline && now > deadline) continue;
       const items = camp.items || [];
+      // item.varian bisa berupa combined "Varian · MasaAktif" (format baru) atau terpisah
+      const combinedKey = masaAktif && masaAktif !== '-' ? normStr(varian) + ' · ' + normStr(masaAktif) : normStr(varian);
       for (const item of items) {
-        if (normStr(item.produk)    === normStr(produk) &&
-            normStr(item.varian)    === normStr(varian) &&
-            normStr(item.masaAktif) === normStr(masaAktif)) {
+        if (normStr(item.produk) !== normStr(produk)) continue;
+        const itemVarian = normStr(item.varian || '');
+        // Match combined "Varian · MasaAktif" ATAU varian+masaAktif terpisah
+        const matchCombined = itemVarian === combinedKey;
+        const matchSeparate = itemVarian === normStr(varian) && normStr(item.masaAktif || '') === normStr(masaAktif);
+        if (matchCombined || matchSeparate) {
           const h = Number(item.harga);
           if (h > 0) return h;
         }
@@ -327,10 +333,13 @@ function _getActiveCampaignPrice(produk, varian, masaAktif) {
       const deadline = settings['flashSale.deadline'] ? new Date(settings['flashSale.deadline']) : null;
       if (!deadline || now <= deadline) {
         const items = JSON.parse(settings['flashSale.items'] || '[]');
+        const combinedKeyOld = masaAktif && masaAktif !== '-' ? normStr(varian) + ' · ' + normStr(masaAktif) : normStr(varian);
         for (const item of items) {
-          if (normStr(item.produk)    === normStr(produk) &&
-              normStr(item.varian)    === normStr(varian) &&
-              normStr(item.masaAktif) === normStr(masaAktif)) {
+          if (normStr(item.produk) !== normStr(produk)) continue;
+          const itemVarian = normStr(item.varian || '');
+          const matchC = itemVarian === combinedKeyOld;
+          const matchS = itemVarian === normStr(varian) && normStr(item.masaAktif || '') === normStr(masaAktif);
+          if (matchC || matchS) {
             const h = Number(item.harga);
             if (h > 0) return h;
           }
