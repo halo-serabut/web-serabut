@@ -860,7 +860,6 @@
                                                 <th class="text-left py-2 px-2 text-xs font-bold text-gray-500">Durasi</th>
                                                 <th class="text-right py-2 px-2 text-xs font-bold text-gray-500">Harga</th>
                                                 <th class="text-right py-2 px-2 text-xs font-bold text-gray-500">Member</th>
-                                                <th class="text-right py-2 px-2 text-xs font-bold text-gray-500">Per Bulan</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -882,7 +881,6 @@
                                                             <span class="text-gray-400 text-xs">—</span>
                                                         </template>
                                                     </td>
-                                                    <td class="py-3 px-2 text-right text-xs text-gray-500" x-text="opt.masaAktif&&opt.masaAktif.includes('Tahun')?formatPrice(Math.round(opt.harga/12))+'/bln':(opt.masaAktif&&opt.masaAktif.includes('Bulan')?formatPrice(Math.round(opt.harga/parseInt(opt.masaAktif))))+'/bln':'—'"></td>
                                                 </tr>
                                             </template>
                                         </tbody>
@@ -894,14 +892,12 @@
                                     <p class="text-xs text-blue-700 leading-relaxed">Harga <strong>Member</strong> hanya berlaku saat ada kampanye diskon aktif. <button @click="showAuthModal=true; authTab='register'" class="underline font-bold">Daftar gratis</button> untuk dapat harga terbaik.</p>
                                 </div>
                                 <!-- Cara bayar -->
-                                <div class="mt-3">
+                                <div class="mt-3" x-show="paymentMethods.length>0">
                                     <div class="text-xs font-bold text-gray-500 mb-2">Metode Pembayaran</div>
                                     <div class="flex flex-wrap gap-2">
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">Transfer Bank</span>
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">QRIS</span>
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">Virtual Account</span>
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">Shopee Pay</span>
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">Dana</span>
+                                        <template x-for="pm in paymentMethods" :key="pm">
+                                            <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium" x-text="pm"></span>
+                                        </template>
                                     </div>
                                 </div>
                             </div>
@@ -2264,7 +2260,7 @@
             <!-- Tab Navigation Mobile: horizontal scroll -->
             <div class="relative mb-4 md:hidden">
                 <div class="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar">
-                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'ulasan',label:'Ulasan'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
+                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'ulasan',label:'Ulasan'},{id:'payment',label:'Pembayaran'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
                         <button @click="adminTab=tab.id; adminInitTab(tab.id); $el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})"
                                 :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
                                 class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
@@ -2289,7 +2285,8 @@
                     {id:'footer',    label:'Footer',       icon:'M4 6h16M4 12h16M4 18h7'},
                     {id:'orders',    label:'Semua Order',  icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},
                     {id:'ulasan',    label:'Ulasan',       icon:'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'},
-                    {id:'ipaymu',    label:'Xendit',       icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'}
+                    {id:'payment',   label:'Pembayaran',   icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'},
+                    {id:'ipaymu',    label:'Xendit',       icon:'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z'}
                 ]" :key="tab.id">
                     <button @click="adminTab=tab.id; adminInitTab(tab.id)"
                             :class="adminTab===tab.id ? 'bg-brand-50 text-brand-600 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'"
@@ -3253,6 +3250,69 @@
 
                 </div>
             </div>
+
+            <!-- ══ Tab: Pembayaran ══════════════════════════════ -->
+            <div x-show="adminTab==='payment'" x-init="if(adminTab==='payment' && !adminPaymentLoaded) adminLoadPaymentMethods()"
+                 class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm space-y-4">
+
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h3 class="font-black text-gray-800 text-base">Metode Pembayaran</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Centang metode yang aktif — tampil di halaman produk</p>
+                    </div>
+                    <button @click="adminSavePaymentMethods()"
+                            :disabled="adminPaymentSaving"
+                            class="flex items-center gap-1.5 text-xs bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-semibold px-3 py-1.5 rounded-lg transition-all">
+                        <svg x-show="adminPaymentSaving" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span x-text="adminPaymentSaving ? 'Menyimpan...' : 'Simpan'"></span>
+                    </button>
+                </div>
+
+                <!-- List metode -->
+                <div class="space-y-2">
+                    <template x-for="(pm, idx) in adminPaymentList" :key="idx">
+                        <div class="flex items-center gap-3 p-3 rounded-xl border transition-all"
+                             :class="pm.active ? 'border-brand-200 bg-brand-50' : 'border-gray-100 bg-white'">
+                            <!-- Toggle -->
+                            <button @click="pm.active=!pm.active"
+                                    class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 flex-none"
+                                    :class="pm.active ? 'bg-brand-500' : 'bg-gray-300'">
+                                <span class="inline-block w-3.5 h-3.5 transform rounded-full bg-white shadow transition-transform duration-200"
+                                      :class="pm.active ? 'translate-x-4' : 'translate-x-0.5'"></span>
+                            </button>
+                            <!-- Nama (editable) -->
+                            <input x-model="pm.label" type="text"
+                                   class="flex-1 text-sm font-medium bg-transparent border-none outline-none text-gray-800 placeholder-gray-300"
+                                   placeholder="Nama metode...">
+                            <!-- Hapus -->
+                            <button @click="adminPaymentList.splice(idx,1)"
+                                    class="p-1 rounded-lg hover:bg-red-50 transition-all flex-none">
+                                <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Tambah baru -->
+                <div class="flex gap-2">
+                    <input x-model="adminPaymentNew" type="text" placeholder="Tambah metode baru (contoh: GoPay)"
+                           @keydown.enter="adminPaymentNew.trim()&&adminPaymentList.push({label:adminPaymentNew.trim(),active:true});adminPaymentNew=''"
+                           class="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-brand-400">
+                    <button @click="adminPaymentNew.trim()&&adminPaymentList.push({label:adminPaymentNew.trim(),active:true});adminPaymentNew=''"
+                            class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-xl transition-all">+ Tambah</button>
+                </div>
+
+                <!-- Preview -->
+                <div class="border-t border-gray-100 pt-3" x-show="adminPaymentList.filter(p=>p.active).length>0">
+                    <div class="text-[11px] text-gray-400 font-semibold mb-2">Preview di halaman produk:</div>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="pm in adminPaymentList.filter(p=>p.active)" :key="pm.label">
+                            <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium" x-text="pm.label"></span>
+                        </template>
+                    </div>
+                </div>
+
+            </div><!-- end tab payment -->
 
             <!-- ── Tab: Xendit ── -->
             <div x-show="adminTab==='ipaymu'" class="space-y-4">
@@ -5443,7 +5503,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260510-10',
+        APP_VERSION:      '20260510-11',
 
         // PWA Install
         pwaPopup:            false,
@@ -5536,6 +5596,10 @@ function serabutStore() {
         adminReviewsLoading: false,
         adminReviewsLoaded:  false,
         adminReviewFilter:   'semua', // semua | tampil | tersembunyi
+        adminPaymentList:   [],
+        adminPaymentLoaded: false,
+        adminPaymentSaving: false,
+        adminPaymentNew:    '',
         currentOrderIPaymuData: null,
         paymentConfirmed: null,
         pendingOrderDetailId: null,
@@ -5634,6 +5698,7 @@ function serabutStore() {
             renewal:  { discountPct: 10, discountMax: 10000 },
             extraCategories: [],
         },
+        paymentMethods: [],
         renewalMode: false,
         settingsLoaded: false,
 
@@ -6133,6 +6198,12 @@ function serabutStore() {
                 try {
                     const extra = JSON.parse(s['categories.extra'] || '[]');
                     if(Array.isArray(extra)) this.siteSettings.extraCategories = extra;
+                } catch {}
+
+                // Payment methods
+                try {
+                    const pm = JSON.parse(s['payment.methods'] || '[]');
+                    if(Array.isArray(pm) && pm.length) this.paymentMethods = pm;
                 } catch {}
 
                 // Benefits per category
@@ -7175,6 +7246,8 @@ function serabutStore() {
                 this.adminLoadGuides();
             } else if(tab==='orders') {
                 if (!this.adminOrdersLoaded) this.adminLoadOrders();
+            } else if(tab==='payment') {
+                if (!this.adminPaymentLoaded) this.adminLoadPaymentMethods();
             } else if(tab==='ipaymu') {
                 if (!this.adminIPaymuLoaded) {
                     this.adminIPaymuLoadBalance();
@@ -7635,6 +7708,44 @@ function serabutStore() {
                 }
             } catch(e) { /* silent */ }
         },
+        // ── Payment Methods admin ─────────────────────────
+        async adminLoadPaymentMethods() {
+            // Default list jika belum ada di settings
+            const defaults = ['Transfer Bank','QRIS','Virtual Account','Shopee Pay','Dana','GoPay','OVO'];
+            try {
+                const data = await fetch(`${this.GAS_URL}?action=getSettings`).then(r=>r.json());
+                if(data.success && data.settings) {
+                    const pm = JSON.parse(data.settings['payment.methods'] || '[]');
+                    if(Array.isArray(pm) && pm.length) {
+                        this.adminPaymentList = pm; // sudah format {label, active}
+                    } else {
+                        // Baru pertama kali — init dari defaults semua aktif
+                        this.adminPaymentList = defaults.map(l => ({ label: l, active: true }));
+                    }
+                }
+            } catch(e) {
+                this.adminPaymentList = defaults.map(l => ({ label: l, active: true }));
+            }
+            this.adminPaymentLoaded = true;
+        },
+        async adminSavePaymentMethods() {
+            this.adminPaymentSaving = true;
+            try {
+                const data = await this.gasPost({
+                    action: 'saveSettings',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.currentUser?.sessionToken,
+                    settings: { 'payment.methods': JSON.stringify(this.adminPaymentList) }
+                });
+                if(data.success) {
+                    // Update live di frontend
+                    this.paymentMethods = this.adminPaymentList.filter(p=>p.active).map(p=>p.label);
+                    this.showToast('Metode pembayaran disimpan ✓');
+                }
+            } catch(e) {}
+            finally { this.adminPaymentSaving = false; }
+        },
+
         async adminDeleteReview(rv) {
             if(!confirm('Hapus ulasan ini permanen?')) return;
             try {
