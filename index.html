@@ -3201,6 +3201,16 @@
                                 <div class="flex items-center justify-between gap-3 px-4 py-2.5 border-t" :class="_orderCardFooter(g.status)">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <span class="text-[11px] text-gray-400" x-text="g.items.length + ' item'"></span>
+                                        <!-- Countdown Belum Bayar -->
+                                        <template x-if="g.status==='Pending' && orderMsLeft({tanggal:g.tanggal, status:g.status}) > 0">
+                                            <span class="flex items-center gap-1 text-[10px] font-semibold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg>
+                                                Sisa <span x-text="orderTimeLeftStr({tanggal:g.tanggal, status:g.status})"></span>
+                                            </span>
+                                        </template>
+                                        <template x-if="g.status==='Pending' && orderMsLeft({tanggal:g.tanggal, status:g.status}) <= 0">
+                                            <span class="text-[10px] font-semibold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Waktu habis</span>
+                                        </template>
                                         <template x-if="g.items[0]?.paymentMethod">
                                             <span class="text-[10px] font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full" x-text="g.items[0].paymentMethod"></span>
                                         </template>
@@ -5368,7 +5378,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260510-8',
+        APP_VERSION:      '20260510-9',
 
         // PWA Install
         pwaPopup:            false,
