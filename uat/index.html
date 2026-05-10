@@ -1600,11 +1600,21 @@
             <!-- Filter tabs + refresh -->
             <div class="flex items-center gap-2 mb-4">
                 <div class="flex gap-1 bg-gray-100 rounded-xl p-1 flex-1 overflow-x-auto no-scrollbar">
-                    <template x-for="f in [{id:'semua',label:'Semua'},{id:'belum-bayar',label:'Belum Bayar'},{id:'selesai',label:'Selesai'},{id:'batal',label:'Dibatalkan'}]" :key="f.id">
+                    <template x-for="f in [
+                        {id:'semua',     label:'Semua',      count: orders.length},
+                        {id:'belum-bayar',label:'Belum Bayar',count: orders.filter(o=>o.status==='Pending'&&orderMsLeft(o)>0).length},
+                        {id:'selesai',   label:'Selesai',    count: orders.filter(o=>o.status==='Aktif'||o.status==='Selesai').length},
+                        {id:'batal',     label:'Dibatalkan', count: orders.filter(o=>orderIsCancelled(o)).length}
+                    ]" :key="f.id">
                         <button @click="ordersFilter=f.id; ordersCurrentPage=1"
                                 :class="ordersFilter===f.id ? 'bg-white text-gray-900 shadow-sm font-bold' : 'text-gray-500'"
-                                class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-none"
-                                x-text="f.label"></button>
+                                class="px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-none flex items-center gap-1">
+                            <span x-text="f.label"></span>
+                            <span x-show="f.count>0"
+                                  :class="ordersFilter===f.id ? 'bg-brand-500 text-white' : 'bg-gray-300 text-gray-600'"
+                                  class="text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none"
+                                  x-text="f.count"></span>
+                        </button>
                     </template>
                 </div>
                 <!-- Refresh manual -->

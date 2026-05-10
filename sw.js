@@ -1,17 +1,11 @@
-const CACHE_NAME = 'serabut-v4';
+const CACHE_NAME = 'serabut-v5';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/js/store.js',
-  '/css/app.css',
   '/logo.png',
   '/manifest.json'
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
-  );
+  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS)));
   self.skipWaiting();
 });
 
@@ -25,25 +19,34 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
+  const req = e.request;
+  const url = new URL(req.url);
 
-  // GAS API & external CDN — network only
-  if (url.hostname !== location.hostname) {
-    e.respondWith(fetch(e.request).catch(() => new Response('', { status: 503 })));
+  // Jangan cache: POST, GAS API, CDN external
+  if (req.method !== 'GET' || url.hostname !== location.hostname) {
+    e.respondWith(fetch(req).catch(() => new Response('', { status: 503 })));
     return;
   }
 
-  // Local assets — cache first, fallback network
+  // index.html & navigasi — NETWORK FIRST (selalu ambil terbaru)
+  if (url.pathname === '/' || url.pathname.endsWith('.html') || url.pathname.startsWith('/produk/')) {
+    e.respondWith(
+      fetch(req).then(res => res).catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
+  // Asset statis (logo, manifest) — cache first
   e.respondWith(
-    caches.match(e.request).then(cached => {
+    caches.match(req).then(cached => {
       if (cached) return cached;
-      return fetch(e.request).then(res => {
+      return fetch(req).then(res => {
         if (res.ok) {
           const clone = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+          caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
         }
         return res;
-      }).catch(() => caches.match('/index.html'));
+      }).catch(() => new Response('', { status: 503 }));
     })
   );
 });
