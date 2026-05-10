@@ -1048,38 +1048,54 @@
                 <!-- end 2-col layout -->
 
                 <!-- ── Sticky bottom bar (mobile only) ── -->
-                <div class="md:hidden fixed bottom-16 left-0 right-0 z-40 bg-white border-t border-gray-100 px-4 py-3 shadow-lg">
-                    <div class="flex items-center gap-3">
-                        <div class="flex-1 min-w-0">
-                            <div class="text-xs text-gray-400">Total Harga</div>
-                            <!-- Member + flash sale -->
-                            <template x-if="isMember && flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'%OFF'"></span>
-                                    <span class="font-black text-brand-500 text-lg" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></span>
-                                </div>
+                <div class="md:hidden fixed left-0 right-0 z-40" style="bottom: calc(64px + env(safe-area-inset-bottom, 0px));">
+                    <!-- Frosted glass container -->
+                    <div class="mx-3 mb-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.10)] border border-gray-100/80 overflow-hidden">
+                        <!-- Price row -->
+                        <div class="px-4 pt-3 pb-2 flex items-center justify-between">
+                            <div>
+                                <div class="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Total Harga</div>
+                                <!-- Member + flash sale -->
+                                <template x-if="isMember && flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-xs text-gray-400 line-through" x-text="formatPrice(selectedVariant?.harga)"></span>
+                                        <span class="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
+                                        <span class="font-black text-brand-500 text-xl leading-none" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></span>
+                                    </div>
+                                </template>
+                                <!-- tanpa flash sale -->
+                                <template x-if="!isMember || !flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                    <div class="font-black text-brand-500 text-xl leading-none mt-0.5" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                </template>
+                            </div>
+                            <div x-show="selectedVariant?.masaAktif && selectedVariant?.masaAktif!=='-'" class="text-right">
+                                <div class="text-[10px] text-gray-400">Durasi</div>
+                                <div class="text-xs font-bold text-gray-600" x-text="selectedVariant?.masaAktif"></div>
+                            </div>
+                        </div>
+                        <!-- CTA buttons row -->
+                        <div class="px-3 pb-3 flex gap-2">
+                            <!-- Keranjang -->
+                            <button @click="addToCart(selectedProductGroup, selectedVariant)"
+                                class="w-12 h-12 flex-none rounded-xl border-2 border-brand-400 bg-white text-brand-500 flex items-center justify-center transition-all active:scale-95 hover:bg-brand-50">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            </button>
+                            <!-- Pesan / Stok Habis -->
+                            <template x-if="selectedVariant?.stok===0">
+                                <div class="flex-1 h-12 bg-gray-100 text-gray-400 font-bold rounded-xl text-sm flex items-center justify-center">Stok Habis</div>
                             </template>
-                            <!-- tanpa flash sale -->
-                            <template x-if="!flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif) || !isMember">
-                                <div class="font-black text-brand-500 text-lg" x-text="formatPrice(selectedVariant?.harga)"></div>
+                            <template x-if="selectedVariant?.stok!==0">
+                                <button @click="handlePesan()"
+                                    class="flex-1 h-12 gradient-card text-white font-black rounded-xl text-sm transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
+                                    Pesan Sekarang
+                                </button>
                             </template>
                         </div>
-                        <button @click="addToCart(selectedProductGroup, selectedVariant)" class="bg-white border-2 border-brand-400 text-brand-500 font-black py-3 px-4 rounded-2xl text-sm transition-all active:scale-95 flex items-center gap-1.5">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                        </button>
-                        <template x-if="selectedVariant?.stok===0">
-                            <div class="flex-1 bg-gray-100 text-gray-400 font-black py-3 rounded-2xl text-sm text-center">Stok Habis</div>
-                        </template>
-                        <template x-if="selectedVariant?.stok!==0">
-                            <button @click="handlePesan()" class="gradient-card text-white font-black py-3 px-5 rounded-2xl text-sm transition-all active:scale-95 shadow-md flex items-center gap-1.5">
-                                <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
-                                Pesan
-                            </button>
-                        </template>
                     </div>
                 </div>
                 <!-- extra padding for sticky bar + bottom nav on mobile -->
-                <div class="md:hidden h-32"></div>
+                <div class="md:hidden h-36"></div>
 
             </div>
         </template>
