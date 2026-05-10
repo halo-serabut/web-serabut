@@ -1947,7 +1947,7 @@
                                     <!-- Stars -->
                                     <div class="flex items-center gap-1 mb-3">
                                         <template x-for="star in [1,2,3,4,5]" :key="star">
-                                            <button type="button" @click="reviewOrderId=orderDetailModal.orderId; reviewProduk=orderDetailModal.items?.[0]?.produk||''; reviewVarian=orderDetailModal.items?.[0]?.varian||''; reviewRating=star"
+                                            <button type="button" @click="reviewRating=star"
                                                     @mouseenter="reviewHover=star" @mouseleave="reviewHover=0"
                                                     class="transition-transform hover:scale-110 active:scale-95">
                                                 <svg class="w-8 h-8 transition-colors" viewBox="0 0 20 20"
@@ -1959,7 +1959,7 @@
                                         <span class="ml-1 text-sm font-semibold text-gray-500" x-text="['','Sangat Buruk','Buruk','Cukup','Bagus','Sangat Bagus'][reviewHover||reviewRating]||''"></span>
                                     </div>
                                     <!-- Textarea — muncul setelah pilih bintang -->
-                                    <template x-if="reviewRating>0 && reviewOrderId===orderDetailModal?.orderId">
+                                    <template x-if="reviewRating>0">
                                         <div class="space-y-2">
                                             <textarea x-model="reviewKomentar" rows="3"
                                                       placeholder="Ceritakan pengalamanmu..."
@@ -1975,7 +1975,7 @@
                                                 <span class="text-xs text-gray-500">Tampilkan sebagai Anonim</span>
                                             </label>
                                             <div x-show="reviewError" class="text-xs text-red-500 font-medium" x-text="reviewError"></div>
-                                            <button @click="submitReviewForm()"
+                                            <button @click="submitInlineReview(orderDetailModal)"
                                                     :disabled="reviewLoading"
                                                     class="w-full py-2.5 rounded-xl font-bold text-sm bg-brand-500 hover:bg-brand-600 text-white transition-all flex items-center justify-center gap-2 disabled:opacity-60">
                                                 <svg x-show="reviewLoading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
@@ -1986,7 +1986,7 @@
                                 </div>
                             </template>
                             <!-- Success state inline -->
-                            <template x-if="reviewSuccess && reviewOrderId===orderDetailModal?.orderId">
+                            <template x-if="reviewSuccess">
                                 <div class="flex items-center gap-3 bg-emerald-50 rounded-xl px-4 py-3">
                                     <svg class="w-5 h-5 text-emerald-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                     <div>
@@ -7225,29 +7225,64 @@ function serabutStore() {
             this.reviewModal    = true;
             document.body.style.overflow = 'hidden';
         },
-        async submitReviewForm() {
-            if(this.reviewRating === 0) return;
+        // Submit dari inline form dalam order detail — order object langsung dipass
+        async submitInlineReview(order) {
+            if(!order) return;
+            if(this.reviewRating === 0) { this.reviewError = 'Pilih rating dulu.'; return; }
             if(!this.reviewKomentar.trim()) { this.reviewError = 'Isi ulasan tidak boleh kosong.'; return; }
+            const firstItem = order.items?.[0] || {};
             this.reviewLoading = true;
             this.reviewError   = '';
             try {
-                const payload = {
-                    action:     'submitReview',
+                const data = await this.gasPost({
+                    action:       'submitReview',
                     sessionToken: this.currentUser?.sessionToken || '',
-                    email:      this.currentUser?.email || '',
-                    orderId:    this.reviewOrderId,
-                    produk:     this.reviewProduk,
-                    varian:     this.reviewVarian,
-                    rating:     this.reviewRating,
-                    komentar:   this.reviewKomentar.trim(),
-                    anonim:     this.reviewAnonim
-                };
-                const data = await this.gasPost(payload);
+                    email:        this.currentUser?.email || '',
+                    orderId:      order.orderId,
+                    produk:       firstItem.produk || '',
+                    varian:       firstItem.varian || '',
+                    rating:       this.reviewRating,
+                    komentar:     this.reviewKomentar.trim(),
+                    anonim:       this.reviewAnonim
+                });
+                if(data.success) {
+                    this.reviewSuccess = true;
+                    this.reviewedOrders.push(order.orderId);
+                    if(this.activePage === 'product-detail' && this.selectedProductGroup?.nama) {
+                        this._loadProductReviews(this.selectedProductGroup.nama);
+                    }
+                } else {
+                    this.reviewError = data.error || 'Gagal mengirim ulasan.';
+                }
+            } catch(e) {
+                this.reviewError = 'Terjadi kesalahan, coba lagi.';
+            } finally {
+                this.reviewLoading = false;
+            }
+        },
+        // Submit dari popup modal (tab Ulasan product detail)
+        async submitReviewForm() {
+            if(this.reviewRating === 0) return;
+            if(!this.reviewKomentar.trim()) { this.reviewError = 'Isi ulasan tidak boleh kosong.'; return; }
+            if(!this.reviewOrderId || !this.reviewProduk) { this.reviewError = 'Data tidak lengkap.'; return; }
+            this.reviewLoading = true;
+            this.reviewError   = '';
+            try {
+                const data = await this.gasPost({
+                    action:       'submitReview',
+                    sessionToken: this.currentUser?.sessionToken || '',
+                    email:        this.currentUser?.email || '',
+                    orderId:      this.reviewOrderId,
+                    produk:       this.reviewProduk,
+                    varian:       this.reviewVarian,
+                    rating:       this.reviewRating,
+                    komentar:     this.reviewKomentar.trim(),
+                    anonim:       this.reviewAnonim
+                });
                 if(data.success) {
                     this.reviewSuccess = true;
                     this.reviewedOrders.push(this.reviewOrderId);
                     document.body.style.overflow = '';
-                    // reload reviews for product detail
                     if(this.activePage === 'product-detail' && this.selectedProductGroup?.nama) {
                         this._loadProductReviews(this.selectedProductGroup.nama);
                     }
