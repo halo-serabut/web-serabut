@@ -843,9 +843,13 @@
                                 </div>
                                 <!-- Nota khusus Adobe -->
                                 <template x-if="selectedProductGroup.category==='Adobe'">
-                                    <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2">
-                                        <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                        <p class="text-xs text-amber-700 leading-relaxed">Akun Adobe CC adalah akun sharing. Harap <strong>jangan ubah password</strong> agar akun tetap aktif untuk semua pengguna.</p>
+                                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex gap-2.5">
+                                        <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <div class="text-xs text-amber-800 leading-relaxed space-y-1">
+                                            <p class="font-semibold">Cara kerja aktivasi Adobe CC:</p>
+                                            <p>Kami mengaktifkan subscription langsung di <strong>akun Adobe milikmu sendiri</strong> — bukan akun sharing.</p>
+                                            <p>Setelah pesan, tim kami akan menghubungimu via <strong>WhatsApp</strong> untuk meminta password secara <strong>private & aman</strong>. Setelah aktivasi selesai, kamu <strong>disarankan ganti password</strong>.</p>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -5503,7 +5507,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260510-13',
+        APP_VERSION:      '20260510-14',
 
         // PWA Install
         pwaPopup:            false,
