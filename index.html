@@ -716,10 +716,12 @@
                                 <span class="text-xs font-bold text-gray-800">4.9</span>
                                 <span class="text-[10px] text-gray-500">(128)</span>
                             </div>
-                            <div class="flex items-center gap-1 bg-white/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/60">
-                                <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                                <span class="text-[10px] font-semibold text-gray-700">398 terjual</span>
-                            </div>
+                            <template x-if="selectedProductGroup.variants?.some(v=>v.terjual>0) || selectedProductGroup.variants?.[0]?.terjual > 0">
+                                <div class="flex items-center gap-1 bg-white/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/60">
+                                    <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                    <span class="text-[10px] font-semibold text-gray-700" x-text="(selectedProductGroup.variants?.reduce((s,v)=>s+(v.terjual||0),0)||0)+' terjual'"></span>
+                                </div>
+                            </template>
                             <div class="flex items-center gap-1 bg-green-500/15 backdrop-blur-sm px-2.5 py-1 rounded-full border border-green-400/30">
                                 <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-none"></div>
                                 <span class="text-[10px] font-semibold text-green-700">Stok tersedia</span>
@@ -928,6 +930,50 @@
                                         </template>
                                     </div>
                                 </div>
+                                <!-- Write review CTA (for logged-in member with eligible order) -->
+                                <template x-if="isMember && eligibleReviewOrder(selectedProductGroup?.nama)">
+                                    <div class="mb-4 bg-brand-50 border border-brand-200 rounded-2xl p-4 flex items-center justify-between gap-3">
+                                        <div>
+                                            <p class="text-sm font-bold text-brand-700">Bagaimana pengalamanmu?</p>
+                                            <p class="text-xs text-brand-500 mt-0.5">Bantu pembeli lain dengan ulasanmu!</p>
+                                        </div>
+                                        <button @click="openReviewModal(eligibleReviewOrder(selectedProductGroup?.nama))"
+                                                class="flex-none bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all">
+                                            Tulis Ulasan
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <!-- Real reviews from GAS (published) -->
+                                <template x-if="productReviews.length > 0">
+                                    <div class="space-y-4 mb-4">
+                                        <template x-for="review in productReviews" :key="review.id">
+                                            <div class="border-b border-gray-50 pb-4 last:border-0">
+                                                <div class="flex items-start justify-between gap-2 mb-1.5">
+                                                    <div class="flex items-center gap-2">
+                                                        <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center flex-none">
+                                                            <span class="text-xs font-black text-emerald-600" x-text="review.nama.charAt(0)"></span>
+                                                        </div>
+                                                        <div>
+                                                            <div class="flex items-center gap-1.5">
+                                                                <div class="text-xs font-bold text-gray-700" x-text="review.nama"></div>
+                                                                <span class="text-[9px] bg-emerald-100 text-emerald-600 font-bold px-1.5 py-0.5 rounded-full">Pembeli Terverifikasi</span>
+                                                            </div>
+                                                            <div class="text-[10px] text-gray-400" x-text="review.tanggal"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex text-yellow-400">
+                                                        <template x-for="i in (review.bintang||5)" :key="i"><svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
+                                                    </div>
+                                                </div>
+                                                <div class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-block mb-1.5" x-text="review.produk+(review.varian&&review.varian!=='-'?' · '+review.varian:'')"></div>
+                                                <p class="text-sm text-gray-600 leading-relaxed" x-text="review.komentar"></p>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+
+                                <!-- Hardcoded dummy reviews -->
                                 <!-- Review cards -->
                                 <div class="space-y-4">
                                     <template x-for="review in [
@@ -1656,9 +1702,19 @@
                                     <!-- Multi-item total -->
                                     <span x-show="order.items.length > 1" class="text-xs font-black text-brand-500" x-text="'Total ' + formatPrice(order.total)"></span>
                                 </div>
-                                <div class="flex items-center gap-1 text-[10px] text-brand-500 font-semibold flex-none">
-                                    <span>Detail</span>
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                <div class="flex items-center gap-2 flex-none">
+                                    <!-- Tulis ulasan badge -->
+                                    <template x-if="canReviewOrder(order)">
+                                        <button @click.stop="openReviewModal(order)"
+                                                class="flex items-center gap-1 text-[10px] bg-yellow-50 border border-yellow-300 text-yellow-700 font-bold px-2 py-0.5 rounded-lg hover:bg-yellow-100 transition-all">
+                                            <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                            Ulasan
+                                        </button>
+                                    </template>
+                                    <div class="flex items-center gap-1 text-[10px] text-brand-500 font-semibold">
+                                        <span>Detail</span>
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -2044,7 +2100,7 @@
             <!-- Tab Navigation Mobile: horizontal scroll -->
             <div class="relative mb-4 md:hidden">
                 <div class="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar">
-                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
+                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'ulasan',label:'Ulasan'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
                         <button @click="adminTab=tab.id; adminInitTab(tab.id); $el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})"
                                 :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
                                 class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
@@ -2068,6 +2124,7 @@
                     {id:'panduan',   label:'Panduan',      icon:'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'},
                     {id:'footer',    label:'Footer',       icon:'M4 6h16M4 12h16M4 18h7'},
                     {id:'orders',    label:'Semua Order',  icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},
+                    {id:'ulasan',    label:'Ulasan',       icon:'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'},
                     {id:'ipaymu',    label:'Xendit',       icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'}
                 ]" :key="tab.id">
                     <button @click="adminTab=tab.id; adminInitTab(tab.id)"
@@ -3083,6 +3140,68 @@
                 </div>
 
             </div><!-- end tab xendit -->
+
+            <!-- ══ Tab: Ulasan ══════════════════════════════════ -->
+            <div x-show="adminTab==='ulasan'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm space-y-4">
+                <div class="flex items-center justify-between gap-3">
+                    <h3 class="font-black text-gray-800 text-base">Manajemen Ulasan</h3>
+                    <button @click="adminLoadReviews()" class="flex items-center gap-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-lg transition-all">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        Refresh
+                    </button>
+                </div>
+
+                <!-- Loading -->
+                <div x-show="adminReviewsLoading" class="flex justify-center py-10">
+                    <div class="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+
+                <!-- Empty -->
+                <div x-show="!adminReviewsLoading && adminReviews.length===0" class="text-center py-10 text-gray-400 text-sm">
+                    Belum ada ulasan masuk. Klik Refresh untuk memuat.
+                </div>
+
+                <!-- Review list -->
+                <div x-show="!adminReviewsLoading && adminReviews.length>0" class="space-y-3">
+                    <template x-for="(rv, idx) in adminReviews" :key="rv.id||idx">
+                        <div class="border border-gray-100 rounded-2xl p-4 transition-all" :class="rv.published ? 'bg-white' : 'bg-gray-50 opacity-60'">
+                            <!-- Header -->
+                            <div class="flex items-start justify-between gap-3 mb-2">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-none">
+                                        <span class="text-xs font-black text-brand-600" x-text="(rv.nama||'A').charAt(0).toUpperCase()"></span>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <div class="text-sm font-bold text-gray-800" x-text="rv.nama||'Anonim'"></div>
+                                        <div class="text-[10px] text-gray-400" x-text="rv.tanggal||''"></div>
+                                    </div>
+                                </div>
+                                <!-- Toggle published -->
+                                <div class="flex items-center gap-2 flex-none">
+                                    <span class="text-[10px] font-semibold" :class="rv.published ? 'text-emerald-600' : 'text-gray-400'" x-text="rv.published ? 'Tampil' : 'Tersembunyi'"></span>
+                                    <button @click="adminToggleReview(rv, idx)"
+                                            class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none"
+                                            :class="rv.published ? 'bg-emerald-500' : 'bg-gray-300'">
+                                        <span class="inline-block w-3.5 h-3.5 transform rounded-full bg-white shadow transition-transform duration-200"
+                                              :class="rv.published ? 'translate-x-4' : 'translate-x-0.5'"></span>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Stars + produk -->
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <div class="flex text-yellow-400">
+                                    <template x-for="i in (rv.bintang||5)" :key="i">
+                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    </template>
+                                </div>
+                                <span class="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full" x-text="rv.produk+(rv.varian&&rv.varian!=='-'?' · '+rv.varian:'')"></span>
+                            </div>
+                            <!-- Komentar -->
+                            <p class="text-sm text-gray-600 leading-relaxed" x-text="rv.komentar||'—'"></p>
+                        </div>
+                    </template>
+                </div>
+            </div><!-- end tab ulasan -->
 
             </div><!-- end content area -->
             </div><!-- end desktop flex -->
@@ -4696,6 +4815,106 @@
 
 <!-- redirect: direct karena Xendit support redirect -->
 
+<!-- ══ Review Modal ══════════════════════════════════════════ -->
+<div x-show="reviewModal" class="fixed inset-0 z-[350] flex items-end md:items-center justify-center" style="display:none"
+     x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="reviewModal=false; document.body.style.overflow=''"></div>
+    <div class="relative bg-white w-full md:max-w-md md:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col"
+         x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-y-full md:translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100 sticky top-0 bg-white z-10 rounded-t-2xl">
+            <div>
+                <h3 class="font-black text-gray-900 text-base">Tulis Ulasan</h3>
+                <p class="text-xs text-gray-400 mt-0.5" x-text="reviewProduk + (reviewVarian&&reviewVarian!=='-' ? ' · '+reviewVarian : '')"></p>
+            </div>
+            <button @click="reviewModal=false; document.body.style.overflow=''" class="w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-all">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="px-5 py-5 space-y-5 flex-1">
+
+            <!-- Success state -->
+            <template x-if="reviewSuccess">
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <h4 class="font-black text-gray-900 text-lg mb-2">Terima kasih!</h4>
+                    <p class="text-sm text-gray-500">Ulasanmu sudah kami terima dan akan segera ditampilkan.</p>
+                    <button @click="reviewModal=false; document.body.style.overflow=''" class="mt-5 bg-brand-500 text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-brand-600 transition-all">Tutup</button>
+                </div>
+            </template>
+
+            <!-- Form state -->
+            <template x-if="!reviewSuccess">
+                <div class="space-y-5">
+                    <!-- Star rating -->
+                    <div>
+                        <label class="text-sm font-bold text-gray-700 mb-2 block">Rating</label>
+                        <div class="flex items-center gap-1.5">
+                            <template x-for="star in [1,2,3,4,5]" :key="star">
+                                <button type="button"
+                                        @click="reviewRating=star"
+                                        @mouseenter="reviewHover=star"
+                                        @mouseleave="reviewHover=0"
+                                        class="transition-transform hover:scale-110 active:scale-95">
+                                    <svg class="w-9 h-9 transition-colors" viewBox="0 0 20 20"
+                                         :class="star <= (reviewHover||reviewRating) ? 'fill-yellow-400' : 'fill-gray-200'">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                    </svg>
+                                </button>
+                            </template>
+                            <span class="ml-1 text-sm font-semibold text-gray-600"
+                                  x-text="['','Sangat Buruk','Buruk','Cukup','Bagus','Sangat Bagus'][reviewHover||reviewRating]||''"></span>
+                        </div>
+                    </div>
+
+                    <!-- Komentar -->
+                    <div>
+                        <label class="text-sm font-bold text-gray-700 mb-2 block">Ulasan</label>
+                        <textarea x-model="reviewKomentar" rows="4"
+                                  placeholder="Ceritakan pengalamanmu menggunakan produk ini..."
+                                  class="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 resize-none transition-all"
+                                  style="font-size:16px!important"></textarea>
+                    </div>
+
+                    <!-- Anonim toggle -->
+                    <label class="flex items-center gap-3 cursor-pointer select-none">
+                        <div class="relative">
+                            <input type="checkbox" x-model="reviewAnonim" class="sr-only">
+                            <div class="w-10 h-5 rounded-full transition-colors duration-200" :class="reviewAnonim ? 'bg-brand-500' : 'bg-gray-200'"></div>
+                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200" :class="reviewAnonim ? 'translate-x-5' : 'translate-x-0'"></div>
+                        </div>
+                        <div>
+                            <span class="text-sm font-semibold text-gray-700">Tampilkan sebagai Anonim</span>
+                            <p class="text-xs text-gray-400">Namamu akan disembunyikan dari publik</p>
+                        </div>
+                    </label>
+
+                    <!-- Error -->
+                    <div x-show="reviewError" class="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600" x-text="reviewError"></div>
+
+                    <!-- Submit -->
+                    <button @click="submitReviewForm()"
+                            :disabled="reviewLoading || reviewRating===0"
+                            class="w-full py-3.5 rounded-xl font-black text-sm transition-all flex items-center justify-center gap-2"
+                            :class="reviewRating===0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-brand-500 hover:bg-brand-600 text-white'">
+                        <template x-if="reviewLoading">
+                            <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+                        </template>
+                        <span x-text="reviewLoading ? 'Mengirim...' : 'Kirim Ulasan'"></span>
+                    </button>
+                </div>
+            </template>
+
+        </div>
+    </div>
+</div><!-- end review modal -->
+
 <!-- Modal Pembayaran Berhasil — muncul setelah user kembali dari iPaymu -->
 <!-- ── Custom Confirm Modal: Sync Order Pending ── -->
 <div x-show="adminIPaymuSyncConfirm" class="fixed inset-0 z-[400] flex items-center justify-center px-4" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" style="display:none">
@@ -5055,6 +5274,22 @@ function serabutStore() {
         iPaymuLoading:   false,
         iPaymuError:     '',
         iPaymuReturnStatus: null,
+        // ── Reviews ──
+        reviewModal:        false,
+        reviewOrderId:      '',
+        reviewProduk:       '',
+        reviewVarian:       '',
+        reviewRating:       0,
+        reviewHover:        0,
+        reviewKomentar:     '',
+        reviewAnonim:       false,
+        reviewLoading:      false,
+        reviewError:        '',
+        reviewSuccess:      false,
+        reviewedOrders:     [], // orderId yang sudah direview di sesi ini
+        productReviews:     [], // reviews dari GAS untuk produk aktif
+        adminReviews:       [],
+        adminReviewsLoading: false,
         currentOrderIPaymuData: null,
         paymentConfirmed: null,
         pendingOrderDetailId: null,
@@ -5858,6 +6093,8 @@ function serabutStore() {
             history.pushState({ page: 'product-detail', slug }, '', '/produk/' + slug);
             this.activePage = 'product-detail';
             this.pdTab = 'deskripsi';
+            this.productReviews = [];
+            this._loadProductReviews(product.nama);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
         openProductModal(product) {
@@ -6666,6 +6903,8 @@ function serabutStore() {
                     this.adminIPaymuLoadBalance();
                     this.adminIPaymuLoadHistory();
                 }
+            } else if(tab==='ulasan') {
+                this.adminLoadReviews();
             }
         },
 
@@ -6845,6 +7084,117 @@ function serabutStore() {
                 : (this.flashSale.aktif ? (this.flashSale.items || []) : []);
             return allItems.find(i => i.produk === nama && (i.varian === varian || i.varian === combined)) || null;
         },
+        // ── Reviews ─────────────────────────────────────────
+        async _loadProductReviews(produkNama) {
+            if(!produkNama) return;
+            try {
+                const data = await this.gasCall({ action:'getReviews', produk: encodeURIComponent(produkNama) });
+                if(data.success && Array.isArray(data.reviews)) {
+                    this.productReviews = data.reviews;
+                }
+            } catch(e) { /* silent */ }
+        },
+        /** Returns the first eligible order to review for a product name */
+        eligibleReviewOrder(produkNama) {
+            if(!produkNama || !this.isMember || !this.orders.length) return null;
+            const ms3days = 3 * 24 * 60 * 60 * 1000;
+            return this.orders.find(order => {
+                if(!['Aktif','Selesai'].includes(order.status)) return false;
+                const age = Date.now() - new Date(order.tanggal).getTime();
+                if(age < ms3days) return false;
+                if(this.reviewedOrders.includes(order.orderId)) return false;
+                return order.items.some(it => it.produk === produkNama);
+            }) || null;
+        },
+        /** Whether a pesanan card should show the "Tulis Ulasan" badge */
+        canReviewOrder(order) {
+            if(!this.isMember) return false;
+            if(!['Aktif','Selesai'].includes(order.status)) return false;
+            if(this.reviewedOrders.includes(order.orderId)) return false;
+            const ms3days = 3 * 24 * 60 * 60 * 1000;
+            return Date.now() - new Date(order.tanggal).getTime() >= ms3days;
+        },
+        openReviewModal(order) {
+            if(!order) return;
+            const firstItem = order.items?.[0] || {};
+            this.reviewOrderId  = order.orderId;
+            this.reviewProduk   = firstItem.produk || '';
+            this.reviewVarian   = firstItem.varian || '';
+            this.reviewRating   = 0;
+            this.reviewHover    = 0;
+            this.reviewKomentar = '';
+            this.reviewAnonim   = false;
+            this.reviewError    = '';
+            this.reviewSuccess  = false;
+            this.reviewLoading  = false;
+            this.reviewModal    = true;
+            document.body.style.overflow = 'hidden';
+        },
+        async submitReviewForm() {
+            if(this.reviewRating === 0) return;
+            if(!this.reviewKomentar.trim()) { this.reviewError = 'Isi ulasan tidak boleh kosong.'; return; }
+            this.reviewLoading = true;
+            this.reviewError   = '';
+            try {
+                const payload = {
+                    action:     'submitReview',
+                    sessionToken: this.currentUser?.sessionToken || '',
+                    email:      this.currentUser?.email || '',
+                    orderId:    this.reviewOrderId,
+                    produk:     this.reviewProduk,
+                    varian:     this.reviewVarian,
+                    bintang:    this.reviewRating,
+                    komentar:   this.reviewKomentar.trim(),
+                    anonim:     this.reviewAnonim
+                };
+                const data = await this.gasPost(payload);
+                if(data.success) {
+                    this.reviewSuccess = true;
+                    this.reviewedOrders.push(this.reviewOrderId);
+                    document.body.style.overflow = '';
+                    // reload reviews for product detail
+                    if(this.activePage === 'product-detail' && this.selectedProductGroup?.nama) {
+                        this._loadProductReviews(this.selectedProductGroup.nama);
+                    }
+                } else {
+                    this.reviewError = data.error || 'Gagal mengirim ulasan.';
+                }
+            } catch(e) {
+                this.reviewError = 'Terjadi kesalahan, coba lagi.';
+            } finally {
+                this.reviewLoading = false;
+            }
+        },
+        // Admin reviews
+        async adminLoadReviews() {
+            this.adminReviewsLoading = true;
+            try {
+                const data = await this.gasPost({
+                    action: 'getAdminReviews',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.currentUser?.sessionToken
+                });
+                if(data.success) this.adminReviews = data.reviews || [];
+            } catch(e) { /* silent */ }
+            finally { this.adminReviewsLoading = false; }
+        },
+        async adminToggleReview(rv, idx) {
+            const newVal = !rv.published;
+            try {
+                const data = await this.gasPost({
+                    action: 'toggleReview',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.currentUser?.sessionToken,
+                    reviewId: rv.id,
+                    published: newVal
+                });
+                if(data.success) {
+                    this.adminReviews[idx] = { ...rv, published: newVal };
+                    this.adminReviews = [...this.adminReviews];
+                }
+            } catch(e) { /* silent */ }
+        },
+
         formatDT(dt) {
             if(!dt) return '—';
             const [date, time] = dt.split('T');
