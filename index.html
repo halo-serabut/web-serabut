@@ -7045,8 +7045,8 @@ function serabutStore() {
                         this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
                     } else if (data.paymentMode === 'manual') {
                         this.orderModal = false;
-                        const singleItem = [{ produk: this.selectedProductGroup?.nama||'', varian: this.selectedVariant||'-', masaAktif: this.selectedDuration||'-', harga: data.harga||data.total||0 }];
-                        this.showManualPaymentInfo(data.orderId, data.harga || data.total, singleItem, this.user?.nama||'');
+                        const singleItem = [{ produk: this.selectedProductGroup?.nama||'', varian: this.selectedVariant?.varian||'-', masaAktif: this.selectedVariant?.masaAktif||'-', harga: data.harga||0 }];
+                        this.showManualPaymentInfo(data.orderId, data.harga||0, singleItem, this.currentUser?.nama||'');
                     } else {
                         this.orderError = data.paymentError || 'Gagal membuat sesi pembayaran. Silakan coba lagi atau hubungi CS.';
                     }
