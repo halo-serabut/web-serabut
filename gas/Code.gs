@@ -630,26 +630,52 @@ function getAllOrders({ adminEmail, adminToken }) {
 
   const data    = sheet.getDataRange().getValues();
   const headers = data[0].map(h => String(h).toLowerCase().trim());
-  const pmCol   = headers.indexOf('payment method');
-  const psCol   = headers.indexOf('payment status');
+  const _col    = function(names) {
+    for (var i = 0; i < names.length; i++) {
+      var idx = headers.indexOf(names[i]);
+      if (idx >= 0) return idx;
+    }
+    return -1;
+  };
+  const pmCol    = _col(['payment method','payment_method']);
+  const psCol    = _col(['payment status','payment_status']);
+  const msnCol   = _col(['nama ms','nama_ms','namams']);
+  const usnCol   = _col(['username']);
+  const msemCol  = _col(['email microsoft','email_microsoft','emailmicrosoft','microsoft email']);
+  const eaCol    = _col(['email aktif','email_aktif','emailaktif']);
+  const erCol    = _col(['email reminder','email_reminder','emailreminder']);
+  const dateCol  = _col(['tanggal','date']);
+
+  const _s = function(row, col) { return col >= 0 && row[col] ? String(row[col]).trim() : ''; };
+  const _fmtDate = function(val) {
+    if (!val) return '';
+    if (val instanceof Date) return Utilities.formatDate(val, 'Asia/Jakarta', 'yyyy-MM-dd HH:mm');
+    return String(val).trim();
+  };
+
   const orders  = [];
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row[0]) continue;
     orders.push({
-      rowIndex:      i + 1,
-      orderId:       String(row[0]),
-      tanggal:       String(row[1]),
-      nama:          String(row[2]),
-      email:         String(row[3]),
-      wa:            String(row[4]),
-      produk:        String(row[5]),
-      varian:        String(row[6]),
-      masaAktif:     String(row[7]),
-      harga:         Number(row[8]) || 0,
-      status:        String(row[9]),
-      paymentMethod: pmCol >= 0 && row[pmCol] ? String(row[pmCol]).trim() : '',
-      paymentStatus: psCol >= 0 && row[psCol] ? String(row[psCol]).trim() : '',
+      rowIndex:       i + 1,
+      orderId:        String(row[0]),
+      tanggal:        dateCol >= 0 ? _fmtDate(row[dateCol]) : _fmtDate(row[1]),
+      nama:           String(row[2] || ''),
+      email:          String(row[3] || ''),
+      wa:             String(row[4] || ''),
+      produk:         String(row[5] || ''),
+      varian:         String(row[6] || ''),
+      masaAktif:      String(row[7] || ''),
+      harga:          Number(row[8]) || 0,
+      status:         String(row[9] || 'Pending'),
+      paymentMethod:  _s(row, pmCol),
+      paymentStatus:  _s(row, psCol),
+      msNama:         _s(row, msnCol),
+      username:       _s(row, usnCol),
+      microsoftEmail: _s(row, msemCol),
+      emailAktif:     _s(row, eaCol),
+      emailReminder:  _s(row, erCol),
     });
   }
   orders.reverse();
