@@ -7194,19 +7194,20 @@ function serabutStore() {
             const ms3days = 3 * 24 * 60 * 60 * 1000;
             return this.orders.find(order => {
                 if(!['Aktif','Selesai'].includes(order.status)) return false;
-                const age = Date.now() - new Date(order.tanggal).getTime();
+                const age = Date.now() - (this.parseTanggalWIB(order.tanggal)?.getTime() || 0);
                 if(age < ms3days) return false;
                 if(this.reviewedOrders.includes(order.orderId)) return false;
                 return order.items.some(it => it.produk === produkNama);
             }) || null;
         },
-        /** Whether a pesanan card should show the "Tulis Ulasan" badge */
+        /** Whether a pesanan card should show review form */
         canReviewOrder(order) {
-            if(!this.isMember) return false;
+            if(!this.isMember || !order) return false;
             if(!['Aktif','Selesai'].includes(order.status)) return false;
             if(this.reviewedOrders.includes(order.orderId)) return false;
             const ms3days = 3 * 24 * 60 * 60 * 1000;
-            return Date.now() - new Date(order.tanggal).getTime() >= ms3days;
+            const age = Date.now() - (this.parseTanggalWIB(order.tanggal)?.getTime() || 0);
+            return age >= ms3days;
         },
         openReviewModal(order) {
             if(!order) return;
