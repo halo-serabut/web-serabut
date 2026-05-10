@@ -802,7 +802,7 @@
                                     :class="pdTab==='ulasan' ? 'bg-white text-gray-900 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'"
                                     class="flex-1 py-2 px-1 text-xs text-center rounded-xl transition-all duration-200 font-medium flex items-center justify-center gap-1">
                                     Ulasan
-                                    <span class="text-[9px] bg-brand-500 text-white font-black px-1.5 py-0.5 rounded-full leading-none">128</span>
+                                    <span class="text-[9px] bg-brand-500 text-white font-black px-1.5 py-0.5 rounded-full leading-none" x-text="productReviews.length || '0'"></span>
                                 </button>
                             </div>
 
@@ -5368,7 +5368,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260510-7',
+        APP_VERSION:      '20260510-8',
 
         // PWA Install
         pwaPopup:            false,
