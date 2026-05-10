@@ -3648,7 +3648,7 @@
 <!-- ══════════════════════════════════════════════════════
      FOOTER
 ══════════════════════════════════════════════════════ -->
-<footer class="hidden md:block bg-gray-900 text-white">
+<footer class="hidden md:block bg-gray-900 text-white" x-show="activePage !== 'product-detail'" x-cloak>
     <div class="max-w-6xl mx-auto px-5 py-5 md:py-6">
 
         <!-- Mobile: compact stacked layout -->
@@ -3745,6 +3745,16 @@
 
     </div>
 </footer>
+
+<!-- Copyright bar minimal — hanya tampil di product-detail -->
+<div x-show="activePage === 'product-detail'" x-cloak
+     class="hidden md:flex bg-gray-900 border-t border-gray-800 px-5 py-3 items-center justify-between text-xs text-gray-600">
+    <span x-text="siteSettings.footer.copyright"></span>
+    <div class="flex items-center gap-4">
+        <button @click="legalModal='terms'" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</button>
+        <button @click="legalModal='privacy'" class="hover:text-gray-400 transition-colors">Kebijakan Privasi</button>
+    </div>
+</div>
 
 </main>
 
