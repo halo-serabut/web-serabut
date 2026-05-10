@@ -781,7 +781,7 @@
             <div>
                 <!-- ── Hero Banner ── -->
                 <!-- ── Hero Banner ── -->
-                <div class="relative overflow-hidden" :class="getCategoryBg(selectedProductGroup.category)">
+                <div class="relative overflow-hidden" :class="getCategoryHeroBg(selectedProductGroup.category)">
                     <!-- decorative blobs -->
                     <div class="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-20 blur-2xl" :class="getCategoryBg(selectedProductGroup.category)" style="background:currentColor"></div>
                     <div class="absolute bottom-0 -left-6 w-28 h-28 rounded-full opacity-10 blur-2xl bg-black"></div>
@@ -830,7 +830,7 @@
                 </div>
 
                 <!-- ── Main layout: 1-col mobile, 2-col desktop ── -->
-                <div class="max-w-5xl mx-auto px-4 py-4 md:flex md:gap-6 md:items-start md:py-6">
+                <div class="max-w-5xl mx-auto px-4 py-4 md:flex md:gap-6 md:items-stretch md:py-6">
 
                     <!-- LEFT: selectors + tabs -->
                     <div class="flex-1 min-w-0 space-y-3">
@@ -1141,8 +1141,8 @@
                     <!-- end LEFT -->
 
                     <!-- RIGHT: Sticky price panel (desktop) -->
-                    <div class="hidden md:block w-72 flex-none sticky top-20">
-                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="hidden md:flex md:flex-col w-72 flex-none self-stretch">
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden sticky top-20">
                             <!-- Price area -->
                             <div class="px-5 pt-5 pb-4 border-b border-gray-100">
                                 <div class="text-xs text-gray-400 mb-1">Harga</div>
@@ -6502,8 +6502,12 @@ function serabutStore() {
             return m[(cat||'').toLowerCase()] || sp('office');
         },
         getCategoryBg(cat) {
-            const m={'Office 365':'bg-blue-50','Adobe':'bg-red-50','Windows':'bg-sky-50','Office':'bg-orange-50','Google':'bg-green-50','CorelDRAW':'bg-yellow-50','Project':'bg-purple-50','Visio':'bg-indigo-50'};
-            return m[cat]||'bg-gray-50';
+            const m={'Office 365':'bg-blue-100','Adobe':'bg-red-100','Windows':'bg-sky-100','Windows Server':'bg-slate-100','Office':'bg-orange-100','Google':'bg-green-100','CorelDRAW':'bg-yellow-100','Project':'bg-purple-100','Visio':'bg-indigo-100'};
+            return m[cat]||'bg-gray-100';
+        },
+        getCategoryHeroBg(cat) {
+            const m={'Office 365':'from-blue-100 to-blue-50','Adobe':'from-red-100 to-red-50','Windows':'from-sky-100 to-sky-50','Windows Server':'from-slate-100 to-slate-50','Office':'from-orange-100 to-orange-50','Google':'from-green-100 to-green-50','CorelDRAW':'from-yellow-100 to-yellow-50','Project':'from-purple-100 to-purple-50','Visio':'from-indigo-100 to-indigo-50'};
+            return 'bg-gradient-to-br ' + (m[cat]||'from-gray-100 to-gray-50');
         },
         getCategoryIcon(cat) {
             const m={'Office 365':'📧','Adobe':'🎨','Windows':'🪟','Office':'💼','Google':'☁️','CorelDRAW':'✏️','Project':'📊','Visio':'📐','Windows Server':'🖥️'};
