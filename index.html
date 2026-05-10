@@ -5363,7 +5363,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260510-2',
+        APP_VERSION:      '20260510-3',
 
         // PWA Install
         pwaPopup:            false,
@@ -5909,6 +5909,8 @@ function serabutStore() {
                     }
                 } catch {}
             }
+            // Load myReviews dari localStorage (survive refresh)
+            if(this.currentUser) this._loadMyReviews();
             // Selalu refresh role dari GAS agar menu Admin selalu akurat
             if(this.currentUser) {
                 await this.refreshUserRole();
@@ -6321,6 +6323,7 @@ function serabutStore() {
                 if(data.success) {
                     this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
                     localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
+                    this._loadMyReviews(); // Restore ulasan dari localStorage
                     this.closeAuthModal();
                     this.loginForm = {email:'',password:''};
                     if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
@@ -6381,6 +6384,7 @@ function serabutStore() {
                 if(data.success) {
                     this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
                     localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
+                    this._loadMyReviews(); // Restore ulasan dari localStorage
                     this.closeOTPModal();
                     this.registerForm = {nama:'',email:'',wa:'',password:''};
                     if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
@@ -7267,6 +7271,20 @@ function serabutStore() {
             return n+' Terjual';
         },
 
+        // ── MyReviews localStorage helpers ────────────────
+        _myReviewsKey() {
+            return 'srb_myreviews_' + (this.currentUser?.email || 'guest');
+        },
+        _saveMyReviews() {
+            try { localStorage.setItem(this._myReviewsKey(), JSON.stringify(this.myReviews)); } catch {}
+        },
+        _loadMyReviews() {
+            try {
+                const raw = localStorage.getItem(this._myReviewsKey());
+                if(raw) this.myReviews = JSON.parse(raw);
+            } catch {}
+        },
+
         // ── Reviews ─────────────────────────────────────────
         async _loadProductReviews(produkNama) {
             if(!produkNama) return;
@@ -7358,6 +7376,7 @@ function serabutStore() {
                         reviewId:    data.reviewId || '',
                         submittedAt: Date.now()
                     };
+                    this._saveMyReviews(); // Persist ke localStorage
                     this.reviewEditMode = false;
                     // Reload reviews di product detail
                     const produkNama = firstItem.produk || this.selectedProductGroup?.nama;
@@ -7393,6 +7412,7 @@ function serabutStore() {
                 if(data.success) {
                     // Update local state
                     this.myReviews[order.orderId] = { ...rv, rating: this.reviewRating, komentar: this.reviewKomentar.trim(), anonim: this.reviewAnonim };
+                    this._saveMyReviews(); // Persist ke localStorage
                     this.reviewEditMode = false;
                     this.reviewSuccess  = true;
                     const produkNama = order.items?.[0]?.produk || this.selectedProductGroup?.nama;
