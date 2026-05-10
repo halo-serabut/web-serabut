@@ -5204,7 +5204,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260502-1',
+        APP_VERSION:      '20260510-1',
 
         // PWA Install
         pwaPopup:            false,
@@ -5653,6 +5653,9 @@ function serabutStore() {
                 const storedV = localStorage.getItem('srb_app_v');
                 if (storedV && storedV !== this.APP_VERSION) {
                     localStorage.setItem('srb_app_v', this.APP_VERSION);
+                    // clear catalog cache agar data fresh dari GAS
+                    localStorage.removeItem('serabut_catalog_cache');
+                    localStorage.removeItem('serabutSettings');
                     // simpan ulang ke sessionStorage agar survive reload
                     if (pendingPayment) sessionStorage.setItem('srb_pending_payment', JSON.stringify(pendingPayment));
                     location.reload(true);
