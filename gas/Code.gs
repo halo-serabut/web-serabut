@@ -9,6 +9,7 @@ const TAB_CATALOG     = 'Catalog';
 const TAB_USERS       = 'Users-web';
 const TAB_ORDERS      = 'Orders';
 const TAB_SETTINGS    = 'Settings';
+const TAB_REVIEWS     = 'Reviews';
 
 // [SEC] Semua token dari Script Properties — JANGAN hardcode di sini
 // Setup: Extensions → Apps Script → Project Settings → Script Properties
@@ -44,7 +45,7 @@ function doGet(e) {
   const action = e.parameter.action;
 
   // [SEC] GET hanya untuk endpoint publik read-only
-  const PUBLIC_ACTIONS = ['getCatalog', 'getSettings', 'getGuides', 'checkStatus', 'smartSearch'];
+  const PUBLIC_ACTIONS = ['getCatalog', 'getSettings', 'getGuides', 'checkStatus', 'smartSearch', 'getReviews'];
   if (!PUBLIC_ACTIONS.includes(action)) {
     return _jsonOut({ success: false, error: 'Gunakan POST untuk aksi ini' });
   }
@@ -57,6 +58,7 @@ function doGet(e) {
       case 'smartSearch': result = smartSearch(e.parameter.query); break;
       case 'getSettings': result = getSettings(); break;
       case 'getGuides':   result = getGuides(); break;
+      case 'getReviews':  result = getReviews(e.parameter.produk); break;
       default:            result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -129,6 +131,11 @@ function doPost(e) {
       case 'iPaymuAdminGetHistory':     result = iPaymuAdminGetHistory(params); break;
       case 'iPaymuAdminGetTransaction': result = iPaymuAdminGetTransaction(params); break;
       case 'iPaymuAdminSyncOrders':     result = iPaymuAdminSyncOrders(params); break;
+      // Reviews
+      case 'submitReview':              result = submitReview(params); break;
+      case 'sendReviewReminder':        result = sendReviewReminder(params); break;
+      case 'toggleReview':              result = toggleReview(params); break;
+      case 'getAdminReviews':           result = getAdminReviews(params); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -388,6 +395,7 @@ function getCatalog() {
   const cKat     = _colIndex(headers, 'kategori', 'category');
   const cIcon    = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
   const cBen     = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
+  const cTerjual = _colIndex(headers, 'terjual', 'sold', 'terjual (p)');
   const products = [];
 
   for (let i = 1; i < data.length; i++) {
@@ -410,9 +418,10 @@ function getCatalog() {
       harga:      Number(row[3]) || 0,
       linkProduk: String(row[4] || '').trim(),
       stok:       stok,
-      category:   cKat  >= 0 ? String(row[cKat]  || '').trim() : '',
-      iconUrl:    cIcon >= 0 ? String(row[cIcon] || '').trim() : String(row[7] || '').trim(),
+      category:   cKat    >= 0 ? String(row[cKat]    || '').trim() : '',
+      iconUrl:    cIcon   >= 0 ? String(row[cIcon]   || '').trim() : String(row[7] || '').trim(),
       benefits:   benefits,
+      terjual:    cTerjual >= 0 ? (Number(row[cTerjual]) || 0) : 0,
     });
   }
 
@@ -3592,3 +3601,348 @@ function checkGASIpAddress() {
   Logger.log('Dashboard iPaymu → Pengaturan → Whitelist IP');
 }
 
+
+// ════════════════════════════════════════════════════════
+//  REVIEWS SYSTEM
+// ════════════════════════════════════════════════════════
+
+// ── Helper: init Reviews sheet ──
+function _ensureReviewsSheet() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(TAB_REVIEWS);
+  if (!sheet) {
+    sheet = ss.insertSheet(TAB_REVIEWS);
+    sheet.appendRow(['Review ID','Tanggal','Order ID','Email','Nama Tampil','Produk','Varian','Rating','Komentar','Published','Reminder Sent']);
+    sheet.getRange(1, 1, 1, 11).setFontWeight('bold');
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
+// ── GET REVIEWS (public) — per produk, only published ──
+function getReviews(produk) {
+  const sheet = _ensureReviewsSheet();
+  const data  = sheet.getDataRange().getValues();
+  if (data.length < 2) return { success: true, data: [] };
+
+  const headers   = data[0].map(h => String(h).toLowerCase().trim());
+  const cId       = _colIndex(headers, 'review id');
+  const cTgl      = _colIndex(headers, 'tanggal');
+  const cNama     = _colIndex(headers, 'nama tampil');
+  const cProduk   = _colIndex(headers, 'produk');
+  const cVarian   = _colIndex(headers, 'varian');
+  const cRating   = _colIndex(headers, 'rating');
+  const cKomentar = _colIndex(headers, 'komentar');
+  const cPub      = _colIndex(headers, 'published');
+
+  const normStr = s => String(s || '').trim().toLowerCase();
+  const reviews = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[cId]) continue;
+    const pub = row[cPub];
+    if (pub !== true && String(pub).toUpperCase() !== 'TRUE') continue;
+    if (produk && normStr(row[cProduk]) !== normStr(produk)) continue;
+
+    const tgl = row[cTgl] instanceof Date
+      ? Utilities.formatDate(row[cTgl], 'Asia/Jakarta', 'dd MMM yyyy')
+      : String(row[cTgl] || '').trim();
+
+    reviews.push({
+      id:       String(row[cId]),
+      tgl,
+      nama:     String(row[cNama] || 'Pengguna'),
+      produk:   String(row[cProduk] || ''),
+      varian:   String(row[cVarian] || ''),
+      rating:   Number(row[cRating]) || 5,
+      komentar: String(row[cKomentar] || ''),
+    });
+  }
+
+  // Terbaru di atas
+  reviews.sort((a, b) => b.id.localeCompare(a.id));
+  return { success: true, data: reviews };
+}
+
+// ── SUBMIT REVIEW (buyer) ──
+function submitReview({ sessionToken, email, orderId, produk, varian, rating, komentar, anonim }) {
+  if (!orderId || !produk || !rating) return { success: false, error: 'Data tidak lengkap' };
+  if (rating < 1 || rating > 5)      return { success: false, error: 'Rating tidak valid' };
+  if (!komentar || komentar.trim().length < 5) return { success: false, error: 'Komentar minimal 5 karakter' };
+
+  // Resolve nama buyer
+  let namaTampil = 'Anonim';
+  if (!anonim) {
+    const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const users = ss.getSheetByName(TAB_USERS);
+    if (users && email) {
+      const uData = users.getDataRange().getValues();
+      const uRow  = uData.find(r => String(r[0]).trim().toLowerCase() === String(email).trim().toLowerCase());
+      if (uRow) {
+        const rawNama = String(uRow[1] || '').trim();
+        // Mask: "Budi Santoso" → "B*** S***"
+        namaTampil = rawNama.split(' ').map(w => w.length > 1 ? w[0] + '***' : w).join(' ');
+      }
+    }
+  }
+
+  // Cegah double review per orderId+produk
+  const sheet = _ensureReviewsSheet();
+  const existing = sheet.getDataRange().getValues();
+  const headers  = existing[0].map(h => String(h).toLowerCase().trim());
+  const cOid     = _colIndex(headers, 'order id');
+  const cProd    = _colIndex(headers, 'produk');
+  for (let i = 1; i < existing.length; i++) {
+    if (String(existing[i][cOid]) === String(orderId) &&
+        String(existing[i][cProd]).toLowerCase() === String(produk).toLowerCase()) {
+      return { success: false, error: 'Kamu sudah memberikan ulasan untuk pesanan ini' };
+    }
+  }
+
+  const reviewId = 'REV-' + new Date().getTime().toString().slice(-10);
+  const tanggal  = new Date();
+
+  sheet.appendRow([
+    reviewId, tanggal, orderId,
+    email || '', namaTampil,
+    produk, varian || '',
+    Number(rating), String(komentar).trim(),
+    true,  // published langsung
+    '',    // reminder sent timestamp
+  ]);
+  SpreadsheetApp.flush();
+
+  // Update terjual di Catalog (col P, index 15)
+  _incrementTerjual(produk);
+
+  Logger.log('Review submitted: ' + reviewId + ' untuk ' + produk);
+  return { success: true, reviewId };
+}
+
+// ── INCREMENT TERJUAL di Catalog col P ──
+function _incrementTerjual(produk) {
+  try {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
+    if (!sheet) return;
+    const data    = sheet.getDataRange().getValues();
+    const headers = data[0].map(h => String(h).toLowerCase().trim());
+    let cTerjual  = _colIndex(headers, 'terjual');
+    // Jika kolom belum ada, tambahkan di posisi P (index 15)
+    if (cTerjual < 0) {
+      const lastCol = sheet.getLastColumn();
+      const newCol  = Math.max(lastCol + 1, 16);
+      sheet.getRange(1, newCol).setValue('Terjual');
+      cTerjual = newCol - 1;
+    }
+    const normStr = s => String(s || '').trim().toLowerCase();
+    for (let i = 1; i < data.length; i++) {
+      if (normStr(data[i][0]) === normStr(produk)) {
+        const cur = Number(data[i][cTerjual]) || 0;
+        sheet.getRange(i + 1, cTerjual + 1).setValue(cur + 1);
+      }
+    }
+    SpreadsheetApp.flush();
+  } catch(e) {
+    Logger.log('_incrementTerjual error: ' + e.message);
+  }
+}
+
+// ── SEND REVIEW REMINDER (manual trigger dari buyer) ──
+function sendReviewReminder({ sessionToken, email, orderId, produk, varian, buyerNama, buyerWa }) {
+  if (!orderId || !produk) return { success: false, error: 'Data tidak lengkap' };
+
+  const slug    = produk.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const prodUrl = 'https://serabut.id/produk/' + slug;
+
+  // WA
+  if (buyerWa) {
+    const waMsg = `Halo *${buyerNama || 'Kak'}*! 👋\n\nBagaimana pengalaman pakai *${produk}* dari Serabut Store?\n\nUlasan kamu sangat membantu calon pembeli lain. Cuma 1 menit, yuk! ⭐\n\n→ ${prodUrl}\n\n(Buka halaman produk → tab Ulasan → Tulis Ulasan)\n\n— Tim Serabut Store`;
+    _sendWA(_normalizeWA(buyerWa), waMsg);
+  }
+
+  // Email
+  if (email) {
+    const subject = `⭐ Bagaimana ${produk} kamu? — Serabut Store`;
+    const html    = `<div style="font-family:sans-serif;max-width:480px;margin:auto">
+      <h2 style="color:#DC2626">Terima kasih sudah berbelanja! 🎉</h2>
+      <p>Halo <strong>${buyerNama || 'Kak'}</strong>,</p>
+      <p>Pesanan <strong>${produk}</strong> kamu sudah aktif. Bagaimana pengalamannya?</p>
+      <p style="margin:24px 0">
+        <a href="${prodUrl}" style="background:#DC2626;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
+          ⭐ Tulis Ulasan Sekarang
+        </a>
+      </p>
+      <p style="color:#6b7280;font-size:13px">Ulasan kamu membantu ribuan pembeli lain membuat keputusan yang tepat.</p>
+      <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+      <p style="color:#9ca3af;font-size:12px">— Tim Serabut Store | serabut.id</p>
+    </div>`;
+    try { GmailApp.sendEmail(email, subject, '', { htmlBody: html }); } catch(e) { Logger.log('Email reminder error: ' + e.message); }
+  }
+
+  // Mark reminder sent di Orders sheet
+  try {
+    const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const oSht  = ss.getSheetByName(TAB_ORDERS);
+    if (oSht) {
+      const oData = oSht.getDataRange().getValues();
+      const oHdr  = oData[0].map(h => String(h).toLowerCase().trim());
+      let cRem    = _colIndex(oHdr, 'review reminder');
+      if (cRem < 0) {
+        const nc = oSht.getLastColumn() + 1;
+        oSht.getRange(1, nc).setValue('Review Reminder');
+        cRem = nc - 1;
+      }
+      for (let i = 1; i < oData.length; i++) {
+        if (String(oData[i][0]) === String(orderId)) {
+          oSht.getRange(i + 1, cRem + 1).setValue(new Date());
+          break;
+        }
+      }
+      SpreadsheetApp.flush();
+    }
+  } catch(e) { Logger.log('Mark reminder error: ' + e.message); }
+
+  return { success: true };
+}
+
+// ── DAILY AUTO REMINDER (H+3) — dipanggil oleh Time Trigger ──
+function checkAndSendReviewReminders() {
+  const ss   = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const oSht = ss.getSheetByName(TAB_ORDERS);
+  if (!oSht) return;
+
+  const data  = oSht.getDataRange().getValues();
+  const hdr   = data[0].map(h => String(h).toLowerCase().trim());
+  const cOid  = _colIndex(hdr, 'order id');
+  const cTgl  = _colIndex(hdr, 'tanggal');
+  const cNama = _colIndex(hdr, 'nama');
+  const cEml  = _colIndex(hdr, 'email');
+  const cWa   = _colIndex(hdr, 'no wa');
+  const cProd = _colIndex(hdr, 'produk');
+  const cVar  = _colIndex(hdr, 'varian');
+  const cStat = _colIndex(hdr, 'status');
+  let   cRem  = _colIndex(hdr, 'review reminder');
+
+  // Tambah kolom jika belum ada
+  if (cRem < 0) {
+    const nc = oSht.getLastColumn() + 1;
+    oSht.getRange(1, nc).setValue('Review Reminder');
+    cRem = nc - 1;
+  }
+
+  const now     = new Date();
+  const H3_MS   = 3 * 24 * 60 * 60 * 1000; // 3 hari dalam ms
+  let   sent    = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    const row    = data[i];
+    const status = String(row[cStat] || '').toLowerCase();
+    if (status !== 'aktif' && status !== 'selesai') continue;
+
+    const reminderSent = row[cRem];
+    if (reminderSent && String(reminderSent).trim() !== '') continue; // sudah dikirim
+
+    const tglOrder = row[cTgl] instanceof Date ? row[cTgl] : new Date(row[cTgl]);
+    if (isNaN(tglOrder.getTime())) continue;
+    if ((now - tglOrder) < H3_MS) continue; // belum 3 hari
+
+    const orderId  = String(row[cOid] || '');
+    const produk   = String(row[cProd] || '');
+    const varian   = String(row[cVar] || '');
+    const buyerNama= String(row[cNama] || '');
+    const email    = String(row[cEml] || '');
+    const wa       = String(row[cWa] || '');
+
+    if (!orderId || !produk) continue;
+
+    sendReviewReminder({ orderId, produk, varian, buyerNama, buyerWa: wa, email });
+    sent++;
+
+    if (sent >= 50) break; // max 50 per run agar tidak timeout
+  }
+
+  Logger.log('checkAndSendReviewReminders: sent=' + sent);
+}
+
+// ── SETUP TIME TRIGGER (jalankan sekali) ──
+function setupReviewReminderTrigger() {
+  // Hapus trigger lama jika ada
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (t.getHandlerFunction() === 'checkAndSendReviewReminders') ScriptApp.deleteTrigger(t);
+  });
+  // Buat trigger baru: tiap hari jam 09:00 WIB (02:00 UTC)
+  ScriptApp.newTrigger('checkAndSendReviewReminders')
+    .timeBased()
+    .atHour(2)
+    .everyDays(1)
+    .create();
+  Logger.log('Review reminder trigger created — runs daily at 09:00 WIB');
+}
+
+// ── ADMIN: get all reviews ──
+function getAdminReviews({ adminEmail, adminToken }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+
+  const sheet = _ensureReviewsSheet();
+  const data  = sheet.getDataRange().getValues();
+  if (data.length < 2) return { success: true, data: [] };
+
+  const headers   = data[0].map(h => String(h).toLowerCase().trim());
+  const cId       = _colIndex(headers, 'review id');
+  const cTgl      = _colIndex(headers, 'tanggal');
+  const cOid      = _colIndex(headers, 'order id');
+  const cNama     = _colIndex(headers, 'nama tampil');
+  const cProduk   = _colIndex(headers, 'produk');
+  const cVarian   = _colIndex(headers, 'varian');
+  const cRating   = _colIndex(headers, 'rating');
+  const cKomentar = _colIndex(headers, 'komentar');
+  const cPub      = _colIndex(headers, 'published');
+
+  const reviews = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[cId]) continue;
+    const pub = row[cPub];
+    const tgl = row[cTgl] instanceof Date
+      ? Utilities.formatDate(row[cTgl], 'Asia/Jakarta', 'dd MMM yyyy HH:mm')
+      : String(row[cTgl] || '');
+    reviews.push({
+      rowIndex: i + 1,
+      id:       String(row[cId]),
+      tgl,
+      orderId:  String(row[cOid] || ''),
+      nama:     String(row[cNama] || ''),
+      produk:   String(row[cProduk] || ''),
+      varian:   String(row[cVarian] || ''),
+      rating:   Number(row[cRating]) || 5,
+      komentar: String(row[cKomentar] || ''),
+      published: pub === true || String(pub).toUpperCase() === 'TRUE',
+    });
+  }
+
+  reviews.sort((a, b) => b.id.localeCompare(a.id));
+  return { success: true, data: reviews };
+}
+
+// ── ADMIN: toggle published ──
+function toggleReview({ adminEmail, adminToken, reviewId, published }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+
+  const sheet   = _ensureReviewsSheet();
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const cId     = _colIndex(headers, 'review id');
+  const cPub    = _colIndex(headers, 'published');
+
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][cId]) === String(reviewId)) {
+      sheet.getRange(i + 1, cPub + 1).setValue(published ? true : false);
+      SpreadsheetApp.flush();
+      return { success: true };
+    }
+  }
+  return { success: false, error: 'Review tidak ditemukan' };
+}
