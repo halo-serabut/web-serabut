@@ -135,6 +135,7 @@ function doPost(e) {
       case 'submitReview':              result = submitReview(params); break;
       case 'getBuyerReviews':           result = getBuyerReviews(params); break;
       case 'likeReview':                result = likeReview(params); break;
+      case 'sendQuotationEmail':        result = sendQuotationEmail(params); break;
       case 'sendReviewReminder':        result = sendReviewReminder(params); break;
       case 'editReview':                result = editReview(params); break;
       case 'toggleReview':              result = toggleReview(params); break;
@@ -4196,4 +4197,25 @@ function toggleReview({ adminEmail, adminToken, reviewId, published }) {
     }
   }
   return { success: false, error: 'Review tidak ditemukan' };
+}
+
+// ── Quotation: kirim email dengan HTML invoice sebagai body ──
+function sendQuotationEmail({ adminEmail, adminToken, to, subject, htmlBody }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+  if (!to)        return { success: false, error: 'Email tujuan kosong' };
+  if (!htmlBody)  return { success: false, error: 'Konten quotation kosong' };
+
+  const subj = subject || 'Penawaran dari Serabut Store';
+  try {
+    GmailApp.sendEmail(to, subj, '', {
+      htmlBody: htmlBody,
+      name: 'Serabut Store',
+      replyTo: 'halo@serabut.id'
+    });
+    return { success: true };
+  } catch (e) {
+    Logger.log('sendQuotationEmail error: ' + e.message);
+    return { success: false, error: 'Gagal kirim email: ' + e.message };
+  }
 }
