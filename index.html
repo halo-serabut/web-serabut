@@ -781,7 +781,7 @@
             <div>
                 <!-- ── Hero Banner ── -->
                 <!-- ── Hero Banner ── -->
-                <div class="relative overflow-hidden" :class="getCategoryBg(selectedProductGroup.category)">
+                <div class="relative overflow-hidden" :class="getCategoryHeroBg(selectedProductGroup.category)">
                     <!-- decorative blobs -->
                     <div class="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-20 blur-2xl" :class="getCategoryBg(selectedProductGroup.category)" style="background:currentColor"></div>
                     <div class="absolute bottom-0 -left-6 w-28 h-28 rounded-full opacity-10 blur-2xl bg-black"></div>
@@ -833,7 +833,7 @@
                 <div class="max-w-5xl mx-auto px-4 py-4 md:flex md:gap-6 md:items-start md:py-6">
 
                     <!-- LEFT: selectors + tabs -->
-                    <div class="flex-1 min-w-0 space-y-3">
+                    <div class="flex-1 min-w-0 flex flex-col gap-3">
 
                         <!-- Varian selector -->
                         <template x-if="getUniqueVariants(selectedProductGroup).length > 1">
@@ -1213,17 +1213,17 @@
                                     <span>Butuh bantuan? <button @click.prevent="csHidden=false; csPopup=true" class="text-brand-500 font-semibold hover:underline">Chat Sera →</button></span>
                                 </div>
                             </div>
-                        </div>
-                        <!-- Rating mini -->
-                        <div class="mt-3 bg-white rounded-2xl border border-gray-100 px-4 py-3 flex items-center gap-3">
-                            <div class="flex text-yellow-400">
-                                <template x-for="i in 5" :key="i"><svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
+                            <!-- Rating mini -->
+                            <div class="border-t border-gray-100 px-4 py-3 flex items-center gap-3">
+                                <div class="flex text-yellow-400">
+                                    <template x-for="i in 5" :key="i"><svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-black text-gray-800" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></span>
+                                    <span class="text-xs text-gray-400 ml-1" x-text="productReviews.length ? 'dari '+productReviews.length+' ulasan' : 'belum ada ulasan'"></span>
+                                </div>
+                                <button @click="pdTab='ulasan'" class="ml-auto text-xs text-brand-500 font-semibold hover:underline">Lihat →</button>
                             </div>
-                            <div>
-                                <span class="text-sm font-black text-gray-800" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></span>
-                                <span class="text-xs text-gray-400 ml-1" x-text="productReviews.length ? 'dari '+productReviews.length+' ulasan' : 'belum ada ulasan'"></span>
-                            </div>
-                            <button @click="pdTab='ulasan'" class="ml-auto text-xs text-brand-500 font-semibold hover:underline">Lihat →</button>
                         </div>
                     </div>
                     <!-- end RIGHT -->
@@ -2228,6 +2228,14 @@
                                 Perpanjang Sekarang
                             </button>
                         </template>
+                        <!-- Download Invoice — jika status Selesai atau Aktif -->
+                        <template x-if="orderDetailModal?.status==='Selesai' || orderDetailModal?.status==='Aktif'">
+                            <button @click="downloadInvoice(orderDetailModal)"
+                                    class="flex items-center gap-1.5 px-4 py-3 bg-emerald-50 text-emerald-700 font-semibold text-sm rounded-2xl active:scale-95 transition-all hover:bg-emerald-100 border border-emerald-200">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                                Invoice
+                            </button>
+                        </template>
                         <button @click="orderDetailModal=null"
                                 class="flex-1 py-3 bg-gray-100 text-gray-600 font-semibold text-sm rounded-2xl active:scale-95 transition-all">
                             Tutup
@@ -2394,7 +2402,7 @@
             <!-- Tab Navigation Mobile: horizontal scroll -->
             <div class="relative mb-4 md:hidden">
                 <div class="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar">
-                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'ulasan',label:'Ulasan'},{id:'payment',label:'Pembayaran'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
+                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'quotation',label:'Quotation'},{id:'ulasan',label:'Ulasan'},{id:'payment',label:'Pembayaran'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
                         <button @click="adminTab=tab.id; adminInitTab(tab.id); $el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})"
                                 :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
                                 class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
@@ -2418,6 +2426,7 @@
                     {id:'panduan',   label:'Panduan',      icon:'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'},
                     {id:'footer',    label:'Footer',       icon:'M4 6h16M4 12h16M4 18h7'},
                     {id:'orders',    label:'Semua Order',  icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},
+                    {id:'quotation', label:'Quotation',    icon:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'},
                     {id:'ulasan',    label:'Ulasan',       icon:'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'},
                     {id:'payment',   label:'Pembayaran',   icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'},
                     {id:'ipaymu',    label:'Xendit',       icon:'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z'}
@@ -3263,11 +3272,19 @@
 
                                 <!-- Group header: No Pesanan kiri, status+buyer tengah, ubah status kanan -->
                                 <div class="px-4 py-3 border-b" :class="_orderCardHeader(g.status)">
-                                    <!-- Row 1: No Pesanan + Ubah Status -->
+                                    <!-- Row 1: No Pesanan + action buttons + Ubah Status -->
                                     <div class="flex items-center justify-between gap-2 mb-2">
                                         <div class="flex items-center gap-2 flex-wrap">
                                             <span class="font-mono text-xs font-bold text-gray-700 bg-white border border-gray-200 px-2 py-0.5 rounded-lg" x-text="g.orderId"></span>
                                             <span :class="getStatusBadge(g.status)" class="text-xs font-semibold px-2.5 py-0.5 rounded-full" x-text="g.status"></span>
+                                            <!-- Invoice: hanya status Selesai -->
+                                            <template x-if="g.status==='Selesai'">
+                                                <button @click.stop="adminDownloadInvoice(g)"
+                                                        class="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-white border border-emerald-300 px-2 py-0.5 rounded-full hover:bg-emerald-50 transition-colors">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                                                    Invoice
+                                                </button>
+                                            </template>
                                         </div>
                                         <select @change="adminUpdateGroupStatus(g, $event.target.value); $event.target.value=''"
                                                 class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700 flex-shrink-0">
@@ -3509,6 +3526,292 @@
 
             </div><!-- end tab xendit -->
 
+            <!-- ══ Tab: Quotation ══════════════════════════════ -->
+            <div x-show="adminTab==='quotation'" class="space-y-4">
+
+                <!-- ── LIST VIEW ── -->
+                <div x-show="quoView==='list'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="font-black text-gray-900 text-base">Quotation</h2>
+                            <p class="text-xs text-gray-400 mt-0.5" x-text="quoList.length + ' dokumen tersimpan'"></p>
+                        </div>
+                        <button @click="quoNewForm()"
+                                class="flex items-center gap-1.5 text-sm font-bold bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                            Buat Quotation
+                        </button>
+                    </div>
+                    <!-- Empty state -->
+                    <div x-show="quoList.length===0" class="text-center py-12 text-gray-400">
+                        <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <p class="text-sm font-medium">Belum ada quotation</p>
+                        <p class="text-xs mt-1">Klik "Buat Quotation" untuk membuat dokumen pertama</p>
+                    </div>
+                    <!-- List -->
+                    <div x-show="quoList.length>0" class="space-y-2">
+                        <template x-for="(q,idx) in quoList" :key="q.id">
+                            <div class="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all">
+                                <!-- Icon -->
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                </div>
+                                <!-- Info -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-xs text-gray-500" x-text="q.id"></span>
+                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                              :class="q.status==='sent_wa'||q.status==='sent_email'||q.status==='sent_both' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'"
+                                              x-text="q.status==='sent_wa'?'✓ WA':q.status==='sent_email'?'✓ Email':q.status==='sent_both'?'✓ WA+Email':'Draft'"></span>
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-800 truncate mt-0.5" x-text="q.nama"></div>
+                                    <div class="flex items-center gap-3 mt-0.5">
+                                        <span class="text-xs text-gray-400" x-text="new Date(q.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})"></span>
+                                        <span class="text-xs font-bold text-brand-500" x-text="'Rp '+Number(q.total||0).toLocaleString('id-ID')"></span>
+                                        <span class="text-xs text-gray-400" x-text="q.itemCount+' item'"></span>
+                                    </div>
+                                </div>
+                                <!-- Actions -->
+                                <div class="flex items-center gap-1.5 flex-shrink-0">
+                                    <button @click="quoDeleteIdx===idx ? (quoList.splice(idx,1), localStorage.setItem('srb_quotations',JSON.stringify(quoList)), quoDeleteIdx=-1) : (quoDeleteIdx=idx)"
+                                            :class="quoDeleteIdx===idx ? 'bg-red-500 text-white hover:bg-red-600' : 'text-gray-300 hover:text-red-400 hover:bg-red-50'"
+                                            class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-xs font-bold" :title="quoDeleteIdx===idx ? 'Yakin hapus?' : 'Hapus'">
+                                        <template x-if="quoDeleteIdx===idx"><span>Ya</span></template>
+                                        <template x-if="quoDeleteIdx!==idx"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></template>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- ── FORM VIEW ── -->
+                <div x-show="quoView==='form'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <button @click="quoBackToList()"
+                                    class="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <div>
+                                <h2 class="font-black text-gray-900 text-base">Buat Quotation</h2>
+                                <p class="text-xs text-gray-400 mt-0.5">Isi data penerima, item, dan kirimkan ke klien</p>
+                            </div>
+                        </div>
+                        <button @click="quoReset()"
+                                class="text-xs text-gray-400 hover:text-gray-600 font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all">
+                            Reset Form
+                        </button>
+                    </div>
+
+                    <!-- 2 col layout on desktop -->
+                    <div class="grid md:grid-cols-2 gap-5">
+
+                        <!-- LEFT: Penerima -->
+                        <div class="space-y-3">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Data Penerima</p>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Nama / Perusahaan <span class="text-red-400">*</span></label>
+                                <input x-model="quoForm.nama" type="text" placeholder="PT. Nama Perusahaan"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Email</label>
+                                <input x-model="quoForm.email" type="email" placeholder="email@perusahaan.com"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">No. HP / WhatsApp</label>
+                                <div class="flex border border-gray-200 rounded-xl overflow-hidden focus-within:border-brand-400 transition-colors">
+                                    <span class="px-3 py-2 bg-gray-50 text-gray-500 text-sm font-semibold border-r border-gray-200 flex-shrink-0 flex items-center">+62</span>
+                                    <input x-model="quoForm.noHP" type="tel" inputmode="numeric" pattern="[0-9]*"
+                                           @input="quoForm.noHP = quoForm.noHP.replace(/[^0-9]/g,'')"
+                                           placeholder="812 3456 7890"
+                                           class="flex-1 px-3 py-2 text-sm focus:outline-none bg-white"/>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Alamat</label>
+                                <textarea x-model="quoForm.alamat" rows="2" placeholder="Jl. ..., Kota"
+                                          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 resize-none"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: Pembayaran -->
+                        <div class="space-y-3">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Pembayaran</p>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Metode Bayar</label>
+                                <select x-model="quoForm.payMethod"
+                                        class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 bg-white">
+                                    <option value="Transfer Bank">Transfer Bank</option>
+                                    <option value="QRIS">QRIS</option>
+                                    <option value="iPaymu">iPaymu</option>
+                                    <option value="Xendit">Xendit</option>
+                                    <option value="Tunai">Tunai</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Nama Bank / E-wallet</label>
+                                <input x-model="quoForm.bankName" type="text" placeholder="SeaBank / BCA / Mandiri"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">No. Rekening</label>
+                                <input x-model="quoForm.bankAccount" type="text" placeholder="901000004087"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Atas Nama</label>
+                                <input x-model="quoForm.bankHolder" type="text" placeholder="Eko Harianto"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Catatan (opsional)</label>
+                                <textarea x-model="quoForm.note" rows="2" placeholder="Garansi 1 tahun, dll."
+                                          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 resize-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="mt-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Item Produk</p>
+                            <button @click="quoAddItem()"
+                                    class="flex items-center gap-1 text-xs font-semibold text-brand-600 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-all">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                                Tambah Item
+                            </button>
+                        </div>
+
+                        <!-- Items table (Excel-style) -->
+                        <div class="border border-gray-200 rounded-xl overflow-hidden">
+                            <!-- Table header -->
+                            <div class="grid items-center bg-gray-50 border-b border-gray-200 text-[10px] font-bold uppercase tracking-wide text-gray-400 px-2"
+                                 style="grid-template-columns:1fr 52px 110px 80px 28px">
+                                <div class="py-2 px-1.5">Produk</div>
+                                <div class="py-2 px-1 text-center">Qty</div>
+                                <div class="py-2 px-1 text-right">Harga Satuan</div>
+                                <div class="py-2 px-1 text-right">Total</div>
+                                <div></div>
+                            </div>
+                            <!-- Rows -->
+                            <template x-for="(item, idx) in quoForm.items" :key="idx">
+                                <div class="grid items-center border-b border-gray-100 last:border-0 px-2 hover:bg-gray-50 transition-colors"
+                                     style="grid-template-columns:1fr 52px 110px 80px 28px">
+                                    <!-- Produk -->
+                                    <div class="py-1.5 px-1 relative">
+                                        <input :value="item.deskripsi" @input="item.deskripsi=$event.target.value; quoProductSearch=idx; quoSearchQuery=$event.target.value; quoFilterProducts()"
+                                               type="text" placeholder="Cari atau ketik..."
+                                               class="w-full border-0 bg-transparent text-xs text-gray-800 focus:outline-none placeholder-gray-300"/>
+                                        <div x-show="quoProductSearch===idx && quoFilteredProducts.length>0"
+                                             class="absolute z-50 top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-0.5 max-h-40 overflow-y-auto" style="min-width:220px">
+                                            <template x-for="p in quoFilteredProducts.slice(0,8)" :key="p.nama+'|'+p.varian+'|'+p.masaAktif">
+                                                <button @click.stop="quoSelectProduct(idx, p)"
+                                                        class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 transition-colors border-b border-gray-50 last:border-0">
+                                                    <span class="font-semibold text-gray-800" x-text="p.nama"></span>
+                                                    <span x-show="p.varian&&p.varian!=='-'" class="text-gray-400 ml-1" x-text="'– '+p.varian"></span>
+                                                    <span x-show="p.masaAktif&&p.masaAktif!=='-'" class="text-gray-400 ml-1" x-text="'· '+p.masaAktif"></span>
+                                                    <span class="text-brand-500 font-bold ml-2" x-text="formatPrice(p.harga)"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <!-- Qty -->
+                                    <div class="py-1.5 px-1">
+                                        <input x-model.number="item.qty" @input="quoRecalc()" type="number" min="1"
+                                               class="w-full border border-gray-200 rounded-md px-1.5 py-1 text-xs focus:outline-none focus:border-brand-400 text-center bg-white"/>
+                                    </div>
+                                    <!-- Harga Satuan -->
+                                    <div class="py-1.5 px-1">
+                                        <input x-model.number="item.harga" @input="quoRecalc()" type="number" min="0"
+                                               class="w-full border border-gray-200 rounded-md px-1.5 py-1 text-xs focus:outline-none focus:border-brand-400 text-right bg-white"/>
+                                    </div>
+                                    <!-- Total -->
+                                    <div class="py-1.5 px-1 text-right">
+                                        <span class="text-xs font-bold text-gray-700" x-text="formatPrice(item.qty*item.harga)"></span>
+                                    </div>
+                                    <!-- Hapus -->
+                                    <div class="py-1.5 flex justify-center">
+                                        <button @click="quoForm.items.splice(idx,1); quoRecalc()" title="Hapus"
+                                                class="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 rounded transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="quoForm.items.length===0" class="text-center py-5 text-xs text-gray-400">Belum ada item — klik "+ Tambah Item"</div>
+                        </div>
+
+                        <!-- Subtotal + Diskon + Total -->
+                        <div class="mt-4 flex justify-end">
+                            <div class="w-full md:w-72 space-y-2">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-500">Subtotal</span>
+                                    <span class="font-semibold text-gray-700" x-text="formatPrice(quoSubtotal)"></span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-sm text-gray-500 flex-none">Diskon</span>
+                                    <div class="flex items-center gap-1.5 flex-1 justify-end">
+                                        <select x-model="quoForm.discountType" @change="quoRecalc()"
+                                                class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none bg-white text-gray-600">
+                                            <option value="nominal">Rp</option>
+                                            <option value="persen">%</option>
+                                        </select>
+                                        <input x-model.number="quoForm.discountVal" @input="quoRecalc()" type="number" min="0"
+                                               :placeholder="quoForm.discountType==='persen'?'0':'0'"
+                                               class="w-24 border border-gray-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-brand-400 text-right"/>
+                                    </div>
+                                </div>
+                                <div x-show="quoDiscountAmount>0" class="flex items-center justify-between text-sm text-red-500">
+                                    <span>– Diskon</span>
+                                    <span class="font-semibold" x-text="'– '+formatPrice(quoDiscountAmount)"></span>
+                                </div>
+                                <div class="flex items-center justify-between border-t border-gray-200 pt-2 mt-1">
+                                    <span class="font-bold text-gray-800">Total</span>
+                                    <span class="text-xl font-black text-brand-500" x-text="formatPrice(quoTotal)"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="mt-5 space-y-3">
+                        <!-- Row 1: Preview -->
+                        <button @click="quoGenerate()"
+                                :disabled="!quoForm.nama || quoForm.items.length===0"
+                                class="w-full py-3 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            Preview & Print
+                        </button>
+                        <!-- Row 2: Send via WA + Email -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <button @click="quoSendWA()"
+                                    :disabled="!quoForm.nama || quoForm.items.length===0 || quoWASending"
+                                    class="py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
+                                <svg x-show="quoWASending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                <svg x-show="!quoWASending" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.534 5.862L.057 23.943l6.235-1.469A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.525-5.17-1.435l-.37-.22-3.7.872.932-3.604-.241-.371A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                                <span x-text="quoWASending ? 'Mengirim...' : 'Kirim WA'"></span>
+                            </button>
+                            <button @click="quoSendEmail()"
+                                    :disabled="!quoForm.nama || quoForm.items.length===0 || quoEmailSending"
+                                    class="py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
+                                <svg x-show="quoEmailSending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                <svg x-show="!quoEmailSending" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                <span x-text="quoEmailSending ? 'Mengirim...' : 'Kirim Email'"></span>
+                            </button>
+                        </div>
+                        <!-- Status msg -->
+                        <div x-show="quoSendMsg" class="text-center text-sm font-semibold px-4 py-2.5 rounded-xl"
+                             :class="quoSendMsg.startsWith('✓') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'"
+                             x-text="quoSendMsg"></div>
+                    </div>
+                </div><!-- end form view -->
+
+            </div><!-- end tab quotation -->
+
             <!-- ══ Tab: Ulasan ══════════════════════════════════ -->
             <div x-show="adminTab==='ulasan'" x-init="if(!adminReviewsLoaded) adminLoadReviews()"
                  class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm space-y-4">
@@ -3648,7 +3951,7 @@
 <!-- ══════════════════════════════════════════════════════
      FOOTER
 ══════════════════════════════════════════════════════ -->
-<footer class="hidden md:block bg-gray-900 text-white">
+<footer class="hidden md:block bg-gray-900 text-white" x-show="activePage !== 'product-detail'" x-cloak>
     <div class="max-w-6xl mx-auto px-5 py-5 md:py-6">
 
         <!-- Mobile: compact stacked layout -->
@@ -3745,6 +4048,16 @@
 
     </div>
 </footer>
+
+<!-- Copyright bar minimal — hanya tampil di product-detail -->
+<div x-show="activePage === 'product-detail'" x-cloak
+     class="hidden md:flex bg-gray-900 border-t border-gray-800 px-5 py-3 items-center justify-between text-xs text-gray-600">
+    <span x-text="siteSettings.footer.copyright"></span>
+    <div class="flex items-center gap-4">
+        <button @click="legalModal='terms'" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</button>
+        <button @click="legalModal='privacy'" class="hover:text-gray-400 transition-colors">Kebijakan Privasi</button>
+    </div>
+</div>
 
 </main>
 
@@ -5233,14 +5546,12 @@
         </div>
 
         <!-- WA Button -->
-        <a :href="'https://wa.me/628881500555?text=' + encodeURIComponent('Halo, saya ingin konfirmasi pembayaran untuk Order ID: ' + (manualPayment?.orderId||'') + '\nTotal: Rp ' + Number(manualPayment?.total||0).toLocaleString('id-ID'))"
-           target="_blank" rel="noopener"
-           @click="manualPayment=null"
+        <button @click="openWAKonfirmasi()"
            class="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20BD5C] text-white font-black py-3.5 rounded-2xl text-sm transition-colors active:scale-95 mb-3">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             Konfirmasi via WhatsApp
-        </a>
-        <button @click="manualPayment=null; navigateTo('orders')" class="w-full text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors">
+        </button>
+        <button @click="manualPayment=null; setPage('profile'); profileTab='pesanan'; loadOrders()" class="w-full text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors">
             Lihat Riwayat Pesanan →
         </button>
     </div>
@@ -5916,6 +6227,22 @@ function serabutStore() {
         adminIPaymuSyncConfirm:    false,
         adminIPaymuFilter:         { startdate:'', enddate:'', status:'', page:1, limit:20 },
 
+        // ── Quotation builder ────────────────────────
+        quoForm: {
+            nama:'', email:'', noHP:'', alamat:'',
+            payMethod:'Transfer Bank', bankName:'SeaBank', bankAccount:'901000004087', bankHolder:'Eko Harianto',
+            note:'', discountType:'nominal', discountVal:0,
+            items:[]
+        },
+        quoView:    'list', // 'list' | 'form'
+        quoList:    JSON.parse(localStorage.getItem('srb_quotations')||'[]'),
+        quoSending: false, quoWASending: false, quoEmailSending: false, quoDeleteIdx: -1,
+        quoSendMsg: '',
+        _logoDataURL: null,
+        quoProductSearch: -1,
+        quoSearchQuery:   '',
+        quoFilteredProducts: [],
+
         // ── Static Data ──────────────────────────────
         navItems: [
             { id:'home',    label:'Beranda',    mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
@@ -6492,8 +6819,12 @@ function serabutStore() {
             return m[(cat||'').toLowerCase()] || sp('office');
         },
         getCategoryBg(cat) {
-            const m={'Office 365':'bg-blue-50','Adobe':'bg-red-50','Windows':'bg-sky-50','Office':'bg-orange-50','Google':'bg-green-50','CorelDRAW':'bg-yellow-50','Project':'bg-purple-50','Visio':'bg-indigo-50'};
-            return m[cat]||'bg-gray-50';
+            const m={'Office 365':'bg-blue-100','Adobe':'bg-red-100','Windows':'bg-sky-100','Windows Server':'bg-slate-100','Office':'bg-orange-100','Google':'bg-green-100','CorelDRAW':'bg-yellow-100','Project':'bg-purple-100','Visio':'bg-indigo-100'};
+            return m[cat]||'bg-gray-100';
+        },
+        getCategoryHeroBg(cat) {
+            const m={'Office 365':'from-blue-100 to-blue-50','Adobe':'from-red-100 to-red-50','Windows':'from-sky-100 to-sky-50','Windows Server':'from-slate-100 to-slate-50','Office':'from-orange-100 to-orange-50','Google':'from-green-100 to-green-50','CorelDRAW':'from-yellow-100 to-yellow-50','Project':'from-purple-100 to-purple-50','Visio':'from-indigo-100 to-indigo-50'};
+            return 'bg-gradient-to-br ' + (m[cat]||'from-gray-100 to-gray-50');
         },
         getCategoryIcon(cat) {
             const m={'Office 365':'📧','Adobe':'🎨','Windows':'🪟','Office':'💼','Google':'☁️','CorelDRAW':'✏️','Project':'📊','Visio':'📐','Windows Server':'🖥️'};
@@ -6882,7 +7213,8 @@ function serabutStore() {
                     if (data.paymentUrl) {
                         this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
                     } else if (data.paymentMode === 'manual') {
-                        this.showManualPaymentInfo(data.orderId, data.total);
+                        const cartItems = this.cart.map(c => ({ produk: c.nama, varian: c.varian||'-', masaAktif: c.masaAktif||'-', harga: c.harga }));
+                        this.showManualPaymentInfo(data.orderId, data.total, cartItems, this.user?.nama||'');
                     } else {
                         this.cartCheckoutError = data.paymentError || 'Pesanan dibuat tapi gagal membuat sesi pembayaran. Hubungi CS.';
                     }
@@ -6891,8 +7223,22 @@ function serabutStore() {
             this.cartCheckoutLoading = false;
         },
 
-        showManualPaymentInfo(orderId, total) {
-            this.manualPayment = { orderId, total };
+        showManualPaymentInfo(orderId, total, items, nama) {
+            this.manualPayment = { orderId, total, items: items||[], nama: nama||'' };
+        },
+        openWAKonfirmasi() {
+            const m = this.manualPayment;
+            if (!m) return;
+            const itemLines = (m.items||[]).map((it, i) => {
+                let line = '[' + (i+1) + '] *' + (it.produk||'') + '*';
+                if (it.varian && it.varian !== '-') line += ' - ' + it.varian;
+                if (it.masaAktif && it.masaAktif !== '-') line += ' (' + it.masaAktif + ')';
+                line += '\n    Rp ' + Number(it.harga||0).toLocaleString('id-ID');
+                return line;
+            }).join('\n');
+            const text = 'Halo Kak, saya ingin konfirmasi pembayaran\n\n*Order ID: ' + m.orderId + '*\n────────────────────\n' + itemLines + '\n────────────────────\nTotal: *Rp ' + Number(m.total||0).toLocaleString('id-ID') + '*\n\nMohon diproses ya, terima kasih!';
+            window.open('https://wa.me/628881500555?text=' + encodeURIComponent(text), '_blank');
+            this.manualPayment = null;
         },
 
         startPaymentRedirect(orderId, paymentUrl) {
@@ -7034,7 +7380,9 @@ function serabutStore() {
                         this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
                     } else if (data.paymentMode === 'manual') {
                         this.orderModal = false;
-                        this.showManualPaymentInfo(data.orderId, data.harga || data.total);
+                        const finalHarga = unitHarga * qty;
+                        const singleItem = [{ produk: this.selectedProductGroup?.nama||'', varian: this.selectedVariant?.varian||'-', masaAktif: this.selectedVariant?.masaAktif||'-', harga: finalHarga }];
+                        this.showManualPaymentInfo(data.orderId, finalHarga, singleItem, this.currentUser?.nama||'');
                     } else {
                         this.orderError = data.paymentError || 'Gagal membuat sesi pembayaran. Silakan coba lagi atau hubungi CS.';
                     }
@@ -7335,6 +7683,13 @@ function serabutStore() {
             return list;
         },
         get adminOrdersTotalPages() { return Math.max(1, Math.ceil(this.adminGroupedOrders.length / this.adminOrdersPerPage)); },
+        get quoSubtotal()  { return (this.quoForm.items||[]).reduce((s,i)=>s+Number(i.qty||1)*Number(i.harga||0),0); },
+        get quoDiscountAmount() {
+            const f = this.quoForm;
+            if(!f.discountVal) return 0;
+            return f.discountType==='persen' ? Math.round(this.quoSubtotal * f.discountVal / 100) : Number(f.discountVal);
+        },
+        get quoTotal() { return Math.max(0, this.quoSubtotal - this.quoDiscountAmount); },
         get adminPagedOrders()      { const s = (this.adminOrdersPage-1)*this.adminOrdersPerPage; return this.adminGroupedOrders.slice(s, s+this.adminOrdersPerPage); },
         get adminOrdersPageRange() {
             const t = this.adminOrdersTotalPages, c = this.adminOrdersPage;
@@ -7579,11 +7934,15 @@ function serabutStore() {
         },
         flashSaleItem(nama, varian, masaAktif) {
             const combined = masaAktif && masaAktif !== '-' ? varian + ' · ' + masaAktif : varian;
-            // Cek semua active discount items (flash sale + regular discount)
+            const norm = s => String(s||'').trim().toLowerCase();
             const allItems = this.flashSale.allDiscountItems?.length
                 ? this.flashSale.allDiscountItems
                 : (this.flashSale.aktif ? (this.flashSale.items || []) : []);
-            return allItems.find(i => i.produk === nama && (i.varian === varian || i.varian === combined)) || null;
+            return allItems.find(i =>
+                norm(i.produk) === norm(nama) &&
+                (norm(i.varian) === norm(varian) || norm(i.varian) === norm(combined) ||
+                 (norm(i.varian) === norm(varian) && norm(i.masaAktif||'') === norm(masaAktif||'')))
+            ) || null;
         },
         formatTerjual(n) {
             if(!n || n <= 0) return '';
@@ -8421,6 +8780,471 @@ function serabutStore() {
                 }
             } catch {}
         },
+        // ── Invoice / Quotation ────────────────────────────────────────────
+        _invoiceFmtPrice(n) {
+            return 'Rp ' + Number(n||0).toLocaleString('id-ID');
+        },
+        _invoiceFmtDate(str) {
+            if(!str) return '–';
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            const s = String(str).trim();
+            const [datePart] = s.split(' ');
+            let d,m,y;
+            if(datePart && datePart.indexOf('-') >= 4){ [y,m,d]=datePart.split('-'); }
+            else { [d,m,y]=(datePart||'').split('/'); }
+            if(!y) return str;
+            return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+        },
+        _buildInvoiceDoc({ orderId, tanggal, nama, email, noWA, alamat, items, total, subtotal, discountAmt, paymentMethod, bankName, bankAccount, bankHolder, note, docType, logoSrc }) {
+            const fp  = v => this._invoiceFmtPrice(v);
+            const fd  = v => this._invoiceFmtDate(v);
+            const isInvoice = docType === 'invoice';
+            const docLabel  = isInvoice ? 'INVOICE' : 'QUOTATION';
+            const docColor  = '#e84343';
+            const today = fd(new Date().toISOString().split('T')[0].replace(/-/g,(m,i)=>i===4?'-':i===7?'-':'-'));
+            const nowDate = (() => {
+                const d = new Date();
+                const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+            })();
+
+            const itemRows = (items||[]).map((item, i) => {
+                const desc = [item.produk, item.varian&&item.varian!=='-'?item.varian:'', item.masaAktif&&item.masaAktif!=='-'?`(${item.masaAktif})`:''].filter(Boolean).join(' ');
+                const qty   = Number(item.qty||1);
+                const unit  = Number(item.harga||0) / qty;
+                const rowTotal = Number(item.harga||0);
+                return `<tr>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13.5px">${i+1}. ${desc}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px">${qty}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#334155;font-size:13px">${fp(unit)}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#1e293b;font-weight:600;font-size:13px">${fp(rowTotal)}</td>
+                </tr>`;
+            }).join('');
+
+            const computedSubtotal = subtotal != null ? Number(subtotal) : (items||[]).reduce((s,it)=>s+Number(it.harga||0),0);
+            const computedDiscount = Number(discountAmt||0);
+            const computedTotal    = total != null ? Number(total) : Math.max(0, computedSubtotal - computedDiscount);
+            const payMethod  = paymentMethod || 'Transfer Bank';
+            const bName      = bankName    || 'SeaBank';
+            const bAccount   = bankAccount || '901000004087';
+            const bHolder    = bankHolder  || 'Eko Harianto';
+            const waFormatted = noWA ? `+${String(noWA).replace(/^628/,'62 8').replace(/(\d{4})(?=\d)/g,'$1 ').trim()}` : '–';
+
+            const logoImg = logoSrc
+                ? `<img src="${logoSrc}" alt="Serabut" style="width:44px;height:44px;border-radius:10px;object-fit:contain;display:block"/>`
+                : `<div style="width:44px;height:44px;background:${docColor};border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="white" fill-opacity="0.9"/></svg></div>`;
+
+            return `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${docLabel} ${orderId||''}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a1a2e;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:13px}
+
+  /* ── Toolbar ── */
+  .toolbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+  .toolbar-left{display:flex;align-items:center;gap:8px;color:#6b7280;font-size:12px}
+  .toolbar-chip{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:#374151;font-family:monospace}
+  .toolbar-status{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${isInvoice?'#fef2f2':'#fef2f2'};color:${isInvoice?'#991b1b':'#991b1b'}}
+  .btn-print{background:${docColor};color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .15s}
+  .btn-print:hover{opacity:.88}
+
+  /* ── Page ── */
+  .page{max-width:740px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);overflow:hidden}
+
+  /* ── Odoo-style header ── */
+  .doc-head{padding:32px 40px 28px;border-bottom:1px solid #f3f4f6}
+  .doc-head-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-info .name{font-weight:800;font-size:15px;color:#111827;letter-spacing:-.2px}
+  .brand-info .sub{font-size:11px;color:#9ca3af;margin-top:2px}
+  .doc-title-block{text-align:right}
+  .doc-label-text{font-size:32px;font-weight:900;letter-spacing:1.5px;color:#111827;line-height:1}
+  .doc-label-text em{color:${docColor};font-style:normal}
+  .doc-ref{margin-top:8px;font-size:11.5px;color:#6b7280;line-height:1.7}
+  .doc-ref strong{color:#111827;font-weight:700;font-family:monospace}
+  .doc-badge{display:inline-flex;align-items:center;gap:4px;margin-top:10px;padding:4px 12px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+
+  /* ── Info grid (Odoo-style 3-col) ── */
+  .info-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;border:1px solid #f3f4f6;border-radius:10px;overflow:hidden}
+  .info-cell{padding:14px 18px;border-right:1px solid #f3f4f6}
+  .info-cell:last-child{border-right:none}
+  .info-cell .ic-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:7px}
+  .info-cell .ic-name{font-size:13.5px;font-weight:700;color:#111827;margin-bottom:4px}
+  .info-cell .ic-detail{font-size:11.5px;color:#6b7280;line-height:1.65}
+  .info-cell .ic-val{font-size:13px;font-weight:600;color:#374151;margin-bottom:4px}
+  .info-cell .ic-sub{font-size:11.5px;color:#6b7280;line-height:1.6}
+
+  /* ── Products table ── */
+  .tbl-section{padding:0 40px}
+  .tbl-wrap{border:1px solid #f3f4f6;border-radius:10px;overflow:hidden;margin-top:24px}
+  table{width:100%;border-collapse:collapse}
+  thead tr{background:#f9fafb;border-bottom:1px solid #e5e7eb}
+  thead th{padding:11px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af}
+  thead th:first-child{text-align:left;padding-left:18px}
+  thead th:nth-child(2){text-align:center;width:60px}
+  thead th:nth-child(3){text-align:right;width:130px}
+  thead th:nth-child(4){text-align:right;width:130px;padding-right:18px}
+  tbody tr{border-bottom:1px solid #f9fafb;transition:background .1s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:#fafafa}
+  tbody td{padding:12px 14px;font-size:13px;color:#374151}
+  tbody td:first-child{padding-left:18px;color:#111827;font-weight:500}
+  tbody td:nth-child(2){text-align:center;color:#6b7280}
+  tbody td:nth-child(3){text-align:right;color:#6b7280}
+  tbody td:nth-child(4){text-align:right;font-weight:700;color:#111827;padding-right:18px}
+
+  /* ── Totals ── */
+  .totals-wrap{display:flex;justify-content:flex-end;padding:16px 40px 0}
+  .totals-inner{width:260px}
+  .tot-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #f3f4f6;color:#6b7280}
+  .tot-row:last-child{border-bottom:none}
+  .tot-row .tv{font-weight:600;color:#374151}
+  .tot-grand{display:flex;justify-content:space-between;align-items:center;background:${docColor};border-radius:8px;padding:12px 16px;margin-top:8px}
+  .tot-grand .tl{font-weight:700;color:#fff;font-size:14px}
+  .tot-grand .tv{font-weight:900;color:#fff;font-size:18px}
+
+  /* ── Footer section ── */
+  .doc-footer{margin:24px 40px;padding:20px;background:#f9fafb;border-radius:10px;border:1px solid #f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .df-block .df-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;margin-bottom:5px}
+  .df-block .df-val{font-size:13px;font-weight:600;color:#1f2937;line-height:1.5}
+  .df-block .df-note{font-size:11px;color:#9ca3af;margin-top:3px;line-height:1.5}
+  .copyright{text-align:center;padding:16px 40px 24px;font-size:11px;color:#d1d5db}
+
+  @media print{
+    body{background:#fff}
+    .toolbar{display:none}
+    .page{margin:0;border-radius:0;box-shadow:none;max-width:none}
+    .tbl-section{padding:0 32px}
+    .totals-wrap{padding:16px 32px 0}
+    .doc-footer{margin:24px 32px}
+  }
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <span class="toolbar-chip">${orderId||'–'}</span>
+    <span>${nowDate}</span>
+    <span class="toolbar-status">${isInvoice ? '✓ Lunas' : 'Penawaran'}</span>
+  </div>
+  <button class="btn-print" onclick="window.print()">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+    Cetak / Simpan PDF
+  </button>
+</div>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="doc-head">
+    <div class="doc-head-top">
+      <!-- Brand -->
+      <div class="brand">
+        ${logoImg}
+        <div class="brand-info">
+          <div class="name">Serabut Store</div>
+          <div class="sub">PT Serabut Solusi Digital · serabut.id</div>
+        </div>
+      </div>
+      <!-- Doc title -->
+      <div class="doc-title-block" style="position:relative">
+        ${isInvoice ? `<div style="position:absolute;top:-8px;right:-8px;transform:rotate(12deg);border:3px solid #16a34a;border-radius:6px;padding:4px 14px;color:#16a34a;font-size:18px;font-weight:900;letter-spacing:3px;opacity:.85;pointer-events:none;line-height:1">PAID</div>` : ''}
+        <div class="doc-label-text">${isInvoice ? 'INV<em>OICE</em>' : 'QUOT<em>ATION</em>'}</div>
+        <div class="doc-ref">
+          No: <strong>${orderId||'–'}</strong><br>
+          Tanggal: ${nowDate}
+        </div>
+        <div class="doc-badge">
+          ${isInvoice
+            ? '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Lunas'
+            : '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg> Penawaran'}
+        </div>
+      </div>
+    </div>
+
+    <!-- Info grid -->
+    <div class="info-grid">
+      <div class="info-cell">
+        <div class="ic-lbl">Dari</div>
+        <div class="ic-name">PT Serabut Solusi Digital</div>
+        <div class="ic-detail">Jl. Mampang Prpt. Raya, Duren Tiga<br>Pancoran, Jakarta Selatan 12790<br>(+62) 888-1500-555 · halo@serabut.id</div>
+      </div>
+      <div class="info-cell">
+        <div class="ic-lbl">Tagih Kepada</div>
+        <div class="ic-name">${nama||'–'}</div>
+        <div class="ic-detail">
+          ${email ? email+'<br>' : ''}
+          ${noWA ? waFormatted : ''}
+          ${alamat ? '<br>'+alamat : ''}
+        </div>
+      </div>
+      <div class="info-cell">
+        <div class="ic-lbl">Detail Dokumen</div>
+        <div class="ic-val">${payMethod}</div>
+        <div class="ic-sub">${bName}<br>${bAccount}<br>a.n ${bHolder}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products -->
+  <div class="tbl-section">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Deskripsi Produk</th>
+            <th>Qty</th>
+            <th>Harga Satuan</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Totals -->
+  <div class="totals-wrap">
+    <div class="totals-inner">
+      <div class="tot-row"><span>Subtotal</span><span class="tv">${fp(computedSubtotal)}</span></div>
+      ${computedDiscount>0 ? `<div class="tot-row"><span style="color:#ef4444">Diskon</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>` : ''}
+      <div class="tot-row"><span>Garansi</span><span class="tv" style="color:#059669">Termasuk ✓</span></div>
+      <div class="tot-grand"><span class="tl">Total Pembayaran</span><span class="tv">${fp(computedTotal)}</span></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="doc-footer">
+    <div class="df-block">
+      <div class="df-lbl">Instruksi Pembayaran</div>
+      <div class="df-val">${payMethod}</div>
+      <div class="df-note">${bName} · ${bAccount}<br>a.n ${bHolder}</div>
+    </div>
+    <div class="df-block">
+      <div class="df-lbl">Garansi Produk</div>
+      <div class="df-val">Penuh selama masa aktif</div>
+      <div class="df-note">Produk tidak aktif akan diganti<br>tanpa biaya tambahan</div>
+    </div>
+    ${note ? `<div class="df-block" style="grid-column:span 2"><div class="df-lbl">Catatan</div><div class="df-val" style="font-weight:400;color:#4b5563;white-space:pre-wrap">${note}</div></div>` : ''}
+  </div>
+
+  <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; Dokumen ini diterbitkan secara digital</div>
+</div>
+</body>
+</html>`;
+        },
+        async downloadInvoice(order) {
+            const items = order.items || [{ produk: order.produk, varian: order.varian, masaAktif: order.masaAktif, harga: order.harga }];
+            const logo = await this._getLogoDataURL();
+            const html = this._buildInvoiceDoc({
+                orderId:       order.orderId,
+                tanggal:       order.tanggal,
+                nama:          this.currentUser?.nama || order.nama || '–',
+                email:         this.currentUser?.email || '',
+                noWA:          this.currentUser?.noWA  || '',
+                items,
+                total:         order.total || items.reduce((s,i)=>s+Number(i.harga||0),0),
+                paymentMethod: order.paymentMethod,
+                docType:       'invoice',
+                logoSrc:       logo,
+            });
+            const win = window.open('', '_blank', 'width=760,height=900,scrollbars=yes');
+            win.document.write(html);
+            win.document.close();
+        },
+        async adminDownloadInvoice(group) {
+            const logo = await this._getLogoDataURL();
+            const html = this._buildInvoiceDoc({
+                orderId:       group.orderId,
+                tanggal:       group.tanggal,
+                nama:          group.nama || '–',
+                email:         group.email || '',
+                noWA:          group.noWA  || '',
+                items:         group.items || [],
+                total:         group.total,
+                paymentMethod: (group.items||[])[0]?.paymentMethod,
+                docType:       'invoice',
+                logoSrc:       logo,
+            });
+            const win = window.open('', '_blank', 'width=760,height=900,scrollbars=yes');
+            win.document.write(html);
+            win.document.close();
+        },
+        async adminDownloadQuotation(group) {
+            const logo = await this._getLogoDataURL();
+            const html = this._buildInvoiceDoc({
+                orderId:       group.orderId,
+                tanggal:       group.tanggal,
+                nama:          group.nama || '–',
+                email:         group.email || '',
+                noWA:          group.noWA  || '',
+                items:         group.items || [],
+                total:         group.total,
+                paymentMethod: (group.items||[])[0]?.paymentMethod,
+                docType:       'quotation',
+                logoSrc:       logo,
+            });
+            const win = window.open('', '_blank', 'width=760,height=900,scrollbars=yes');
+            win.document.write(html);
+            win.document.close();
+        },
+
+        // ── Quotation builder methods ────────────────────────────────────
+        quoReset() {
+            this.quoForm = {
+                nama:'', email:'', noHP:'', alamat:'',
+                payMethod:'Transfer Bank', bankName:'SeaBank', bankAccount:'901000004087', bankHolder:'Eko Harianto',
+                note:'', discountType:'nominal', discountVal:0, items:[]
+            };
+            this._quoId = null;
+            this.quoProductSearch = -1;
+            this.quoSearchQuery   = '';
+            this.quoFilteredProducts = [];
+            this.quoSendMsg = '';
+            this.quoView = 'form';
+        },
+        quoNewForm() { this.quoReset(); this.quoView = 'form'; },
+        quoBackToList() { this.quoView = 'list'; },
+        _quoSaveToList(status) {
+            const f = this.quoForm;
+            const existing = this.quoList.findIndex(q => q.id === this._quoId);
+            const entry = { id:this._quoId, tanggal:new Date().toISOString(), nama:f.nama, email:f.email, noHP:f.noHP, total:this.quoTotal, itemCount:f.items.length, status };
+            if (existing >= 0) { this.quoList[existing] = {...this.quoList[existing], ...entry}; }
+            else { this.quoList.unshift(entry); }
+            this.quoList = this.quoList.slice(0,100);
+            localStorage.setItem('srb_quotations', JSON.stringify(this.quoList));
+        },
+        async _getLogoDataURL() {
+            if (this._logoDataURL) return this._logoDataURL;
+            try {
+                const resp = await fetch('/logo.png');
+                if (!resp.ok) return null;
+                const blob = await resp.blob();
+                return new Promise(res => {
+                    const r = new FileReader();
+                    r.onload = e => { this._logoDataURL = e.target.result; res(e.target.result); };
+                    r.readAsDataURL(blob);
+                });
+            } catch { return null; }
+        },
+        quoAddItem() {
+            this.quoForm.items.push({ deskripsi:'', qty:1, harga:0 });
+        },
+        quoRecalc() { /* computed via getters, nothing needed */ },
+        quoFilterProducts() {
+            const q = (this.quoSearchQuery||'').toLowerCase().trim();
+            if(!q) { this.quoFilteredProducts = []; return; }
+            this.quoFilteredProducts = (this.products||[]).filter(p =>
+                p.nama.toLowerCase().includes(q) ||
+                (p.varian||'').toLowerCase().includes(q) ||
+                (p.masaAktif||'').toLowerCase().includes(q)
+            );
+        },
+        quoSelectProduct(idx, p) {
+            const normName   = p.nama.toLowerCase();
+            const normVarian = (p.varian||'').toLowerCase();
+            const skipVarian = !normVarian || normVarian==='-' || normName.includes(normVarian);
+            const parts = [p.nama, !skipVarian?p.varian:'', p.masaAktif&&p.masaAktif!=='-'?p.masaAktif:''].filter(Boolean);
+            const desc = parts.join(' · ');
+            this.quoForm.items[idx].deskripsi = desc;
+            this.quoForm.items[idx].harga     = Number(p.harga||0);
+            this.quoProductSearch = -1;
+            this.quoFilteredProducts = [];
+            this.quoSearchQuery = '';
+        },
+        _quoEnsureId() {
+            if (!this._quoId) {
+                const now = new Date(), pad = n => String(n).padStart(2,'0');
+                this._quoId = 'QUO-' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + '-' + Math.floor(Math.random()*9000+1000);
+            }
+        },
+        async _quoBuildDoc(logoDataURL) {
+            const f   = this.quoForm;
+            const now = new Date(), pad = n => String(n).padStart(2,'0');
+            this._quoEnsureId();
+            const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+            const items = f.items.map(i => ({
+                produk: i.deskripsi, varian:'-', masaAktif:'-',
+                harga: Number(i.harga||0) * Number(i.qty||1), qty: i.qty,
+            }));
+            const logo = logoDataURL || await this._getLogoDataURL();
+            return this._buildInvoiceDoc({
+                orderId: this._quoId, tanggal: todayStr,
+                nama: f.nama, email: f.email, noWA: '62'+String(f.noHP||'').replace(/\D/g,''), alamat: f.alamat,
+                items, total: this.quoTotal, subtotal: this.quoSubtotal,
+                discountAmt: this.quoDiscountAmount,
+                paymentMethod: f.payMethod, bankName: f.bankName,
+                bankAccount: f.bankAccount, bankHolder: f.bankHolder,
+                note: f.note, docType: 'quotation', logoSrc: logo,
+            });
+        },
+        async quoGenerate() {
+            this._quoId = null;
+            const logo = await this._getLogoDataURL();
+            const html  = await this._quoBuildDoc(logo);
+            const win = window.open('', '_blank', 'width=800,height=960,scrollbars=yes');
+            win.document.write(html); win.document.close();
+            this._quoSaveToList('preview');
+        },
+        async quoSendWA() {
+            const f = this.quoForm;
+            const rawNum = String(f.noHP||'').replace(/\D/g,'');
+            if (!rawNum || rawNum.length < 8) { this.quoSendMsg = '⚠️ No. HP penerima belum diisi'; return; }
+            this._quoEnsureId();
+            this.quoWASending = true; this.quoSendMsg = '';
+            const fp = v => 'Rp ' + Number(v||0).toLocaleString('id-ID');
+            const itemLines = f.items.map((it,i) => `${i+1}. ${it.deskripsi} x${it.qty||1} — ${fp(Number(it.harga||0)*Number(it.qty||1))}`).join('\n');
+            const bankInfo = f.bankName ? `${f.bankName}: ${f.bankAccount} (a.n ${f.bankHolder})` : '';
+            try {
+                const data = await this.gasPost({
+                    action: 'sendQuotationWA',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.sessionToken,
+                    noHP: '62' + rawNum.replace(/^0/,''),
+                    quoId: this._quoId, nama: f.nama,
+                    itemLines, total: this.quoTotal,
+                    payMethod: f.payMethod, bankInfo,
+                });
+                if (data.success) {
+                    this.quoSendMsg = '✓ WA terkirim ke +62' + rawNum;
+                    this._quoSaveToList('sent_wa');
+                } else { this.quoSendMsg = '✗ ' + (data.error||'Gagal kirim WA'); }
+            } catch { this.quoSendMsg = '✗ Gagal terhubung ke server'; }
+            finally  { this.quoWASending = false; }
+        },
+        async quoSendEmail() {
+            const f = this.quoForm;
+            if (!f.email) { this.quoSendMsg = '⚠️ Email penerima belum diisi'; return; }
+            this._quoEnsureId();
+            this.quoEmailSending = true; this.quoSendMsg = '';
+            try {
+                const logo = await this._getLogoDataURL();
+                const html = await this._quoBuildDoc(logo);
+                const data = await this.gasPost({
+                    action: 'sendQuotationEmail',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.sessionToken,
+                    to:       f.email,
+                    subject:  `Penawaran ${this._quoId} dari Serabut Store`,
+                    htmlBody: html,
+                });
+                if (data.success) {
+                    this.quoSendMsg = '✓ Email terkirim ke ' + f.email;
+                    this._quoSaveToList('sent_email');
+                } else { this.quoSendMsg = '✗ ' + (data.error||'Gagal kirim email'); }
+            } catch { this.quoSendMsg = '✗ Gagal terhubung ke server'; }
+            finally  { this.quoEmailSending = false; }
+        },
+        // ─────────────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────────────
+
         async adminUpdateGroupStatus(group, newStatus) {
             if(!newStatus) return;
             await Promise.all(group.items.map(item => this.adminUpdateOrderStatus(item, newStatus, true)));
