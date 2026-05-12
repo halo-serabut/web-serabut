@@ -2402,7 +2402,7 @@
             <!-- Tab Navigation Mobile: horizontal scroll -->
             <div class="relative mb-4 md:hidden">
                 <div class="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar">
-                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'ulasan',label:'Ulasan'},{id:'payment',label:'Pembayaran'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
+                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'quotation',label:'Quotation'},{id:'ulasan',label:'Ulasan'},{id:'payment',label:'Pembayaran'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
                         <button @click="adminTab=tab.id; adminInitTab(tab.id); $el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})"
                                 :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
                                 class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
@@ -2426,6 +2426,7 @@
                     {id:'panduan',   label:'Panduan',      icon:'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'},
                     {id:'footer',    label:'Footer',       icon:'M4 6h16M4 12h16M4 18h7'},
                     {id:'orders',    label:'Semua Order',  icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},
+                    {id:'quotation', label:'Quotation',    icon:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'},
                     {id:'ulasan',    label:'Ulasan',       icon:'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'},
                     {id:'payment',   label:'Pembayaran',   icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'},
                     {id:'ipaymu',    label:'Xendit',       icon:'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z'}
@@ -3276,12 +3277,6 @@
                                         <div class="flex items-center gap-2 flex-wrap">
                                             <span class="font-mono text-xs font-bold text-gray-700 bg-white border border-gray-200 px-2 py-0.5 rounded-lg" x-text="g.orderId"></span>
                                             <span :class="getStatusBadge(g.status)" class="text-xs font-semibold px-2.5 py-0.5 rounded-full" x-text="g.status"></span>
-                                            <!-- Quotation: semua status -->
-                                            <button @click.stop="adminDownloadQuotation(g)"
-                                                    class="flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-white border border-blue-300 px-2 py-0.5 rounded-full hover:bg-blue-50 transition-colors">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                                Quo
-                                            </button>
                                             <!-- Invoice: hanya status Selesai -->
                                             <template x-if="g.status==='Selesai'">
                                                 <button @click.stop="adminDownloadInvoice(g)"
@@ -3530,6 +3525,197 @@
                 </div>
 
             </div><!-- end tab xendit -->
+
+            <!-- ══ Tab: Quotation ══════════════════════════════ -->
+            <div x-show="adminTab==='quotation'" class="space-y-4">
+                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="font-black text-gray-900 text-base">Buat Quotation</h2>
+                            <p class="text-xs text-gray-400 mt-0.5">Isi data penerima, item, dan kirimkan ke klien</p>
+                        </div>
+                        <button @click="quoReset()"
+                                class="text-xs text-gray-400 hover:text-gray-600 font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all">
+                            Reset Form
+                        </button>
+                    </div>
+
+                    <!-- 2 col layout on desktop -->
+                    <div class="grid md:grid-cols-2 gap-5">
+
+                        <!-- LEFT: Penerima -->
+                        <div class="space-y-3">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Data Penerima</p>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Nama / Perusahaan <span class="text-red-400">*</span></label>
+                                <input x-model="quoForm.nama" type="text" placeholder="PT. Nama Perusahaan"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Email</label>
+                                <input x-model="quoForm.email" type="email" placeholder="email@perusahaan.com"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">No. HP / WhatsApp</label>
+                                <input x-model="quoForm.noHP" type="text" placeholder="+62 812-3456-7890"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Alamat</label>
+                                <textarea x-model="quoForm.alamat" rows="2" placeholder="Jl. ..., Kota"
+                                          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 resize-none"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: Pembayaran -->
+                        <div class="space-y-3">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Pembayaran</p>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Metode Bayar</label>
+                                <select x-model="quoForm.payMethod"
+                                        class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 bg-white">
+                                    <option value="Transfer Bank">Transfer Bank</option>
+                                    <option value="QRIS">QRIS</option>
+                                    <option value="iPaymu">iPaymu</option>
+                                    <option value="Xendit">Xendit</option>
+                                    <option value="Tunai">Tunai</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Nama Bank / E-wallet</label>
+                                <input x-model="quoForm.bankName" type="text" placeholder="SeaBank / BCA / Mandiri"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">No. Rekening</label>
+                                <input x-model="quoForm.bankAccount" type="text" placeholder="901000004087"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Atas Nama</label>
+                                <input x-model="quoForm.bankHolder" type="text" placeholder="Eko Harianto"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Catatan (opsional)</label>
+                                <textarea x-model="quoForm.note" rows="2" placeholder="Garansi 1 tahun, dll."
+                                          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 resize-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="mt-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Item Produk</p>
+                            <button @click="quoAddItem()"
+                                    class="flex items-center gap-1 text-xs font-semibold text-brand-600 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-all">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                                Tambah Item
+                            </button>
+                        </div>
+
+                        <!-- Items list -->
+                        <div class="space-y-2">
+                            <template x-for="(item, idx) in quoForm.items" :key="idx">
+                                <div class="grid grid-cols-12 gap-2 items-start bg-gray-50 rounded-xl p-3">
+                                    <!-- Deskripsi produk -->
+                                    <div class="col-span-12 md:col-span-5">
+                                        <label class="text-[10px] text-gray-400 font-medium mb-1 block">Produk</label>
+                                        <div class="relative">
+                                            <input :value="item.deskripsi" @input="item.deskripsi=$event.target.value; quoProductSearch=idx; quoSearchQuery=$event.target.value; quoFilterProducts()"
+                                                   type="text" placeholder="Cari atau ketik produk..."
+                                                   class="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-brand-400 bg-white"/>
+                                            <!-- Dropdown suggestions -->
+                                            <div x-show="quoProductSearch===idx && quoFilteredProducts.length>0"
+                                                 class="absolute z-50 top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-0.5 max-h-40 overflow-y-auto">
+                                                <template x-for="p in quoFilteredProducts.slice(0,8)" :key="p.nama+'|'+p.varian+'|'+p.masaAktif">
+                                                    <button @click.stop="quoSelectProduct(idx, p)"
+                                                            class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 transition-colors border-b border-gray-50 last:border-0">
+                                                        <span class="font-semibold text-gray-800" x-text="p.nama"></span>
+                                                        <span x-show="p.varian&&p.varian!=='-'" class="text-gray-400 ml-1" x-text="'– '+p.varian"></span>
+                                                        <span x-show="p.masaAktif&&p.masaAktif!=='-'" class="text-gray-400 ml-1" x-text="'· '+p.masaAktif"></span>
+                                                        <span class="text-brand-500 font-bold ml-2" x-text="formatPrice(p.harga)"></span>
+                                                    </button>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Qty -->
+                                    <div class="col-span-3 md:col-span-2">
+                                        <label class="text-[10px] text-gray-400 font-medium mb-1 block">Qty</label>
+                                        <input x-model.number="item.qty" @input="quoRecalc()" type="number" min="1"
+                                               class="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-brand-400 bg-white text-center"/>
+                                    </div>
+                                    <!-- Harga Satuan -->
+                                    <div class="col-span-5 md:col-span-3">
+                                        <label class="text-[10px] text-gray-400 font-medium mb-1 block">Harga Satuan (Rp)</label>
+                                        <input x-model.number="item.harga" @input="quoRecalc()" type="number" min="0"
+                                               class="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-brand-400 bg-white"/>
+                                    </div>
+                                    <!-- Subtotal -->
+                                    <div class="col-span-3 md:col-span-1 flex flex-col justify-between">
+                                        <label class="text-[10px] text-gray-400 font-medium mb-1 block">Total</label>
+                                        <span class="text-xs font-bold text-gray-700 pt-1.5" x-text="formatPrice(item.qty*item.harga)"></span>
+                                    </div>
+                                    <!-- Hapus -->
+                                    <div class="col-span-1 flex items-end pb-0.5">
+                                        <button @click="quoForm.items.splice(idx,1); quoRecalc()"
+                                                class="w-6 h-6 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors mt-4">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="quoForm.items.length===0" class="text-center py-4 text-xs text-gray-400">Belum ada item — klik "+ Tambah Item"</div>
+                        </div>
+
+                        <!-- Subtotal + Diskon + Total -->
+                        <div class="mt-4 flex justify-end">
+                            <div class="w-full md:w-72 space-y-2">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-500">Subtotal</span>
+                                    <span class="font-semibold text-gray-700" x-text="formatPrice(quoSubtotal)"></span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-sm text-gray-500 flex-none">Diskon</span>
+                                    <div class="flex items-center gap-1.5 flex-1 justify-end">
+                                        <select x-model="quoForm.discountType" @change="quoRecalc()"
+                                                class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none bg-white text-gray-600">
+                                            <option value="nominal">Rp</option>
+                                            <option value="persen">%</option>
+                                        </select>
+                                        <input x-model.number="quoForm.discountVal" @input="quoRecalc()" type="number" min="0"
+                                               :placeholder="quoForm.discountType==='persen'?'0':'0'"
+                                               class="w-24 border border-gray-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-brand-400 text-right"/>
+                                    </div>
+                                </div>
+                                <div x-show="quoDiscountAmount>0" class="flex items-center justify-between text-sm text-red-500">
+                                    <span>– Diskon</span>
+                                    <span class="font-semibold" x-text="'– '+formatPrice(quoDiscountAmount)"></span>
+                                </div>
+                                <div class="flex items-center justify-between border-t border-gray-200 pt-2 mt-1">
+                                    <span class="font-bold text-gray-800">Total</span>
+                                    <span class="text-xl font-black text-brand-500" x-text="formatPrice(quoTotal)"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generate button -->
+                    <div class="mt-5 flex gap-3">
+                        <button @click="quoGenerate()"
+                                :disabled="!quoForm.nama || quoForm.items.length===0"
+                                class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            Generate & Print Quotation
+                        </button>
+                    </div>
+                </div>
+            </div><!-- end tab quotation -->
 
             <!-- ══ Tab: Ulasan ══════════════════════════════════ -->
             <div x-show="adminTab==='ulasan'" x-init="if(!adminReviewsLoaded) adminLoadReviews()"
@@ -5946,6 +6132,17 @@ function serabutStore() {
         adminIPaymuSyncConfirm:    false,
         adminIPaymuFilter:         { startdate:'', enddate:'', status:'', page:1, limit:20 },
 
+        // ── Quotation builder ────────────────────────
+        quoForm: {
+            nama:'', email:'', noHP:'', alamat:'',
+            payMethod:'Transfer Bank', bankName:'SeaBank', bankAccount:'901000004087', bankHolder:'Eko Harianto',
+            note:'', discountType:'nominal', discountVal:0,
+            items:[]
+        },
+        quoProductSearch: -1,
+        quoSearchQuery:   '',
+        quoFilteredProducts: [],
+
         // ── Static Data ──────────────────────────────
         navItems: [
             { id:'home',    label:'Beranda',    mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
@@ -7386,6 +7583,13 @@ function serabutStore() {
             return list;
         },
         get adminOrdersTotalPages() { return Math.max(1, Math.ceil(this.adminGroupedOrders.length / this.adminOrdersPerPage)); },
+        get quoSubtotal()  { return (this.quoForm.items||[]).reduce((s,i)=>s+Number(i.qty||1)*Number(i.harga||0),0); },
+        get quoDiscountAmount() {
+            const f = this.quoForm;
+            if(!f.discountVal) return 0;
+            return f.discountType==='persen' ? Math.round(this.quoSubtotal * f.discountVal / 100) : Number(f.discountVal);
+        },
+        get quoTotal() { return Math.max(0, this.quoSubtotal - this.quoDiscountAmount); },
         get adminPagedOrders()      { const s = (this.adminOrdersPage-1)*this.adminOrdersPerPage; return this.adminGroupedOrders.slice(s, s+this.adminOrdersPerPage); },
         get adminOrdersPageRange() {
             const t = this.adminOrdersTotalPages, c = this.adminOrdersPage;
@@ -8491,7 +8695,7 @@ function serabutStore() {
             if(!y) return str;
             return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
         },
-        _buildInvoiceDoc({ orderId, tanggal, nama, email, noWA, items, total, paymentMethod, docType }) {
+        _buildInvoiceDoc({ orderId, tanggal, nama, email, noWA, alamat, items, total, subtotal, discountAmt, paymentMethod, bankName, bankAccount, bankHolder, note, docType }) {
             const fp  = v => this._invoiceFmtPrice(v);
             const fd  = v => this._invoiceFmtDate(v);
             const isInvoice = docType === 'invoice';
@@ -8506,17 +8710,24 @@ function serabutStore() {
 
             const itemRows = (items||[]).map((item, i) => {
                 const desc = [item.produk, item.varian&&item.varian!=='-'?item.varian:'', item.masaAktif&&item.masaAktif!=='-'?`(${item.masaAktif})`:''].filter(Boolean).join(' ');
-                const price = Number(item.harga||0);
+                const qty   = Number(item.qty||1);
+                const unit  = Number(item.harga||0) / qty;
+                const rowTotal = Number(item.harga||0);
                 return `<tr>
                     <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13.5px">${i+1}. ${desc}</td>
-                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px">1</td>
-                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#334155;font-size:13px">${fp(price)}</td>
-                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#1e293b;font-weight:600;font-size:13px">${fp(price)}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px">${qty}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#334155;font-size:13px">${fp(unit)}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#1e293b;font-weight:600;font-size:13px">${fp(rowTotal)}</td>
                 </tr>`;
             }).join('');
 
-            const computedTotal = (items||[]).reduce((s,it)=>s+Number(it.harga||0),0) || Number(total||0);
-            const payMethod = paymentMethod || 'Transfer Bank / iPaymu';
+            const computedSubtotal = subtotal != null ? Number(subtotal) : (items||[]).reduce((s,it)=>s+Number(it.harga||0),0);
+            const computedDiscount = Number(discountAmt||0);
+            const computedTotal    = total != null ? Number(total) : Math.max(0, computedSubtotal - computedDiscount);
+            const payMethod  = paymentMethod || 'Transfer Bank';
+            const bName      = bankName    || 'SeaBank';
+            const bAccount   = bankAccount || '901000004087';
+            const bHolder    = bankHolder  || 'Eko Harianto';
             const waFormatted = noWA ? `+${String(noWA).replace(/^628/,'62 8').replace(/(\d{4})(?=\d)/g,'$1 ').trim()}` : '–';
 
             return `<!DOCTYPE html>
@@ -8616,7 +8827,8 @@ function serabutStore() {
         <div class="party-name">${nama||'–'}</div>
         <div class="party-detail">
           ${email ? email+'<br>' : ''}
-          ${noWA ? waFormatted : ''}
+          ${noWA ? waFormatted+'<br>' : ''}
+          ${alamat ? alamat : ''}
         </div>
       </div>
     </div>
@@ -8641,7 +8853,8 @@ function serabutStore() {
     <!-- Totals -->
     <div class="totals">
       <div class="totals-box">
-        <div class="totals-row"><span class="label">Subtotal</span><span class="value">${fp(computedTotal)}</span></div>
+        <div class="totals-row"><span class="label">Subtotal</span><span class="value">${fp(computedSubtotal)}</span></div>
+        ${computedDiscount>0 ? `<div class="totals-row"><span class="label" style="color:#ef4444">Diskon</span><span class="value" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>` : ''}
         <div class="totals-row"><span class="label">Garansi</span><span class="value" style="color:#16a34a">Termasuk</span></div>
         <div class="totals-row grand"><span class="label">Total</span><span class="value">${fp(computedTotal)}</span></div>
       </div>
@@ -8652,7 +8865,7 @@ function serabutStore() {
       <div class="fi-section">
         <div class="fi-label">Metode Pembayaran</div>
         <div class="fi-val">${payMethod}</div>
-        <div class="fi-note">SeaBank: 901000004087 · a.n Eko Harianto</div>
+        <div class="fi-note">${bName}: ${bAccount} · a.n ${bHolder}</div>
       </div>
       <div class="fi-section">
         <div class="fi-label">Garansi</div>
@@ -8660,9 +8873,10 @@ function serabutStore() {
         <div class="fi-note">Produk tidak aktif = diganti tanpa biaya</div>
       </div>
       <div class="fi-section" style="grid-column:span 2">
-        <div class="fi-label">Tanggal Pesanan</div>
-        <div class="fi-val">${fd(tanggal)} &nbsp;·&nbsp; No. Order: <span style="font-family:monospace">${orderId||'–'}</span></div>
+        <div class="fi-label">Tanggal</div>
+        <div class="fi-val">${fd(tanggal)} &nbsp;·&nbsp; No: <span style="font-family:monospace">${orderId||'–'}</span></div>
       </div>
+      ${note ? `<div class="fi-section" style="grid-column:span 2"><div class="fi-label">Catatan</div><div class="fi-val" style="white-space:pre-wrap">${note}</div></div>` : ''}
     </div>
   </div>
 
@@ -8720,6 +8934,77 @@ function serabutStore() {
             win.document.write(html);
             win.document.close();
         },
+
+        // ── Quotation builder methods ────────────────────────────────────
+        quoReset() {
+            this.quoForm = {
+                nama:'', email:'', noHP:'', alamat:'',
+                payMethod:'Transfer Bank', bankName:'SeaBank', bankAccount:'901000004087', bankHolder:'Eko Harianto',
+                note:'', discountType:'nominal', discountVal:0, items:[]
+            };
+            this.quoProductSearch = -1;
+            this.quoSearchQuery   = '';
+            this.quoFilteredProducts = [];
+        },
+        quoAddItem() {
+            this.quoForm.items.push({ deskripsi:'', qty:1, harga:0 });
+        },
+        quoRecalc() { /* computed via getters, nothing needed */ },
+        quoFilterProducts() {
+            const q = (this.quoSearchQuery||'').toLowerCase().trim();
+            if(!q) { this.quoFilteredProducts = []; return; }
+            this.quoFilteredProducts = (this.products||[]).filter(p =>
+                p.nama.toLowerCase().includes(q) ||
+                (p.varian||'').toLowerCase().includes(q) ||
+                (p.masaAktif||'').toLowerCase().includes(q)
+            );
+        },
+        quoSelectProduct(idx, p) {
+            const desc = [p.nama, p.varian&&p.varian!=='-'?p.varian:'', p.masaAktif&&p.masaAktif!=='-'?p.masaAktif:''].filter(Boolean).join(' – ');
+            this.quoForm.items[idx].deskripsi = desc;
+            this.quoForm.items[idx].harga     = Number(p.harga||0);
+            this.quoProductSearch = -1;
+            this.quoFilteredProducts = [];
+            this.quoSearchQuery = '';
+        },
+        quoGenerate() {
+            const f = this.quoForm;
+            const now = new Date();
+            const pad = n => String(n).padStart(2,'0');
+            const quoId = 'QUO-' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + '-' + Math.floor(Math.random()*9000+1000);
+            const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+
+            const items = f.items.map(i => ({
+                produk:    i.deskripsi,
+                varian:    '-',
+                masaAktif: '-',
+                harga:     Number(i.harga||0) * Number(i.qty||1),
+                qty:       i.qty,
+            }));
+
+            const html = this._buildInvoiceDoc({
+                orderId:       quoId,
+                tanggal:       todayStr,
+                nama:          f.nama,
+                email:         f.email,
+                noWA:          f.noHP,
+                alamat:        f.alamat,
+                items,
+                total:         this.quoTotal,
+                subtotal:      this.quoSubtotal,
+                discountAmt:   this.quoDiscountAmount,
+                paymentMethod: f.payMethod,
+                bankName:      f.bankName,
+                bankAccount:   f.bankAccount,
+                bankHolder:    f.bankHolder,
+                note:          f.note,
+                docType:       'quotation',
+            });
+            const win = window.open('', '_blank', 'width=760,height=900,scrollbars=yes');
+            win.document.write(html);
+            win.document.close();
+        },
+        // ─────────────────────────────────────────────────────────────────
         // ─────────────────────────────────────────────────────────────────
 
         async adminUpdateGroupStatus(group, newStatus) {
