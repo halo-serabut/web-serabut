@@ -2228,6 +2228,14 @@
                                 Perpanjang Sekarang
                             </button>
                         </template>
+                        <!-- Download Invoice — hanya jika status Selesai -->
+                        <template x-if="orderDetailModal?.status==='Selesai'">
+                            <button @click="downloadInvoice(orderDetailModal)"
+                                    class="flex items-center gap-1.5 px-4 py-3 bg-emerald-50 text-emerald-700 font-semibold text-sm rounded-2xl active:scale-95 transition-all hover:bg-emerald-100 border border-emerald-200">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                                Invoice
+                            </button>
+                        </template>
                         <button @click="orderDetailModal=null"
                                 class="flex-1 py-3 bg-gray-100 text-gray-600 font-semibold text-sm rounded-2xl active:scale-95 transition-all">
                             Tutup
@@ -3263,11 +3271,25 @@
 
                                 <!-- Group header: No Pesanan kiri, status+buyer tengah, ubah status kanan -->
                                 <div class="px-4 py-3 border-b" :class="_orderCardHeader(g.status)">
-                                    <!-- Row 1: No Pesanan + Ubah Status -->
+                                    <!-- Row 1: No Pesanan + action buttons + Ubah Status -->
                                     <div class="flex items-center justify-between gap-2 mb-2">
                                         <div class="flex items-center gap-2 flex-wrap">
                                             <span class="font-mono text-xs font-bold text-gray-700 bg-white border border-gray-200 px-2 py-0.5 rounded-lg" x-text="g.orderId"></span>
                                             <span :class="getStatusBadge(g.status)" class="text-xs font-semibold px-2.5 py-0.5 rounded-full" x-text="g.status"></span>
+                                            <!-- Quotation: semua status -->
+                                            <button @click.stop="adminDownloadQuotation(g)"
+                                                    class="flex items-center gap-1 text-[11px] font-semibold text-blue-600 bg-white border border-blue-300 px-2 py-0.5 rounded-full hover:bg-blue-50 transition-colors">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                Quo
+                                            </button>
+                                            <!-- Invoice: hanya status Selesai -->
+                                            <template x-if="g.status==='Selesai'">
+                                                <button @click.stop="adminDownloadInvoice(g)"
+                                                        class="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-white border border-emerald-300 px-2 py-0.5 rounded-full hover:bg-emerald-50 transition-colors">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                                                    Invoice
+                                                </button>
+                                            </template>
                                         </div>
                                         <select @change="adminUpdateGroupStatus(g, $event.target.value); $event.target.value=''"
                                                 class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700 flex-shrink-0">
@@ -8454,6 +8476,252 @@ function serabutStore() {
                 }
             } catch {}
         },
+        // ── Invoice / Quotation ────────────────────────────────────────────
+        _invoiceFmtPrice(n) {
+            return 'Rp ' + Number(n||0).toLocaleString('id-ID');
+        },
+        _invoiceFmtDate(str) {
+            if(!str) return '–';
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            const s = String(str).trim();
+            const [datePart] = s.split(' ');
+            let d,m,y;
+            if(datePart && datePart.indexOf('-') >= 4){ [y,m,d]=datePart.split('-'); }
+            else { [d,m,y]=(datePart||'').split('/'); }
+            if(!y) return str;
+            return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+        },
+        _buildInvoiceDoc({ orderId, tanggal, nama, email, noWA, items, total, paymentMethod, docType }) {
+            const fp  = v => this._invoiceFmtPrice(v);
+            const fd  = v => this._invoiceFmtDate(v);
+            const isInvoice = docType === 'invoice';
+            const docLabel  = isInvoice ? 'INVOICE' : 'QUOTATION';
+            const docColor  = isInvoice ? '#e84343' : '#2563eb';
+            const today = fd(new Date().toISOString().split('T')[0].replace(/-/g,(m,i)=>i===4?'-':i===7?'-':'-'));
+            const nowDate = (() => {
+                const d = new Date();
+                const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+            })();
+
+            const itemRows = (items||[]).map((item, i) => {
+                const desc = [item.produk, item.varian&&item.varian!=='-'?item.varian:'', item.masaAktif&&item.masaAktif!=='-'?`(${item.masaAktif})`:''].filter(Boolean).join(' ');
+                const price = Number(item.harga||0);
+                return `<tr>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13.5px">${i+1}. ${desc}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px">1</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#334155;font-size:13px">${fp(price)}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#1e293b;font-weight:600;font-size:13px">${fp(price)}</td>
+                </tr>`;
+            }).join('');
+
+            const computedTotal = (items||[]).reduce((s,it)=>s+Number(it.harga||0),0) || Number(total||0);
+            const payMethod = paymentMethod || 'Transfer Bank / iPaymu';
+            const waFormatted = noWA ? `+${String(noWA).replace(/^628/,'62 8').replace(/(\d{4})(?=\d)/g,'$1 ').trim()}` : '–';
+
+            return `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${docLabel} ${orderId||''}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f8fafc;color:#1e293b;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .page{max-width:680px;margin:32px auto;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.08);overflow:hidden}
+  .header{background:linear-gradient(135deg,#1e293b 0%,#334155 100%);padding:28px 32px;display:flex;align-items:flex-start;justify-content:space-between}
+  .logo-area{display:flex;align-items:center;gap:10px}
+  .logo-circle{width:40px;height:40px;background:#e84343;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .logo-text{color:#fff;font-weight:900;font-size:18px;letter-spacing:-0.5px}
+  .tagline{color:#94a3b8;font-size:11px;margin-top:2px}
+  .doc-type{text-align:right}
+  .doc-label{color:#fff;font-weight:900;font-size:26px;letter-spacing:1px}
+  .doc-number{color:#94a3b8;font-size:12px;margin-top:4px;font-family:monospace}
+  .doc-date{color:#64748b;font-size:11px;margin-top:2px}
+  .status-badge{display:inline-block;background:${docColor};color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;margin-top:6px;letter-spacing:0.5px}
+  .body{padding:28px 32px}
+  .parties{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+  .party-card{background:#f8fafc;border-radius:10px;padding:14px 16px}
+  .party-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:#94a3b8;margin-bottom:8px}
+  .party-name{font-weight:800;font-size:14px;color:#1e293b;margin-bottom:4px}
+  .party-detail{font-size:12px;color:#64748b;line-height:1.5}
+  .divider{height:1px;background:#f1f5f9;margin:0 0 20px}
+  table{width:100%;border-collapse:collapse}
+  thead tr{background:#f8fafc}
+  thead th{padding:10px 8px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8;border-bottom:2px solid #e2e8f0}
+  thead th:nth-child(2){text-align:center}
+  thead th:nth-child(3),thead th:nth-child(4){text-align:right}
+  .totals{margin-top:16px;display:flex;justify-content:flex-end}
+  .totals-box{width:220px}
+  .totals-row{display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:#64748b;border-bottom:1px solid #f1f5f9}
+  .totals-row.grand{border-top:2px solid #e2e8f0;border-bottom:none;padding-top:10px;margin-top:4px}
+  .totals-row.grand .label{font-weight:800;color:#1e293b;font-size:15px}
+  .totals-row.grand .value{font-weight:900;color:${docColor};font-size:17px}
+  .footer-info{margin-top:24px;background:#f8fafc;border-radius:10px;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .fi-section .fi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#94a3b8;margin-bottom:4px}
+  .fi-section .fi-val{font-size:12.5px;color:#334155;font-weight:600;line-height:1.4}
+  .fi-section .fi-note{font-size:11px;color:#94a3b8;margin-top:2px}
+  .copyright{text-align:center;padding:16px 32px;font-size:11px;color:#94a3b8;border-top:1px solid #f1f5f9}
+  .print-btn{display:block;text-align:center;padding:12px;background:${docColor};color:#fff;font-weight:700;font-size:14px;border:none;cursor:pointer;width:100%;transition:opacity .2s;letter-spacing:0.3px}
+  .print-btn:hover{opacity:.88}
+  @media print{
+    body{background:#fff}
+    .page{margin:0;border-radius:0;box-shadow:none;max-width:none}
+    .print-btn{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Print button -->
+  <button class="print-btn" onclick="window.print()">
+    🖨️ &nbsp;Cetak / Simpan sebagai PDF
+  </button>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-area">
+      <div class="logo-circle">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="white" fill-opacity="0.9"/></svg>
+      </div>
+      <div>
+        <div class="logo-text">Serabut Store</div>
+        <div class="tagline">PT Serabut Solusi Digital · serabut.id</div>
+      </div>
+    </div>
+    <div class="doc-type">
+      <div class="doc-label">${docLabel}</div>
+      <div class="doc-number">${orderId||'–'}</div>
+      <div class="doc-date">${nowDate}</div>
+      <div><span class="status-badge">${isInvoice ? '✓ LUNAS' : 'PENAWARAN'}</span></div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+    <!-- Parties -->
+    <div class="parties">
+      <div class="party-card">
+        <div class="party-label">Dari</div>
+        <div class="party-name">PT Serabut Solusi Digital</div>
+        <div class="party-detail">
+          Jl. Mampang Prpt. Raya, Duren Tiga<br>
+          Pancoran, Jakarta Selatan 12790<br>
+          (+62) 888-1500-555<br>
+          halo@serabut.id
+        </div>
+      </div>
+      <div class="party-card">
+        <div class="party-label">Kepada</div>
+        <div class="party-name">${nama||'–'}</div>
+        <div class="party-detail">
+          ${email ? email+'<br>' : ''}
+          ${noWA ? waFormatted : ''}
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Items table -->
+    <table>
+      <thead>
+        <tr>
+          <th style="width:55%">Deskripsi</th>
+          <th style="width:8%">Qty</th>
+          <th style="width:18%">Harga Satuan</th>
+          <th style="width:19%">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemRows}
+      </tbody>
+    </table>
+
+    <!-- Totals -->
+    <div class="totals">
+      <div class="totals-box">
+        <div class="totals-row"><span class="label">Subtotal</span><span class="value">${fp(computedTotal)}</span></div>
+        <div class="totals-row"><span class="label">Garansi</span><span class="value" style="color:#16a34a">Termasuk</span></div>
+        <div class="totals-row grand"><span class="label">Total</span><span class="value">${fp(computedTotal)}</span></div>
+      </div>
+    </div>
+
+    <!-- Footer info -->
+    <div class="footer-info">
+      <div class="fi-section">
+        <div class="fi-label">Metode Pembayaran</div>
+        <div class="fi-val">${payMethod}</div>
+        <div class="fi-note">SeaBank: 901000004087 · a.n Eko Harianto</div>
+      </div>
+      <div class="fi-section">
+        <div class="fi-label">Garansi</div>
+        <div class="fi-val">Penuh selama masa aktif</div>
+        <div class="fi-note">Produk tidak aktif = diganti tanpa biaya</div>
+      </div>
+      <div class="fi-section" style="grid-column:span 2">
+        <div class="fi-label">Tanggal Pesanan</div>
+        <div class="fi-val">${fd(tanggal)} &nbsp;·&nbsp; No. Order: <span style="font-family:monospace">${orderId||'–'}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital · serabut.id · Dokumen ini diterbitkan secara digital</div>
+</div>
+</body>
+</html>`;
+        },
+        downloadInvoice(order) {
+            const items = order.items || [{ produk: order.produk, varian: order.varian, masaAktif: order.masaAktif, harga: order.harga }];
+            const html = this._buildInvoiceDoc({
+                orderId:       order.orderId,
+                tanggal:       order.tanggal,
+                nama:          this.currentUser?.nama || order.nama || '–',
+                email:         this.currentUser?.email || '',
+                noWA:          this.currentUser?.noWA  || '',
+                items,
+                total:         order.total || items.reduce((s,i)=>s+Number(i.harga||0),0),
+                paymentMethod: order.paymentMethod,
+                docType:       'invoice',
+            });
+            const win = window.open('', '_blank', 'width=760,height=900,scrollbars=yes');
+            win.document.write(html);
+            win.document.close();
+        },
+        adminDownloadInvoice(group) {
+            const html = this._buildInvoiceDoc({
+                orderId:       group.orderId,
+                tanggal:       group.tanggal,
+                nama:          group.nama || '–',
+                email:         group.email || '',
+                noWA:          group.noWA  || '',
+                items:         group.items || [],
+                total:         group.total,
+                paymentMethod: (group.items||[])[0]?.paymentMethod,
+                docType:       'invoice',
+            });
+            const win = window.open('', '_blank', 'width=760,height=900,scrollbars=yes');
+            win.document.write(html);
+            win.document.close();
+        },
+        adminDownloadQuotation(group) {
+            const html = this._buildInvoiceDoc({
+                orderId:       group.orderId,
+                tanggal:       group.tanggal,
+                nama:          group.nama || '–',
+                email:         group.email || '',
+                noWA:          group.noWA  || '',
+                items:         group.items || [],
+                total:         group.total,
+                paymentMethod: (group.items||[])[0]?.paymentMethod,
+                docType:       'quotation',
+            });
+            const win = window.open('', '_blank', 'width=760,height=900,scrollbars=yes');
+            win.document.write(html);
+            win.document.close();
+        },
+        // ─────────────────────────────────────────────────────────────────
+
         async adminUpdateGroupStatus(group, newStatus) {
             if(!newStatus) return;
             await Promise.all(group.items.map(item => this.adminUpdateOrderStatus(item, newStatus, true)));
