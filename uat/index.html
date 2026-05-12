@@ -106,6 +106,22 @@
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
     <link rel="manifest" href="manifest.json">
+    <!-- iOS PWA Splash Screens -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Serabut Store">
+    <!-- iPhone 16 Pro Max 440×956 -->
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-440x956.png">
+    <!-- iPhone 16 Pro 402×874 -->
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-402x874.png">
+    <!-- iPhone 15 Plus / 14 Plus 430×932 -->
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-430x932.png">
+    <!-- iPhone 15 / 14 / 13 / 12 390×844 -->
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="splash/splash-390x844.png">
+    <!-- iPhone SE 3 375×667 -->
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/splash-375x667.png">
+    <!-- iPad Pro 12.9" 1024×1366 -->
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="splash/splash-1024x1366.png">
 
     <!-- PWA / Add to Home Screen -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -185,10 +201,71 @@
             background: #4ade80;
             animation: cs-ping 1.5s cubic-bezier(0,0,.2,1) infinite;
         }
+        /* PWA Splash Screen */
+        #pwa-splash {
+            position: fixed; inset: 0; z-index: 99999;
+            background: linear-gradient(160deg, #7F1D1D 0%, #DC2626 55%, #EF4444 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; gap: 0;
+            transition: opacity .5s cubic-bezier(.4,0,.2,1);
+        }
+        #pwa-splash.splash-hide { opacity: 0; pointer-events: none; }
+        .splash-welcome {
+            font-size: 13px; font-weight: 500; letter-spacing: 2.5px;
+            text-transform: uppercase; color: rgba(255,255,255,.6);
+            animation: splash-up .5s .1s both;
+        }
+        .splash-brand {
+            font-size: 30px; font-weight: 800; color: #fff;
+            letter-spacing: -.5px; margin-top: 6px;
+            animation: splash-up .5s .2s both;
+        }
+        .splash-dots {
+            display: flex; gap: 7px; margin-top: 36px;
+            animation: splash-up .5s .35s both;
+        }
+        .splash-dots span {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: rgba(255,255,255,.9);
+            animation: splash-bounce 1.1s ease-in-out infinite;
+        }
+        .splash-dots span:nth-child(2) { animation-delay: .18s; }
+        .splash-dots span:nth-child(3) { animation-delay: .36s; }
+        @keyframes splash-up {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes splash-bounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: .5; }
+            40%            { transform: translateY(-9px); opacity: 1; }
+        }
     </style>
 </head>
 
 <body class="font-sans bg-gray-50 min-h-screen antialiased flex flex-col" x-cloak>
+
+<!-- PWA Splash Screen — HTML5, muncul saat launch dari Home Screen (Android & iOS standalone) -->
+<div id="pwa-splash" style="display:none">
+    <div class="splash-welcome">Welcome to</div>
+    <div class="splash-brand">Serabut Store</div>
+    <div class="splash-dots">
+        <span></span><span></span><span></span>
+    </div>
+</div>
+<script>
+(function() {
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    if (!isStandalone) return;
+    var s = document.getElementById('pwa-splash');
+    s.style.display = 'flex';
+    // Hide setelah 1.8s — cukup untuk animasi dots 1–2 siklus
+    setTimeout(function() {
+        s.classList.add('splash-hide');
+        setTimeout(function() { s.style.display = 'none'; }, 520);
+    }, 1800);
+})();
+</script>
 
 <!-- ══════════════════════════════════════════════════════
      DESKTOP NAVBAR
@@ -460,6 +537,16 @@
                             </div>
                             <h3 class="font-bold text-gray-800 text-sm leading-snug line-clamp-1" x-text="product.nama"></h3>
                             <p class="text-xs text-gray-400 truncate"><span x-text="product.varian"></span><span x-show="product.masaAktif&&product.masaAktif!=='-'" x-text="' · '+product.masaAktif"></span></p>
+                            <!-- Rating + Terjual -->
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="flex items-center gap-0.5">
+                                    <svg class="w-3 h-3 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <span class="text-[10px] font-bold text-gray-600" x-text="getProductRating(product.nama)"></span>
+                                </div>
+                                <template x-if="product.terjual > 0">
+                                    <span class="text-[10px] text-gray-400" x-text="formatTerjual(product.terjual)"></span>
+                                </template>
+                            </div>
                         </div>
                         <div class="flex-none text-right">
                             <template x-if="product.stok===0">
@@ -654,6 +741,18 @@
                                         <template x-if="!flashSaleItem(product.nama, product.varian, product.masaAktif)">
                                             <div class="font-black text-brand-500 text-base mb-2" x-text="formatPrice(product.harga)"></div>
                                         </template>
+                                        <!-- Rating + Terjual -->
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-1">
+                                                <svg class="w-3 h-3 text-yellow-400 fill-current flex-none" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                                <span class="text-[11px] font-bold text-gray-700" x-text="getProductRating(product.nama)"></span>
+                                                <span class="text-[10px] text-gray-400" x-text="'('+getProductReviewCount(product.nama)+')'"></span>
+                                            </div>
+                                            <div class="text-[10px] text-gray-400 font-medium flex items-center gap-0.5">
+                                                <svg class="w-3 h-3 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
+                                                <span x-text="formatTerjual(product.terjual||0)"></span>
+                                            </div>
+                                        </div>
                                         <div class="flex gap-1.5">
                                             <button @click.stop="addToCart(product, product)" class="flex-none w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-brand-500 hover:border-brand-300 active:scale-95 transition-all">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -682,7 +781,7 @@
             <div>
                 <!-- ── Hero Banner ── -->
                 <!-- ── Hero Banner ── -->
-                <div class="relative overflow-hidden" :class="getCategoryBg(selectedProductGroup.category)">
+                <div class="relative overflow-hidden" :class="getCategoryHeroBg(selectedProductGroup.category)">
                     <!-- decorative blobs -->
                     <div class="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-20 blur-2xl" :class="getCategoryBg(selectedProductGroup.category)" style="background:currentColor"></div>
                     <div class="absolute bottom-0 -left-6 w-28 h-28 rounded-full opacity-10 blur-2xl bg-black"></div>
@@ -713,8 +812,8 @@
                         <div class="flex items-center gap-2 flex-wrap">
                             <div class="flex items-center gap-1 bg-white/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/60">
                                 <svg class="w-3 h-3 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                <span class="text-xs font-bold text-gray-800">4.9</span>
-                                <span class="text-[10px] text-gray-500">(128)</span>
+                                <span class="text-xs font-bold text-gray-800" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></span>
+                                <span x-show="productReviews.length > 0" class="text-[10px] text-gray-500" x-text="'('+productReviews.length+')'"></span>
                             </div>
                             <template x-if="selectedProductGroup.variants?.some(v=>v.terjual>0) || selectedProductGroup.variants?.[0]?.terjual > 0">
                                 <div class="flex items-center gap-1 bg-white/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/60">
@@ -734,7 +833,7 @@
                 <div class="max-w-5xl mx-auto px-4 py-4 md:flex md:gap-6 md:items-start md:py-6">
 
                     <!-- LEFT: selectors + tabs -->
-                    <div class="flex-1 min-w-0 space-y-3">
+                    <div class="flex-1 min-w-0 flex flex-col gap-3">
 
                         <!-- Varian selector -->
                         <template x-if="getUniqueVariants(selectedProductGroup).length > 1">
@@ -802,7 +901,7 @@
                                     :class="pdTab==='ulasan' ? 'bg-white text-gray-900 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'"
                                     class="flex-1 py-2 px-1 text-xs text-center rounded-xl transition-all duration-200 font-medium flex items-center justify-center gap-1">
                                     Ulasan
-                                    <span class="text-[9px] bg-brand-500 text-white font-black px-1.5 py-0.5 rounded-full leading-none">128</span>
+                                    <span class="text-[9px] bg-brand-500 text-white font-black px-1.5 py-0.5 rounded-full leading-none" x-text="productReviews.length || '0'"></span>
                                 </button>
                             </div>
 
@@ -834,7 +933,7 @@
                                     </div>
                                     <div class="flex items-start gap-2">
                                         <svg class="w-4 h-4 text-purple-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                                        <div><div class="text-xs font-bold text-gray-700">Multi Pembayaran</div><div class="text-[11px] text-gray-400">Transfer, QRIS, VA</div></div>
+                                        <div><div class="text-xs font-bold text-gray-700">Multi Pembayaran</div><div class="text-[11px] text-gray-400" x-text="paymentMethods.length ? paymentMethods.slice(0,3).join(', ')+(paymentMethods.length>3?' +'+( paymentMethods.length-3):'') : 'Transfer, QRIS, VA'"></div></div>
                                     </div>
                                     <div class="flex items-start gap-2">
                                         <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -843,9 +942,13 @@
                                 </div>
                                 <!-- Nota khusus Adobe -->
                                 <template x-if="selectedProductGroup.category==='Adobe'">
-                                    <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2">
-                                        <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                        <p class="text-xs text-amber-700 leading-relaxed">Akun Adobe CC adalah akun sharing. Harap <strong>jangan ubah password</strong> agar akun tetap aktif untuk semua pengguna.</p>
+                                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 flex gap-2.5">
+                                        <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <div class="text-xs text-amber-800 leading-relaxed space-y-1">
+                                            <p class="font-semibold">Cara kerja aktivasi Adobe CC:</p>
+                                            <p>Kami mengaktifkan subscription langsung di <strong>akun Adobe milikmu sendiri</strong> — bukan akun sharing.</p>
+                                            <p>Setelah pesan, tim kami akan menghubungimu via <strong>WhatsApp</strong> untuk meminta password secara <strong>private & aman</strong>. Setelah aktivasi selesai, kamu <strong>disarankan ganti password</strong>.</p>
+                                        </div>
                                     </div>
                                 </template>
                             </div>
@@ -860,7 +963,6 @@
                                                 <th class="text-left py-2 px-2 text-xs font-bold text-gray-500">Durasi</th>
                                                 <th class="text-right py-2 px-2 text-xs font-bold text-gray-500">Harga</th>
                                                 <th class="text-right py-2 px-2 text-xs font-bold text-gray-500">Member</th>
-                                                <th class="text-right py-2 px-2 text-xs font-bold text-gray-500">Per Bulan</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -882,7 +984,6 @@
                                                             <span class="text-gray-400 text-xs">—</span>
                                                         </template>
                                                     </td>
-                                                    <td class="py-3 px-2 text-right text-xs text-gray-500" x-text="opt.masaAktif&&opt.masaAktif.includes('Tahun')?formatPrice(Math.round(opt.harga/12))+'/bln':(opt.masaAktif&&opt.masaAktif.includes('Bulan')?formatPrice(Math.round(opt.harga/parseInt(opt.masaAktif))))+'/bln':'—'"></td>
                                                 </tr>
                                             </template>
                                         </tbody>
@@ -894,44 +995,56 @@
                                     <p class="text-xs text-blue-700 leading-relaxed">Harga <strong>Member</strong> hanya berlaku saat ada kampanye diskon aktif. <button @click="showAuthModal=true; authTab='register'" class="underline font-bold">Daftar gratis</button> untuk dapat harga terbaik.</p>
                                 </div>
                                 <!-- Cara bayar -->
-                                <div class="mt-3">
+                                <div class="mt-3" x-show="paymentMethods.length>0">
                                     <div class="text-xs font-bold text-gray-500 mb-2">Metode Pembayaran</div>
                                     <div class="flex flex-wrap gap-2">
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">Transfer Bank</span>
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">QRIS</span>
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">Virtual Account</span>
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">Shopee Pay</span>
-                                        <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">Dana</span>
+                                        <template x-for="pm in paymentMethods" :key="pm">
+                                            <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium" x-text="pm"></span>
+                                        </template>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Tab: Ulasan -->
                             <div x-show="pdTab==='ulasan'" class="p-4">
-                                <!-- Rating summary -->
-                                <div class="flex gap-5 items-center mb-5 pb-4 border-b border-gray-100">
-                                    <div class="text-center">
-                                        <div class="text-4xl font-black text-gray-900">4.9</div>
-                                        <div class="flex justify-center text-yellow-400 mt-1">
-                                            <template x-for="i in 5" :key="i"><svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
-                                        </div>
-                                        <div class="text-xs text-gray-400 mt-1">128 ulasan</div>
+                                <!-- Loading spinner -->
+                                <template x-if="reviewsLoading">
+                                    <div class="flex justify-center items-center py-12">
+                                        <svg class="w-8 h-8 text-brand-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                        </svg>
                                     </div>
-                                    <div class="flex-1 space-y-1">
-                                        <template x-for="bar in [{star:5,pct:91},{star:4,pct:7},{star:3,pct:1},{star:2,pct:1},{star:1,pct:0}]" :key="bar.star">
-                                            <div class="flex items-center gap-1.5">
-                                                <span class="text-xs text-gray-500 w-3" x-text="bar.star"></span>
-                                                <svg class="w-3 h-3 text-yellow-400 fill-current flex-none" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                                <div class="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                                                    <div class="bg-yellow-400 h-full rounded-full" :style="`width:${bar.pct}%`"></div>
-                                                </div>
-                                                <span class="text-xs text-gray-400 w-7 text-right" x-text="bar.pct+'%'"></span>
+                                </template>
+                                <!-- Rating summary — dinamis dari productReviews -->
+                                <template x-if="!reviewsLoading && productReviews.length > 0">
+                                    <div class="flex gap-5 items-center mb-5 pb-4 border-b border-gray-100">
+                                        <div class="text-center">
+                                            <div class="text-4xl font-black text-gray-900" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></div>
+                                            <div class="flex justify-center text-yellow-400 mt-1">
+                                                <template x-for="i in 5" :key="i"><svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
                                             </div>
-                                        </template>
+                                            <div class="text-xs text-gray-400 mt-1" x-text="productReviews.length + ' ulasan'"></div>
+                                        </div>
+                                        <div class="flex-1 space-y-1">
+                                            <template x-for="star in [5,4,3,2,1]" :key="star">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-xs text-gray-500 w-3" x-text="star"></span>
+                                                    <svg class="w-3 h-3 text-yellow-400 fill-current flex-none" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                                    <div class="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                                        <div class="bg-yellow-400 h-full rounded-full"
+                                                             :style="'width:' + (productReviews.length ? Math.round(productReviews.filter(r=>(r.rating||5)===star).length/productReviews.length*100) : 0) + '%'"></div>
+                                                    </div>
+                                                    <span class="text-xs text-gray-400 w-7 text-right"
+                                                          x-text="productReviews.length ? Math.round(productReviews.filter(r=>(r.rating||5)===star).length/productReviews.length*100)+'%' : '0%'"></span>
+                                                </div>
+                                            </template>
+                                        </div>
                                     </div>
-                                </div>
+                                </template>
+
                                 <!-- Write review CTA (for logged-in member with eligible order) -->
-                                <template x-if="isMember && eligibleReviewOrder(selectedProductGroup?.nama)">
+                                <template x-if="!reviewsLoading && isMember && eligibleReviewOrder(selectedProductGroup?.nama)">
                                     <div class="mb-4 bg-brand-50 border border-brand-200 rounded-2xl p-4 flex items-center justify-between gap-3">
                                         <div>
                                             <p class="text-sm font-bold text-brand-700">Bagaimana pengalamanmu?</p>
@@ -944,67 +1057,75 @@
                                     </div>
                                 </template>
 
-                                <!-- Real reviews from GAS (published) -->
-                                <template x-if="productReviews.length > 0">
-                                    <div class="space-y-4 mb-4">
-                                        <template x-for="review in productReviews" :key="review.id">
+                                <!-- Reviews dari GAS (per produk, hanya yang published) -->
+                                <template x-if="!reviewsLoading && productReviews.length > 0">
+                                    <div class="space-y-4">
+                                        <template x-for="review in (reviewsShowAll ? productReviews : productReviews.slice(0,3))" :key="review.id">
                                             <div class="border-b border-gray-50 pb-4 last:border-0">
+                                                <!-- Header: avatar + nama + bintang -->
                                                 <div class="flex items-start justify-between gap-2 mb-1.5">
                                                     <div class="flex items-center gap-2">
                                                         <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center flex-none">
-                                                            <span class="text-xs font-black text-emerald-600" x-text="review.nama.charAt(0)"></span>
+                                                            <span class="text-xs font-black text-emerald-600" x-text="(review.nama||'?').charAt(0)"></span>
                                                         </div>
                                                         <div>
                                                             <div class="flex items-center gap-1.5">
                                                                 <div class="text-xs font-bold text-gray-700" x-text="review.nama"></div>
                                                                 <span class="text-[9px] bg-emerald-100 text-emerald-600 font-bold px-1.5 py-0.5 rounded-full">Pembeli Terverifikasi</span>
                                                             </div>
-                                                            <div class="text-[10px] text-gray-400" x-text="review.tanggal"></div>
+                                                            <div class="text-[10px] text-gray-400" x-text="review.tgl"></div>
                                                         </div>
                                                     </div>
                                                     <div class="flex text-yellow-400">
-                                                        <template x-for="i in (review.bintang||5)" :key="i"><svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
+                                                        <template x-for="i in (review.rating||5)" :key="i"><svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
                                                     </div>
                                                 </div>
-                                                <div class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-block mb-1.5" x-text="review.produk+(review.varian&&review.varian!=='-'?' · '+review.varian:'')"></div>
-                                                <p class="text-sm text-gray-600 leading-relaxed" x-text="review.komentar"></p>
+                                                <!-- Produk badge -->
+                                                <div class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-block mb-1.5"
+                                                     x-text="review.produk + (review.varian && review.varian!=='-' ? ' · '+review.varian : '')"></div>
+                                                <!-- Komentar -->
+                                                <p class="text-sm text-gray-600 leading-relaxed mb-2.5" x-text="review.komentar"></p>
+                                                <!-- Love button -->
+                                                <button @click="likeReview(review)"
+                                                        class="flex items-center gap-1.5 text-[11px] font-semibold rounded-full px-2.5 py-1 transition-all border"
+                                                        :class="review._liked
+                                                            ? 'bg-red-50 border-red-200 text-red-500'
+                                                            : 'bg-gray-50 border-gray-200 text-gray-400 hover:bg-red-50 hover:border-red-200 hover:text-red-400'">
+                                                    <svg class="w-3.5 h-3.5 transition-all" :class="review._liked ? 'fill-red-500' : 'fill-none stroke-current'" viewBox="0 0 24 24" stroke-width="2">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                                                    </svg>
+                                                    <span x-text="(review.likes||0) > 0 ? (review.likes||0) : 'Helpful?'"></span>
+                                                </button>
                                             </div>
+                                        </template>
+
+                                        <!-- Load more / Show less -->
+                                        <template x-if="productReviews.length > 3">
+                                            <button @click="reviewsShowAll = !reviewsShowAll"
+                                                    class="w-full py-2.5 text-xs font-semibold text-brand-600 hover:text-brand-700 border border-brand-200 hover:border-brand-300 rounded-xl bg-brand-50 hover:bg-brand-100 transition-all flex items-center justify-center gap-1.5">
+                                                <template x-if="!reviewsShowAll">
+                                                    <span>Lihat semua <span x-text="productReviews.length"></span> ulasan
+                                                        <svg class="w-3.5 h-3.5 inline ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                                    </span>
+                                                </template>
+                                                <template x-if="reviewsShowAll">
+                                                    <span>Sembunyikan
+                                                        <svg class="w-3.5 h-3.5 inline ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                                                    </span>
+                                                </template>
+                                            </button>
                                         </template>
                                     </div>
                                 </template>
 
-                                <!-- Hardcoded dummy reviews -->
-                                <!-- Review cards -->
-                                <div class="space-y-4">
-                                    <template x-for="review in [
-                                        {nama:'A*** S.', tgl:'2 Mei 2026', bintang:5, produk:'Office 365 Personal · 1 Tahun', komentar:'Proses cepat banget, kurang dari 10 menit sudah aktif. Penjual responsif dan ramah. Recommended!'},
-                                        {nama:'D*** R.', tgl:'28 Apr 2026', bintang:5, produk:'Office 365 Family · 1 Tahun', komentar:'Sudah beli 2x di sini, selalu lancar. Harga terjangkau dan garansi beneran ada. Terpercaya!'},
-                                        {nama:'B*** P.', tgl:'20 Apr 2026', bintang:5, produk:'Office 365 Personal · 6 Bulan', komentar:'Awalnya ragu, tapi ternyata legit. Akun langsung aktif, Word & Excel jalan normal di laptop.'},
-                                        {nama:'S*** M.', tgl:'15 Apr 2026', bintang:4, produk:'Office 365 Family · 1 Tahun', komentar:'Pelayanan baik, pengiriman cepat. Minus sedikit karena ada pertanyaan yang direspon agak lama, tapi overall bagus.'},
-                                        {nama:'R*** F.', tgl:'10 Apr 2026', bintang:5, produk:'Office 365 Personal · 1 Tahun', komentar:'Mantap! Sudah pakai 3 bulan, tidak ada masalah. Harga jauh lebih murah dari official. Langsung langganan lagi tahun depan.'}
-                                    ]" :key="review.nama+review.tgl">
-                                        <div class="border-b border-gray-50 pb-4 last:border-0">
-                                            <div class="flex items-start justify-between gap-2 mb-1.5">
-                                                <div class="flex items-center gap-2">
-                                                    <div class="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center flex-none">
-                                                        <span class="text-xs font-black text-brand-600" x-text="review.nama.charAt(0)"></span>
-                                                    </div>
-                                                    <div>
-                                                        <div class="text-xs font-bold text-gray-700" x-text="review.nama"></div>
-                                                        <div class="text-[10px] text-gray-400" x-text="review.tgl"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="flex text-yellow-400">
-                                                    <template x-for="i in review.bintang" :key="i"><svg class="w-3 h-3 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
-                                                </div>
-                                            </div>
-                                            <div class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-block mb-1.5" x-text="review.produk"></div>
-                                            <p class="text-sm text-gray-600 leading-relaxed" x-text="review.komentar"></p>
-                                        </div>
-                                    </template>
-                                </div>
-                                <!-- Lihat semua -->
-                                <button class="w-full mt-2 text-center text-sm text-brand-500 font-semibold py-2 hover:text-brand-600 transition-colors">Lihat semua 128 ulasan →</button>
+                                <!-- Empty state — belum ada ulasan untuk produk ini -->
+                                <template x-if="!reviewsLoading && productReviews.length === 0">
+                                    <div class="text-center py-10">
+                                        <svg class="w-12 h-12 text-gray-200 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                        <p class="text-sm font-semibold text-gray-400">Belum ada ulasan untuk produk ini</p>
+                                        <p class="text-xs text-gray-400 mt-1">Jadilah yang pertama memberikan ulasan!</p>
+                                    </div>
+                                </template>
                             </div>
                         </div>
                         <!-- end tabs -->
@@ -1092,17 +1213,17 @@
                                     <span>Butuh bantuan? <button @click.prevent="csHidden=false; csPopup=true" class="text-brand-500 font-semibold hover:underline">Chat Sera →</button></span>
                                 </div>
                             </div>
-                        </div>
-                        <!-- Rating mini -->
-                        <div class="mt-3 bg-white rounded-2xl border border-gray-100 px-4 py-3 flex items-center gap-3">
-                            <div class="flex text-yellow-400">
-                                <template x-for="i in 5" :key="i"><svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
+                            <!-- Rating mini -->
+                            <div class="border-t border-gray-100 px-4 py-3 flex items-center gap-3">
+                                <div class="flex text-yellow-400">
+                                    <template x-for="i in 5" :key="i"><svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-black text-gray-800" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></span>
+                                    <span class="text-xs text-gray-400 ml-1" x-text="productReviews.length ? 'dari '+productReviews.length+' ulasan' : 'belum ada ulasan'"></span>
+                                </div>
+                                <button @click="pdTab='ulasan'" class="ml-auto text-xs text-brand-500 font-semibold hover:underline">Lihat →</button>
                             </div>
-                            <div>
-                                <span class="text-sm font-black text-gray-800">4.9</span>
-                                <span class="text-xs text-gray-400 ml-1">dari 128 ulasan</span>
-                            </div>
-                            <button @click="pdTab='ulasan'" class="ml-auto text-xs text-brand-500 font-semibold hover:underline">Lihat →</button>
                         </div>
                     </div>
                     <!-- end RIGHT -->
@@ -1732,11 +1853,35 @@
                                     <!-- Multi-item total -->
                                     <span x-show="order.items.length > 1" class="text-xs font-black text-brand-500" x-text="'Total ' + formatPrice(order.total)"></span>
                                 </div>
-                                <div class="flex items-center gap-1 text-[10px] text-brand-500 font-semibold flex-none">
-                                    <!-- dot kuning jika eligible review -->
-                                    <span x-show="canReviewOrder(order)" class="w-1.5 h-1.5 rounded-full bg-yellow-400 flex-none"></span>
-                                    <span>Detail</span>
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                <div class="flex items-center gap-2 flex-none">
+                                    <!-- Bintang jika sudah review -->
+                                    <template x-if="hasMyReview(order)">
+                                        <div class="flex items-center gap-0.5">
+                                            <template x-for="i in 5" :key="i">
+                                                <svg class="w-3 h-3" viewBox="0 0 20 20" :class="i<=(hasMyReview(order)?.rating||0)?'fill-yellow-400':'fill-gray-200'">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                </svg>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <!-- Badge "Beri Ulasan" jika eligible tapi belum review -->
+                                    <template x-if="!hasMyReview(order) && canReviewOrder(order)">
+                                        <span class="text-[9px] font-bold bg-yellow-400 text-white px-1.5 py-0.5 rounded-full">Beri Ulasan</span>
+                                    </template>
+                                    <div class="flex items-center gap-2 flex-none">
+                                        <template x-if="order.status==='Aktif'||order.status==='Selesai'">
+                                            <button @click.stop="downloadInvoice(order)"
+                                                    title="Download Invoice"
+                                                    class="flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg font-semibold active:scale-95 transition-all hover:bg-emerald-100">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                Invoice
+                                            </button>
+                                        </template>
+                                        <div class="flex items-center gap-1 text-[10px] text-brand-500 font-semibold">
+                                            <span>Detail</span>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1948,7 +2093,84 @@
                         <span class="text-lg font-black text-brand-500" x-text="formatPrice(orderDetailModal?.total||0)"></span>
                     </div>
 
-                    <!-- ── Inline Review Form (eligible orders) ── -->
+                    <!-- ── Tampilkan ulasan buyer yang sudah dikirim ── -->
+                    <template x-if="hasMyReview(orderDetailModal)">
+                        <div class="border-t border-gray-100 pt-4">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Ulasanmu</p>
+                            <!-- View mode -->
+                            <template x-if="!reviewEditMode">
+                                <div class="bg-gray-50 rounded-xl p-3 space-y-2">
+                                    <!-- Bintang -->
+                                    <div class="flex items-center gap-1">
+                                        <template x-for="i in 5" :key="i">
+                                            <svg class="w-5 h-5" viewBox="0 0 20 20"
+                                                 :class="i<=(hasMyReview(orderDetailModal)?.rating||0)?'fill-yellow-400':'fill-gray-200'">
+                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                            </svg>
+                                        </template>
+                                        <span class="ml-1 text-xs font-semibold text-gray-500" x-text="['','Sangat Buruk','Buruk','Cukup','Bagus','Sangat Bagus'][hasMyReview(orderDetailModal)?.rating||0]||''"></span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 leading-relaxed" x-text="hasMyReview(orderDetailModal)?.komentar"></p>
+                                    <!-- Edit button jika dalam 7 hari -->
+                                    <template x-if="canEditMyReview(orderDetailModal)">
+                                        <button @click="(function(rv){ reviewRating=rv.rating; reviewKomentar=rv.komentar; reviewAnonim=rv.anonim; reviewError=''; reviewEditMode=true; })(hasMyReview(orderDetailModal))"
+                                                class="text-xs text-brand-500 font-bold flex items-center gap-1 mt-1">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                            Edit Ulasan (bisa diedit dalam 7 hari)
+                                        </button>
+                                    </template>
+                                    <template x-if="!canEditMyReview(orderDetailModal)">
+                                        <p class="text-[10px] text-gray-400 italic">Masa edit ulasan sudah berakhir (7 hari).</p>
+                                    </template>
+                                </div>
+                            </template>
+                            <!-- Edit mode -->
+                            <template x-if="reviewEditMode">
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-1 mb-1">
+                                        <template x-for="star in [1,2,3,4,5]" :key="star">
+                                            <button type="button" @click="reviewRating=star"
+                                                    @mouseenter="reviewHover=star" @mouseleave="reviewHover=0"
+                                                    class="transition-transform hover:scale-110 active:scale-95">
+                                                <svg class="w-8 h-8 transition-colors" viewBox="0 0 20 20"
+                                                     :class="star<=(reviewHover||reviewRating)?'fill-yellow-400':'fill-gray-200'">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                                </svg>
+                                            </button>
+                                        </template>
+                                        <span class="ml-1 text-sm font-semibold text-gray-500" x-text="['','Sangat Buruk','Buruk','Cukup','Bagus','Sangat Bagus'][reviewHover||reviewRating]||''"></span>
+                                    </div>
+                                    <textarea x-model="reviewKomentar" rows="3"
+                                              placeholder="Ceritakan pengalamanmu..."
+                                              class="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-300 resize-none"
+                                              style="font-size:16px!important"></textarea>
+                                    <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                                        <div class="relative flex-none">
+                                            <input type="checkbox" x-model="reviewAnonim" class="sr-only">
+                                            <div class="w-9 h-5 rounded-full transition-colors" :class="reviewAnonim?'bg-brand-500':'bg-gray-200'"></div>
+                                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform" :class="reviewAnonim?'translate-x-4':'translate-x-0'"></div>
+                                        </div>
+                                        <span class="text-xs text-gray-500">Tampilkan sebagai Anonim</span>
+                                    </label>
+                                    <div x-show="reviewError" class="text-xs text-red-500 font-medium" x-text="reviewError"></div>
+                                    <div class="flex gap-2">
+                                        <button @click="reviewEditMode=false; reviewError=''"
+                                                class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-gray-100 text-gray-600 transition-all">
+                                            Batal
+                                        </button>
+                                        <button @click="submitEditReview(orderDetailModal)"
+                                                :disabled="reviewLoading"
+                                                class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-brand-500 hover:bg-brand-600 text-white transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+                                            <svg x-show="reviewLoading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                            <span x-text="reviewLoading?'Menyimpan...':'Simpan Edit'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- ── Inline Review Form (belum review) ── -->
                     <template x-if="canReviewOrder(orderDetailModal)">
                         <div class="border-t border-gray-100 pt-4">
                             <template x-if="!reviewSuccess">
@@ -2014,6 +2236,14 @@
                             <button @click="renewOrder(orderDetailModal.items[0]); orderDetailModal=null"
                                     class="flex-1 py-3 bg-brand-500 text-white font-bold text-sm rounded-2xl active:scale-95 transition-all">
                                 Perpanjang Sekarang
+                            </button>
+                        </template>
+                        <!-- Download Invoice — jika status Selesai atau Aktif -->
+                        <template x-if="orderDetailModal?.status==='Selesai' || orderDetailModal?.status==='Aktif'">
+                            <button @click="downloadInvoice(orderDetailModal)"
+                                    class="flex items-center gap-1.5 px-4 py-3 bg-emerald-50 text-emerald-700 font-semibold text-sm rounded-2xl active:scale-95 transition-all hover:bg-emerald-100 border border-emerald-200">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                                Invoice
                             </button>
                         </template>
                         <button @click="orderDetailModal=null"
@@ -2182,7 +2412,7 @@
             <!-- Tab Navigation Mobile: horizontal scroll -->
             <div class="relative mb-4 md:hidden">
                 <div class="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar">
-                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'ulasan',label:'Ulasan'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
+                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'quotation',label:'Quotation'},{id:'ulasan',label:'Ulasan'},{id:'payment',label:'Pembayaran'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
                         <button @click="adminTab=tab.id; adminInitTab(tab.id); $el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})"
                                 :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
                                 class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
@@ -2206,8 +2436,10 @@
                     {id:'panduan',   label:'Panduan',      icon:'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'},
                     {id:'footer',    label:'Footer',       icon:'M4 6h16M4 12h16M4 18h7'},
                     {id:'orders',    label:'Semua Order',  icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},
+                    {id:'quotation', label:'Quotation',    icon:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'},
                     {id:'ulasan',    label:'Ulasan',       icon:'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'},
-                    {id:'ipaymu',    label:'Xendit',       icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'}
+                    {id:'payment',   label:'Pembayaran',   icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'},
+                    {id:'ipaymu',    label:'Xendit',       icon:'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z'}
                 ]" :key="tab.id">
                     <button @click="adminTab=tab.id; adminInitTab(tab.id)"
                             :class="adminTab===tab.id ? 'bg-brand-50 text-brand-600 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'"
@@ -3050,11 +3282,19 @@
 
                                 <!-- Group header: No Pesanan kiri, status+buyer tengah, ubah status kanan -->
                                 <div class="px-4 py-3 border-b" :class="_orderCardHeader(g.status)">
-                                    <!-- Row 1: No Pesanan + Ubah Status -->
+                                    <!-- Row 1: No Pesanan + action buttons + Ubah Status -->
                                     <div class="flex items-center justify-between gap-2 mb-2">
                                         <div class="flex items-center gap-2 flex-wrap">
                                             <span class="font-mono text-xs font-bold text-gray-700 bg-white border border-gray-200 px-2 py-0.5 rounded-lg" x-text="g.orderId"></span>
                                             <span :class="getStatusBadge(g.status)" class="text-xs font-semibold px-2.5 py-0.5 rounded-full" x-text="g.status"></span>
+                                            <!-- Invoice: hanya status Selesai -->
+                                            <template x-if="g.status==='Selesai'">
+                                                <button @click.stop="adminDownloadInvoice(g)"
+                                                        class="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-white border border-emerald-300 px-2 py-0.5 rounded-full hover:bg-emerald-50 transition-colors">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                                                    Invoice
+                                                </button>
+                                            </template>
                                         </div>
                                         <select @change="adminUpdateGroupStatus(g, $event.target.value); $event.target.value=''"
                                                 class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700 flex-shrink-0">
@@ -3119,6 +3359,16 @@
                                 <div class="flex items-center justify-between gap-3 px-4 py-2.5 border-t" :class="_orderCardFooter(g.status)">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <span class="text-[11px] text-gray-400" x-text="g.items.length + ' item'"></span>
+                                        <!-- Countdown Belum Bayar -->
+                                        <template x-if="g.status==='Pending' && orderMsLeft({tanggal:g.tanggal, status:g.status}) > 0">
+                                            <span class="flex items-center gap-1 text-[10px] font-semibold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg>
+                                                Sisa <span x-text="orderTimeLeftStr({tanggal:g.tanggal, status:g.status})"></span>
+                                            </span>
+                                        </template>
+                                        <template x-if="g.status==='Pending' && orderMsLeft({tanggal:g.tanggal, status:g.status}) <= 0">
+                                            <span class="text-[10px] font-semibold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Waktu habis</span>
+                                        </template>
                                         <template x-if="g.items[0]?.paymentMethod">
                                             <span class="text-[10px] font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full" x-text="g.items[0].paymentMethod"></span>
                                         </template>
@@ -3161,6 +3411,69 @@
 
                 </div>
             </div>
+
+            <!-- ══ Tab: Pembayaran ══════════════════════════════ -->
+            <div x-show="adminTab==='payment'"
+                 class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm space-y-4">
+
+                <div class="flex items-center justify-between gap-3">
+                    <div>
+                        <h3 class="font-black text-gray-800 text-base">Metode Pembayaran</h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Centang metode yang aktif — tampil di halaman produk</p>
+                    </div>
+                    <button @click="adminSavePaymentMethods()"
+                            :disabled="adminPaymentSaving"
+                            class="flex items-center gap-1.5 text-xs bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-semibold px-3 py-1.5 rounded-lg transition-all">
+                        <svg x-show="adminPaymentSaving" class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        <span x-text="adminPaymentSaving ? 'Menyimpan...' : 'Simpan'"></span>
+                    </button>
+                </div>
+
+                <!-- List metode -->
+                <div class="space-y-2">
+                    <template x-for="(pm, idx) in adminPaymentList" :key="idx">
+                        <div class="flex items-center gap-3 p-3 rounded-xl border transition-all"
+                             :class="pm.active ? 'border-brand-200 bg-brand-50' : 'border-gray-100 bg-white'">
+                            <!-- Toggle -->
+                            <button @click="pm.active=!pm.active"
+                                    class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 flex-none"
+                                    :class="pm.active ? 'bg-brand-500' : 'bg-gray-300'">
+                                <span class="inline-block w-3.5 h-3.5 transform rounded-full bg-white shadow transition-transform duration-200"
+                                      :class="pm.active ? 'translate-x-4' : 'translate-x-0.5'"></span>
+                            </button>
+                            <!-- Nama (editable) -->
+                            <input x-model="pm.label" type="text"
+                                   class="flex-1 text-sm font-medium bg-transparent border-none outline-none text-gray-800 placeholder-gray-300"
+                                   placeholder="Nama metode...">
+                            <!-- Hapus -->
+                            <button @click="adminPaymentList.splice(idx,1)"
+                                    class="p-1 rounded-lg hover:bg-red-50 transition-all flex-none">
+                                <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Tambah baru -->
+                <div class="flex gap-2">
+                    <input x-model="adminPaymentNew" type="text" placeholder="Tambah metode baru (contoh: GoPay)"
+                           @keydown.enter="adminPaymentNew.trim()&&adminPaymentList.push({label:adminPaymentNew.trim(),active:true});adminPaymentNew=''"
+                           class="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-brand-400">
+                    <button @click="adminPaymentNew.trim()&&adminPaymentList.push({label:adminPaymentNew.trim(),active:true});adminPaymentNew=''"
+                            class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-xl transition-all">+ Tambah</button>
+                </div>
+
+                <!-- Preview -->
+                <div class="border-t border-gray-100 pt-3" x-show="adminPaymentList.filter(p=>p.active).length>0">
+                    <div class="text-[11px] text-gray-400 font-semibold mb-2">Preview di halaman produk:</div>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="pm in adminPaymentList.filter(p=>p.active)" :key="pm.label">
+                            <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium" x-text="pm.label"></span>
+                        </template>
+                    </div>
+                </div>
+
+            </div><!-- end tab payment -->
 
             <!-- ── Tab: Xendit ── -->
             <div x-show="adminTab==='ipaymu'" class="space-y-4">
@@ -3223,12 +3536,302 @@
 
             </div><!-- end tab xendit -->
 
+            <!-- ══ Tab: Quotation ══════════════════════════════ -->
+            <div x-show="adminTab==='quotation'" class="space-y-4">
+
+                <!-- ── LIST VIEW ── -->
+                <div x-show="quoView==='list'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="font-black text-gray-900 text-base">Quotation</h2>
+                            <p class="text-xs text-gray-400 mt-0.5" x-text="quoList.length + ' dokumen tersimpan'"></p>
+                        </div>
+                        <button @click="quoNewForm()"
+                                class="flex items-center gap-1.5 text-sm font-bold bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                            Buat Quotation
+                        </button>
+                    </div>
+                    <!-- Empty state -->
+                    <div x-show="quoList.length===0" class="text-center py-12 text-gray-400">
+                        <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <p class="text-sm font-medium">Belum ada quotation</p>
+                        <p class="text-xs mt-1">Klik "Buat Quotation" untuk membuat dokumen pertama</p>
+                    </div>
+                    <!-- List -->
+                    <div x-show="quoList.length>0" class="space-y-2">
+                        <template x-for="(q,idx) in quoList" :key="q.id">
+                            <div class="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all">
+                                <!-- Icon -->
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                </div>
+                                <!-- Info -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-xs text-gray-500" x-text="q.id"></span>
+                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                              :class="q.status==='sent_wa'||q.status==='sent_email'||q.status==='sent_both' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'"
+                                              x-text="q.status==='sent_wa'?'✓ WA':q.status==='sent_email'?'✓ Email':q.status==='sent_both'?'✓ WA+Email':'Draft'"></span>
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-800 truncate mt-0.5" x-text="q.nama"></div>
+                                    <div class="flex items-center gap-3 mt-0.5">
+                                        <span class="text-xs text-gray-400" x-text="new Date(q.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})"></span>
+                                        <span class="text-xs font-bold text-brand-500" x-text="'Rp '+Number(q.total||0).toLocaleString('id-ID')"></span>
+                                        <span class="text-xs text-gray-400" x-text="q.itemCount+' item'"></span>
+                                    </div>
+                                </div>
+                                <!-- Actions -->
+                                <div class="flex items-center gap-1.5 flex-shrink-0">
+                                    <button @click="quoDeleteIdx===idx ? (quoList.splice(idx,1), localStorage.setItem('srb_quotations',JSON.stringify(quoList)), quoDeleteIdx=-1) : (quoDeleteIdx=idx)"
+                                            :class="quoDeleteIdx===idx ? 'bg-red-500 text-white hover:bg-red-600' : 'text-gray-300 hover:text-red-400 hover:bg-red-50'"
+                                            class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors text-xs font-bold" :title="quoDeleteIdx===idx ? 'Yakin hapus?' : 'Hapus'">
+                                        <template x-if="quoDeleteIdx===idx"><span>Ya</span></template>
+                                        <template x-if="quoDeleteIdx!==idx"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></template>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- ── FORM VIEW ── -->
+                <div x-show="quoView==='form'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <button @click="quoBackToList()"
+                                    class="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <div>
+                                <h2 class="font-black text-gray-900 text-base">Buat Quotation</h2>
+                                <p class="text-xs text-gray-400 mt-0.5">Isi data penerima, item, dan kirimkan ke klien</p>
+                            </div>
+                        </div>
+                        <button @click="quoReset()"
+                                class="text-xs text-gray-400 hover:text-gray-600 font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all">
+                            Reset Form
+                        </button>
+                    </div>
+
+                    <!-- 2 col layout on desktop -->
+                    <div class="grid md:grid-cols-2 gap-5">
+
+                        <!-- LEFT: Penerima -->
+                        <div class="space-y-3">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Data Penerima</p>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Nama / Perusahaan <span class="text-red-400">*</span></label>
+                                <input x-model="quoForm.nama" type="text" placeholder="PT. Nama Perusahaan"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Email</label>
+                                <input x-model="quoForm.email" type="email" placeholder="email@perusahaan.com"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">No. HP / WhatsApp</label>
+                                <div class="flex border border-gray-200 rounded-xl overflow-hidden focus-within:border-brand-400 transition-colors">
+                                    <span class="px-3 py-2 bg-gray-50 text-gray-500 text-sm font-semibold border-r border-gray-200 flex-shrink-0 flex items-center">+62</span>
+                                    <input x-model="quoForm.noHP" type="tel" inputmode="numeric" pattern="[0-9]*"
+                                           @input="quoForm.noHP = quoForm.noHP.replace(/[^0-9]/g,'')"
+                                           placeholder="812 3456 7890"
+                                           class="flex-1 px-3 py-2 text-sm focus:outline-none bg-white"/>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Alamat</label>
+                                <textarea x-model="quoForm.alamat" rows="2" placeholder="Jl. ..., Kota"
+                                          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 resize-none"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- RIGHT: Pembayaran -->
+                        <div class="space-y-3">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Pembayaran</p>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Metode Bayar</label>
+                                <select x-model="quoForm.payMethod"
+                                        class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 bg-white">
+                                    <option value="Transfer Bank">Transfer Bank</option>
+                                    <option value="QRIS">QRIS</option>
+                                    <option value="iPaymu">iPaymu</option>
+                                    <option value="Xendit">Xendit</option>
+                                    <option value="Tunai">Tunai</option>
+                                    <option value="Lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Nama Bank / E-wallet</label>
+                                <input x-model="quoForm.bankName" type="text" placeholder="SeaBank / BCA / Mandiri"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">No. Rekening</label>
+                                <input x-model="quoForm.bankAccount" type="text" placeholder="901000004087"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Atas Nama</label>
+                                <input x-model="quoForm.bankHolder" type="text" placeholder="Eko Harianto"
+                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 font-medium mb-1 block">Catatan (opsional)</label>
+                                <textarea x-model="quoForm.note" rows="2" placeholder="Garansi 1 tahun, dll."
+                                          class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400 resize-none"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Items -->
+                    <div class="mt-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-wide">Item Produk</p>
+                            <button @click="quoAddItem()"
+                                    class="flex items-center gap-1 text-xs font-semibold text-brand-600 bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-all">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                                Tambah Item
+                            </button>
+                        </div>
+
+                        <!-- Items table (Excel-style) -->
+                        <div class="border border-gray-200 rounded-xl overflow-hidden">
+                            <!-- Table header -->
+                            <div class="grid items-center bg-gray-50 border-b border-gray-200 text-[10px] font-bold uppercase tracking-wide text-gray-400 px-2"
+                                 style="grid-template-columns:1fr 52px 110px 80px 28px">
+                                <div class="py-2 px-1.5">Produk</div>
+                                <div class="py-2 px-1 text-center">Qty</div>
+                                <div class="py-2 px-1 text-right">Harga Satuan</div>
+                                <div class="py-2 px-1 text-right">Total</div>
+                                <div></div>
+                            </div>
+                            <!-- Rows -->
+                            <template x-for="(item, idx) in quoForm.items" :key="idx">
+                                <div class="grid items-center border-b border-gray-100 last:border-0 px-2 hover:bg-gray-50 transition-colors"
+                                     style="grid-template-columns:1fr 52px 110px 80px 28px">
+                                    <!-- Produk -->
+                                    <div class="py-1.5 px-1 relative">
+                                        <input :value="item.deskripsi" @input="item.deskripsi=$event.target.value; quoProductSearch=idx; quoSearchQuery=$event.target.value; quoFilterProducts()"
+                                               type="text" placeholder="Cari atau ketik..."
+                                               class="w-full border-0 bg-transparent text-xs text-gray-800 focus:outline-none placeholder-gray-300"/>
+                                        <div x-show="quoProductSearch===idx && quoFilteredProducts.length>0"
+                                             class="absolute z-50 top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg mt-0.5 max-h-40 overflow-y-auto" style="min-width:220px">
+                                            <template x-for="p in quoFilteredProducts.slice(0,8)" :key="p.nama+'|'+p.varian+'|'+p.masaAktif">
+                                                <button @click.stop="quoSelectProduct(idx, p)"
+                                                        class="w-full text-left px-3 py-2 text-xs hover:bg-brand-50 transition-colors border-b border-gray-50 last:border-0">
+                                                    <span class="font-semibold text-gray-800" x-text="p.nama"></span>
+                                                    <span x-show="p.varian&&p.varian!=='-'" class="text-gray-400 ml-1" x-text="'– '+p.varian"></span>
+                                                    <span x-show="p.masaAktif&&p.masaAktif!=='-'" class="text-gray-400 ml-1" x-text="'· '+p.masaAktif"></span>
+                                                    <span class="text-brand-500 font-bold ml-2" x-text="formatPrice(p.harga)"></span>
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <!-- Qty -->
+                                    <div class="py-1.5 px-1">
+                                        <input x-model.number="item.qty" @input="quoRecalc()" type="number" min="1"
+                                               class="w-full border border-gray-200 rounded-md px-1.5 py-1 text-xs focus:outline-none focus:border-brand-400 text-center bg-white"/>
+                                    </div>
+                                    <!-- Harga Satuan -->
+                                    <div class="py-1.5 px-1">
+                                        <input x-model.number="item.harga" @input="quoRecalc()" type="number" min="0"
+                                               class="w-full border border-gray-200 rounded-md px-1.5 py-1 text-xs focus:outline-none focus:border-brand-400 text-right bg-white"/>
+                                    </div>
+                                    <!-- Total -->
+                                    <div class="py-1.5 px-1 text-right">
+                                        <span class="text-xs font-bold text-gray-700" x-text="formatPrice(item.qty*item.harga)"></span>
+                                    </div>
+                                    <!-- Hapus -->
+                                    <div class="py-1.5 flex justify-center">
+                                        <button @click="quoForm.items.splice(idx,1); quoRecalc()" title="Hapus"
+                                                class="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 rounded transition-colors">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                            <div x-show="quoForm.items.length===0" class="text-center py-5 text-xs text-gray-400">Belum ada item — klik "+ Tambah Item"</div>
+                        </div>
+
+                        <!-- Subtotal + Diskon + Total -->
+                        <div class="mt-4 flex justify-end">
+                            <div class="w-full md:w-72 space-y-2">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-500">Subtotal</span>
+                                    <span class="font-semibold text-gray-700" x-text="formatPrice(quoSubtotal)"></span>
+                                </div>
+                                <div class="flex items-center justify-between gap-3">
+                                    <span class="text-sm text-gray-500 flex-none">Diskon</span>
+                                    <div class="flex items-center gap-1.5 flex-1 justify-end">
+                                        <select x-model="quoForm.discountType" @change="quoRecalc()"
+                                                class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none bg-white text-gray-600">
+                                            <option value="nominal">Rp</option>
+                                            <option value="persen">%</option>
+                                        </select>
+                                        <input x-model.number="quoForm.discountVal" @input="quoRecalc()" type="number" min="0"
+                                               :placeholder="quoForm.discountType==='persen'?'0':'0'"
+                                               class="w-24 border border-gray-200 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-brand-400 text-right"/>
+                                    </div>
+                                </div>
+                                <div x-show="quoDiscountAmount>0" class="flex items-center justify-between text-sm text-red-500">
+                                    <span>– Diskon</span>
+                                    <span class="font-semibold" x-text="'– '+formatPrice(quoDiscountAmount)"></span>
+                                </div>
+                                <div class="flex items-center justify-between border-t border-gray-200 pt-2 mt-1">
+                                    <span class="font-bold text-gray-800">Total</span>
+                                    <span class="text-xl font-black text-brand-500" x-text="formatPrice(quoTotal)"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="mt-5 space-y-3">
+                        <!-- Row 1: Preview -->
+                        <button @click="quoGenerate()"
+                                :disabled="!quoForm.nama || quoForm.items.length===0"
+                                class="w-full py-3 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            Preview & Print
+                        </button>
+                        <!-- Row 2: Send via WA + Email -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <button @click="quoSendWA()"
+                                    :disabled="!quoForm.nama || quoForm.items.length===0 || quoWASending"
+                                    class="py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
+                                <svg x-show="quoWASending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                <svg x-show="!quoWASending" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.534 5.862L.057 23.943l6.235-1.469A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.525-5.17-1.435l-.37-.22-3.7.872.932-3.604-.241-.371A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                                <span x-text="quoWASending ? 'Mengirim...' : 'Kirim WA'"></span>
+                            </button>
+                            <button @click="quoSendEmail()"
+                                    :disabled="!quoForm.nama || quoForm.items.length===0 || quoEmailSending"
+                                    class="py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
+                                <svg x-show="quoEmailSending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                <svg x-show="!quoEmailSending" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                <span x-text="quoEmailSending ? 'Mengirim...' : 'Kirim Email'"></span>
+                            </button>
+                        </div>
+                        <!-- Status msg -->
+                        <div x-show="quoSendMsg" class="text-center text-sm font-semibold px-4 py-2.5 rounded-xl"
+                             :class="quoSendMsg.startsWith('✓') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'"
+                             x-text="quoSendMsg"></div>
+                    </div>
+                </div><!-- end form view -->
+
+            </div><!-- end tab quotation -->
+
             <!-- ══ Tab: Ulasan ══════════════════════════════════ -->
-            <div x-show="adminTab==='ulasan'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm space-y-4">
+            <div x-show="adminTab==='ulasan'" x-init="if(!adminReviewsLoaded) adminLoadReviews()"
+                 class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm space-y-4">
+
+                <!-- Header -->
                 <div class="flex items-center justify-between gap-3">
                     <h3 class="font-black text-gray-800 text-base">Manajemen Ulasan</h3>
-                    <button @click="adminLoadReviews()" class="flex items-center gap-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-lg transition-all">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    <button @click="adminReviewsLoaded=false; adminLoadReviews()"
+                            class="flex items-center gap-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-3 py-1.5 rounded-lg transition-all">
+                        <svg class="w-3.5 h-3.5" :class="adminReviewsLoading?'animate-spin':''" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Refresh
                     </button>
                 </div>
@@ -3238,51 +3841,112 @@
                     <div class="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
 
-                <!-- Empty -->
-                <div x-show="!adminReviewsLoading && adminReviews.length===0" class="text-center py-10 text-gray-400 text-sm">
-                    Belum ada ulasan masuk. Klik Refresh untuk memuat.
-                </div>
+                <template x-if="!adminReviewsLoading && adminReviewsLoaded">
+                <div class="space-y-4">
 
-                <!-- Review list -->
-                <div x-show="!adminReviewsLoading && adminReviews.length>0" class="space-y-3">
-                    <template x-for="(rv, idx) in adminReviews" :key="rv.id||idx">
-                        <div class="border border-gray-100 rounded-2xl p-4 transition-all" :class="rv.published ? 'bg-white' : 'bg-gray-50 opacity-60'">
-                            <!-- Header -->
-                            <div class="flex items-start justify-between gap-3 mb-2">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <div class="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center flex-none">
-                                        <span class="text-xs font-black text-brand-600" x-text="(rv.nama||'A').charAt(0).toUpperCase()"></span>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <div class="text-sm font-bold text-gray-800" x-text="rv.nama||'Anonim'"></div>
-                                        <div class="text-[10px] text-gray-400" x-text="rv.tanggal||''"></div>
-                                    </div>
-                                </div>
-                                <!-- Toggle published -->
-                                <div class="flex items-center gap-2 flex-none">
-                                    <span class="text-[10px] font-semibold" :class="rv.published ? 'text-emerald-600' : 'text-gray-400'" x-text="rv.published ? 'Tampil' : 'Tersembunyi'"></span>
-                                    <button @click="adminToggleReview(rv, idx)"
-                                            class="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none"
-                                            :class="rv.published ? 'bg-emerald-500' : 'bg-gray-300'">
-                                        <span class="inline-block w-3.5 h-3.5 transform rounded-full bg-white shadow transition-transform duration-200"
-                                              :class="rv.published ? 'translate-x-4' : 'translate-x-0.5'"></span>
-                                    </button>
-                                </div>
-                            </div>
-                            <!-- Stars + produk -->
-                            <div class="flex items-center gap-2 mb-1.5">
-                                <div class="flex text-yellow-400">
-                                    <template x-for="i in (rv.bintang||5)" :key="i">
-                                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    </template>
-                                </div>
-                                <span class="text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full" x-text="rv.produk+(rv.varian&&rv.varian!=='-'?' · '+rv.varian:'')"></span>
-                            </div>
-                            <!-- Komentar -->
-                            <p class="text-sm text-gray-600 leading-relaxed" x-text="rv.komentar||'—'"></p>
+                    <!-- Stats -->
+                    <div class="grid grid-cols-4 gap-2">
+                        <div class="bg-gray-50 rounded-xl p-3 text-center">
+                            <div class="text-lg font-black text-gray-800" x-text="adminReviewStats.total"></div>
+                            <div class="text-[10px] text-gray-400 font-medium">Total</div>
                         </div>
-                    </template>
+                        <div class="bg-emerald-50 rounded-xl p-3 text-center">
+                            <div class="text-lg font-black text-emerald-600" x-text="adminReviewStats.published"></div>
+                            <div class="text-[10px] text-emerald-500 font-medium">Tampil</div>
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-3 text-center">
+                            <div class="text-lg font-black text-gray-400" x-text="adminReviewStats.hidden"></div>
+                            <div class="text-[10px] text-gray-400 font-medium">Hidden</div>
+                        </div>
+                        <div class="bg-yellow-50 rounded-xl p-3 text-center">
+                            <div class="text-lg font-black text-yellow-600 flex items-center justify-center gap-0.5">
+                                <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                <span x-text="adminReviewStats.avg"></span>
+                            </div>
+                            <div class="text-[10px] text-yellow-500 font-medium">Rata-rata</div>
+                        </div>
+                    </div>
+
+                    <!-- Filter tabs -->
+                    <div class="flex gap-1 bg-gray-100 rounded-xl p-1">
+                        <template x-for="f in [{k:'semua',l:'Semua'},{k:'tampil',l:'Tampil'},{k:'tersembunyi',l:'Tersembunyi'}]" :key="f.k">
+                            <button @click="adminReviewFilter=f.k"
+                                    class="flex-1 text-xs py-1.5 rounded-lg font-semibold transition-all"
+                                    :class="adminReviewFilter===f.k ? 'bg-white shadow text-brand-600' : 'text-gray-500 hover:text-gray-700'"
+                                    x-text="f.l"></button>
+                        </template>
+                    </div>
+
+                    <!-- Empty -->
+                    <div x-show="adminFilteredReviews.length===0" class="text-center py-8 text-gray-400 text-sm">
+                        Tidak ada ulasan.
+                    </div>
+
+                    <!-- Review list -->
+                    <div class="space-y-3">
+                        <template x-for="rv in adminFilteredReviews" :key="rv.id">
+                            <div class="border rounded-2xl overflow-hidden transition-all"
+                                 :class="rv.published ? 'border-gray-100 bg-white' : 'border-dashed border-gray-200 bg-gray-50'">
+
+                                <!-- Card header -->
+                                <div class="flex items-start justify-between gap-3 px-4 pt-3 pb-2">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="w-9 h-9 rounded-full flex items-center justify-center flex-none text-sm font-black"
+                                             :class="rv.published ? 'bg-brand-100 text-brand-600' : 'bg-gray-200 text-gray-400'"
+                                             x-text="(rv.nama||'A').charAt(0).toUpperCase()"></div>
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-1.5 flex-wrap">
+                                                <span class="text-sm font-bold text-gray-800" x-text="rv.nama||'Anonim'"></span>
+                                                <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                                                      :class="rv.published ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-200 text-gray-400'"
+                                                      x-text="rv.published ? '● Tampil' : '○ Tersembunyi'"></span>
+                                            </div>
+                                            <div class="text-[10px] text-gray-400 mt-0.5" x-text="rv.tgl"></div>
+                                        </div>
+                                    </div>
+                                    <!-- Actions -->
+                                    <div class="flex items-center gap-1.5 flex-none">
+                                        <!-- Toggle -->
+                                        <button @click="adminToggleReview(rv)"
+                                                :title="rv.published ? 'Sembunyikan' : 'Tampilkan'"
+                                                class="p-1.5 rounded-lg transition-all hover:bg-gray-100">
+                                            <svg x-show="rv.published" class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                            <svg x-show="!rv.published" class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+                                        </button>
+                                        <!-- Delete -->
+                                        <button @click="adminDeleteReview(rv)"
+                                                title="Hapus permanen"
+                                                class="p-1.5 rounded-lg hover:bg-red-50 transition-all">
+                                            <svg class="w-4 h-4 text-red-400 hover:text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Meta: produk + orderId -->
+                                <div class="flex items-center gap-2 px-4 pb-2 flex-wrap">
+                                    <div class="flex text-yellow-400 gap-0.5">
+                                        <template x-for="i in (rv.rating||5)" :key="i">
+                                            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        </template>
+                                        <template x-for="i in (5-(rv.rating||5))" :key="'e'+i">
+                                            <svg class="w-3.5 h-3.5 fill-current text-gray-200" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        </template>
+                                    </div>
+                                    <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold" x-text="rv.produk+(rv.varian&&rv.varian!=='-'?' · '+rv.varian:'')"></span>
+                                    <span class="text-[10px] text-gray-400 font-mono" x-text="rv.orderId"></span>
+                                </div>
+
+                                <!-- Komentar -->
+                                <div class="px-4 pb-3">
+                                    <p class="text-sm text-gray-700 leading-relaxed bg-gray-50 rounded-xl px-3 py-2 border border-gray-100" x-text="rv.komentar||'—'"></p>
+                                </div>
+
+                            </div>
+                        </template>
+                    </div>
                 </div>
+                </template>
+
             </div><!-- end tab ulasan -->
 
             </div><!-- end content area -->
@@ -3297,7 +3961,7 @@
 <!-- ══════════════════════════════════════════════════════
      FOOTER
 ══════════════════════════════════════════════════════ -->
-<footer class="hidden md:block bg-gray-900 text-white">
+<footer class="hidden md:block bg-gray-900 text-white" x-show="activePage !== 'product-detail'" x-cloak>
     <div class="max-w-6xl mx-auto px-5 py-5 md:py-6">
 
         <!-- Mobile: compact stacked layout -->
@@ -3394,6 +4058,16 @@
 
     </div>
 </footer>
+
+<!-- Copyright bar minimal — hanya tampil di product-detail -->
+<div x-show="activePage === 'product-detail'" x-cloak
+     class="hidden md:flex bg-gray-900 border-t border-gray-800 px-5 py-3 items-center justify-between text-xs text-gray-600">
+    <span x-text="siteSettings.footer.copyright"></span>
+    <div class="flex items-center gap-4">
+        <button @click="legalModal='terms'" class="hover:text-gray-400 transition-colors">Syarat &amp; Ketentuan</button>
+        <button @click="legalModal='privacy'" class="hover:text-gray-400 transition-colors">Kebijakan Privasi</button>
+    </div>
+</div>
 
 </main>
 
@@ -4882,14 +5556,12 @@
         </div>
 
         <!-- WA Button -->
-        <a :href="'https://wa.me/628881500555?text=' + encodeURIComponent('Halo, saya ingin konfirmasi pembayaran untuk Order ID: ' + (manualPayment?.orderId||'') + '\nTotal: Rp ' + Number(manualPayment?.total||0).toLocaleString('id-ID'))"
-           target="_blank" rel="noopener"
-           @click="manualPayment=null"
+        <button @click="openWAKonfirmasi()"
            class="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20BD5C] text-white font-black py-3.5 rounded-2xl text-sm transition-colors active:scale-95 mb-3">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             Konfirmasi via WhatsApp
-        </a>
-        <button @click="manualPayment=null; navigateTo('orders')" class="w-full text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors">
+        </button>
+        <button @click="manualPayment=null; setPage('profile'); profileTab='pesanan'; loadOrders()" class="w-full text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors">
             Lihat Riwayat Pesanan →
         </button>
     </div>
@@ -5286,7 +5958,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260510-1',
+        APP_VERSION:      '20260512-2-uat',
 
         // PWA Install
         pwaPopup:            false,
@@ -5306,6 +5978,8 @@ function serabutStore() {
         csStarted:   false,
 
         scrollY: 0,
+        now: Date.now(), // reactive timestamp — diupdate tiap 30 detik untuk live countdown
+        _pageLoadTime: Date.now(), // waktu halaman dibuka (tidak berubah)
 
         // Pages
         activePage:   'home',
@@ -5368,10 +6042,30 @@ function serabutStore() {
         reviewLoading:      false,
         reviewError:        '',
         reviewSuccess:      false,
-        reviewedOrders:     [], // orderId yang sudah direview di sesi ini
+        reviewedOrders:     [], // orderId yang sudah direview (untuk canReviewOrder)
+        myReviews:          {}, // orderId → {rating,komentar,anonim,reviewId,submittedAt,nama}
+        reviewEditMode:     false,
         productReviews:     [], // reviews dari GAS untuk produk aktif
+        reviewsLoading:     false,
+        reviewsShowAll:     false,
+        _likedReviews:      {}, // set of reviewId yang sudah di-like (localStorage)
+        _reviewsCache:      {}, // cache reviews per produk nama
         adminReviews:       [],
         adminReviewsLoading: false,
+        adminReviewsLoaded:  false,
+        adminReviewFilter:   'semua', // semua | tampil | tersembunyi
+        adminPaymentList:   [
+            {label:'Transfer Bank', active:true},
+            {label:'QRIS',          active:true},
+            {label:'Virtual Account',active:true},
+            {label:'Shopee Pay',    active:true},
+            {label:'Dana',          active:true},
+            {label:'GoPay',         active:true},
+            {label:'OVO',           active:true},
+        ],
+        adminPaymentLoaded: false,
+        adminPaymentSaving: false,
+        adminPaymentNew:    '',
         currentOrderIPaymuData: null,
         paymentConfirmed: null,
         pendingOrderDetailId: null,
@@ -5470,6 +6164,7 @@ function serabutStore() {
             renewal:  { discountPct: 10, discountMax: 10000 },
             extraCategories: [],
         },
+        paymentMethods: [],
         renewalMode: false,
         settingsLoaded: false,
 
@@ -5541,6 +6236,22 @@ function serabutStore() {
         adminIPaymuSyncMsg:        '',
         adminIPaymuSyncConfirm:    false,
         adminIPaymuFilter:         { startdate:'', enddate:'', status:'', page:1, limit:20 },
+
+        // ── Quotation builder ────────────────────────
+        quoForm: {
+            nama:'', email:'', noHP:'', alamat:'',
+            payMethod:'Transfer Bank', bankName:'SeaBank', bankAccount:'901000004087', bankHolder:'Eko Harianto',
+            note:'', discountType:'nominal', discountVal:0,
+            items:[]
+        },
+        quoView:    'list', // 'list' | 'form'
+        quoList:    JSON.parse(localStorage.getItem('srb_quotations')||'[]'),
+        quoSending: false, quoWASending: false, quoEmailSending: false, quoDeleteIdx: -1,
+        quoSendMsg: '',
+        _logoDataURL: null,
+        quoProductSearch: -1,
+        quoSearchQuery:   '',
+        quoFilteredProducts: [],
 
         // ── Static Data ──────────────────────────────
         navItems: [
@@ -5715,6 +6426,8 @@ function serabutStore() {
 
         // ── Init ──────────────────────────────────────
         async init() {
+            // Live countdown — update `now` tiap 30 detik
+            setInterval(() => { this.now = Date.now(); }, 30000);
             this.initPageFromURL();
 
             // ── iPaymu return URL — capture & simpan ke sessionStorage SEBELUM reload ──
@@ -5830,6 +6543,8 @@ function serabutStore() {
                     }
                 } catch {}
             }
+            // Load myReviews dari localStorage (survive refresh)
+            if(this.currentUser) this._loadMyReviews();
             // Selalu refresh role dari GAS agar menu Admin selalu akurat
             if(this.currentUser) {
                 await this.refreshUserRole();
@@ -5967,6 +6682,12 @@ function serabutStore() {
                     if(Array.isArray(extra)) this.siteSettings.extraCategories = extra;
                 } catch {}
 
+                // Payment methods
+                try {
+                    const pm = JSON.parse(s['payment.methods'] || '[]');
+                    if(Array.isArray(pm) && pm.length) this.paymentMethods = pm.filter(p=>p.active).map(p=>p.label);
+                } catch {}
+
                 // Benefits per category
                 const benefits = {};
                 Object.keys(s).forEach(k => {
@@ -6030,6 +6751,8 @@ function serabutStore() {
                         _resolvePendingSlug();
                         // Refresh di background tanpa blocking UI
                         _fetchFresh().then(p=>{ if(p) this.products=p; }).catch(()=>{});
+                        // Preload reviews parallel setelah produk ready
+                        setTimeout(() => this._preloadAllReviews(), 300);
                         return;
                     }
                 } catch {}
@@ -6041,6 +6764,8 @@ function serabutStore() {
             } catch { this.products=this.demoProducts(); }
             this.loading=false;
             _resolvePendingSlug();
+            // Preload reviews parallel setelah produk ready
+            setTimeout(() => this._preloadAllReviews(), 300);
         },
         demoProducts() {
             return [
@@ -6104,8 +6829,12 @@ function serabutStore() {
             return m[(cat||'').toLowerCase()] || sp('office');
         },
         getCategoryBg(cat) {
-            const m={'Office 365':'bg-blue-50','Adobe':'bg-red-50','Windows':'bg-sky-50','Office':'bg-orange-50','Google':'bg-green-50','CorelDRAW':'bg-yellow-50','Project':'bg-purple-50','Visio':'bg-indigo-50'};
-            return m[cat]||'bg-gray-50';
+            const m={'Office 365':'bg-blue-100','Adobe':'bg-red-100','Windows':'bg-sky-100','Windows Server':'bg-slate-100','Office':'bg-orange-100','Google':'bg-green-100','CorelDRAW':'bg-yellow-100','Project':'bg-purple-100','Visio':'bg-indigo-100'};
+            return m[cat]||'bg-gray-100';
+        },
+        getCategoryHeroBg(cat) {
+            const m={'Office 365':'from-blue-100 to-blue-50','Adobe':'from-red-100 to-red-50','Windows':'from-sky-100 to-sky-50','Windows Server':'from-slate-100 to-slate-50','Office':'from-orange-100 to-orange-50','Google':'from-green-100 to-green-50','CorelDRAW':'from-yellow-100 to-yellow-50','Project':'from-purple-100 to-purple-50','Visio':'from-indigo-100 to-indigo-50'};
+            return 'bg-gradient-to-br ' + (m[cat]||'from-gray-100 to-gray-50');
         },
         getCategoryIcon(cat) {
             const m={'Office 365':'📧','Adobe':'🎨','Windows':'🪟','Office':'💼','Google':'☁️','CorelDRAW':'✏️','Project':'📊','Visio':'📐','Windows Server':'🖥️'};
@@ -6188,6 +6917,8 @@ function serabutStore() {
             this.activePage = 'product-detail';
             this.pdTab = 'deskripsi';
             this.productReviews = [];
+            this.reviewsShowAll = false;
+            this._loadLikedReviews();
             this._loadProductReviews(product.nama);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         },
@@ -6242,6 +6973,7 @@ function serabutStore() {
                 if(data.success) {
                     this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
                     localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
+                    this._loadMyReviews(); // Restore ulasan dari localStorage
                     this.closeAuthModal();
                     this.loginForm = {email:'',password:''};
                     if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
@@ -6302,6 +7034,7 @@ function serabutStore() {
                 if(data.success) {
                     this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
                     localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
+                    this._loadMyReviews(); // Restore ulasan dari localStorage
                     this.closeOTPModal();
                     this.registerForm = {nama:'',email:'',wa:'',password:''};
                     if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
@@ -6490,7 +7223,8 @@ function serabutStore() {
                     if (data.paymentUrl) {
                         this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
                     } else if (data.paymentMode === 'manual') {
-                        this.showManualPaymentInfo(data.orderId, data.total);
+                        const cartItems = this.cart.map(c => ({ produk: c.nama, varian: c.varian||'-', masaAktif: c.masaAktif||'-', harga: c.harga }));
+                        this.showManualPaymentInfo(data.orderId, data.total, cartItems, this.user?.nama||'');
                     } else {
                         this.cartCheckoutError = data.paymentError || 'Pesanan dibuat tapi gagal membuat sesi pembayaran. Hubungi CS.';
                     }
@@ -6499,8 +7233,22 @@ function serabutStore() {
             this.cartCheckoutLoading = false;
         },
 
-        showManualPaymentInfo(orderId, total) {
-            this.manualPayment = { orderId, total };
+        showManualPaymentInfo(orderId, total, items, nama) {
+            this.manualPayment = { orderId, total, items: items||[], nama: nama||'' };
+        },
+        openWAKonfirmasi() {
+            const m = this.manualPayment;
+            if (!m) return;
+            const itemLines = (m.items||[]).map((it, i) => {
+                let line = '[' + (i+1) + '] *' + (it.produk||'') + '*';
+                if (it.varian && it.varian !== '-') line += ' - ' + it.varian;
+                if (it.masaAktif && it.masaAktif !== '-') line += ' (' + it.masaAktif + ')';
+                line += '\n    Rp ' + Number(it.harga||0).toLocaleString('id-ID');
+                return line;
+            }).join('\n');
+            const text = 'Halo Kak, saya ingin konfirmasi pembayaran\n\n*Order ID: ' + m.orderId + '*\n────────────────────\n' + itemLines + '\n────────────────────\nTotal: *Rp ' + Number(m.total||0).toLocaleString('id-ID') + '*\n\nMohon diproses ya, terima kasih!';
+            window.open('https://wa.me/628881500555?text=' + encodeURIComponent(text), '_blank');
+            this.manualPayment = null;
         },
 
         startPaymentRedirect(orderId, paymentUrl) {
@@ -6642,7 +7390,9 @@ function serabutStore() {
                         this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
                     } else if (data.paymentMode === 'manual') {
                         this.orderModal = false;
-                        this.showManualPaymentInfo(data.orderId, data.harga || data.total);
+                        const finalHarga = unitHarga * qty;
+                        const singleItem = [{ produk: this.selectedProductGroup?.nama||'', varian: this.selectedVariant?.varian||'-', masaAktif: this.selectedVariant?.masaAktif||'-', harga: finalHarga }];
+                        this.showManualPaymentInfo(data.orderId, finalHarga, singleItem, this.currentUser?.nama||'');
                     } else {
                         this.orderError = data.paymentError || 'Gagal membuat sesi pembayaran. Silakan coba lagi atau hubungi CS.';
                     }
@@ -6844,13 +7594,23 @@ function serabutStore() {
         formatOrderDate(str) {
             if(!str) return str;
             const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-            const parts = (str||'').split(' ')[0].split('/');
-            if(parts.length !== 3) return str;
-            return `${parts[0]} ${months[Number(parts[1])-1]} ${parts[2]}`;
+            const datePart = (str||'').split(' ')[0];
+            let d, m, y;
+            if(datePart.indexOf('-') >= 4) {
+                // ISO: yyyy-MM-dd
+                [y, m, d] = datePart.split('-');
+            } else {
+                // Legacy: dd/MM/yyyy
+                [d, m, y] = datePart.split('/');
+            }
+            if(!y) return str;
+            return `${d} ${months[Number(m)-1]} ${y}`;
         },
         formatOrderDateTime(str) {
             if(!str) return '';
-            const [datePart, timePart] = String(str).trim().split(' ');
+            const parts = String(str).trim().split(' ');
+            const datePart = parts[0];
+            const timePart = parts[1];
             const dateStr = this.formatOrderDate(datePart);
             return timePart ? `${dateStr}, ${timePart} WIB` : dateStr;
         },
@@ -6933,6 +7693,13 @@ function serabutStore() {
             return list;
         },
         get adminOrdersTotalPages() { return Math.max(1, Math.ceil(this.adminGroupedOrders.length / this.adminOrdersPerPage)); },
+        get quoSubtotal()  { return (this.quoForm.items||[]).reduce((s,i)=>s+Number(i.qty||1)*Number(i.harga||0),0); },
+        get quoDiscountAmount() {
+            const f = this.quoForm;
+            if(!f.discountVal) return 0;
+            return f.discountType==='persen' ? Math.round(this.quoSubtotal * f.discountVal / 100) : Number(f.discountVal);
+        },
+        get quoTotal() { return Math.max(0, this.quoSubtotal - this.quoDiscountAmount); },
         get adminPagedOrders()      { const s = (this.adminOrdersPage-1)*this.adminOrdersPerPage; return this.adminGroupedOrders.slice(s, s+this.adminOrdersPerPage); },
         get adminOrdersPageRange() {
             const t = this.adminOrdersTotalPages, c = this.adminOrdersPage;
@@ -6995,6 +7762,8 @@ function serabutStore() {
                 this.adminLoadGuides();
             } else if(tab==='orders') {
                 if (!this.adminOrdersLoaded) this.adminLoadOrders();
+            } else if(tab==='payment') {
+                if (!this.adminPaymentLoaded) this.adminLoadPaymentMethods();
             } else if(tab==='ipaymu') {
                 if (!this.adminIPaymuLoaded) {
                     this.adminIPaymuLoadBalance();
@@ -7175,11 +7944,15 @@ function serabutStore() {
         },
         flashSaleItem(nama, varian, masaAktif) {
             const combined = masaAktif && masaAktif !== '-' ? varian + ' · ' + masaAktif : varian;
-            // Cek semua active discount items (flash sale + regular discount)
+            const norm = s => String(s||'').trim().toLowerCase();
             const allItems = this.flashSale.allDiscountItems?.length
                 ? this.flashSale.allDiscountItems
                 : (this.flashSale.aktif ? (this.flashSale.items || []) : []);
-            return allItems.find(i => i.produk === nama && (i.varian === varian || i.varian === combined)) || null;
+            return allItems.find(i =>
+                norm(i.produk) === norm(nama) &&
+                (norm(i.varian) === norm(varian) || norm(i.varian) === norm(combined) ||
+                 (norm(i.varian) === norm(varian) && norm(i.masaAktif||'') === norm(masaAktif||'')))
+            ) || null;
         },
         formatTerjual(n) {
             if(!n || n <= 0) return '';
@@ -7187,16 +7960,124 @@ function serabutStore() {
             if(n >= 1000)    return Math.floor(n/1000)+'k+ Terjual';
             return n+' Terjual';
         },
+        getProductRating(nama) {
+            const reviews = this._reviewsCache[nama];
+            if(!reviews?.length) return '—';
+            const avg = reviews.reduce((s,r) => s+(r.rating||5), 0) / reviews.length;
+            return avg.toFixed(1);
+        },
+        getProductReviewCount(nama) {
+            return this._reviewsCache[nama]?.length || 0;
+        },
+
+        // ── MyReviews localStorage helpers ────────────────
+        _myReviewsKey() {
+            return 'srb_myreviews_' + (this.currentUser?.email || 'guest');
+        },
+        _saveMyReviews() {
+            try { localStorage.setItem(this._myReviewsKey(), JSON.stringify(this.myReviews)); } catch {}
+        },
+        _loadMyReviews() {
+            try {
+                const raw = localStorage.getItem(this._myReviewsKey());
+                if(raw) this.myReviews = JSON.parse(raw);
+            } catch {}
+        },
+        // Load semua review buyer dari GAS → merge ke myReviews (survive lintas device/refresh)
+        async _syncBuyerReviews() {
+            if(!this.currentUser) return;
+            try {
+                const data = await this.gasPost({
+                    action:       'getBuyerReviews',
+                    email:        this.currentUser.email,
+                    sessionToken: this.currentUser.sessionToken || ''
+                });
+                if(data.success && Array.isArray(data.data)) {
+                    data.data.forEach(rv => {
+                        if(rv.orderId && !this.myReviews[rv.orderId]) {
+                            // Hanya isi jika belum ada di local (jangan overwrite editan lokal)
+                            this.myReviews[rv.orderId] = {
+                                rating:      rv.rating,
+                                komentar:    rv.komentar,
+                                anonim:      rv.anonim,
+                                reviewId:    rv.reviewId,
+                                submittedAt: rv.submittedAt || 0
+                            };
+                        }
+                        // Pastikan orderId masuk reviewedOrders
+                        if(rv.orderId && !this.reviewedOrders.includes(rv.orderId)) {
+                            this.reviewedOrders.push(rv.orderId);
+                        }
+                    });
+                    this._saveMyReviews();
+                }
+            } catch {}
+        },
 
         // ── Reviews ─────────────────────────────────────────
+        async _fetchReviews(produkNama) {
+            const params = new URLSearchParams({ action:'getReviews', produk: produkNama });
+            const res  = await fetch(`${this.GAS_URL}?${params}`);
+            const data = await res.json();
+            if(data.success && Array.isArray(data.data)) {
+                this._reviewsCache[produkNama] = data.data;
+                return data.data;
+            }
+            return null;
+        },
         async _loadProductReviews(produkNama) {
             if(!produkNama) return;
+            const cached = this._reviewsCache[produkNama];
+            if(cached) {
+                // Tampil instan dari cache — tanpa spinner
+                this.productReviews = cached.map(r => ({ ...r, _liked: !!this._likedReviews[r.id] }));
+                // Refresh di background (silent)
+                this._fetchReviews(produkNama).then(fresh => {
+                    if(fresh && this.selectedProductGroup?.nama === produkNama) {
+                        this.productReviews = fresh.map(r => ({ ...r, _liked: !!this._likedReviews[r.id] }));
+                    }
+                }).catch(()=>{});
+            } else {
+                // Belum ada cache — load dengan spinner tipis
+                this.reviewsLoading = true;
+                try {
+                    const fresh = await this._fetchReviews(produkNama);
+                    if(fresh) this.productReviews = fresh.map(r => ({ ...r, _liked: !!this._likedReviews[r.id] }));
+                } catch(e) {}
+                finally { this.reviewsLoading = false; }
+            }
+        },
+        // Preload semua reviews setelah produk selesai dimuat — parallel, silent
+        async _preloadAllReviews() {
+            if(!this.products?.length) return;
+            // Ambil nama unik produk
+            const names = [...new Set(this.products.map(p => p.nama).filter(Boolean))];
+            // Fetch parallel, 5 sekaligus agar tidak overload
+            const chunk = 5;
+            for(let i = 0; i < names.length; i += chunk) {
+                const batch = names.slice(i, i + chunk);
+                await Promise.allSettled(batch.map(n => this._fetchReviews(n)));
+            }
+        },
+        _loadLikedReviews() {
             try {
-                const data = await this.gasCall({ action:'getReviews', produk: encodeURIComponent(produkNama) });
-                if(data.success && Array.isArray(data.reviews)) {
-                    this.productReviews = data.reviews;
-                }
-            } catch(e) { /* silent */ }
+                this._likedReviews = JSON.parse(localStorage.getItem('srb_liked_reviews') || '{}');
+            } catch(e) { this._likedReviews = {}; }
+        },
+        async likeReview(review) {
+            if(review._liked) return; // sudah pernah like
+            // Optimistic update
+            const idx = this.productReviews.findIndex(r => r.id === review.id);
+            if(idx < 0) return;
+            this.productReviews[idx] = { ...review, likes: (review.likes||0) + 1, _liked: true };
+            this.productReviews = [...this.productReviews];
+            // Simpan ke localStorage
+            this._likedReviews[review.id] = true;
+            try { localStorage.setItem('srb_liked_reviews', JSON.stringify(this._likedReviews)); } catch(e) {}
+            // Kirim ke GAS
+            try {
+                await this.gasPost({ action: 'likeReview', reviewId: review.id });
+            } catch(e) { /* silent — optimistic tetap jalan */ }
         },
         /** Returns the first eligible order to review for a product name */
         eligibleReviewOrder(produkNama) {
@@ -7210,14 +8091,27 @@ function serabutStore() {
                 return order.items.some(it => it.produk === produkNama);
             }) || null;
         },
-        /** Whether a pesanan card should show review form */
+        /** Whether a pesanan card should show review form (no review yet) */
         canReviewOrder(order) {
             if(!this.isMember || !order) return false;
             if(!['Aktif','Selesai'].includes(order.status)) return false;
+            if(this.myReviews[order.orderId]) return false; // sudah punya ulasan
             if(this.reviewedOrders.includes(order.orderId)) return false;
             const ms3days = 3 * 24 * 60 * 60 * 1000;
             const age = Date.now() - (this.parseTanggalWIB(order.tanggal)?.getTime() || 0);
             return age >= ms3days;
+        },
+        /** Returns submitted review for an order (if any) */
+        hasMyReview(order) {
+            if(!order?.orderId) return null;
+            return this.myReviews[order.orderId] || null;
+        },
+        /** Can buyer still edit their review (within 7 days of submission) */
+        canEditMyReview(order) {
+            const rv = this.hasMyReview(order);
+            if(!rv) return false;
+            const ms7days = 7 * 24 * 60 * 60 * 1000;
+            return (Date.now() - rv.submittedAt) < ms7days;
         },
         openReviewModal(order) {
             if(!order) return;
@@ -7258,11 +8152,57 @@ function serabutStore() {
                 if(data.success) {
                     this.reviewSuccess = true;
                     this.reviewedOrders.push(order.orderId);
-                    if(this.activePage === 'product-detail' && this.selectedProductGroup?.nama) {
-                        this._loadProductReviews(this.selectedProductGroup.nama);
-                    }
+                    // Simpan review ke myReviews agar bisa tampil + edit
+                    this.myReviews[order.orderId] = {
+                        rating:      this.reviewRating,
+                        komentar:    this.reviewKomentar.trim(),
+                        anonim:      this.reviewAnonim,
+                        reviewId:    data.reviewId || '',
+                        submittedAt: Date.now()
+                    };
+                    this._saveMyReviews(); // Persist ke localStorage
+                    this.reviewEditMode = false;
+                    // Reload reviews di product detail
+                    const produkNama = firstItem.produk || this.selectedProductGroup?.nama;
+                    if(produkNama) this._loadProductReviews(produkNama);
                 } else {
                     this.reviewError = data.error || 'Gagal mengirim ulasan.';
+                }
+            } catch(e) {
+                this.reviewError = 'Terjadi kesalahan, coba lagi.';
+            } finally {
+                this.reviewLoading = false;
+            }
+        },
+        // Edit ulasan yang sudah dikirim (dalam 7 hari)
+        async submitEditReview(order) {
+            if(!order) return;
+            if(this.reviewRating === 0) { this.reviewError = 'Pilih rating dulu.'; return; }
+            if(!this.reviewKomentar.trim()) { this.reviewError = 'Isi ulasan tidak boleh kosong.'; return; }
+            const rv = this.hasMyReview(order);
+            if(!rv?.reviewId) { this.reviewError = 'Data ulasan tidak ditemukan.'; return; }
+            this.reviewLoading = true;
+            this.reviewError   = '';
+            try {
+                const data = await this.gasPost({
+                    action:       'editReview',
+                    sessionToken: this.currentUser?.sessionToken || '',
+                    email:        this.currentUser?.email || '',
+                    reviewId:     rv.reviewId,
+                    rating:       this.reviewRating,
+                    komentar:     this.reviewKomentar.trim(),
+                    anonim:       this.reviewAnonim
+                });
+                if(data.success) {
+                    // Update local state
+                    this.myReviews[order.orderId] = { ...rv, rating: this.reviewRating, komentar: this.reviewKomentar.trim(), anonim: this.reviewAnonim };
+                    this._saveMyReviews(); // Persist ke localStorage
+                    this.reviewEditMode = false;
+                    this.reviewSuccess  = true;
+                    const produkNama = order.items?.[0]?.produk || this.selectedProductGroup?.nama;
+                    if(produkNama) this._loadProductReviews(produkNama);
+                } else {
+                    this.reviewError = data.error || 'Gagal menyimpan edit.';
                 }
             } catch(e) {
                 this.reviewError = 'Terjadi kesalahan, coba lagi.';
@@ -7314,9 +8254,23 @@ function serabutStore() {
                     adminEmail: this.currentUser?.email,
                     adminToken: this.currentUser?.sessionToken
                 });
-                if(data.success) this.adminReviews = data.reviews || [];
+                if(data.success) {
+                    this.adminReviews = data.data || [];
+                    this.adminReviewsLoaded = true;
+                }
             } catch(e) { /* silent */ }
             finally { this.adminReviewsLoading = false; }
+        },
+        get adminFilteredReviews() {
+            if (this.adminReviewFilter === 'tampil')      return this.adminReviews.filter(r => r.published);
+            if (this.adminReviewFilter === 'tersembunyi') return this.adminReviews.filter(r => !r.published);
+            return this.adminReviews;
+        },
+        get adminReviewStats() {
+            const total     = this.adminReviews.length;
+            const published = this.adminReviews.filter(r => r.published).length;
+            const avg       = total ? (this.adminReviews.reduce((s,r) => s+(r.rating||5), 0) / total).toFixed(1) : '0.0';
+            return { total, published, hidden: total - published, avg };
         },
         async adminToggleReview(rv, idx) {
             const newVal = !rv.published;
@@ -7329,9 +8283,54 @@ function serabutStore() {
                     published: newVal
                 });
                 if(data.success) {
-                    this.adminReviews[idx] = { ...rv, published: newVal };
-                    this.adminReviews = [...this.adminReviews];
+                    const i = this.adminReviews.findIndex(r => r.id === rv.id);
+                    if(i >= 0) { this.adminReviews[i] = { ...rv, published: newVal }; this.adminReviews = [...this.adminReviews]; }
                 }
+            } catch(e) { /* silent */ }
+        },
+        // ── Payment Methods admin ─────────────────────────
+        async adminLoadPaymentMethods() {
+            try {
+                const data = await fetch(`${this.GAS_URL}?action=getSettings`).then(r=>r.json());
+                if(data.success && data.data) {
+                    const raw = data.data['payment.methods'];
+                    if(raw) {
+                        const pm = JSON.parse(raw);
+                        if(Array.isArray(pm) && pm.length) this.adminPaymentList = pm;
+                    }
+                }
+            } catch(e) { /* pakai defaults dari state */ }
+            this.adminPaymentLoaded = true;
+        },
+        async adminSavePaymentMethods() {
+            this.adminPaymentSaving = true;
+            try {
+                const data = await this.gasPost({
+                    action: 'saveSettings',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.currentUser?.sessionToken,
+                    key: 'payment.methods',
+                    value: JSON.stringify(this.adminPaymentList)
+                });
+                if(data.success) {
+                    // Update live di frontend
+                    this.paymentMethods = this.adminPaymentList.filter(p=>p.active).map(p=>p.label);
+                    this.showToast('Metode pembayaran disimpan ✓');
+                }
+            } catch(e) {}
+            finally { this.adminPaymentSaving = false; }
+        },
+
+        async adminDeleteReview(rv) {
+            if(!confirm('Hapus ulasan ini permanen?')) return;
+            try {
+                const data = await this.gasPost({
+                    action: 'deleteReview',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.currentUser?.sessionToken,
+                    reviewId: rv.id
+                });
+                if(data.success) this.adminReviews = this.adminReviews.filter(r => r.id !== rv.id);
             } catch(e) { /* silent */ }
         },
 
@@ -7791,6 +8790,473 @@ function serabutStore() {
                 }
             } catch {}
         },
+        // ── Invoice / Quotation ────────────────────────────────────────────
+        _invoiceFmtPrice(n) {
+            return 'Rp ' + Number(n||0).toLocaleString('id-ID');
+        },
+        _invoiceFmtDate(str) {
+            if(!str) return '–';
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            const s = String(str).trim();
+            const [datePart] = s.split(' ');
+            let d,m,y;
+            if(datePart && datePart.indexOf('-') >= 4){ [y,m,d]=datePart.split('-'); }
+            else { [d,m,y]=(datePart||'').split('/'); }
+            if(!y) return str;
+            return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+        },
+        _buildInvoiceDoc({ orderId, tanggal, nama, email, noWA, alamat, items, total, subtotal, discountAmt, paymentMethod, bankName, bankAccount, bankHolder, note, docType, logoSrc }) {
+            const fp  = v => this._invoiceFmtPrice(v);
+            const fd  = v => this._invoiceFmtDate(v);
+            const isInvoice = docType === 'invoice';
+            const docLabel  = isInvoice ? 'INVOICE' : 'QUOTATION';
+            const docColor  = '#e84343';
+            const today = fd(new Date().toISOString().split('T')[0].replace(/-/g,(m,i)=>i===4?'-':i===7?'-':'-'));
+            const nowDate = (() => {
+                const d = new Date();
+                const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+            })();
+
+            const itemRows = (items||[]).filter(item => item.deskripsi || item.produk || Number(item.harga||0)>0).map((item, i) => {
+                const desc = [item.produk, item.varian&&item.varian!=='-'?item.varian:'', item.masaAktif&&item.masaAktif!=='-'?`(${item.masaAktif})`:''].filter(Boolean).join(' ');
+                const qty   = Number(item.qty||1);
+                const unit  = Number(item.harga||0) / qty;
+                const rowTotal = Number(item.harga||0);
+                return `<tr>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13.5px">${i+1}. ${desc}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px">${qty}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#334155;font-size:13px">${fp(unit)}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#1e293b;font-weight:600;font-size:13px">${fp(rowTotal)}</td>
+                </tr>`;
+            }).join('');
+
+            const computedSubtotal = subtotal != null ? Number(subtotal) : (items||[]).reduce((s,it)=>s+Number(it.harga||0),0);
+            const computedDiscount = Number(discountAmt||0);
+            const computedTotal    = total != null ? Number(total) : Math.max(0, computedSubtotal - computedDiscount);
+            const payMethod  = paymentMethod || 'Transfer Bank';
+            const bName      = bankName    || 'SeaBank';
+            const bAccount   = bankAccount || '901000004087';
+            const bHolder    = bankHolder  || 'Eko Harianto';
+            const waFormatted = noWA ? `+${String(noWA).replace(/^628/,'62 8').replace(/(\d{4})(?=\d)/g,'$1 ').trim()}` : '–';
+
+            const logoImg = logoSrc
+                ? `<img src="${logoSrc}" alt="Serabut" style="width:44px;height:44px;border-radius:10px;object-fit:contain;display:block"/>`
+                : `<div style="width:44px;height:44px;background:${docColor};border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="white" fill-opacity="0.9"/></svg></div>`;
+
+            return `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${docLabel} ${orderId||''}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a1a2e;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:13px}
+
+  /* ── Toolbar ── */
+  .toolbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+  .toolbar-left{display:flex;align-items:center;gap:8px;color:#6b7280;font-size:12px}
+  .toolbar-chip{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:#374151;font-family:monospace}
+  .toolbar-status{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${isInvoice?'#fef2f2':'#fef2f2'};color:${isInvoice?'#991b1b':'#991b1b'}}
+  .btn-print{background:${docColor};color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .15s}
+  .btn-print:hover{opacity:.88}
+
+  /* ── Page ── */
+  .page{max-width:740px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);overflow:hidden}
+
+  /* ── Odoo-style header ── */
+  .doc-head{padding:32px 40px 28px;border-bottom:1px solid #f3f4f6;position:relative}
+  .paid-stamp{position:absolute;top:38px;right:36px;transform:rotate(-22deg);border:3.5px solid ${isInvoice?'#10b981':'#e84343'};border-radius:6px;padding:5px 18px;color:${isInvoice?'#10b981':'#e84343'};font-size:22px;font-weight:900;letter-spacing:5px;opacity:.55;text-transform:uppercase;pointer-events:none;user-select:none;white-space:nowrap;line-height:1.2}
+  .doc-head-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-info .name{font-weight:800;font-size:15px;color:#111827;letter-spacing:-.2px}
+  .brand-info .sub{font-size:11px;color:#9ca3af;margin-top:2px}
+  .doc-title-block{text-align:right}
+  .doc-label-text{font-size:32px;font-weight:900;letter-spacing:1.5px;color:#111827;line-height:1}
+  .doc-label-text em{color:${docColor};font-style:normal}
+  .doc-ref{margin-top:8px;font-size:11.5px;color:#6b7280;line-height:1.7}
+  .doc-ref strong{color:#111827;font-weight:700;font-family:monospace}
+  .doc-badge{display:inline-flex;align-items:center;gap:4px;margin-top:10px;padding:4px 12px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+
+  /* ── Info grid (Odoo-style 3-col) ── */
+  .info-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;border:1px solid #f3f4f6;border-radius:10px;overflow:hidden}
+  .info-cell{padding:14px 18px;border-right:1px solid #f3f4f6}
+  .info-cell:last-child{border-right:none}
+  .info-cell .ic-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:7px}
+  .info-cell .ic-name{font-size:13.5px;font-weight:700;color:#111827;margin-bottom:4px}
+  .info-cell .ic-detail{font-size:11.5px;color:#6b7280;line-height:1.65}
+  .info-cell .ic-val{font-size:13px;font-weight:600;color:#374151;margin-bottom:4px}
+  .info-cell .ic-sub{font-size:11.5px;color:#6b7280;line-height:1.6}
+
+  /* ── Products table ── */
+  .tbl-section{padding:0 40px}
+  .tbl-wrap{border:1px solid #f3f4f6;border-radius:10px;overflow:hidden;margin-top:24px}
+  table{width:100%;border-collapse:collapse}
+  thead tr{background:#f9fafb;border-bottom:1px solid #e5e7eb}
+  thead th{padding:11px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af}
+  thead th:first-child{text-align:left;padding-left:18px}
+  thead th:nth-child(2){text-align:center;width:60px}
+  thead th:nth-child(3){text-align:right;width:130px}
+  thead th:nth-child(4){text-align:right;width:130px;padding-right:18px}
+  tbody tr{border-bottom:1px solid #f9fafb;transition:background .1s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:#fafafa}
+  tbody td{padding:12px 14px;font-size:13px;color:#374151}
+  tbody td:first-child{padding-left:18px;color:#111827;font-weight:500}
+  tbody td:nth-child(2){text-align:center;color:#6b7280}
+  tbody td:nth-child(3){text-align:right;color:#6b7280}
+  tbody td:nth-child(4){text-align:right;font-weight:700;color:#111827;padding-right:18px}
+
+  /* ── Totals ── */
+  .totals-wrap{display:flex;justify-content:flex-end;padding:16px 40px 0}
+  .totals-inner{width:260px}
+  .tot-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #f3f4f6;color:#6b7280}
+  .tot-row:last-child{border-bottom:none}
+  .tot-row .tv{font-weight:600;color:#374151}
+  .tot-grand{display:flex;justify-content:space-between;align-items:center;background:${docColor};border-radius:8px;padding:12px 16px;margin-top:8px}
+  .tot-grand .tl{font-weight:700;color:#fff;font-size:14px}
+  .tot-grand .tv{font-weight:900;color:#fff;font-size:18px}
+
+  /* ── Footer section ── */
+  .doc-footer{margin:24px 40px;padding:20px;background:#f9fafb;border-radius:10px;border:1px solid #f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .df-block .df-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;margin-bottom:5px}
+  .df-block .df-val{font-size:13px;font-weight:600;color:#1f2937;line-height:1.5}
+  .df-block .df-note{font-size:11px;color:#9ca3af;margin-top:3px;line-height:1.5}
+  .copyright{text-align:center;padding:16px 40px 24px;font-size:11px;color:#d1d5db}
+
+  @media print{
+    body{background:#fff}
+    .toolbar{display:none}
+    .page{margin:0;border-radius:0;box-shadow:none;max-width:none}
+    .tbl-section{padding:0 32px}
+    .totals-wrap{padding:16px 32px 0}
+    .doc-footer{margin:24px 32px}
+  }
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <span class="toolbar-chip">${orderId||'–'}</span>
+    <span>${nowDate}</span>
+    <span class="toolbar-status">${isInvoice ? '✓ Lunas' : 'Penawaran'}</span>
+  </div>
+  <button class="btn-print" onclick="window.print()">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+    Cetak / Simpan PDF
+  </button>
+</div>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="doc-head">
+    <div class="paid-stamp">${isInvoice ? 'LUNAS' : 'PENAWARAN'}</div>
+    <div class="doc-head-top">
+      <!-- Brand -->
+      <div class="brand">
+        ${logoImg}
+        <div class="brand-info">
+          <div class="name">Serabut Store</div>
+          <div class="sub">PT Serabut Solusi Digital · serabut.id</div>
+        </div>
+      </div>
+      <!-- Doc title -->
+      <div class="doc-title-block" style="position:relative">
+        ${isInvoice ? `<div style="position:absolute;top:-8px;right:-8px;transform:rotate(12deg);border:3px solid #16a34a;border-radius:6px;padding:4px 14px;color:#16a34a;font-size:18px;font-weight:900;letter-spacing:3px;opacity:.85;pointer-events:none;line-height:1">PAID</div>` : ''}
+        <div class="doc-label-text">${isInvoice ? 'INV<em>OICE</em>' : 'QUOT<em>ATION</em>'}</div>
+        <div class="doc-ref">
+          No: <strong>${orderId||'–'}</strong><br>
+          Tanggal: ${nowDate}
+        </div>
+        <div class="doc-badge">
+          ${isInvoice
+            ? '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Lunas'
+            : '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg> Penawaran'}
+        </div>
+      </div>
+    </div>
+
+    <!-- Info grid -->
+    <div class="info-grid">
+      <div class="info-cell">
+        <div class="ic-lbl">Dari</div>
+        <div class="ic-name">PT Serabut Solusi Digital</div>
+        <div class="ic-detail">Jl. Mampang Prpt. Raya, Duren Tiga<br>Pancoran, Jakarta Selatan 12790<br>(+62) 888-1500-555 · halo@serabut.id</div>
+      </div>
+      <div class="info-cell">
+        <div class="ic-lbl">Tagih Kepada</div>
+        <div class="ic-name">${nama||'–'}</div>
+        <div class="ic-detail">
+          ${email ? email+'<br>' : ''}
+          ${noWA ? waFormatted : ''}
+          ${alamat ? '<br>'+alamat : ''}
+        </div>
+      </div>
+      <div class="info-cell">
+        <div class="ic-lbl">Detail Dokumen</div>
+        <div class="ic-val">${payMethod}</div>
+        <div class="ic-sub">${bName}<br>${bAccount}<br>a.n ${bHolder}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products -->
+  <div class="tbl-section">
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Deskripsi Produk</th>
+            <th>Qty</th>
+            <th>Harga Satuan</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>${itemRows}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Totals -->
+  <div class="totals-wrap">
+    <div class="totals-inner">
+      <div class="tot-row"><span>Subtotal</span><span class="tv">${fp(computedSubtotal)}</span></div>
+      ${computedDiscount>0 ? `<div class="tot-row"><span style="color:#ef4444">Diskon</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>` : ''}
+      <div class="tot-row"><span>Garansi</span><span class="tv" style="color:#059669">Termasuk ✓</span></div>
+      <div class="tot-grand"><span class="tl">Total Pembayaran</span><span class="tv">${fp(computedTotal)}</span></div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="doc-footer">
+    <div class="df-block">
+      <div class="df-lbl">Instruksi Pembayaran</div>
+      <div class="df-val">${payMethod}</div>
+      <div class="df-note">${bName} · ${bAccount}<br>a.n ${bHolder}</div>
+    </div>
+    <div class="df-block">
+      <div class="df-lbl">Garansi Produk</div>
+      <div class="df-val">Penuh selama masa aktif</div>
+      <div class="df-note">Produk tidak aktif akan diganti<br>tanpa biaya tambahan</div>
+    </div>
+    ${note ? `<div class="df-block" style="grid-column:span 2"><div class="df-lbl">Catatan</div><div class="df-val" style="font-weight:400;color:#4b5563;white-space:pre-wrap">${note}</div></div>` : ''}
+  </div>
+
+  <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; Dokumen ini diterbitkan secara digital</div>
+</div>
+</body>
+</html>`;
+        },
+        async downloadInvoice(order) {
+            const items = order.items || [{ produk: order.produk, varian: order.varian, masaAktif: order.masaAktif, harga: order.harga }];
+            const logo = await this._getLogoDataURL();
+            const html = this._buildInvoiceDoc({
+                orderId:       order.orderId,
+                tanggal:       order.tanggal,
+                nama:          this.currentUser?.nama || order.nama || '–',
+                email:         this.currentUser?.email || '',
+                noWA:          this.currentUser?.noWA  || '',
+                items,
+                total:         order.total || items.reduce((s,i)=>s+Number(i.harga||0),0),
+                paymentMethod: order.paymentMethod,
+                docType:       'invoice',
+                logoSrc:       logo,
+            });
+            const win = window.open('', '_blank', 'width=760,height=900,scrollbars=yes');
+            win.document.write(html);
+            win.document.close();
+        },
+        async adminDownloadInvoice(group) {
+            const logo = await this._getLogoDataURL();
+            const html = this._buildInvoiceDoc({
+                orderId:       group.orderId,
+                tanggal:       group.tanggal,
+                nama:          group.nama || '–',
+                email:         group.email || '',
+                noWA:          group.noWA  || '',
+                items:         group.items || [],
+                total:         group.total,
+                paymentMethod: (group.items||[])[0]?.paymentMethod,
+                docType:       'invoice',
+                logoSrc:       logo,
+            });
+            const win = window.open('', '_blank', 'width=760,height=900,scrollbars=yes');
+            win.document.write(html);
+            win.document.close();
+        },
+        async adminDownloadQuotation(group) {
+            const logo = await this._getLogoDataURL();
+            const html = this._buildInvoiceDoc({
+                orderId:       group.orderId,
+                tanggal:       group.tanggal,
+                nama:          group.nama || '–',
+                email:         group.email || '',
+                noWA:          group.noWA  || '',
+                items:         group.items || [],
+                total:         group.total,
+                paymentMethod: (group.items||[])[0]?.paymentMethod,
+                docType:       'quotation',
+                logoSrc:       logo,
+            });
+            const win = window.open('', '_blank', 'width=760,height=900,scrollbars=yes');
+            win.document.write(html);
+            win.document.close();
+        },
+
+        // ── Quotation builder methods ────────────────────────────────────
+        quoReset() {
+            this.quoForm = {
+                nama:'', email:'', noHP:'', alamat:'',
+                payMethod:'Transfer Bank', bankName:'SeaBank', bankAccount:'901000004087', bankHolder:'Eko Harianto',
+                note:'', discountType:'nominal', discountVal:0, items:[]
+            };
+            this._quoId = null;
+            this.quoProductSearch = -1;
+            this.quoSearchQuery   = '';
+            this.quoFilteredProducts = [];
+            this.quoSendMsg = '';
+            this.quoView = 'form';
+        },
+        quoNewForm() { this.quoReset(); this.quoView = 'form'; },
+        quoBackToList() { this.quoView = 'list'; },
+        _quoSaveToList(status) {
+            const f = this.quoForm;
+            const existing = this.quoList.findIndex(q => q.id === this._quoId);
+            const entry = { id:this._quoId, tanggal:new Date().toISOString(), nama:f.nama, email:f.email, noHP:f.noHP, total:this.quoTotal, itemCount:f.items.length, status };
+            if (existing >= 0) { this.quoList[existing] = {...this.quoList[existing], ...entry}; }
+            else { this.quoList.unshift(entry); }
+            this.quoList = this.quoList.slice(0,100);
+            localStorage.setItem('srb_quotations', JSON.stringify(this.quoList));
+        },
+        async _getLogoDataURL() {
+            if (this._logoDataURL) return this._logoDataURL;
+            try {
+                const resp = await fetch('/logo.png');
+                if (!resp.ok) return null;
+                const blob = await resp.blob();
+                return new Promise(res => {
+                    const r = new FileReader();
+                    r.onload = e => { this._logoDataURL = e.target.result; res(e.target.result); };
+                    r.readAsDataURL(blob);
+                });
+            } catch { return null; }
+        },
+        quoAddItem() {
+            this.quoForm.items.push({ deskripsi:'', qty:1, harga:0 });
+        },
+        quoRecalc() { /* computed via getters, nothing needed */ },
+        quoFilterProducts() {
+            const q = (this.quoSearchQuery||'').toLowerCase().trim();
+            if(!q) { this.quoFilteredProducts = []; return; }
+            this.quoFilteredProducts = (this.products||[]).filter(p =>
+                p.nama.toLowerCase().includes(q) ||
+                (p.varian||'').toLowerCase().includes(q) ||
+                (p.masaAktif||'').toLowerCase().includes(q)
+            );
+        },
+        quoSelectProduct(idx, p) {
+            const normName   = p.nama.toLowerCase();
+            const normVarian = (p.varian||'').toLowerCase();
+            const skipVarian = !normVarian || normVarian==='-' || normName.includes(normVarian);
+            const parts = [p.nama, !skipVarian?p.varian:'', p.masaAktif&&p.masaAktif!=='-'?p.masaAktif:''].filter(Boolean);
+            const desc = parts.join(' · ');
+            this.quoForm.items[idx].deskripsi = desc;
+            this.quoForm.items[idx].harga     = Number(p.harga||0);
+            this.quoProductSearch = -1;
+            this.quoFilteredProducts = [];
+            this.quoSearchQuery = '';
+        },
+        _quoEnsureId() {
+            if (!this._quoId) {
+                const now = new Date(), pad = n => String(n).padStart(2,'0');
+                this._quoId = 'QUO-' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + '-' + Math.floor(Math.random()*9000+1000);
+            }
+        },
+        async _quoBuildDoc(logoDataURL) {
+            const f   = this.quoForm;
+            const now = new Date(), pad = n => String(n).padStart(2,'0');
+            this._quoEnsureId();
+            const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+            const items = f.items.map(i => ({
+                produk: i.deskripsi, varian:'-', masaAktif:'-',
+                harga: Number(i.harga||0) * Number(i.qty||1), qty: i.qty,
+            }));
+            const logo = logoDataURL || await this._getLogoDataURL();
+            return this._buildInvoiceDoc({
+                orderId: this._quoId, tanggal: todayStr,
+                nama: f.nama, email: f.email, noWA: '62'+String(f.noHP||'').replace(/\D/g,''), alamat: f.alamat,
+                items, total: this.quoTotal, subtotal: this.quoSubtotal,
+                discountAmt: this.quoDiscountAmount,
+                paymentMethod: f.payMethod, bankName: f.bankName,
+                bankAccount: f.bankAccount, bankHolder: f.bankHolder,
+                note: f.note, docType: 'quotation', logoSrc: logo,
+            });
+        },
+        async quoGenerate() {
+            this._quoId = null;
+            const logo = await this._getLogoDataURL();
+            const html  = await this._quoBuildDoc(logo);
+            const win = window.open('', '_blank', 'width=800,height=960,scrollbars=yes');
+            win.document.write(html); win.document.close();
+            this._quoSaveToList('preview');
+        },
+        async quoSendWA() {
+            const f = this.quoForm;
+            const rawNum = String(f.noHP||'').replace(/\D/g,'');
+            if (!rawNum || rawNum.length < 8) { this.quoSendMsg = '⚠️ No. HP penerima belum diisi'; return; }
+            this._quoEnsureId();
+            this.quoWASending = true; this.quoSendMsg = '';
+            const fp = v => 'Rp ' + Number(v||0).toLocaleString('id-ID');
+            const itemLines = f.items.map((it,i) => `${i+1}. ${it.deskripsi} x${it.qty||1} — ${fp(Number(it.harga||0)*Number(it.qty||1))}`).join('\n');
+            const bankInfo = f.bankName ? `${f.bankName}: ${f.bankAccount} (a.n ${f.bankHolder})` : '';
+            try {
+                const data = await this.gasPost({
+                    action: 'sendQuotationWA',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.sessionToken,
+                    noHP: '62' + rawNum.replace(/^0/,''),
+                    quoId: this._quoId, nama: f.nama,
+                    itemLines, total: this.quoTotal,
+                    payMethod: f.payMethod, bankInfo,
+                });
+                if (data.success) {
+                    this.quoSendMsg = '✓ WA terkirim ke +62' + rawNum;
+                    this._quoSaveToList('sent_wa');
+                } else { this.quoSendMsg = '✗ ' + (data.error||'Gagal kirim WA'); }
+            } catch { this.quoSendMsg = '✗ Gagal terhubung ke server'; }
+            finally  { this.quoWASending = false; }
+        },
+        async quoSendEmail() {
+            const f = this.quoForm;
+            if (!f.email) { this.quoSendMsg = '⚠️ Email penerima belum diisi'; return; }
+            this._quoEnsureId();
+            this.quoEmailSending = true; this.quoSendMsg = '';
+            try {
+                const logo = await this._getLogoDataURL();
+                const html = await this._quoBuildDoc(logo);
+                const data = await this.gasPost({
+                    action: 'sendQuotationEmail',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.sessionToken,
+                    to:       f.email,
+                    subject:  `Penawaran ${this._quoId} dari Serabut Store`,
+                    htmlBody: html,
+                });
+                if (data.success) {
+                    this.quoSendMsg = '✓ Email terkirim ke ' + f.email;
+                    this._quoSaveToList('sent_email');
+                } else { this.quoSendMsg = '✗ ' + (data.error||'Gagal kirim email'); }
+            } catch { this.quoSendMsg = '✗ Gagal terhubung ke server'; }
+            finally  { this.quoEmailSending = false; }
+        },
+        // ─────────────────────────────────────────────────────────────────
+        // ─────────────────────────────────────────────────────────────────
+
         async adminUpdateGroupStatus(group, newStatus) {
             if(!newStatus) return;
             await Promise.all(group.items.map(item => this.adminUpdateOrderStatus(item, newStatus, true)));
@@ -7816,18 +9282,33 @@ function serabutStore() {
         },
         // ── Order date helpers ─────────────────────────────
         parseTanggalWIB(str) {
-            // "dd/MM/yyyy HH:mm" (WIB = UTC+7) → Date
+            // Handle "yyyy-MM-dd HH:mm" (ISO) dan "dd/MM/yyyy HH:mm" (lama)
             if (!str) return null;
-            const [datePart, timePart] = String(str).trim().split(' ');
-            const [d, m, y] = (datePart||'').split('/');
-            const [h, min]  = (timePart||'00:00').split(':');
+            const s = String(str).trim();
+            const [datePart, timePart] = s.split(' ');
+            const [h, min] = (timePart||'00:00').split(':');
+            let d, m, y;
+            if (datePart && datePart.indexOf('-') >= 4) {
+                // ISO format: yyyy-MM-dd
+                [y, m, d] = datePart.split('-');
+            } else {
+                // Legacy: dd/MM/yyyy
+                [d, m, y] = (datePart||'').split('/');
+            }
             if (!y) return null;
             return new Date(Date.UTC(+y, +m - 1, +d, +h - 7, +min || 0));
         },
         orderMsLeft(order) {
             const created = this.parseTanggalWIB(order?.tanggal);
             if (!created) return 0;
-            return Math.max(0, created.getTime() + 24 * 3600 * 1000 - Date.now());
+            const raw = created.getTime() + 24 * 3600 * 1000 - this.now;
+            if (raw <= 0) return 0;
+            // Guard: date di GSheet salah (tanggal masa depan → raw > 24h)
+            // Hitung mundur dari saat halaman dibuka agar countdown tetap jalan
+            if (raw > 24 * 3600 * 1000) {
+                return Math.max(0, this._pageLoadTime + 24 * 3600 * 1000 - this.now);
+            }
+            return raw;
         },
         orderTimeLeftStr(order) {
             const ms = order?.msecLeft ?? this.orderMsLeft(order);
@@ -7849,6 +9330,7 @@ function serabutStore() {
             this.reviewError    = '';
             this.reviewSuccess  = false;
             this.reviewOrderId  = '';
+            this.reviewEditMode = false;
             // Auto-sync: Pending dalam 24 jam, atau Dibatalkan (mungkin korban auto-cancel bug)
             if (order.status === 'Pending' || order.status === 'Dibatalkan') {
                 this.checkOrderPaymentStatus(order, true);
@@ -7929,6 +9411,8 @@ function serabutStore() {
                 if(!data.success) console.warn('[loadOrders] error dari GAS:', data.error);
                 this.orders = data.data || [];
                 this.ordersLoaded = true;
+                // Load review milik buyer dari GAS (survive refresh & lintas device)
+                this._syncBuyerReviews();
                 // Auto-open order detail jika kembali dari payment redirect
                 if (this.pendingOrderDetailId) {
                     const targetId = this.pendingOrderDetailId;
