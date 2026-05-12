@@ -136,6 +136,7 @@ function doPost(e) {
       case 'getBuyerReviews':           result = getBuyerReviews(params); break;
       case 'likeReview':                result = likeReview(params); break;
       case 'sendQuotationEmail':        result = sendQuotationEmail(params); break;
+      case 'sendQuotationWA':          result = sendQuotationWA(params); break;
       case 'sendReviewReminder':        result = sendReviewReminder(params); break;
       case 'editReview':                result = editReview(params); break;
       case 'toggleReview':              result = toggleReview(params); break;
@@ -4217,5 +4218,48 @@ function sendQuotationEmail({ adminEmail, adminToken, to, subject, htmlBody }) {
   } catch (e) {
     Logger.log('sendQuotationEmail error: ' + e.message);
     return { success: false, error: 'Gagal kirim email: ' + e.message };
+  }
+}
+
+// ── Quotation: kirim WA via Fonnte ke nomor penerima ──
+function sendQuotationWA({ adminEmail, adminToken, noHP, quoId, nama, itemLines, total, payMethod, bankInfo }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+
+  const wa = _normalizeWA(noHP);
+  if (!wa || wa.length < 10) return { success: false, error: 'No. WA tidak valid' };
+  if (!FONNTE_TOKEN)         return { success: false, error: 'FONNTE_TOKEN belum diset' };
+
+  const fp  = v => 'Rp ' + Number(v||0).toLocaleString('id-ID');
+  const msg =
+`Halo *${nama||''}*! 👋
+
+Berikut penawaran dari *Serabut Store*:
+━━━━━━━━━━━━━━━━━━
+📄 No: *${quoId||'–'}*
+
+${itemLines||''}
+━━━━━━━━━━━━━━━━━━
+💰 *Total: ${fp(total)}*
+
+Pembayaran: ${payMethod||'Transfer Bank'}
+${bankInfo||''}
+
+Penawaran berlaku *7 hari*. Balas pesan ini untuk konfirmasi atau pertanyaan 😊
+🌐 serabut.id | halo@serabut.id`;
+
+  try {
+    const resp = UrlFetchApp.fetch('https://api.fonnte.com/send', {
+      method: 'post',
+      headers: { 'Authorization': FONNTE_TOKEN },
+      payload: { target: wa, message: msg },
+      muteHttpExceptions: true,
+    });
+    const body = JSON.parse(resp.getContentText());
+    Logger.log('sendQuotationWA [' + resp.getResponseCode() + ']: ' + JSON.stringify(body));
+    if (resp.getResponseCode() === 200 && body.status !== false) return { success: true };
+    return { success: false, error: body.reason || body.message || 'Fonnte error' };
+  } catch (e) {
+    return { success: false, error: e.message };
   }
 }

@@ -3528,12 +3528,73 @@
 
             <!-- ══ Tab: Quotation ══════════════════════════════ -->
             <div x-show="adminTab==='quotation'" class="space-y-4">
-                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
 
+                <!-- ── LIST VIEW ── -->
+                <div x-show="quoView==='list'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h2 class="font-black text-gray-900 text-base">Buat Quotation</h2>
-                            <p class="text-xs text-gray-400 mt-0.5">Isi data penerima, item, dan kirimkan ke klien</p>
+                            <h2 class="font-black text-gray-900 text-base">Quotation</h2>
+                            <p class="text-xs text-gray-400 mt-0.5" x-text="quoList.length + ' dokumen tersimpan'"></p>
+                        </div>
+                        <button @click="quoNewForm()"
+                                class="flex items-center gap-1.5 text-sm font-bold bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                            Buat Quotation
+                        </button>
+                    </div>
+                    <!-- Empty state -->
+                    <div x-show="quoList.length===0" class="text-center py-12 text-gray-400">
+                        <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <p class="text-sm font-medium">Belum ada quotation</p>
+                        <p class="text-xs mt-1">Klik "Buat Quotation" untuk membuat dokumen pertama</p>
+                    </div>
+                    <!-- List -->
+                    <div x-show="quoList.length>0" class="space-y-2">
+                        <template x-for="(q,idx) in quoList" :key="q.id">
+                            <div class="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all">
+                                <!-- Icon -->
+                                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                </div>
+                                <!-- Info -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-mono text-xs text-gray-500" x-text="q.id"></span>
+                                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                              :class="q.status==='sent_wa'||q.status==='sent_email'||q.status==='sent_both' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'"
+                                              x-text="q.status==='sent_wa'?'✓ WA':q.status==='sent_email'?'✓ Email':q.status==='sent_both'?'✓ WA+Email':'Draft'"></span>
+                                    </div>
+                                    <div class="text-sm font-semibold text-gray-800 truncate mt-0.5" x-text="q.nama"></div>
+                                    <div class="flex items-center gap-3 mt-0.5">
+                                        <span class="text-xs text-gray-400" x-text="new Date(q.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})"></span>
+                                        <span class="text-xs font-bold text-brand-500" x-text="'Rp '+Number(q.total||0).toLocaleString('id-ID')"></span>
+                                        <span class="text-xs text-gray-400" x-text="q.itemCount+' item'"></span>
+                                    </div>
+                                </div>
+                                <!-- Actions -->
+                                <div class="flex items-center gap-1.5 flex-shrink-0">
+                                    <button @click="quoList.splice(idx,1); localStorage.setItem('srb_quotations',JSON.stringify(quoList))"
+                                            class="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- ── FORM VIEW ── -->
+                <div x-show="quoView==='form'" class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <button @click="quoBackToList()"
+                                    class="w-8 h-8 flex items-center justify-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <div>
+                                <h2 class="font-black text-gray-900 text-base">Buat Quotation</h2>
+                                <p class="text-xs text-gray-400 mt-0.5">Isi data penerima, item, dan kirimkan ke klien</p>
+                            </div>
                         </div>
                         <button @click="quoReset()"
                                 class="text-xs text-gray-400 hover:text-gray-600 font-semibold px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-all">
@@ -3559,8 +3620,13 @@
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500 font-medium mb-1 block">No. HP / WhatsApp</label>
-                                <input x-model="quoForm.noHP" type="text" placeholder="+62 812-3456-7890"
-                                       class="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-400"/>
+                                <div class="flex border border-gray-200 rounded-xl overflow-hidden focus-within:border-brand-400 transition-colors">
+                                    <span class="px-3 py-2 bg-gray-50 text-gray-500 text-sm font-semibold border-r border-gray-200 flex-shrink-0 flex items-center">+62</span>
+                                    <input x-model="quoForm.noHP" type="tel" inputmode="numeric" pattern="[0-9]*"
+                                           @input="quoForm.noHP = quoForm.noHP.replace(/[^0-9]/g,'')"
+                                           placeholder="812 3456 7890"
+                                           class="flex-1 px-3 py-2 text-sm focus:outline-none bg-white"/>
+                                </div>
                             </div>
                             <div>
                                 <label class="text-xs text-gray-500 font-medium mb-1 block">Alamat</label>
@@ -3735,7 +3801,8 @@
                              :class="quoSendMsg.startsWith('✓') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'"
                              x-text="quoSendMsg"></div>
                     </div>
-                </div>
+                </div><!-- end form view -->
+
             </div><!-- end tab quotation -->
 
             <!-- ══ Tab: Ulasan ══════════════════════════════════ -->
@@ -6155,13 +6222,16 @@ function serabutStore() {
 
         // ── Quotation builder ────────────────────────
         quoForm: {
-            nama:'', email:'', noHP:'+62 ', alamat:'',
+            nama:'', email:'', noHP:'', alamat:'',
             payMethod:'Transfer Bank', bankName:'SeaBank', bankAccount:'901000004087', bankHolder:'Eko Harianto',
             note:'', discountType:'nominal', discountVal:0,
             items:[]
         },
+        quoView:    'list', // 'list' | 'form'
+        quoList:    JSON.parse(localStorage.getItem('srb_quotations')||'[]'),
         quoSending: false,
         quoSendMsg: '',
+        _logoDataURL: null,
         quoProductSearch: -1,
         quoSearchQuery:   '',
         quoFilteredProducts: [],
@@ -8718,7 +8788,7 @@ function serabutStore() {
             if(!y) return str;
             return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
         },
-        _buildInvoiceDoc({ orderId, tanggal, nama, email, noWA, alamat, items, total, subtotal, discountAmt, paymentMethod, bankName, bankAccount, bankHolder, note, docType }) {
+        _buildInvoiceDoc({ orderId, tanggal, nama, email, noWA, alamat, items, total, subtotal, discountAmt, paymentMethod, bankName, bankAccount, bankHolder, note, docType, logoSrc }) {
             const fp  = v => this._invoiceFmtPrice(v);
             const fd  = v => this._invoiceFmtDate(v);
             const isInvoice = docType === 'invoice';
@@ -8753,6 +8823,10 @@ function serabutStore() {
             const bHolder    = bankHolder  || 'Eko Harianto';
             const waFormatted = noWA ? `+${String(noWA).replace(/^628/,'62 8').replace(/(\d{4})(?=\d)/g,'$1 ').trim()}` : '–';
 
+            const logoImg = logoSrc
+                ? `<img src="${logoSrc}" alt="Serabut" style="width:44px;height:44px;border-radius:10px;object-fit:contain;display:block"/>`
+                : `<div style="width:44px;height:44px;background:${docColor};border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="white" fill-opacity="0.9"/></svg></div>`;
+
             return `<!DOCTYPE html>
 <html lang="id">
 <head>
@@ -8760,179 +8834,200 @@ function serabutStore() {
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${docLabel} ${orderId||''}</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;background:#f1f5f9;color:#0f172a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .print-bar{background:${docColor};padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .print-bar button{background:rgba(255,255,255,.18);color:#fff;border:1.5px solid rgba(255,255,255,.35);padding:8px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s}
-  .print-bar button:hover{background:rgba(255,255,255,.28)}
-  .print-bar span{color:rgba(255,255,255,.8);font-size:12px}
-  .page{max-width:700px;margin:20px auto 40px;background:#fff;border-radius:16px;box-shadow:0 2px 20px rgba(0,0,0,.07);overflow:hidden}
-  /* Top accent */
-  .accent-bar{height:5px;background:${docColor}}
-  /* Header */
-  .doc-header{padding:24px 32px 20px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #f1f5f9}
-  .logo-wrap{display:flex;align-items:center;gap:10px}
-  .logo-wrap img{width:38px;height:38px;border-radius:8px;object-fit:contain}
-  .brand-name{font-weight:800;font-size:16px;color:#0f172a;letter-spacing:-.3px}
-  .brand-sub{font-size:11px;color:#94a3b8;margin-top:1px}
-  .doc-title-wrap{text-align:right}
-  .doc-title{font-size:28px;font-weight:900;letter-spacing:2px;color:#0f172a}
-  .doc-title span{color:${docColor}}
-  .doc-meta{margin-top:6px;font-size:12px;color:#64748b;line-height:1.6}
-  .doc-meta strong{font-family:monospace;color:#334155;font-size:12px}
-  .doc-badge{display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.4px;background:${isInvoice?'#dcfce7':'#eff6ff'};color:${isInvoice?'#15803d':'#1d4ed8'}}
-  /* Body */
-  .body{padding:24px 32px}
-  /* Parties */
-  .parties{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
-  .party{padding:14px 16px;border-radius:10px;border:1px solid #f1f5f9}
-  .party.from{background:#f8fafc}
-  .party.to{background:#fff8f8;border-color:#fee2e2}
-  .party-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8;margin-bottom:7px}
-  .party-name{font-weight:800;font-size:14px;color:#0f172a;margin-bottom:4px}
-  .party-detail{font-size:11.5px;color:#64748b;line-height:1.65}
-  /* Table */
-  .tbl-wrap{border-radius:10px;overflow:hidden;border:1px solid #f1f5f9}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a1a2e;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:13px}
+
+  /* ── Toolbar ── */
+  .toolbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+  .toolbar-left{display:flex;align-items:center;gap:8px;color:#6b7280;font-size:12px}
+  .toolbar-chip{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:#374151;font-family:monospace}
+  .toolbar-status{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${isInvoice?'#d1fae5':'#dbeafe'};color:${isInvoice?'#065f46':'#1e40af'}}
+  .btn-print{background:${docColor};color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .15s}
+  .btn-print:hover{opacity:.88}
+
+  /* ── Page ── */
+  .page{max-width:740px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);overflow:hidden}
+
+  /* ── Odoo-style header ── */
+  .doc-head{padding:32px 40px 28px;border-bottom:1px solid #f3f4f6}
+  .doc-head-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand-info .name{font-weight:800;font-size:15px;color:#111827;letter-spacing:-.2px}
+  .brand-info .sub{font-size:11px;color:#9ca3af;margin-top:2px}
+  .doc-title-block{text-align:right}
+  .doc-label-text{font-size:32px;font-weight:900;letter-spacing:1.5px;color:#111827;line-height:1}
+  .doc-label-text em{color:${docColor};font-style:normal}
+  .doc-ref{margin-top:8px;font-size:11.5px;color:#6b7280;line-height:1.7}
+  .doc-ref strong{color:#111827;font-weight:700;font-family:monospace}
+  .doc-badge{display:inline-flex;align-items:center;gap:4px;margin-top:10px;padding:4px 12px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:${isInvoice?'#d1fae5':'#dbeafe'};color:${isInvoice?'#065f46':'#1e40af'};border:1px solid ${isInvoice?'#a7f3d0':'#bfdbfe'}}
+
+  /* ── Info grid (Odoo-style 3-col) ── */
+  .info-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;border:1px solid #f3f4f6;border-radius:10px;overflow:hidden}
+  .info-cell{padding:14px 18px;border-right:1px solid #f3f4f6}
+  .info-cell:last-child{border-right:none}
+  .info-cell .ic-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:7px}
+  .info-cell .ic-name{font-size:13.5px;font-weight:700;color:#111827;margin-bottom:4px}
+  .info-cell .ic-detail{font-size:11.5px;color:#6b7280;line-height:1.65}
+  .info-cell .ic-val{font-size:13px;font-weight:600;color:#374151;margin-bottom:4px}
+  .info-cell .ic-sub{font-size:11.5px;color:#6b7280;line-height:1.6}
+
+  /* ── Products table ── */
+  .tbl-section{padding:0 40px}
+  .tbl-wrap{border:1px solid #f3f4f6;border-radius:10px;overflow:hidden;margin-top:24px}
   table{width:100%;border-collapse:collapse}
-  thead{background:#f8fafc}
-  thead th{padding:10px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#94a3b8;border-bottom:1px solid #e8ecf0}
-  thead th:nth-child(2){text-align:center}
-  thead th:nth-child(3),thead th:nth-child(4){text-align:right}
-  tbody tr:nth-child(even){background:#fafbfc}
-  tbody td{padding:11px 14px;font-size:13px;color:#334155;border-bottom:1px solid #f1f5f9}
-  tbody tr:last-child td{border-bottom:none}
-  tbody td:nth-child(1){color:#0f172a;font-weight:500}
-  tbody td:nth-child(2){text-align:center;color:#64748b}
-  tbody td:nth-child(3){text-align:right;color:#64748b}
-  tbody td:nth-child(4){text-align:right;font-weight:700;color:#0f172a}
-  /* Totals */
-  .totals-section{display:flex;justify-content:flex-end;margin-top:18px}
-  .totals-box{width:240px;border:1px solid #f1f5f9;border-radius:10px;overflow:hidden}
-  .t-row{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;font-size:13px;border-bottom:1px solid #f8fafc}
-  .t-row:last-child{border-bottom:none}
-  .t-row.grand{background:${docColor};padding:12px 14px}
-  .t-row.grand .tl{font-weight:800;color:#fff;font-size:14px}
-  .t-row.grand .tv{font-weight:900;color:#fff;font-size:16px}
-  .tl{color:#64748b}
-  .tv{font-weight:600;color:#334155}
-  /* Footer info */
-  .footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px;padding:18px;background:#f8fafc;border-radius:10px;border:1px solid #f1f5f9}
-  .fi .fi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8;margin-bottom:4px}
-  .fi .fi-val{font-size:13px;font-weight:600;color:#1e293b;line-height:1.45}
-  .fi .fi-note{font-size:11px;color:#94a3b8;margin-top:2px}
-  .copyright{text-align:center;padding:14px 32px;font-size:11px;color:#94a3b8;border-top:1px solid #f1f5f9}
+  thead tr{background:#f9fafb;border-bottom:1px solid #e5e7eb}
+  thead th{padding:11px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af}
+  thead th:first-child{text-align:left;padding-left:18px}
+  thead th:nth-child(2){text-align:center;width:60px}
+  thead th:nth-child(3){text-align:right;width:130px}
+  thead th:nth-child(4){text-align:right;width:130px;padding-right:18px}
+  tbody tr{border-bottom:1px solid #f9fafb;transition:background .1s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:#fafafa}
+  tbody td{padding:12px 14px;font-size:13px;color:#374151}
+  tbody td:first-child{padding-left:18px;color:#111827;font-weight:500}
+  tbody td:nth-child(2){text-align:center;color:#6b7280}
+  tbody td:nth-child(3){text-align:right;color:#6b7280}
+  tbody td:nth-child(4){text-align:right;font-weight:700;color:#111827;padding-right:18px}
+
+  /* ── Totals ── */
+  .totals-wrap{display:flex;justify-content:flex-end;padding:16px 40px 0}
+  .totals-inner{width:260px}
+  .tot-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #f3f4f6;color:#6b7280}
+  .tot-row:last-child{border-bottom:none}
+  .tot-row .tv{font-weight:600;color:#374151}
+  .tot-grand{display:flex;justify-content:space-between;align-items:center;background:${docColor};border-radius:8px;padding:12px 16px;margin-top:8px}
+  .tot-grand .tl{font-weight:700;color:#fff;font-size:14px}
+  .tot-grand .tv{font-weight:900;color:#fff;font-size:18px}
+
+  /* ── Footer section ── */
+  .doc-footer{margin:24px 40px;padding:20px;background:#f9fafb;border-radius:10px;border:1px solid #f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .df-block .df-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;margin-bottom:5px}
+  .df-block .df-val{font-size:13px;font-weight:600;color:#1f2937;line-height:1.5}
+  .df-block .df-note{font-size:11px;color:#9ca3af;margin-top:3px;line-height:1.5}
+  .copyright{text-align:center;padding:16px 40px 24px;font-size:11px;color:#d1d5db}
+
   @media print{
     body{background:#fff}
-    .print-bar{display:none}
+    .toolbar{display:none}
     .page{margin:0;border-radius:0;box-shadow:none;max-width:none}
+    .tbl-section{padding:0 32px}
+    .totals-wrap{padding:16px 32px 0}
+    .doc-footer{margin:24px 32px}
   }
 </style>
 </head>
 <body>
-<!-- Print bar -->
-<div class="print-bar">
-  <span>${docLabel} · ${orderId||'–'} · ${nowDate}</span>
-  <button onclick="window.print()">
-    <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <span class="toolbar-chip">${orderId||'–'}</span>
+    <span>${nowDate}</span>
+    <span class="toolbar-status">${isInvoice ? '✓ Lunas' : 'Penawaran'}</span>
+  </div>
+  <button class="btn-print" onclick="window.print()">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
     Cetak / Simpan PDF
   </button>
 </div>
 
 <div class="page">
-  <div class="accent-bar"></div>
 
   <!-- Header -->
-  <div class="doc-header">
-    <div class="logo-wrap">
-      <img src="https://serabut.id/logo.png" alt="Serabut" onerror="this.style.display='none'"/>
-      <div>
-        <div class="brand-name">Serabut Store</div>
-        <div class="brand-sub">PT Serabut Solusi Digital · serabut.id</div>
-      </div>
-    </div>
-    <div class="doc-title-wrap">
-      <div class="doc-title">${isInvoice ? 'INV<span style="color:'+docColor+'">OICE</span>' : 'QUOT<span style="color:'+docColor+'">ATION</span>'}</div>
-      <div class="doc-meta">
-        No: <strong>${orderId||'–'}</strong><br>
-        Tanggal: ${nowDate}
-      </div>
-      <div class="doc-badge">
-        ${isInvoice
-          ? '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> LUNAS'
-          : '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg> PENAWARAN'}
-      </div>
-    </div>
-  </div>
-
-  <div class="body">
-    <!-- Parties -->
-    <div class="parties">
-      <div class="party from">
-        <div class="party-lbl">Dari</div>
-        <div class="party-name">PT Serabut Solusi Digital</div>
-        <div class="party-detail">
-          Jl. Mampang Prpt. Raya, Duren Tiga<br>
-          Pancoran, Jakarta Selatan 12790<br>
-          (+62) 888-1500-555 · halo@serabut.id
+  <div class="doc-head">
+    <div class="doc-head-top">
+      <!-- Brand -->
+      <div class="brand">
+        ${logoImg}
+        <div class="brand-info">
+          <div class="name">Serabut Store</div>
+          <div class="sub">PT Serabut Solusi Digital · serabut.id</div>
         </div>
       </div>
-      <div class="party to">
-        <div class="party-lbl">Kepada</div>
-        <div class="party-name">${nama||'–'}</div>
-        <div class="party-detail">
+      <!-- Doc title -->
+      <div class="doc-title-block">
+        <div class="doc-label-text">${isInvoice ? 'INV<em>OICE</em>' : 'QUOT<em>ATION</em>'}</div>
+        <div class="doc-ref">
+          No: <strong>${orderId||'–'}</strong><br>
+          Tanggal: ${nowDate}
+        </div>
+        <div class="doc-badge">
+          ${isInvoice
+            ? '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Lunas'
+            : '<svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg> Penawaran'}
+        </div>
+      </div>
+    </div>
+
+    <!-- Info grid -->
+    <div class="info-grid">
+      <div class="info-cell">
+        <div class="ic-lbl">Dari</div>
+        <div class="ic-name">PT Serabut Solusi Digital</div>
+        <div class="ic-detail">Jl. Mampang Prpt. Raya, Duren Tiga<br>Pancoran, Jakarta Selatan 12790<br>(+62) 888-1500-555 · halo@serabut.id</div>
+      </div>
+      <div class="info-cell">
+        <div class="ic-lbl">Tagih Kepada</div>
+        <div class="ic-name">${nama||'–'}</div>
+        <div class="ic-detail">
           ${email ? email+'<br>' : ''}
           ${noWA ? waFormatted : ''}
           ${alamat ? '<br>'+alamat : ''}
         </div>
       </div>
+      <div class="info-cell">
+        <div class="ic-lbl">Detail Dokumen</div>
+        <div class="ic-val">${payMethod}</div>
+        <div class="ic-sub">${bName}<br>${bAccount}<br>a.n ${bHolder}</div>
+      </div>
     </div>
+  </div>
 
-    <!-- Items table -->
+  <!-- Products -->
+  <div class="tbl-section">
     <div class="tbl-wrap">
       <table>
         <thead>
           <tr>
-            <th style="width:52%;text-align:left">Deskripsi</th>
-            <th style="width:8%">Qty</th>
-            <th style="width:20%">Harga Satuan</th>
-            <th style="width:20%">Total</th>
+            <th>Deskripsi Produk</th>
+            <th>Qty</th>
+            <th>Harga Satuan</th>
+            <th>Subtotal</th>
           </tr>
         </thead>
         <tbody>${itemRows}</tbody>
       </table>
     </div>
+  </div>
 
-    <!-- Totals -->
-    <div class="totals-section">
-      <div class="totals-box">
-        <div class="t-row"><span class="tl">Subtotal</span><span class="tv">${fp(computedSubtotal)}</span></div>
-        ${computedDiscount>0 ? `<div class="t-row"><span class="tl" style="color:#ef4444">Diskon</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>` : ''}
-        <div class="t-row"><span class="tl">Garansi</span><span class="tv" style="color:#16a34a">Termasuk ✓</span></div>
-        <div class="t-row grand"><span class="tl">Total</span><span class="tv">${fp(computedTotal)}</span></div>
-      </div>
-    </div>
-
-    <!-- Footer info -->
-    <div class="footer-grid">
-      <div class="fi">
-        <div class="fi-lbl">Metode Pembayaran</div>
-        <div class="fi-val">${payMethod}</div>
-        <div class="fi-note">${bName} · ${bAccount}<br>a.n ${bHolder}</div>
-      </div>
-      <div class="fi">
-        <div class="fi-lbl">Garansi</div>
-        <div class="fi-val">Penuh selama masa aktif</div>
-        <div class="fi-note">Produk tidak aktif → diganti tanpa biaya</div>
-      </div>
-      <div class="fi" style="grid-column:span 2">
-        <div class="fi-lbl">Nomor & Tanggal Dokumen</div>
-        <div class="fi-val" style="font-family:monospace">${orderId||'–'} &nbsp;·&nbsp; ${fd(tanggal)}</div>
-      </div>
-      ${note ? `<div class="fi" style="grid-column:span 2"><div class="fi-lbl">Catatan</div><div class="fi-val" style="white-space:pre-wrap;font-family:inherit;font-weight:400;color:#475569">${note}</div></div>` : ''}
+  <!-- Totals -->
+  <div class="totals-wrap">
+    <div class="totals-inner">
+      <div class="tot-row"><span>Subtotal</span><span class="tv">${fp(computedSubtotal)}</span></div>
+      ${computedDiscount>0 ? `<div class="tot-row"><span style="color:#ef4444">Diskon</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>` : ''}
+      <div class="tot-row"><span>Garansi</span><span class="tv" style="color:#059669">Termasuk ✓</span></div>
+      <div class="tot-grand"><span class="tl">Total Pembayaran</span><span class="tv">${fp(computedTotal)}</span></div>
     </div>
   </div>
 
-  <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; Diterbitkan secara digital</div>
+  <!-- Footer -->
+  <div class="doc-footer">
+    <div class="df-block">
+      <div class="df-lbl">Instruksi Pembayaran</div>
+      <div class="df-val">${payMethod}</div>
+      <div class="df-note">${bName} · ${bAccount}<br>a.n ${bHolder}</div>
+    </div>
+    <div class="df-block">
+      <div class="df-lbl">Garansi Produk</div>
+      <div class="df-val">Penuh selama masa aktif</div>
+      <div class="df-note">Produk tidak aktif akan diganti<br>tanpa biaya tambahan</div>
+    </div>
+    ${note ? `<div class="df-block" style="grid-column:span 2"><div class="df-lbl">Catatan</div><div class="df-val" style="font-weight:400;color:#4b5563;white-space:pre-wrap">${note}</div></div>` : ''}
+  </div>
+
+  <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; Dokumen ini diterbitkan secara digital</div>
 </div>
 </body>
 </html>`;
@@ -8990,14 +9085,40 @@ function serabutStore() {
         // ── Quotation builder methods ────────────────────────────────────
         quoReset() {
             this.quoForm = {
-                nama:'', email:'', noHP:'+62 ', alamat:'',
+                nama:'', email:'', noHP:'', alamat:'',
                 payMethod:'Transfer Bank', bankName:'SeaBank', bankAccount:'901000004087', bankHolder:'Eko Harianto',
                 note:'', discountType:'nominal', discountVal:0, items:[]
             };
+            this._quoId = null;
             this.quoProductSearch = -1;
             this.quoSearchQuery   = '';
             this.quoFilteredProducts = [];
             this.quoSendMsg = '';
+            this.quoView = 'form';
+        },
+        quoNewForm() { this.quoReset(); this.quoView = 'form'; },
+        quoBackToList() { this.quoView = 'list'; },
+        _quoSaveToList(status) {
+            const f = this.quoForm;
+            const existing = this.quoList.findIndex(q => q.id === this._quoId);
+            const entry = { id:this._quoId, tanggal:new Date().toISOString(), nama:f.nama, email:f.email, noHP:f.noHP, total:this.quoTotal, itemCount:f.items.length, status };
+            if (existing >= 0) { this.quoList[existing] = {...this.quoList[existing], ...entry}; }
+            else { this.quoList.unshift(entry); }
+            this.quoList = this.quoList.slice(0,100);
+            localStorage.setItem('srb_quotations', JSON.stringify(this.quoList));
+        },
+        async _getLogoDataURL() {
+            if (this._logoDataURL) return this._logoDataURL;
+            try {
+                const resp = await fetch('/logo.png');
+                if (!resp.ok) return null;
+                const blob = await resp.blob();
+                return new Promise(res => {
+                    const r = new FileReader();
+                    r.onload = e => { this._logoDataURL = e.target.result; res(e.target.result); };
+                    r.readAsDataURL(blob);
+                });
+            } catch { return null; }
         },
         quoAddItem() {
             this.quoForm.items.push({ deskripsi:'', qty:1, harga:0 });
@@ -9024,74 +9145,86 @@ function serabutStore() {
             this.quoFilteredProducts = [];
             this.quoSearchQuery = '';
         },
-        _quoBuildDoc() {
+        _quoEnsureId() {
+            if (!this._quoId) {
+                const now = new Date(), pad = n => String(n).padStart(2,'0');
+                this._quoId = 'QUO-' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + '-' + Math.floor(Math.random()*9000+1000);
+            }
+        },
+        async _quoBuildDoc(logoDataURL) {
             const f   = this.quoForm;
-            const now = new Date();
-            const pad = n => String(n).padStart(2,'0');
-            if (!this._quoId) this._quoId = 'QUO-' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + '-' + Math.floor(Math.random()*9000+1000);
+            const now = new Date(), pad = n => String(n).padStart(2,'0');
+            this._quoEnsureId();
             const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
             const items = f.items.map(i => ({
                 produk: i.deskripsi, varian:'-', masaAktif:'-',
                 harga: Number(i.harga||0) * Number(i.qty||1), qty: i.qty,
             }));
+            const logo = logoDataURL || await this._getLogoDataURL();
             return this._buildInvoiceDoc({
                 orderId: this._quoId, tanggal: todayStr,
-                nama: f.nama, email: f.email, noWA: f.noHP, alamat: f.alamat,
+                nama: f.nama, email: f.email, noWA: '62'+String(f.noHP||'').replace(/\D/g,''), alamat: f.alamat,
                 items, total: this.quoTotal, subtotal: this.quoSubtotal,
                 discountAmt: this.quoDiscountAmount,
                 paymentMethod: f.payMethod, bankName: f.bankName,
                 bankAccount: f.bankAccount, bankHolder: f.bankHolder,
-                note: f.note, docType: 'quotation',
+                note: f.note, docType: 'quotation', logoSrc: logo,
             });
         },
-        quoGenerate() {
-            this._quoId = null; // reset so new ID generated
-            const html = this._quoBuildDoc();
-            const win = window.open('', '_blank', 'width=780,height=940,scrollbars=yes');
+        async quoGenerate() {
+            this._quoId = null;
+            const logo = await this._getLogoDataURL();
+            const html  = await this._quoBuildDoc(logo);
+            const win = window.open('', '_blank', 'width=800,height=960,scrollbars=yes');
             win.document.write(html); win.document.close();
+            this._quoSaveToList('preview');
         },
-        quoSendWA() {
+        async quoSendWA() {
             const f = this.quoForm;
-            const wa = String(f.noHP||'').replace(/\D/g,'');
-            if (!wa || wa.length < 8) { this.quoSendMsg = '⚠️ No. HP penerima belum diisi'; return; }
+            const rawNum = String(f.noHP||'').replace(/\D/g,'');
+            if (!rawNum || rawNum.length < 8) { this.quoSendMsg = '⚠️ No. HP penerima belum diisi'; return; }
+            this._quoEnsureId();
+            this.quoSending = true; this.quoSendMsg = '';
             const fp = v => 'Rp ' + Number(v||0).toLocaleString('id-ID');
             const itemLines = f.items.map((it,i) => `${i+1}. ${it.deskripsi} x${it.qty||1} — ${fp(Number(it.harga||0)*Number(it.qty||1))}`).join('\n');
-            const discLine = this.quoDiscountAmount > 0 ? `\nDiskon: – ${fp(this.quoDiscountAmount)}` : '';
-            const doc = this._quoBuildDoc ? this._quoId || '–' : '–';
-            const text =
-`Halo *${f.nama||''}*! 👋
-
-Berikut penawaran dari *Serabut Store*:
-━━━━━━━━━━━━━━━━━━
-No: *${this._quoId||'–'}*
-${itemLines}${discLine}
-━━━━━━━━━━━━━━━━━━
-💰 *Total: ${fp(this.quoTotal)}*
-
-Pembayaran via: ${f.payMethod}
-${f.bankName ? f.bankName+': '+f.bankAccount+' ('+f.bankHolder+')' : ''}
-
-Penawaran ini berlaku 7 hari. Hubungi kami jika ada pertanyaan 😊
-serabut.id | halo@serabut.id`;
-            window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(text), '_blank');
-            this.quoSendMsg = '✓ WhatsApp dibuka';
+            const bankInfo = f.bankName ? `${f.bankName}: ${f.bankAccount} (a.n ${f.bankHolder})` : '';
+            try {
+                const data = await this.gasPost({
+                    action: 'sendQuotationWA',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.sessionToken,
+                    noHP: '62' + rawNum.replace(/^0/,''),
+                    quoId: this._quoId, nama: f.nama,
+                    itemLines, total: this.quoTotal,
+                    payMethod: f.payMethod, bankInfo,
+                });
+                if (data.success) {
+                    this.quoSendMsg = '✓ WA terkirim ke +62' + rawNum;
+                    this._quoSaveToList('sent_wa');
+                } else { this.quoSendMsg = '✗ ' + (data.error||'Gagal kirim WA'); }
+            } catch { this.quoSendMsg = '✗ Gagal terhubung ke server'; }
+            finally  { this.quoSending = false; }
         },
         async quoSendEmail() {
             const f = this.quoForm;
             if (!f.email) { this.quoSendMsg = '⚠️ Email penerima belum diisi'; return; }
-            this.quoSending = true;
-            this.quoSendMsg = '';
+            this._quoEnsureId();
+            this.quoSending = true; this.quoSendMsg = '';
             try {
-                const html = this._quoBuildDoc();
+                const logo = await this._getLogoDataURL();
+                const html = await this._quoBuildDoc(logo);
                 const data = await this.gasPost({
                     action: 'sendQuotationEmail',
                     adminEmail: this.currentUser?.email,
                     adminToken: this.sessionToken,
                     to:       f.email,
-                    subject:  `Penawaran ${this._quoId||''} dari Serabut Store`,
+                    subject:  `Penawaran ${this._quoId} dari Serabut Store`,
                     htmlBody: html,
                 });
-                this.quoSendMsg = data.success ? '✓ Email terkirim ke ' + f.email : '✗ ' + (data.error||'Gagal kirim');
+                if (data.success) {
+                    this.quoSendMsg = '✓ Email terkirim ke ' + f.email;
+                    this._quoSaveToList('sent_email');
+                } else { this.quoSendMsg = '✗ ' + (data.error||'Gagal kirim email'); }
             } catch { this.quoSendMsg = '✗ Gagal terhubung ke server'; }
             finally  { this.quoSending = false; }
         },
