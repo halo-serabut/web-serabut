@@ -8847,7 +8847,9 @@ function serabutStore() {
   .btn-print:hover{opacity:.88}
 
   /* ── Page ── */
-  .page{max-width:740px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);overflow:hidden}
+  .page{max-width:740px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);overflow:hidden;position:relative}
+  /* Odoo ribbon sudut kanan atas */
+  .page-ribbon{position:absolute;top:20px;right:-32px;width:150px;padding:9px 0;text-align:center;background:${isInvoice?'#10b981':'#e84343'};color:#fff;font-size:13px;font-weight:900;letter-spacing:3px;text-transform:uppercase;transform:rotate(45deg);box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:10}
 
   /* ── Odoo-style header ── */
   .doc-head{padding:32px 40px 28px;border-bottom:1px solid #f3f4f6}
@@ -8855,7 +8857,7 @@ function serabutStore() {
   .brand{display:flex;align-items:center;gap:12px}
   .brand-info .name{font-weight:800;font-size:15px;color:#111827;letter-spacing:-.2px}
   .brand-info .sub{font-size:11px;color:#9ca3af;margin-top:2px}
-  .doc-title-block{text-align:right;position:relative}
+  .doc-title-block{text-align:right}
   .doc-label-text{font-size:32px;font-weight:900;letter-spacing:1.5px;color:#111827;line-height:1}
   .doc-ref{margin-top:8px;font-size:11.5px;color:#6b7280;line-height:1.7}
   .doc-ref strong{color:#111827;font-weight:700;font-family:monospace}
@@ -8932,6 +8934,7 @@ function serabutStore() {
 </div>
 
 <div class="page">
+  <div class="page-ribbon">${isInvoice ? 'LUNAS' : 'PENAWARAN'}</div>
 
   <!-- Header -->
   <div class="doc-head">
@@ -8951,7 +8954,6 @@ function serabutStore() {
           No: <strong>${orderId||'–'}</strong><br>
           Tanggal: ${nowDate}
         </div>
-        <div class="paid-stamp" style="position:relative;display:inline-block;margin-top:10px;transform:rotate(-18deg);border:3px solid ${isInvoice?'#10b981':'#e84343'};border-radius:5px;padding:3px 14px;color:${isInvoice?'#10b981':'#e84343'};font-size:16px;font-weight:900;letter-spacing:4px;opacity:.6;text-transform:uppercase;white-space:nowrap">${isInvoice?'LUNAS':'PENAWARAN'}</div>
       </div>
     </div>
 
@@ -9001,7 +9003,6 @@ function serabutStore() {
     <div class="totals-inner">
       <div class="tot-row"><span>Subtotal</span><span class="tv">${fp(computedSubtotal)}</span></div>
       ${computedDiscount>0 ? `<div class="tot-row"><span style="color:#ef4444">Diskon</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>` : ''}
-      <div class="tot-row"><span>Garansi</span><span class="tv" style="color:#059669">Termasuk ✓</span></div>
       <div class="tot-grand"><span class="tl">Total Pembayaran</span><span class="tv">${fp(computedTotal)}</span></div>
     </div>
   </div>
