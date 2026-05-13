@@ -8982,6 +8982,7 @@ function serabutStore() {
     .bottom-section{display:flex!important;page-break-inside:avoid;margin-bottom:0!important}
     .stamp-area{width:190px!important;min-width:190px!important}
     .pay-area,.warranty-area{flex:1!important}
+    .qr-col{width:100px!important;min-width:100px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .tot-grand,.left-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
@@ -9016,7 +9017,11 @@ function serabutStore() {
       </div>
       <div class="doc-meta">
         <div class="doc-type">${docLabel}</div>
-        <div class="doc-num">No: <strong>${orderId||'–'}</strong><br>Date: ${nowDate}</div>
+        <div class="doc-num">
+          No: <strong>${orderId||'–'}</strong><br>
+          Date: ${nowDate}<br>
+          Due: <strong>${isInvoice ? 'Immediately' : 'Upon approval'}</strong>
+        </div>
       </div>
     </div>
 
@@ -9049,7 +9054,7 @@ function serabutStore() {
       <div class="totals-inner">
         <div class="tot-row"><span>Subtotal</span><span class="tv">${fp(computedSubtotal)}</span></div>
         ${computedDiscount>0?`<div class="tot-row"><span style="color:#ef4444">Discount</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>`:''}
-        <div class="tot-grand"><span class="tl">Total Amount</span><span class="tv">${fp(computedTotal)}</span></div>
+        <div class="tot-grand"><span class="tl">Total (IDR)</span><span class="tv">${fp(computedTotal)}</span></div>
       </div>
     </div>
 
@@ -9074,9 +9079,16 @@ function serabutStore() {
           ✓ Covers full subscription duration
         </div>
       </div>
+      <div style="flex-shrink:0;width:100px;border-left:1px solid #e5e7eb;padding-left:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent('https://serabut.id/?order='+(orderId||''))}&size=80x80&margin=2&color=111827&bgcolor=ffffff" alt="QR" width="80" height="80" style="border-radius:6px;border:1px solid #e5e7eb;display:block" onerror="this.style.display='none'"/>
+        <div style="font-size:8.5px;color:#9ca3af;text-align:center;font-weight:600;letter-spacing:.3px">SCAN TO VERIFY</div>
+      </div>
     </div>
 
-    <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; This document is issued digitally</div>
+    <div class="copyright">
+      © ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; Issued digitally
+      <br><span style="font-size:9.5px;color:#e5e7eb">Terms: Payment due upon receipt · All products delivered digitally · Non-refundable after account delivered · Support via WhatsApp during active period</span>
+    </div>
   </div>
 </div>
 </body>
