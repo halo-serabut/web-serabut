@@ -8897,11 +8897,16 @@ function serabutStore() {
   .btn-print{background:${accentColor};color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px}
   .btn-print:hover{opacity:.88}
 
-  .page{max-width:760px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.07);overflow:hidden;position:relative;display:flex}
-  .left-bar{width:8px;background:${accentColor};flex-shrink:0}
-  .main{flex:1;min-width:0;padding:0}
+  /* ── Page — A4 proportions on screen, full A4 in print ── */
+  .page{max-width:794px;margin:24px auto 48px;background:#fff;border-radius:12px;
+        box-shadow:0 2px 6px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.07);
+        overflow:hidden;display:flex;min-height:900px}
+  .left-bar{width:8px;flex-shrink:0;background:${accentColor};-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  /* main uses flex-col so .grow pushes bottom-section to bottom */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .grow{flex:1} /* spacer that expands to push bottom section down */
 
-  /* ── Header — brand left, doc info right aligned with Amount col ── */
+  /* ── Header ── */
   .doc-header{padding:32px 24px 28px 32px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #f3f4f6}
   .brand{display:flex;align-items:flex-start;gap:14px}
   .brand-logo{width:54px;height:54px;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
@@ -8909,19 +8914,19 @@ function serabutStore() {
   .brand-name{font-size:17px;font-weight:800;color:#111827;letter-spacing:-.3px;margin-top:2px}
   .brand-sub{font-size:11px;color:#9ca3af;margin-top:3px}
   .brand-contact{font-size:10.5px;color:#6b7280;margin-top:10px;line-height:1.75}
-  /* doc meta right-aligned to match Amount column right edge (24px from right) */
-  .doc-meta{text-align:right;padding-right:24px}
-  .doc-type{font-size:34px;font-weight:900;color:#111827;letter-spacing:0;line-height:1}
+  /* INVOICE flush right — padding-right:0, same as the Amount col outer right edge */
+  .doc-meta{text-align:right;padding-right:0;margin-right:24px}
+  .doc-type{font-size:36px;font-weight:900;color:#111827;letter-spacing:0;line-height:1}
   .doc-num{font-size:12px;color:#6b7280;margin-top:8px;line-height:1.9}
   .doc-num strong{color:#111827;font-family:monospace;font-weight:700;font-size:13px}
 
-  /* ── Info band — same horizontal padding as table first-col ── */
+  /* ── Info band ── */
   .info-band{background:#f9fafb;border-top:1px solid #f3f4f6;border-bottom:1px solid #f3f4f6;padding:18px 24px 18px 32px;display:grid;grid-template-columns:1fr 1fr}
   .ib-cell .ib-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin-bottom:5px}
   .ib-cell .ib-name{font-size:13px;font-weight:700;color:#111827}
   .ib-cell .ib-detail{font-size:11px;color:#6b7280;line-height:1.65;margin-top:2px}
 
-  /* ── Products table — left edge at 32px matching header/info ── */
+  /* ── Products table ── */
   .tbl-section{padding:24px 0 0}
   table{width:100%;border-collapse:collapse;font-size:13px}
   thead th{padding:10px 16px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;border-bottom:2px solid #f3f4f6}
@@ -8936,38 +8941,45 @@ function serabutStore() {
   tbody td:nth-child(4){text-align:right;font-weight:700;color:#111827;padding-right:24px}
   tbody tr:last-child td{border-bottom:none}
 
-  /* ── Totals — right edge matches Amount col ── */
+  /* ── Totals — right edge = 24px, matches Amount col ── */
   .totals-wrap{display:flex;justify-content:flex-end;padding:8px 24px 0 0}
   .totals-inner{width:280px}
   .tot-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #f3f4f6;color:#6b7280}
   .tot-row .tv{font-weight:600;color:#374151}
-  .tot-grand{display:flex;justify-content:space-between;align-items:center;background:${accentColor};border-radius:8px;padding:13px 18px;margin-top:10px}
+  .tot-grand{display:flex;justify-content:space-between;align-items:center;background:${accentColor};border-radius:8px;padding:13px 18px;margin-top:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .tot-grand .tl{font-weight:700;color:#fff;font-size:14px}
   .tot-grand .tv{font-weight:900;color:#fff;font-size:17px}
 
-  /* ── Stamp + Payment row ── */
-  .bottom-section{display:flex;align-items:flex-start;gap:0;margin:20px 24px 20px 32px;padding:18px 20px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:10px}
-  .stamp-area{flex-shrink:0;width:200px;display:flex;align-items:center;justify-content:center}
+  /* ── Bottom: stamp | payment | warranty — pinned to bottom via .grow ── */
+  .bottom-section{display:flex;align-items:stretch;margin:0 24px 0 32px;padding:18px 20px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:10px}
+  .stamp-area{flex-shrink:0;width:190px;display:flex;align-items:center;justify-content:center}
   .pay-area{flex:1;min-width:0;border-left:1px solid #e5e7eb;padding-left:20px}
   .warranty-area{flex:1;min-width:0;border-left:1px solid #e5e7eb;padding-left:20px}
   .pf-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:6px}
   .pf-val{font-size:14px;font-weight:700;color:#111827}
-  .copyright{text-align:center;padding:0 24px 20px;font-size:10.5px;color:#d1d5db}
+  .copyright{text-align:center;padding:12px 24px 20px;font-size:10.5px;color:#d1d5db}
 
+  /* ── Print ── */
   @media print{
-    @page{size:A4;margin:12mm 10mm}
+    @page{size:A4 portrait;margin:10mm 10mm}
     body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .toolbar{display:none!important}
-    .page{margin:0;border-radius:0;box-shadow:none;max-width:none;display:flex!important;page-break-inside:avoid}
-    .left-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .main{width:100%}
-    /* fix flex children explicit widths for print engines */
-    .bottom-section{display:flex!important;page-break-inside:avoid}
-    .stamp-area{width:180px!important;min-width:180px}
+    /* A4 at 96dpi = 794px wide, 1123px tall; subtract @page margins (20mm each side = 76px) */
+    .page{
+      margin:0!important;border-radius:0;box-shadow:none;
+      width:100%!important;max-width:100%!important;
+      min-height:calc(297mm - 20mm)!important;
+      display:flex!important;flex-direction:row!important;
+      page-break-inside:avoid
+    }
+    .left-bar{width:6px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .main{display:flex!important;flex-direction:column!important;flex:1!important}
+    .grow{flex:1!important}
+    .info-band{display:grid!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .bottom-section{display:flex!important;page-break-inside:avoid;margin-bottom:0!important}
+    .stamp-area{width:190px!important;min-width:190px!important}
     .pay-area,.warranty-area{flex:1!important}
-    .info-band{display:grid!important}
-    .totals-inner{width:280px}
-    .tot-grand{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .tot-grand,.left-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
 </head>
@@ -9037,6 +9049,9 @@ function serabutStore() {
         <div class="tot-grand"><span class="tl">Total Amount</span><span class="tv">${fp(computedTotal)}</span></div>
       </div>
     </div>
+
+    <!-- Spacer — pushes bottom section to foot of page (A4) -->
+    <div class="grow"></div>
 
     <!-- Bottom: Stamp | Payment | Warranty -->
     <div class="bottom-section">
