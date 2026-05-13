@@ -8865,19 +8865,32 @@ function serabutStore() {
             const bankInfo    = isTransfer ? `<div style="font-size:11.5px;color:#6b7280;margin-top:3px;line-height:1.6">${bName} &nbsp;·&nbsp; ${bAccount}<br><span style="color:#9ca3af">a.n</span> ${bHolder}</div>` : '';
 
             const logoImg = logoSrc
-                ? `<img src="${logoSrc}" alt="Serabut" style="width:48px;height:48px;object-fit:contain;display:block"/>`
+                ? `<img src="${logoSrc}" alt="Serabut" style="width:52px;height:52px;object-fit:contain;display:block"/>`
                 : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="${accentColor}"/></svg>`;
 
-            // Professional stamp — solid filled rounded-rect, rotated
+            // Real rubber stamp SVG — bottom-left area, large, rotated -22deg
             const stampColor = isInvoice ? '#059669' : '#2563eb';
-            const stampText  = isInvoice ? 'PAID' : 'QUOTE';
-            const paidStamp  = `<div style="position:absolute;top:28px;right:32px;z-index:10;transform:rotate(-18deg);display:inline-flex;flex-direction:column;align-items:center;gap:3px">
-  <svg width="96" height="46" viewBox="0 0 96 46" style="display:block">
-    <rect x="2" y="2" width="92" height="42" rx="6" fill="${stampColor}"/>
-    <rect x="5" y="5" width="86" height="36" rx="4" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.5"/>
-    <text x="48" y="27" dominant-baseline="middle" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="900" letter-spacing="4" fill="white">${stampText}</text>
-  </svg>
-</div>`;
+            const stampLine1 = isInvoice ? 'PAID' : 'APPROVED';
+            const stampLine2 = isInvoice ? 'IN FULL' : 'QUOTATION';
+            const rubberStamp = `
+  <svg width="180" height="80" viewBox="0 0 180 80" style="transform:rotate(-22deg);display:block;opacity:0.82">
+    <!-- outer thick ring -->
+    <rect x="3" y="3" width="174" height="74" rx="10" fill="none" stroke="${stampColor}" stroke-width="4"/>
+    <!-- inner dashed ring -->
+    <rect x="9" y="9" width="162" height="62" rx="7" fill="none" stroke="${stampColor}" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <!-- top decorative line -->
+    <line x1="22" y1="22" x2="158" y2="22" stroke="${stampColor}" stroke-width="1" opacity="0.4"/>
+    <!-- bottom decorative line -->
+    <line x1="22" y1="58" x2="158" y2="58" stroke="${stampColor}" stroke-width="1" opacity="0.4"/>
+    <!-- main text -->
+    <text x="90" y="37" dominant-baseline="middle" text-anchor="middle"
+          font-family="Inter,Arial,sans-serif" font-size="22" font-weight="900"
+          letter-spacing="6" fill="${stampColor}">${stampLine1}</text>
+    <!-- sub text -->
+    <text x="90" y="54" dominant-baseline="middle" text-anchor="middle"
+          font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700"
+          letter-spacing="4" fill="${stampColor}">${stampLine2}</text>
+  </svg>`;
 
             return `<!DOCTYPE html>
 <html lang="en">
@@ -8896,64 +8909,62 @@ function serabutStore() {
   .btn-print{background:${accentColor};color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px}
   .btn-print:hover{opacity:.88}
 
-  /* ── Page card ── */
   .page{max-width:760px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.07);overflow:hidden;position:relative;display:flex}
-
-  /* ── Left accent bar (like reference) ── */
   .left-bar{width:8px;background:${accentColor};flex-shrink:0}
-
-  /* ── Main content ── */
   .main{flex:1;min-width:0;padding:0}
 
-  /* ── Header ── */
-  .doc-header{padding:36px 40px 28px;display:flex;align-items:flex-start;justify-content:space-between;position:relative;border-bottom:2px solid #f3f4f6}
-  .brand{display:flex;align-items:center;gap:14px}
-  .brand-logo{width:52px;height:52px;border-radius:10px;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
-  .brand-logo img{width:48px;height:48px;object-fit:contain;display:block}
-  .brand-name{font-size:17px;font-weight:800;color:#111827;letter-spacing:-.3px}
+  /* ── Header — brand left, doc info right aligned with Amount col ── */
+  .doc-header{padding:32px 24px 28px 32px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #f3f4f6}
+  .brand{display:flex;align-items:flex-start;gap:14px}
+  .brand-logo{width:54px;height:54px;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+  .brand-logo img{width:52px;height:52px;object-fit:contain;display:block}
+  .brand-name{font-size:17px;font-weight:800;color:#111827;letter-spacing:-.3px;margin-top:2px}
   .brand-sub{font-size:11px;color:#9ca3af;margin-top:3px}
-  .brand-contact{font-size:10.5px;color:#6b7280;margin-top:10px;line-height:1.7}
-  .doc-meta{text-align:right;padding-right:80px} /* leave space for stamp */
-  .doc-type{font-size:32px;font-weight:900;color:#111827;letter-spacing:0;line-height:1}
+  .brand-contact{font-size:10.5px;color:#6b7280;margin-top:10px;line-height:1.75}
+  /* doc meta right-aligned to match Amount column right edge (24px from right) */
+  .doc-meta{text-align:right;padding-right:24px}
+  .doc-type{font-size:34px;font-weight:900;color:#111827;letter-spacing:0;line-height:1}
   .doc-num{font-size:12px;color:#6b7280;margin-top:8px;line-height:1.9}
   .doc-num strong{color:#111827;font-family:monospace;font-weight:700;font-size:13px}
 
-  /* ── Info band ── */
-  .info-band{background:#f9fafb;border-bottom:1px solid #f3f4f6;padding:16px 40px;display:grid;grid-template-columns:1fr 1fr}
+  /* ── Info band — same horizontal padding as table first-col ── */
+  .info-band{background:#f9fafb;border-top:1px solid #f3f4f6;border-bottom:1px solid #f3f4f6;padding:18px 24px 18px 32px;display:grid;grid-template-columns:1fr 1fr}
   .ib-cell .ib-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin-bottom:5px}
   .ib-cell .ib-name{font-size:13px;font-weight:700;color:#111827}
   .ib-cell .ib-detail{font-size:11px;color:#6b7280;line-height:1.65;margin-top:2px}
 
-  /* ── Products table ── */
-  .tbl-section{padding:24px 40px 0}
+  /* ── Products table — left edge at 32px matching header/info ── */
+  .tbl-section{padding:24px 0 0}
   table{width:100%;border-collapse:collapse;font-size:13px}
   thead th{padding:10px 16px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;border-bottom:2px solid #f3f4f6}
-  thead th:first-child{text-align:left;padding-left:24px}
+  thead th:first-child{text-align:left;padding-left:32px}
   thead th:nth-child(2){text-align:center;width:56px}
   thead th:nth-child(3){text-align:right;width:120px}
   thead th:nth-child(4){text-align:right;width:120px;padding-right:24px}
   tbody td{color:#374151;vertical-align:top}
-  tbody td:first-child{padding-left:24px;font-weight:500;color:#111827}
+  tbody td:first-child{padding-left:32px;font-weight:500;color:#111827}
   tbody td:nth-child(2){text-align:center;color:#6b7280}
   tbody td:nth-child(3){text-align:right;color:#6b7280}
   tbody td:nth-child(4){text-align:right;font-weight:700;color:#111827;padding-right:24px}
   tbody tr:last-child td{border-bottom:none}
 
-  /* ── Totals ── */
-  .totals-wrap{display:flex;justify-content:flex-end;padding:8px 40px 0}
-  .totals-inner{width:270px}
+  /* ── Totals — right edge matches Amount col ── */
+  .totals-wrap{display:flex;justify-content:flex-end;padding:8px 24px 0 0}
+  .totals-inner{width:280px}
   .tot-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #f3f4f6;color:#6b7280}
   .tot-row .tv{font-weight:600;color:#374151}
   .tot-grand{display:flex;justify-content:space-between;align-items:center;background:${accentColor};border-radius:8px;padding:13px 18px;margin-top:10px}
   .tot-grand .tl{font-weight:700;color:#fff;font-size:14px}
   .tot-grand .tv{font-weight:900;color:#fff;font-size:17px}
 
-  /* ── Payment footer ── */
-  .pay-footer{margin:20px 40px 28px;padding:16px 20px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:10px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  /* ── Stamp + Payment row ── */
+  .bottom-section{display:flex;align-items:flex-start;gap:0;margin:20px 24px 20px 32px;padding:18px 20px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:10px}
+  .stamp-area{flex-shrink:0;width:200px;display:flex;align-items:center;justify-content:center}
+  .pay-area{flex:1;min-width:0;border-left:1px solid #e5e7eb;padding-left:20px}
+  .warranty-area{flex:1;min-width:0;border-left:1px solid #e5e7eb;padding-left:20px}
   .pf-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:6px}
   .pf-val{font-size:14px;font-weight:700;color:#111827}
-  .warranty-block{border-left:3px solid ${accentColor};padding-left:14px}
-  .copyright{text-align:center;padding:0 40px 20px;font-size:10.5px;color:#d1d5db}
+  .copyright{text-align:center;padding:0 24px 20px;font-size:10.5px;color:#d1d5db}
 
   @media print{
     body{background:#fff}
@@ -8977,65 +8988,51 @@ function serabutStore() {
 </div>
 
 <div class="page">
-  <!-- Left accent bar -->
   <div class="left-bar"></div>
-
   <div class="main">
-    <!-- Header -->
+
+    <!-- Header: brand left | INVOICE right aligned with Amount col -->
     <div class="doc-header">
       <div class="brand">
         <div class="brand-logo">${logoImg}</div>
         <div>
           <div class="brand-name">Serabut Store</div>
           <div class="brand-sub">PT Serabut Solusi Digital · serabut.id</div>
-          <div class="brand-contact">
-            (+62) 888-1500-555<br>
-            halo@serabut.id
-          </div>
+          <div class="brand-contact">(+62) 888-1500-555<br>halo@serabut.id</div>
         </div>
       </div>
       <div class="doc-meta">
         <div class="doc-type">${docLabel}</div>
-        <div class="doc-num">
-          No: <strong>${orderId||'–'}</strong><br>
-          Date: ${nowDate}
-        </div>
+        <div class="doc-num">No: <strong>${orderId||'–'}</strong><br>Date: ${nowDate}</div>
       </div>
-      <!-- PAID / QUOTE stamp -->
-      ${paidStamp}
     </div>
 
-    <!-- Info band: From (left) + Bill To (right) -->
+    <!-- Info band: From left | Bill To right — aligned with table -->
     <div class="info-band">
       <div class="ib-cell">
         <div class="ib-lbl">From</div>
         <div class="ib-name">PT Serabut Solusi Digital</div>
         <div class="ib-detail">Jl. Mampang Prpt. Raya, Duren Tiga<br>Pancoran, South Jakarta 12790</div>
       </div>
-      <div class="ib-cell">
+      <div class="ib-cell" style="padding-left:24px">
         <div class="ib-lbl">Bill To</div>
         <div class="ib-name">${nama||'–'}</div>
         <div class="ib-detail">${[email, waFormatted, alamat].filter(Boolean).join('<br>')}</div>
       </div>
     </div>
 
-    <!-- Products -->
+    <!-- Products table -->
     <div class="tbl-section">
       <table>
-        <thead>
-          <tr>
-            <th>Product / Service</th>
-            <th>Qty</th>
-            <th>Unit Price</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th>Product / Service</th><th>Qty</th><th>Unit Price</th><th>Amount</th>
+        </tr></thead>
         <tbody>${itemRows}</tbody>
       </table>
     </div>
 
     <!-- Totals -->
-    <div class="totals-wrap">
+    <div class="totals-wrap" style="padding-right:24px">
       <div class="totals-inner">
         <div class="tot-row"><span>Subtotal</span><span class="tv">${fp(computedSubtotal)}</span></div>
         ${computedDiscount>0?`<div class="tot-row"><span style="color:#ef4444">Discount</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>`:''}
@@ -9043,21 +9040,22 @@ function serabutStore() {
       </div>
     </div>
 
-    <!-- Payment footer + Warranty -->
-    <div class="pay-footer">
-      <div>
+    <!-- Bottom: Stamp | Payment | Warranty -->
+    <div class="bottom-section">
+      <div class="stamp-area">${rubberStamp}</div>
+      <div class="pay-area">
         <div class="pf-lbl">Payment Method</div>
         <div class="pf-val">${payMethod}</div>
         ${bankInfo}
-        ${note?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb"><div class="pf-lbl">Notes</div><div style="font-size:12px;color:#4b5563;white-space:pre-wrap;margin-top:3px">${note}</div></div>`:''}
+        ${note?`<div style="margin-top:10px;padding-top:10px;border-top:1px dashed #e5e7eb"><div class="pf-lbl">Notes</div><div style="font-size:12px;color:#4b5563;white-space:pre-wrap;margin-top:3px">${note}</div></div>`:''}
       </div>
-      <div class="warranty-block">
+      <div class="warranty-area">
         <div class="pf-lbl">Warranty & Guarantee</div>
-        <div style="font-size:12.5px;font-weight:700;color:#111827;margin-bottom:6px">Full warranty for active subscription</div>
-        <div style="font-size:11px;color:#6b7280;line-height:1.7">
-          ✓ Product replaced at no charge if inactive<br>
-          ✓ Support via WhatsApp during service period<br>
-          ✓ Valid for the full duration of your plan
+        <div style="font-size:12px;font-weight:700;color:#111827;margin-bottom:6px">Full warranty during active plan</div>
+        <div style="font-size:10.5px;color:#6b7280;line-height:1.8">
+          ✓ Replaced at no charge if product goes inactive<br>
+          ✓ WhatsApp support throughout service period<br>
+          ✓ Covers full subscription duration
         </div>
       </div>
     </div>
