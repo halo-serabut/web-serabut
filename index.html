@@ -8868,28 +8868,16 @@ function serabutStore() {
                 ? `<img src="${logoSrc}" alt="Serabut" style="width:52px;height:52px;object-fit:contain;display:block"/>`
                 : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="${accentColor}"/></svg>`;
 
-            // Real rubber stamp SVG — bottom-left area, large, rotated -22deg
+            // Rubber stamp SVG — centered in stamp-area, rotated
             const stampColor = isInvoice ? '#059669' : '#2563eb';
-            const stampLine1 = isInvoice ? 'PAID' : 'APPROVED';
-            const stampLine2 = isInvoice ? 'IN FULL' : 'QUOTATION';
             const rubberStamp = `
-  <svg width="180" height="80" viewBox="0 0 180 80" style="transform:rotate(-22deg);display:block;opacity:0.82">
-    <!-- outer thick ring -->
-    <rect x="3" y="3" width="174" height="74" rx="10" fill="none" stroke="${stampColor}" stroke-width="4"/>
-    <!-- inner dashed ring -->
-    <rect x="9" y="9" width="162" height="62" rx="7" fill="none" stroke="${stampColor}" stroke-width="1.5" stroke-dasharray="4 3"/>
-    <!-- top decorative line -->
-    <line x1="22" y1="22" x2="158" y2="22" stroke="${stampColor}" stroke-width="1" opacity="0.4"/>
-    <!-- bottom decorative line -->
-    <line x1="22" y1="58" x2="158" y2="58" stroke="${stampColor}" stroke-width="1" opacity="0.4"/>
-    <!-- main text -->
-    <text x="90" y="37" dominant-baseline="middle" text-anchor="middle"
-          font-family="Inter,Arial,sans-serif" font-size="22" font-weight="900"
-          letter-spacing="6" fill="${stampColor}">${stampLine1}</text>
-    <!-- sub text -->
-    <text x="90" y="54" dominant-baseline="middle" text-anchor="middle"
-          font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700"
-          letter-spacing="4" fill="${stampColor}">${stampLine2}</text>
+  <svg width="160" height="72" viewBox="0 0 160 72" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-20deg);display:block;overflow:visible">
+    <rect x="4" y="4" width="152" height="64" rx="9" fill="none" stroke="${stampColor}" stroke-width="4"/>
+    <rect x="10" y="10" width="140" height="52" rx="6" fill="none" stroke="${stampColor}" stroke-width="1.5" stroke-dasharray="4 2.5"/>
+    <line x1="20" y1="20" x2="140" y2="20" stroke="${stampColor}" stroke-width="0.8" stroke-opacity="0.35"/>
+    <line x1="20" y1="52" x2="140" y2="52" stroke="${stampColor}" stroke-width="0.8" stroke-opacity="0.35"/>
+    <text x="80" y="33" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="20" font-weight="900" letter-spacing="5" fill="${stampColor}">${isInvoice?'PAID':'QUOTE'}</text>
+    <text x="80" y="48" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="9" font-weight="700" letter-spacing="3.5" fill="${stampColor}">${isInvoice?'IN FULL':'APPROVED'}</text>
   </svg>`;
 
             return `<!DOCTYPE html>
@@ -8967,9 +8955,19 @@ function serabutStore() {
   .copyright{text-align:center;padding:0 24px 20px;font-size:10.5px;color:#d1d5db}
 
   @media print{
-    body{background:#fff}
-    .toolbar{display:none}
-    .page{margin:0;border-radius:0;box-shadow:none;max-width:none}
+    @page{size:A4;margin:12mm 10mm}
+    body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .toolbar{display:none!important}
+    .page{margin:0;border-radius:0;box-shadow:none;max-width:none;display:flex!important;page-break-inside:avoid}
+    .left-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .main{width:100%}
+    /* fix flex children explicit widths for print engines */
+    .bottom-section{display:flex!important;page-break-inside:avoid}
+    .stamp-area{width:180px!important;min-width:180px}
+    .pay-area,.warranty-area{flex:1!important}
+    .info-band{display:grid!important}
+    .totals-inner{width:280px}
+    .tot-grand{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
 </style>
 </head>
