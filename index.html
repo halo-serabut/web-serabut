@@ -1868,6 +1868,14 @@
                                     <template x-if="!hasMyReview(order) && canReviewOrder(order)">
                                         <span class="text-[9px] font-bold bg-yellow-400 text-white px-1.5 py-0.5 rounded-full">Beri Ulasan</span>
                                     </template>
+                                    <!-- Invoice button for Selesai orders -->
+                                    <template x-if="order.status==='Selesai'">
+                                        <button @click.stop="downloadInvoice(order)"
+                                                class="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-lg active:scale-95 transition-all hover:bg-emerald-100">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                            Invoice
+                                        </button>
+                                    </template>
                                     <div class="flex items-center gap-1 text-[10px] text-brand-500 font-semibold">
                                         <span>Detail</span>
                                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
@@ -8891,7 +8899,7 @@ function serabutStore() {
   .brand-logo img{width:44px;height:44px;object-fit:contain;display:block}
   .brand-info .name{font-weight:800;font-size:16px;color:#fff;letter-spacing:-.2px}
   .brand-info .sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
-  .doc-title-block{text-align:right}
+  .doc-title-block{text-align:right;padding-right:72px} /* keep INVOICE text clear of corner ribbon */
   .doc-label-text{font-size:38px;font-weight:900;letter-spacing:3px;color:#fff;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.15)}
   .doc-ref{margin-top:8px;font-size:12px;color:rgba(255,255,255,.8);line-height:1.8}
   .doc-ref strong{color:#fff;font-weight:700;font-family:monospace;font-size:13px}
