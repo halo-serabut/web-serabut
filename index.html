@@ -8818,10 +8818,9 @@ function serabutStore() {
         },
         _buildInvoiceDoc({ orderId, tanggal, nama, email, noWA, alamat, items, total, subtotal, discountAmt, paymentMethod, bankName, bankAccount, bankHolder, note, docType, logoSrc }) {
             const fp  = v => this._invoiceFmtPrice(v);
-            const fd  = v => this._invoiceFmtDate(v);
             const isInvoice = docType === 'invoice';
             const docLabel  = isInvoice ? 'INVOICE' : 'QUOTATION';
-            const docColor  = isInvoice ? '#e84343' : '#2563eb';
+            const accentColor = isInvoice ? '#e84343' : '#2563eb';
             const nowDate = (() => {
                 const d = new Date();
                 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -8829,24 +8828,27 @@ function serabutStore() {
             })();
 
             const itemRows = (items||[]).map((item, i) => {
-                const desc = [item.produk, item.varian&&item.varian!=='-'?item.varian:'', item.masaAktif&&item.masaAktif!=='-'?`(${item.masaAktif})`:''].filter(Boolean).join(' ');
+                const name = [item.produk, item.varian&&item.varian!=='-'?item.varian:'', item.masaAktif&&item.masaAktif!=='-'?`(${item.masaAktif})`:''].filter(Boolean).join(' ');
                 const qty      = Number(item.qty||1);
                 const unit     = Number(item.harga||0) / qty;
                 const rowTotal = Number(item.harga||0);
+                // read direct item fields (from getOrders) OR item.extra (from cart/quotation)
                 const ex = item.extra || {};
-                const notes = [
-                    ex.nama           ? `Name: ${ex.nama}` : '',
-                    ex.username       ? `Username: ${ex.username}` : '',
-                    ex.microsoftEmail ? `Microsoft Email: ${ex.microsoftEmail}` : '',
-                    ex.adobeEmail     ? `Adobe Email: ${ex.adobeEmail}` : '',
-                    ex.emailAktif     ? `Active Email: ${ex.emailAktif}` : '',
-                ].filter(Boolean).join(' · ');
-                const noteRow = notes ? `<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:4px;line-height:1.5">${notes}</div>` : '';
+                const fields = [
+                    ['Name',           item.msNama         || ex.nama],
+                    ['Username',       item.username        || ex.username],
+                    ['Microsoft Email',item.microsoftEmail  || ex.microsoftEmail],
+                    ['Adobe Email',    item.adobeEmail      || ex.adobeEmail],
+                    ['Active Email',   item.emailAktif      || ex.emailAktif],
+                ].filter(([,v]) => v && v !== '-');
+                const noteHtml = fields.length ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e5e7eb">${
+                    fields.map(([k,v]) => `<div style="display:flex;gap:8px;margin-top:2px"><span style="font-size:10px;color:#9ca3af;min-width:110px">${k}</span><span style="font-size:11px;font-weight:600;color:#374151">${v}</span></div>`).join('')
+                }</div>` : '';
                 return `<tr>
-                    <td style="padding:12px 14px 12px 18px;border-bottom:1px solid #f9fafb;color:#111827;font-weight:500;font-size:13px">${i+1}. ${desc}${noteRow}</td>
-                    <td style="padding:12px 14px;border-bottom:1px solid #f9fafb;text-align:center;color:#6b7280;font-size:13px">${qty}</td>
-                    <td style="padding:12px 14px;border-bottom:1px solid #f9fafb;text-align:right;color:#6b7280;font-size:13px">${fp(unit)}</td>
-                    <td style="padding:12px 14px 12px 14px;border-bottom:1px solid #f9fafb;text-align:right;font-weight:700;color:#111827;padding-right:18px;font-size:13px">${fp(rowTotal)}</td>
+                    <td style="padding:14px 16px 14px 24px;border-bottom:1px solid #f3f4f6">${i+1}. ${name}${noteHtml}</td>
+                    <td style="padding:14px 16px;border-bottom:1px solid #f3f4f6;text-align:center;color:#6b7280">${qty}</td>
+                    <td style="padding:14px 16px;border-bottom:1px solid #f3f4f6;text-align:right;color:#6b7280">${fp(unit)}</td>
+                    <td style="padding:14px 24px 14px 16px;border-bottom:1px solid #f3f4f6;text-align:right;font-weight:700;color:#111827">${fp(rowTotal)}</td>
                 </tr>`;
             }).join('');
 
@@ -8857,14 +8859,26 @@ function serabutStore() {
             const bName      = bankName    || 'SeaBank';
             const bAccount   = bankAccount || '901000004087';
             const bHolder    = bankHolder  || 'Eko Harianto';
-            const waFormatted = noWA ? `+${String(noWA).replace(/^628/,'62 8').replace(/(\d{4})(?=\d)/g,'$1 ').trim()}` : '–';
-            // Show bank details only for bank transfer, not for QRIS/Cash/iPaymu etc.
-            const isTransfer = /transfer|bank/i.test(payMethod);
-            const bankDetails = isTransfer ? `<div style="font-size:11px;color:#9ca3af;margin-top:3px;line-height:1.5">${bName} · ${bAccount}<br>a.n ${bHolder}</div>` : '';
+            const waFormatted = noWA ? `+${String(noWA).replace(/^628/,'62 8').replace(/(\d{4})(?=\d)/g,'$1 ').trim()}` : '';
+            const isTransfer  = /transfer|bank/i.test(payMethod);
+            const bankInfo    = isTransfer ? `<div style="font-size:11.5px;color:#6b7280;margin-top:3px;line-height:1.6">${bName} &nbsp;·&nbsp; ${bAccount}<br><span style="color:#9ca3af">a.n</span> ${bHolder}</div>` : '';
 
             const logoImg = logoSrc
-                ? `<img src="${logoSrc}" alt="Serabut" style="width:44px;height:44px;object-fit:contain;display:block"/>`
-                : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="${docColor}" fill-opacity="0.9"/></svg>`;
+                ? `<img src="${logoSrc}" alt="Serabut" style="width:48px;height:48px;object-fit:contain;display:block"/>`
+                : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="${accentColor}"/></svg>`;
+
+            // PAID stamp HTML (rotated circle — rendered as SVG so no font issues)
+            const paidStamp = isInvoice ? `
+  <svg style="position:absolute;top:18px;right:18px;z-index:10;opacity:.92" width="72" height="72" viewBox="0 0 72 72">
+    <circle cx="36" cy="36" r="33" fill="none" stroke="#059669" stroke-width="3"/>
+    <circle cx="36" cy="36" r="28" fill="none" stroke="#059669" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <text x="50%" y="42%" dominant-baseline="middle" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="13" font-weight="900" letter-spacing="2" fill="#059669" transform="rotate(-20,36,36)">PAID</text>
+  </svg>` : `
+  <svg style="position:absolute;top:18px;right:18px;z-index:10;opacity:.85" width="72" height="72" viewBox="0 0 72 72">
+    <circle cx="36" cy="36" r="33" fill="none" stroke="#2563eb" stroke-width="3"/>
+    <circle cx="36" cy="36" r="28" fill="none" stroke="#2563eb" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <text x="50%" y="42%" dominant-baseline="middle" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="10" font-weight="900" letter-spacing="1.5" fill="#2563eb" transform="rotate(-20,36,36)">QUOTE</text>
+  </svg>`;
 
             return `<!DOCTYPE html>
 <html lang="en">
@@ -8875,97 +8889,86 @@ function serabutStore() {
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a1a2e;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:13px}
-
-  /* ── Toolbar ── */
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#eef0f3;color:#111827;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:13px}
   .toolbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
-  .toolbar-left{display:flex;align-items:center;gap:8px;color:#6b7280;font-size:12px}
+  .toolbar-left{display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280}
   .toolbar-chip{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:#374151;font-family:monospace}
-  .toolbar-status{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${isInvoice?'#d1fae5':'#dbeafe'};color:${isInvoice?'#065f46':'#1e40af'}}
-  .btn-print{background:${docColor};color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .15s}
+  .toolbar-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${isInvoice?'#d1fae5':'#dbeafe'};color:${isInvoice?'#065f46':'#1e40af'}}
+  .btn-print{background:${accentColor};color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px}
   .btn-print:hover{opacity:.88}
 
-  /* ── Page ── */
-  .page{max-width:740px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);overflow:hidden;position:relative}
+  /* ── Page card ── */
+  .page{max-width:760px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.07);overflow:hidden;position:relative;display:flex}
 
-  /* ── Colored header ── */
-  .doc-head{background:${docColor};padding:28px 40px 26px;position:relative}
-  .doc-head::before{content:'';position:absolute;top:-40px;left:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.05)}
-  .doc-head::after{content:'';position:absolute;bottom:-30px;right:120px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.05)}
-  .doc-head-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2}
+  /* ── Left accent bar (like reference) ── */
+  .left-bar{width:8px;background:${accentColor};flex-shrink:0}
+
+  /* ── Main content ── */
+  .main{flex:1;min-width:0;padding:0}
+
+  /* ── Header ── */
+  .doc-header{padding:36px 40px 28px;display:flex;align-items:flex-start;justify-content:space-between;position:relative;border-bottom:2px solid #f3f4f6}
   .brand{display:flex;align-items:center;gap:14px}
-  /* white bg so logo is visible against colored header */
-  .brand-logo{width:50px;height:50px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 1px 6px rgba(0,0,0,.12)}
-  .brand-logo img{width:44px;height:44px;object-fit:contain;display:block}
-  .brand-info .name{font-weight:800;font-size:16px;color:#fff;letter-spacing:-.2px}
-  .brand-info .sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
-  .doc-title-block{text-align:right;padding-right:72px} /* keep INVOICE text clear of corner ribbon */
-  .doc-label-text{font-size:38px;font-weight:900;letter-spacing:3px;color:#fff;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.15)}
-  .doc-ref{margin-top:8px;font-size:12px;color:rgba(255,255,255,.8);line-height:1.8}
-  .doc-ref strong{color:#fff;font-weight:700;font-family:monospace;font-size:13px}
+  .brand-logo{width:52px;height:52px;border-radius:10px;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+  .brand-logo img{width:48px;height:48px;object-fit:contain;display:block}
+  .brand-name{font-size:17px;font-weight:800;color:#111827;letter-spacing:-.3px}
+  .brand-sub{font-size:11px;color:#9ca3af;margin-top:3px}
+  .brand-contact{font-size:10.5px;color:#6b7280;margin-top:10px;line-height:1.7}
+  .doc-meta{text-align:right;padding-right:80px} /* leave space for stamp */
+  .doc-type{font-size:32px;font-weight:900;color:#111827;letter-spacing:0;line-height:1}
+  .doc-num{font-size:12px;color:#6b7280;margin-top:8px;line-height:1.9}
+  .doc-num strong{color:#111827;font-family:monospace;font-weight:700;font-size:13px}
 
-  /* ── Corner ribbon — clipped by .page overflow:hidden ── */
-  .page-ribbon{position:absolute;top:0;right:0;z-index:10;overflow:hidden;width:100px;height:100px;pointer-events:none}
-  .page-ribbon span{position:absolute;top:24px;right:-28px;width:120px;padding:6px 0;text-align:center;background:#fff;color:${isInvoice?'#059669':'#dc2626'};font-size:10px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;transform:rotate(45deg);box-shadow:0 2px 6px rgba(0,0,0,.18)}
-
-  /* ── Info grid — below header ── */
-  .doc-info-section{padding:0 40px;margin-top:24px}
-  .info-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:0;border:1px solid #f3f4f6;border-radius:10px;overflow:hidden}
-  .info-cell{padding:14px 18px;border-right:1px solid #f3f4f6}
-  .info-cell:last-child{border-right:none}
-  .info-cell .ic-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:7px}
-  .info-cell .ic-name{font-size:13.5px;font-weight:700;color:#111827;margin-bottom:4px}
-  .info-cell .ic-detail{font-size:11.5px;color:#6b7280;line-height:1.65}
+  /* ── Info band ── */
+  .info-band{background:#f9fafb;border-bottom:1px solid #f3f4f6;padding:16px 40px;display:grid;grid-template-columns:1fr 1fr}
+  .ib-cell .ib-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin-bottom:5px}
+  .ib-cell .ib-name{font-size:13px;font-weight:700;color:#111827}
+  .ib-cell .ib-detail{font-size:11px;color:#6b7280;line-height:1.65;margin-top:2px}
 
   /* ── Products table ── */
-  .tbl-section{padding:0 40px}
-  .tbl-wrap{border:1px solid #f3f4f6;border-radius:10px;overflow:hidden;margin-top:24px}
-  table{width:100%;border-collapse:collapse}
-  thead tr{background:#f9fafb;border-bottom:1px solid #e5e7eb}
-  thead th{padding:11px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af}
-  thead th:first-child{text-align:left;padding-left:18px}
-  thead th:nth-child(2){text-align:center;width:60px}
+  .tbl-section{padding:24px 40px 0}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{padding:10px 16px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;border-bottom:2px solid #f3f4f6}
+  thead th:first-child{text-align:left;padding-left:24px}
+  thead th:nth-child(2){text-align:center;width:56px}
   thead th:nth-child(3){text-align:right;width:120px}
-  thead th:nth-child(4){text-align:right;width:120px;padding-right:18px}
+  thead th:nth-child(4){text-align:right;width:120px;padding-right:24px}
+  tbody td{color:#374151;vertical-align:top}
+  tbody td:first-child{padding-left:24px;font-weight:500;color:#111827}
+  tbody td:nth-child(2){text-align:center;color:#6b7280}
+  tbody td:nth-child(3){text-align:right;color:#6b7280}
+  tbody td:nth-child(4){text-align:right;font-weight:700;color:#111827;padding-right:24px}
   tbody tr:last-child td{border-bottom:none}
-  tbody tr:hover{background:#fafafa}
 
   /* ── Totals ── */
-  .totals-wrap{display:flex;justify-content:flex-end;padding:16px 40px 0}
-  .totals-inner{width:260px}
+  .totals-wrap{display:flex;justify-content:flex-end;padding:8px 40px 0}
+  .totals-inner{width:270px}
   .tot-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #f3f4f6;color:#6b7280}
-  .tot-row:last-child{border-bottom:none}
   .tot-row .tv{font-weight:600;color:#374151}
-  .tot-grand{display:flex;justify-content:space-between;align-items:center;background:${docColor};border-radius:8px;padding:12px 16px;margin-top:8px}
+  .tot-grand{display:flex;justify-content:space-between;align-items:center;background:${accentColor};border-radius:8px;padding:13px 18px;margin-top:10px}
   .tot-grand .tl{font-weight:700;color:#fff;font-size:14px}
-  .tot-grand .tv{font-weight:900;color:#fff;font-size:18px}
+  .tot-grand .tv{font-weight:900;color:#fff;font-size:17px}
 
-  /* ── Footer section ── */
-  .doc-footer{margin:24px 40px;padding:20px;background:#f9fafb;border-radius:10px;border:1px solid #f3f4f6}
-  .df-block .df-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;margin-bottom:5px}
-  .df-block .df-val{font-size:13px;font-weight:600;color:#1f2937;line-height:1.5}
-  .df-block .df-note{font-size:11px;color:#9ca3af;margin-top:3px;line-height:1.5}
-  .copyright{text-align:center;padding:16px 40px 24px;font-size:11px;color:#d1d5db}
+  /* ── Payment footer ── */
+  .pay-footer{margin:20px 40px 28px;padding:16px 20px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:10px}
+  .pf-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:6px}
+  .pf-val{font-size:14px;font-weight:700;color:#111827}
+  .copyright{text-align:center;padding:0 40px 20px;font-size:10.5px;color:#d1d5db}
 
   @media print{
     body{background:#fff}
     .toolbar{display:none}
     .page{margin:0;border-radius:0;box-shadow:none;max-width:none}
-    .doc-info-section{padding:0 32px}
-    .tbl-section{padding:0 32px}
-    .totals-wrap{padding:16px 32px 0}
-    .doc-footer{margin:24px 32px}
   }
 </style>
 </head>
 <body>
 
-<!-- Toolbar -->
 <div class="toolbar">
   <div class="toolbar-left">
     <span class="toolbar-chip">${orderId||'–'}</span>
     <span>${nowDate}</span>
-    <span class="toolbar-status">${isInvoice ? '✓ Paid' : 'Quotation'}</span>
+    <span class="toolbar-badge">${isInvoice?'✓ Paid':'Quotation'}</span>
   </div>
   <button class="btn-print" onclick="window.print()">
     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
@@ -8974,56 +8977,54 @@ function serabutStore() {
 </div>
 
 <div class="page">
-  <!-- Corner ribbon — outside doc-head, clipped by page overflow:hidden -->
-  <div class="page-ribbon"><span>${isInvoice ? 'PAID' : 'QUOTE'}</span></div>
+  <!-- Left accent bar -->
+  <div class="left-bar"></div>
 
-  <!-- Colored Header Bar -->
-  <div class="doc-head">
-    <div class="doc-head-top">
-      <!-- Brand -->
+  <div class="main">
+    <!-- Header -->
+    <div class="doc-header">
       <div class="brand">
         <div class="brand-logo">${logoImg}</div>
-        <div class="brand-info">
-          <div class="name">Serabut Store</div>
-          <div class="sub">PT Serabut Solusi Digital · serabut.id</div>
+        <div>
+          <div class="brand-name">Serabut Store</div>
+          <div class="brand-sub">PT Serabut Solusi Digital · serabut.id</div>
+          <div class="brand-contact">
+            (+62) 888-1500-555<br>
+            halo@serabut.id
+          </div>
         </div>
       </div>
-      <!-- Doc title — no interference with ribbon in page corner -->
-      <div class="doc-title-block">
-        <div class="doc-label-text">${docLabel}</div>
-        <div class="doc-ref">
+      <div class="doc-meta">
+        <div class="doc-type">${docLabel}</div>
+        <div class="doc-num">
           No: <strong>${orderId||'–'}</strong><br>
           Date: ${nowDate}
         </div>
       </div>
+      <!-- PAID / QUOTE stamp -->
+      ${paidStamp}
     </div>
-  </div>
 
-  <!-- Info grid — 2 col only -->
-  <div class="doc-info-section">
-    <div class="info-grid">
-      <div class="info-cell">
-        <div class="ic-lbl">From</div>
-        <div class="ic-name">PT Serabut Solusi Digital</div>
-        <div class="ic-detail">Jl. Mampang Prpt. Raya, Duren Tiga<br>Pancoran, South Jakarta 12790<br>(+62) 888-1500-555 · halo@serabut.id</div>
+    <!-- Info band: Bill To + Details -->
+    <div class="info-band">
+      <div class="ib-cell">
+        <div class="ib-lbl">Bill To</div>
+        <div class="ib-name">${nama||'–'}</div>
+        <div class="ib-detail">${[email, waFormatted, alamat].filter(Boolean).join('<br>')}</div>
       </div>
-      <div class="info-cell">
-        <div class="ic-lbl">Bill To</div>
-        <div class="ic-name">${nama||'–'}</div>
-        <div class="ic-detail">
-          ${email ? email+'<br>' : ''}${noWA ? waFormatted : ''}${alamat ? '<br>'+alamat : ''}
-        </div>
+      <div class="ib-cell">
+        <div class="ib-lbl">From</div>
+        <div class="ib-name">PT Serabut Solusi Digital</div>
+        <div class="ib-detail">Jl. Mampang Prpt. Raya, Duren Tiga<br>Pancoran, South Jakarta 12790</div>
       </div>
     </div>
-  </div>
 
-  <!-- Products -->
-  <div class="tbl-section">
-    <div class="tbl-wrap">
+    <!-- Products -->
+    <div class="tbl-section">
       <table>
         <thead>
           <tr>
-            <th>Product Description</th>
+            <th>Product / Service</th>
             <th>Qty</th>
             <th>Unit Price</th>
             <th>Amount</th>
@@ -9032,28 +9033,26 @@ function serabutStore() {
         <tbody>${itemRows}</tbody>
       </table>
     </div>
-  </div>
 
-  <!-- Totals -->
-  <div class="totals-wrap">
-    <div class="totals-inner">
-      <div class="tot-row"><span>Subtotal</span><span class="tv">${fp(computedSubtotal)}</span></div>
-      ${computedDiscount>0 ? `<div class="tot-row"><span style="color:#ef4444">Discount</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>` : ''}
-      <div class="tot-grand"><span class="tl">Total Amount</span><span class="tv">${fp(computedTotal)}</span></div>
+    <!-- Totals -->
+    <div class="totals-wrap">
+      <div class="totals-inner">
+        <div class="tot-row"><span>Subtotal</span><span class="tv">${fp(computedSubtotal)}</span></div>
+        ${computedDiscount>0?`<div class="tot-row"><span style="color:#ef4444">Discount</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>`:''}
+        <div class="tot-grand"><span class="tl">Total Amount</span><span class="tv">${fp(computedTotal)}</span></div>
+      </div>
     </div>
-  </div>
 
-  <!-- Footer -->
-  <div class="doc-footer">
-    <div class="df-block">
-      <div class="df-lbl">Payment Method</div>
-      <div class="df-val">${payMethod}</div>
-      ${bankDetails}
+    <!-- Payment footer -->
+    <div class="pay-footer">
+      <div class="pf-lbl">Payment Method</div>
+      <div class="pf-val">${payMethod}</div>
+      ${bankInfo}
+      ${note?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb"><div class="pf-lbl">Notes</div><div style="font-size:12px;color:#4b5563;white-space:pre-wrap;margin-top:3px">${note}</div></div>`:''}
     </div>
-    ${note ? `<div class="df-block" style="margin-top:12px"><div class="df-lbl">Notes</div><div class="df-val" style="font-weight:400;color:#4b5563;white-space:pre-wrap">${note}</div></div>` : ''}
-  </div>
 
-  <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; This document is issued digitally</div>
+    <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; This document is issued digitally</div>
+  </div>
 </div>
 </body>
 </html>`;
