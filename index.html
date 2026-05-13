@@ -8858,12 +8858,12 @@ function serabutStore() {
   .brand-logo img{width:52px;height:52px;object-fit:contain;display:block}
   .brand-info .name{font-weight:800;font-size:16px;color:#fff;letter-spacing:-.2px}
   .brand-info .sub{font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px}
-  .doc-title-block{text-align:right;padding-right:72px} /* reserved for ribbon */
-  .doc-label-text{font-size:38px;font-weight:900;letter-spacing:2px;color:#fff;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .doc-title-block{text-align:right;max-width:calc(100% - 180px)} /* stop before ribbon zone */
+  .doc-label-text{font-size:36px;font-weight:900;letter-spacing:2px;color:#fff;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.12)}
   .doc-ref{margin-top:8px;font-size:12px;color:rgba(255,255,255,0.8);line-height:1.8}
   .doc-ref strong{color:#fff;font-weight:700;font-family:monospace;font-size:13px}
-  /* ribbon */
-  .page-ribbon{position:absolute;top:22px;right:-38px;width:160px;padding:9px 0;text-align:center;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.4);color:#fff;font-size:12px;font-weight:900;letter-spacing:3px;text-transform:uppercase;transform:rotate(45deg);z-index:10}
+  /* ribbon — jauh di pojok, tidak overlap content */
+  .page-ribbon{position:absolute;top:16px;right:-52px;width:170px;padding:8px 0;text-align:center;background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.45);color:#fff;font-size:11px;font-weight:900;letter-spacing:3px;text-transform:uppercase;transform:rotate(45deg);z-index:10}
 
   /* ── Info grid — below header ── */
   .doc-info-section{padding:0 40px;margin-top:24px}
