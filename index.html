@@ -8832,23 +8832,24 @@ function serabutStore() {
                 const qty      = Number(item.qty||1);
                 const unit     = Number(item.harga||0) / qty;
                 const rowTotal = Number(item.harga||0);
-                // read direct item fields (from getOrders) OR item.extra (from cart/quotation)
                 const ex = item.extra || {};
-                const fields = [
-                    ['Name',           item.msNama         || ex.nama],
-                    ['Username',       item.username        || ex.username],
-                    ['Microsoft Email',item.microsoftEmail  || ex.microsoftEmail],
-                    ['Adobe Email',    item.adobeEmail      || ex.adobeEmail],
-                    ['Active Email',   item.emailAktif      || ex.emailAktif],
+                // Only show account details for relevant product types (skip Windows/Windows Server)
+                const prodName = (item.produk||'').toLowerCase();
+                const isWindows = /^windows/.test(prodName);
+                const fields = isWindows ? [] : [
+                    ['Account Name',     item.msNama        || ex.nama],
+                    ['Microsoft Account',item.microsoftEmail || ex.microsoftEmail],
+                    ['Adobe Account',    item.adobeEmail    || ex.adobeEmail],
+                    ['Username',         item.username      || ex.username],
                 ].filter(([,v]) => v && v !== '-');
-                const noteHtml = fields.length ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e5e7eb">${
-                    fields.map(([k,v]) => `<div style="display:flex;gap:8px;margin-top:2px"><span style="font-size:10px;color:#9ca3af;min-width:110px">${k}</span><span style="font-size:11px;font-weight:600;color:#374151">${v}</span></div>`).join('')
+                const noteHtml = fields.length ? `<div style="margin-top:7px;padding-top:7px;border-top:1px dashed #e5e7eb;display:grid;grid-template-columns:120px 1fr;gap:3px 8px">${
+                    fields.map(([k,v]) => `<span style="font-size:10px;color:#9ca3af;line-height:1.8">${k}</span><span style="font-size:11px;font-weight:600;color:#374151;word-break:break-all;line-height:1.8">${v}</span>`).join('')
                 }</div>` : '';
                 return `<tr>
-                    <td style="padding:14px 16px 14px 24px;border-bottom:1px solid #f3f4f6">${i+1}. ${name}${noteHtml}</td>
-                    <td style="padding:14px 16px;border-bottom:1px solid #f3f4f6;text-align:center;color:#6b7280">${qty}</td>
-                    <td style="padding:14px 16px;border-bottom:1px solid #f3f4f6;text-align:right;color:#6b7280">${fp(unit)}</td>
-                    <td style="padding:14px 24px 14px 16px;border-bottom:1px solid #f3f4f6;text-align:right;font-weight:700;color:#111827">${fp(rowTotal)}</td>
+                    <td style="padding:14px 16px 14px 24px;border-bottom:1px solid #f3f4f6;vertical-align:top;font-weight:500;color:#111827">${i+1}. ${name}${noteHtml}</td>
+                    <td style="padding:14px 16px;border-bottom:1px solid #f3f4f6;text-align:center;color:#6b7280;vertical-align:top">${qty}</td>
+                    <td style="padding:14px 16px;border-bottom:1px solid #f3f4f6;text-align:right;color:#6b7280;vertical-align:top">${fp(unit)}</td>
+                    <td style="padding:14px 24px 14px 16px;border-bottom:1px solid #f3f4f6;text-align:right;font-weight:700;color:#111827;vertical-align:top">${fp(rowTotal)}</td>
                 </tr>`;
             }).join('');
 
@@ -8867,18 +8868,16 @@ function serabutStore() {
                 ? `<img src="${logoSrc}" alt="Serabut" style="width:48px;height:48px;object-fit:contain;display:block"/>`
                 : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="${accentColor}"/></svg>`;
 
-            // PAID stamp HTML (rotated circle — rendered as SVG so no font issues)
-            const paidStamp = isInvoice ? `
-  <svg style="position:absolute;top:18px;right:18px;z-index:10;opacity:.92" width="72" height="72" viewBox="0 0 72 72">
-    <circle cx="36" cy="36" r="33" fill="none" stroke="#059669" stroke-width="3"/>
-    <circle cx="36" cy="36" r="28" fill="none" stroke="#059669" stroke-width="1.2" stroke-dasharray="3 3"/>
-    <text x="50%" y="42%" dominant-baseline="middle" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="13" font-weight="900" letter-spacing="2" fill="#059669" transform="rotate(-20,36,36)">PAID</text>
-  </svg>` : `
-  <svg style="position:absolute;top:18px;right:18px;z-index:10;opacity:.85" width="72" height="72" viewBox="0 0 72 72">
-    <circle cx="36" cy="36" r="33" fill="none" stroke="#2563eb" stroke-width="3"/>
-    <circle cx="36" cy="36" r="28" fill="none" stroke="#2563eb" stroke-width="1.2" stroke-dasharray="3 3"/>
-    <text x="50%" y="42%" dominant-baseline="middle" text-anchor="middle" font-family="Inter,system-ui,sans-serif" font-size="10" font-weight="900" letter-spacing="1.5" fill="#2563eb" transform="rotate(-20,36,36)">QUOTE</text>
-  </svg>`;
+            // Professional stamp — solid filled rounded-rect, rotated
+            const stampColor = isInvoice ? '#059669' : '#2563eb';
+            const stampText  = isInvoice ? 'PAID' : 'QUOTE';
+            const paidStamp  = `<div style="position:absolute;top:28px;right:32px;z-index:10;transform:rotate(-18deg);display:inline-flex;flex-direction:column;align-items:center;gap:3px">
+  <svg width="96" height="46" viewBox="0 0 96 46" style="display:block">
+    <rect x="2" y="2" width="92" height="42" rx="6" fill="${stampColor}"/>
+    <rect x="5" y="5" width="86" height="36" rx="4" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.5"/>
+    <text x="48" y="27" dominant-baseline="middle" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="900" letter-spacing="4" fill="white">${stampText}</text>
+  </svg>
+</div>`;
 
             return `<!DOCTYPE html>
 <html lang="en">
@@ -8950,9 +8949,10 @@ function serabutStore() {
   .tot-grand .tv{font-weight:900;color:#fff;font-size:17px}
 
   /* ── Payment footer ── */
-  .pay-footer{margin:20px 40px 28px;padding:16px 20px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:10px}
+  .pay-footer{margin:20px 40px 28px;padding:16px 20px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:10px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .pf-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:6px}
   .pf-val{font-size:14px;font-weight:700;color:#111827}
+  .warranty-block{border-left:3px solid ${accentColor};padding-left:14px}
   .copyright{text-align:center;padding:0 40px 20px;font-size:10.5px;color:#d1d5db}
 
   @media print{
@@ -9005,17 +9005,17 @@ function serabutStore() {
       ${paidStamp}
     </div>
 
-    <!-- Info band: Bill To + Details -->
+    <!-- Info band: From (left) + Bill To (right) -->
     <div class="info-band">
-      <div class="ib-cell">
-        <div class="ib-lbl">Bill To</div>
-        <div class="ib-name">${nama||'–'}</div>
-        <div class="ib-detail">${[email, waFormatted, alamat].filter(Boolean).join('<br>')}</div>
-      </div>
       <div class="ib-cell">
         <div class="ib-lbl">From</div>
         <div class="ib-name">PT Serabut Solusi Digital</div>
         <div class="ib-detail">Jl. Mampang Prpt. Raya, Duren Tiga<br>Pancoran, South Jakarta 12790</div>
+      </div>
+      <div class="ib-cell">
+        <div class="ib-lbl">Bill To</div>
+        <div class="ib-name">${nama||'–'}</div>
+        <div class="ib-detail">${[email, waFormatted, alamat].filter(Boolean).join('<br>')}</div>
       </div>
     </div>
 
@@ -9043,12 +9043,23 @@ function serabutStore() {
       </div>
     </div>
 
-    <!-- Payment footer -->
+    <!-- Payment footer + Warranty -->
     <div class="pay-footer">
-      <div class="pf-lbl">Payment Method</div>
-      <div class="pf-val">${payMethod}</div>
-      ${bankInfo}
-      ${note?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb"><div class="pf-lbl">Notes</div><div style="font-size:12px;color:#4b5563;white-space:pre-wrap;margin-top:3px">${note}</div></div>`:''}
+      <div>
+        <div class="pf-lbl">Payment Method</div>
+        <div class="pf-val">${payMethod}</div>
+        ${bankInfo}
+        ${note?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid #e5e7eb"><div class="pf-lbl">Notes</div><div style="font-size:12px;color:#4b5563;white-space:pre-wrap;margin-top:3px">${note}</div></div>`:''}
+      </div>
+      <div class="warranty-block">
+        <div class="pf-lbl">Warranty & Guarantee</div>
+        <div style="font-size:12.5px;font-weight:700;color:#111827;margin-bottom:6px">Full warranty for active subscription</div>
+        <div style="font-size:11px;color:#6b7280;line-height:1.7">
+          ✓ Product replaced at no charge if inactive<br>
+          ✓ Support via WhatsApp during service period<br>
+          ✓ Valid for the full duration of your plan
+        </div>
+      </div>
     </div>
 
     <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; This document is issued digitally</div>
