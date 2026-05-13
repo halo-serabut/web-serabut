@@ -3286,13 +3286,30 @@
                                                 </button>
                                             </template>
                                         </div>
-                                        <select @change="adminUpdateGroupStatus(g, $event.target.value); $event.target.value=''"
-                                                class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700 flex-shrink-0">
-                                            <option value="">Ubah Status...</option>
-                                            <template x-for="st in ['Pending','Diproses','Aktif','Selesai','Dibatalkan']" :key="st">
-                                                <option :value="st" x-text="st"></option>
-                                            </template>
-                                        </select>
+                                        <template x-if="adminStatusConfirm && adminStatusConfirm.orderId===g.orderId">
+                                            <div class="flex items-center gap-1.5 flex-shrink-0">
+                                                <select x-model="adminStatusConfirm.payMethod"
+                                                        class="text-xs border border-brand-300 rounded-lg px-2 py-1.5 focus:outline-none bg-white text-gray-700">
+                                                    <option value="">Metode Bayar...</option>
+                                                    <template x-for="pm in ['Transfer Bank','QRIS','Cash','iPaymu','COD','Lainnya']" :key="pm">
+                                                        <option :value="pm" x-text="pm"></option>
+                                                    </template>
+                                                </select>
+                                                <button @click="if(adminStatusConfirm.payMethod){adminUpdateGroupStatus(g,'Selesai',adminStatusConfirm.payMethod);adminStatusConfirm=null}else{_adminShowMsg('Pilih metode pembayaran dulu')}"
+                                                        class="text-[11px] font-bold px-2.5 py-1.5 bg-brand-500 text-white rounded-lg">OK</button>
+                                                <button @click="adminStatusConfirm=null"
+                                                        class="text-[11px] font-bold px-2.5 py-1.5 bg-gray-100 text-gray-600 rounded-lg">Batal</button>
+                                            </div>
+                                        </template>
+                                        <template x-if="!adminStatusConfirm || adminStatusConfirm.orderId!==g.orderId">
+                                            <select @change="$event.target.value==='Selesai' ? (adminStatusConfirm={orderId:g.orderId,g,payMethod:''}) : (adminUpdateGroupStatus(g,$event.target.value),0); $event.target.value=''"
+                                                    class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700 flex-shrink-0">
+                                                <option value="">Ubah Status...</option>
+                                                <template x-for="st in ['Pending','Diproses','Aktif','Selesai','Dibatalkan']" :key="st">
+                                                    <option :value="st" x-text="st"></option>
+                                                </template>
+                                            </select>
+                                        </template>
                                     </div>
                                     <!-- Row 2: Avatar + Nama + Tanggal -->
                                     <div class="flex items-center gap-2">
@@ -6165,6 +6182,7 @@ function serabutStore() {
         adminOrdersLoaded:  false,
         adminOrderFilter:   'Semua',
         adminOrdersPage:    1,
+        adminStatusConfirm: null, // {g, newStatus} — confirm payment method before Selesai
         adminOrdersPerPage: 10,
         adminEditProduct: null,
         adminAddMode:    false,
@@ -8763,10 +8781,12 @@ function serabutStore() {
             } catch { this.adminOrders=[]; }
             this.adminOrdersLoading=false;
         },
-        async adminUpdateOrderStatus(order, newStatus, silent=false) {
+        async adminUpdateOrderStatus(order, newStatus, silent=false, payMethod) {
             if(!newStatus) return;
             try {
-                const data = await this.gasPost({ action:'updateOrderStatus', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:order.rowIndex, status:newStatus });
+                const payload = { action:'updateOrderStatus', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:order.rowIndex, status:newStatus };
+                if(payMethod) payload.paymentMethod = payMethod;
+                const data = await this.gasPost(payload);
                 if(data.success) {
                     order.status = newStatus;
                     if(!silent) this._adminShowMsg(`Status ${order.orderId} → ${newStatus} ✓`);
@@ -8806,8 +8826,17 @@ function serabutStore() {
                 const qty   = Number(item.qty||1);
                 const unit  = Number(item.harga||0) / qty;
                 const rowTotal = Number(item.harga||0);
+                const ex = item.extra || {};
+                const notes = [
+                    ex.nama       ? `Nama: ${ex.nama}` : '',
+                    ex.username   ? `Username: ${ex.username}` : '',
+                    ex.microsoftEmail ? `Email Microsoft: ${ex.microsoftEmail}` : '',
+                    ex.adobeEmail ? `Email Adobe: ${ex.adobeEmail}` : '',
+                    ex.emailAktif ? `Email Aktif: ${ex.emailAktif}` : '',
+                ].filter(Boolean).join(' · ');
+                const noteRow = notes ? `<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:3px">${notes}</div>` : '';
                 return `<tr>
-                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13.5px">${i+1}. ${desc}</td>
+                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13.5px">${i+1}. ${desc}${noteRow}</td>
                     <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px">${qty}</td>
                     <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#334155;font-size:13px">${fp(unit)}</td>
                     <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#1e293b;font-weight:600;font-size:13px">${fp(rowTotal)}</td>
@@ -8862,8 +8891,8 @@ function serabutStore() {
   .doc-label-text{font-size:36px;font-weight:900;letter-spacing:2px;color:#fff;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.12)}
   .doc-ref{margin-top:8px;font-size:12px;color:rgba(255,255,255,0.8);line-height:1.8}
   .doc-ref strong{color:#fff;font-weight:700;font-family:monospace;font-size:13px}
-  /* ribbon — jauh di pojok, tidak overlap content */
-  .page-ribbon{position:absolute;top:16px;right:-52px;width:170px;padding:8px 0;text-align:center;background:rgba(255,255,255,0.25);border:1.5px solid rgba(255,255,255,0.45);color:#fff;font-size:11px;font-weight:900;letter-spacing:3px;text-transform:uppercase;transform:rotate(45deg);z-index:10}
+  /* ribbon — solid, pojok kanan atas */
+  .page-ribbon{position:absolute;top:18px;right:-50px;width:168px;padding:8px 0;text-align:center;background:#fff;color:${isInvoice?'#059669':'#dc2626'};font-size:11px;font-weight:900;letter-spacing:3px;text-transform:uppercase;transform:rotate(45deg);z-index:10;box-shadow:0 2px 6px rgba(0,0,0,.18)}
 
   /* ── Info grid — below header ── */
   .doc-info-section{padding:0 40px;margin-top:24px}
@@ -9239,12 +9268,12 @@ function serabutStore() {
         // ─────────────────────────────────────────────────────────────────
         // ─────────────────────────────────────────────────────────────────
 
-        async adminUpdateGroupStatus(group, newStatus) {
+        async adminUpdateGroupStatus(group, newStatus, payMethod) {
             if(!newStatus) return;
-            await Promise.all(group.items.map(item => this.adminUpdateOrderStatus(item, newStatus, true)));
+            await Promise.all(group.items.map(item => this.adminUpdateOrderStatus(item, newStatus, true, payMethod)));
             group.status = newStatus;
-            group.items.forEach(i => i.status = newStatus);
-            this._adminShowMsg(`${group.orderId} (${group.items.length} item) → ${newStatus} ✓`);
+            group.items.forEach(i => { i.status = newStatus; if(payMethod) i.paymentMethod = payMethod; });
+            this._adminShowMsg(`${group.orderId} (${group.items.length} item) → ${newStatus}${payMethod?' via '+payMethod:''} ✓`);
         },
 
         // ── getCategoryIconSVG (icon preset) ──────────
