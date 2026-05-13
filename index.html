@@ -1868,9 +1868,20 @@
                                     <template x-if="!hasMyReview(order) && canReviewOrder(order)">
                                         <span class="text-[9px] font-bold bg-yellow-400 text-white px-1.5 py-0.5 rounded-full">Beri Ulasan</span>
                                     </template>
-                                    <div class="flex items-center gap-1 text-[10px] text-brand-500 font-semibold">
-                                        <span>Detail</span>
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                    <div class="flex items-center gap-2 flex-none">
+                                        <!-- Invoice icon untuk Aktif/Selesai -->
+                                        <template x-if="order.status==='Aktif'||order.status==='Selesai'">
+                                            <button @click.stop="downloadInvoice(order)"
+                                                    title="Download Invoice"
+                                                    class="flex items-center gap-1 text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-lg font-semibold active:scale-95 transition-all hover:bg-emerald-100">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                                Invoice
+                                            </button>
+                                        </template>
+                                        <div class="flex items-center gap-1 text-[10px] text-brand-500 font-semibold">
+                                            <span>Detail</span>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3553,8 +3564,8 @@
                         <template x-for="(q,idx) in quoList" :key="q.id">
                             <div class="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all">
                                 <!-- Icon -->
-                                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 </div>
                                 <!-- Info -->
                                 <div class="flex-1 min-w-0">
@@ -3573,10 +3584,20 @@
                                 </div>
                                 <!-- Actions -->
                                 <div class="flex items-center gap-1.5 flex-shrink-0">
-                                    <button @click="quoList.splice(idx,1); localStorage.setItem('srb_quotations',JSON.stringify(quoList))"
-                                            class="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
+                                    <template x-if="quoDeleteIdx===idx">
+                                        <div class="flex items-center gap-1">
+                                            <button @click="quoList.splice(idx,1); localStorage.setItem('srb_quotations',JSON.stringify(quoList)); quoDeleteIdx=-1"
+                                                    class="text-[11px] font-bold px-2.5 py-1 bg-red-500 text-white rounded-lg transition-all hover:bg-red-600">Ya</button>
+                                            <button @click="quoDeleteIdx=-1"
+                                                    class="text-[11px] font-bold px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg transition-all hover:bg-gray-200">Tidak</button>
+                                        </div>
+                                    </template>
+                                    <template x-if="quoDeleteIdx!==idx">
+                                        <button @click="quoDeleteIdx=idx"
+                                                class="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </template>
                                 </div>
                             </div>
                         </template>
@@ -6228,6 +6249,7 @@ function serabutStore() {
             items:[]
         },
         quoView:    'list', // 'list' | 'form'
+        quoDeleteIdx: -1,
         quoList:    JSON.parse(localStorage.getItem('srb_quotations')||'[]'),
         quoSending: false,
         quoSendMsg: '',
@@ -8793,7 +8815,7 @@ function serabutStore() {
             const fd  = v => this._invoiceFmtDate(v);
             const isInvoice = docType === 'invoice';
             const docLabel  = isInvoice ? 'INVOICE' : 'QUOTATION';
-            const docColor  = isInvoice ? '#e84343' : '#2563eb';
+            const docColor  = '#e84343';
             const today = fd(new Date().toISOString().split('T')[0].replace(/-/g,(m,i)=>i===4?'-':i===7?'-':'-'));
             const nowDate = (() => {
                 const d = new Date();
@@ -8801,7 +8823,7 @@ function serabutStore() {
                 return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
             })();
 
-            const itemRows = (items||[]).map((item, i) => {
+            const itemRows = (items||[]).filter(item => item.deskripsi || item.produk || Number(item.harga||0)>0).map((item, i) => {
                 const desc = [item.produk, item.varian&&item.varian!=='-'?item.varian:'', item.masaAktif&&item.masaAktif!=='-'?`(${item.masaAktif})`:''].filter(Boolean).join(' ');
                 const qty   = Number(item.qty||1);
                 const unit  = Number(item.harga||0) / qty;
@@ -8842,7 +8864,7 @@ function serabutStore() {
   .toolbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
   .toolbar-left{display:flex;align-items:center;gap:8px;color:#6b7280;font-size:12px}
   .toolbar-chip{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:#374151;font-family:monospace}
-  .toolbar-status{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${isInvoice?'#d1fae5':'#dbeafe'};color:${isInvoice?'#065f46':'#1e40af'}}
+  .toolbar-status{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${isInvoice?'#d1fae5':'#fee2e2'};color:${isInvoice?'#065f46':'#991b1b'}}
   .btn-print{background:${docColor};color:#fff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .15s}
   .btn-print:hover{opacity:.88}
 
@@ -8860,7 +8882,10 @@ function serabutStore() {
   .doc-label-text em{color:${docColor};font-style:normal}
   .doc-ref{margin-top:8px;font-size:11.5px;color:#6b7280;line-height:1.7}
   .doc-ref strong{color:#111827;font-weight:700;font-family:monospace}
-  .doc-badge{display:inline-flex;align-items:center;gap:4px;margin-top:10px;padding:4px 12px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:${isInvoice?'#d1fae5':'#dbeafe'};color:${isInvoice?'#065f46':'#1e40af'};border:1px solid ${isInvoice?'#a7f3d0':'#bfdbfe'}}
+  .doc-badge{display:inline-flex;align-items:center;gap:4px;margin-top:10px;padding:4px 12px;border-radius:20px;font-size:10.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:${isInvoice?'#d1fae5':'#fee2e2'};color:${isInvoice?'#065f46':'#991b1b'};border:1px solid ${isInvoice?'#a7f3d0':'#fca5a5'}}
+  /* ── Odoo-style diagonal stamp ── */
+  .doc-head{position:relative}
+  .paid-stamp{position:absolute;top:38px;right:36px;transform:rotate(-22deg);border:3.5px solid ${isInvoice?'#10b981':'#e84343'};border-radius:6px;padding:5px 18px;color:${isInvoice?'#10b981':'#e84343'};font-size:22px;font-weight:900;letter-spacing:5px;opacity:.55;text-transform:uppercase;pointer-events:none;user-select:none;white-space:nowrap;line-height:1.2}
 
   /* ── Info grid (Odoo-style 3-col) ── */
   .info-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;border:1px solid #f3f4f6;border-radius:10px;overflow:hidden}
@@ -8937,6 +8962,7 @@ function serabutStore() {
 
   <!-- Header -->
   <div class="doc-head">
+    <div class="paid-stamp">${isInvoice ? 'LUNAS' : 'PENAWARAN'}</div>
     <div class="doc-head-top">
       <!-- Brand -->
       <div class="brand">
