@@ -8814,32 +8814,31 @@ function serabutStore() {
             const isInvoice = docType === 'invoice';
             const docLabel  = isInvoice ? 'INVOICE' : 'QUOTATION';
             const docColor  = isInvoice ? '#e84343' : '#2563eb';
-            const today = fd(new Date().toISOString().split('T')[0].replace(/-/g,(m,i)=>i===4?'-':i===7?'-':'-'));
             const nowDate = (() => {
                 const d = new Date();
-                const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
                 return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
             })();
 
             const itemRows = (items||[]).map((item, i) => {
                 const desc = [item.produk, item.varian&&item.varian!=='-'?item.varian:'', item.masaAktif&&item.masaAktif!=='-'?`(${item.masaAktif})`:''].filter(Boolean).join(' ');
-                const qty   = Number(item.qty||1);
-                const unit  = Number(item.harga||0) / qty;
+                const qty      = Number(item.qty||1);
+                const unit     = Number(item.harga||0) / qty;
                 const rowTotal = Number(item.harga||0);
                 const ex = item.extra || {};
                 const notes = [
-                    ex.nama       ? `Nama: ${ex.nama}` : '',
-                    ex.username   ? `Username: ${ex.username}` : '',
-                    ex.microsoftEmail ? `Email Microsoft: ${ex.microsoftEmail}` : '',
-                    ex.adobeEmail ? `Email Adobe: ${ex.adobeEmail}` : '',
-                    ex.emailAktif ? `Email Aktif: ${ex.emailAktif}` : '',
+                    ex.nama           ? `Name: ${ex.nama}` : '',
+                    ex.username       ? `Username: ${ex.username}` : '',
+                    ex.microsoftEmail ? `Microsoft Email: ${ex.microsoftEmail}` : '',
+                    ex.adobeEmail     ? `Adobe Email: ${ex.adobeEmail}` : '',
+                    ex.emailAktif     ? `Active Email: ${ex.emailAktif}` : '',
                 ].filter(Boolean).join(' · ');
-                const noteRow = notes ? `<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:3px">${notes}</div>` : '';
+                const noteRow = notes ? `<div style="font-size:11px;color:#94a3b8;font-style:italic;margin-top:4px;line-height:1.5">${notes}</div>` : '';
                 return `<tr>
-                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;color:#334155;font-size:13.5px">${i+1}. ${desc}${noteRow}</td>
-                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px">${qty}</td>
-                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#334155;font-size:13px">${fp(unit)}</td>
-                    <td style="padding:10px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#1e293b;font-weight:600;font-size:13px">${fp(rowTotal)}</td>
+                    <td style="padding:12px 14px 12px 18px;border-bottom:1px solid #f9fafb;color:#111827;font-weight:500;font-size:13px">${i+1}. ${desc}${noteRow}</td>
+                    <td style="padding:12px 14px;border-bottom:1px solid #f9fafb;text-align:center;color:#6b7280;font-size:13px">${qty}</td>
+                    <td style="padding:12px 14px;border-bottom:1px solid #f9fafb;text-align:right;color:#6b7280;font-size:13px">${fp(unit)}</td>
+                    <td style="padding:12px 14px 12px 14px;border-bottom:1px solid #f9fafb;text-align:right;font-weight:700;color:#111827;padding-right:18px;font-size:13px">${fp(rowTotal)}</td>
                 </tr>`;
             }).join('');
 
@@ -8851,13 +8850,16 @@ function serabutStore() {
             const bAccount   = bankAccount || '901000004087';
             const bHolder    = bankHolder  || 'Eko Harianto';
             const waFormatted = noWA ? `+${String(noWA).replace(/^628/,'62 8').replace(/(\d{4})(?=\d)/g,'$1 ').trim()}` : '–';
+            // Show bank details only for bank transfer, not for QRIS/Cash/iPaymu etc.
+            const isTransfer = /transfer|bank/i.test(payMethod);
+            const bankDetails = isTransfer ? `<div style="font-size:11px;color:#9ca3af;margin-top:3px;line-height:1.5">${bName} · ${bAccount}<br>a.n ${bHolder}</div>` : '';
 
             const logoImg = logoSrc
-                ? `<img src="${logoSrc}" alt="Serabut" style="width:52px;height:52px;object-fit:contain;display:block"/>`
-                : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="white" fill-opacity="0.9"/></svg>`;
+                ? `<img src="${logoSrc}" alt="Serabut" style="width:44px;height:44px;object-fit:contain;display:block"/>`
+                : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="${docColor}" fill-opacity="0.9"/></svg>`;
 
             return `<!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -8868,7 +8870,7 @@ function serabutStore() {
   body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#f0f2f5;color:#1a1a2e;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:13px}
 
   /* ── Toolbar ── */
-  .toolbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+  .toolbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
   .toolbar-left{display:flex;align-items:center;gap:8px;color:#6b7280;font-size:12px}
   .toolbar-chip{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:#374151;font-family:monospace}
   .toolbar-status{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${isInvoice?'#d1fae5':'#dbeafe'};color:${isInvoice?'#065f46':'#1e40af'}}
@@ -8878,34 +8880,34 @@ function serabutStore() {
   /* ── Page ── */
   .page{max-width:740px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);overflow:hidden;position:relative}
 
-  /* ── Colored header bar (modern) ── */
-  .doc-head{background:${docColor};padding:28px 40px 24px;position:relative;overflow:hidden}
-  .doc-head::after{content:'';position:absolute;bottom:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.06)}
-  .doc-head-top{display:flex;align-items:center;justify-content:space-between}
+  /* ── Colored header ── */
+  .doc-head{background:${docColor};padding:28px 40px 26px;position:relative}
+  .doc-head::before{content:'';position:absolute;top:-40px;left:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,0.05)}
+  .doc-head::after{content:'';position:absolute;bottom:-30px;right:120px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.05)}
+  .doc-head-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2}
   .brand{display:flex;align-items:center;gap:14px}
-  .brand-logo{width:52px;height:52px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
-  .brand-logo img{width:52px;height:52px;object-fit:contain;display:block}
+  /* white bg so logo is visible against colored header */
+  .brand-logo{width:50px;height:50px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+  .brand-logo img{width:44px;height:44px;object-fit:contain;display:block}
   .brand-info .name{font-weight:800;font-size:16px;color:#fff;letter-spacing:-.2px}
-  .brand-info .sub{font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px}
-  .doc-title-block{text-align:right;max-width:calc(100% - 180px)} /* stop before ribbon zone */
-  .doc-label-text{font-size:36px;font-weight:900;letter-spacing:2px;color:#fff;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.12)}
-  .doc-ref{margin-top:8px;font-size:12px;color:rgba(255,255,255,0.8);line-height:1.8}
+  .brand-info .sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:2px}
+  .doc-title-block{text-align:right}
+  .doc-label-text{font-size:38px;font-weight:900;letter-spacing:3px;color:#fff;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .doc-ref{margin-top:8px;font-size:12px;color:rgba(255,255,255,.8);line-height:1.8}
   .doc-ref strong{color:#fff;font-weight:700;font-family:monospace;font-size:13px}
-  /* ribbon — solid, pojok kanan atas */
-  .page-ribbon{position:absolute;top:18px;right:-50px;width:168px;padding:8px 0;text-align:center;background:#fff;color:${isInvoice?'#059669':'#dc2626'};font-size:11px;font-weight:900;letter-spacing:3px;text-transform:uppercase;transform:rotate(45deg);z-index:10;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+
+  /* ── Corner ribbon — clipped by .page overflow:hidden ── */
+  .page-ribbon{position:absolute;top:0;right:0;z-index:10;overflow:hidden;width:100px;height:100px;pointer-events:none}
+  .page-ribbon span{position:absolute;top:24px;right:-28px;width:120px;padding:6px 0;text-align:center;background:#fff;color:${isInvoice?'#059669':'#dc2626'};font-size:10px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;transform:rotate(45deg);box-shadow:0 2px 6px rgba(0,0,0,.18)}
 
   /* ── Info grid — below header ── */
   .doc-info-section{padding:0 40px;margin-top:24px}
-
-  /* ── Info grid (Odoo-style 3-col) ── */
-  .info-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;border:1px solid #f3f4f6;border-radius:10px;overflow:hidden}
+  .info-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:0;border:1px solid #f3f4f6;border-radius:10px;overflow:hidden}
   .info-cell{padding:14px 18px;border-right:1px solid #f3f4f6}
   .info-cell:last-child{border-right:none}
   .info-cell .ic-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:7px}
   .info-cell .ic-name{font-size:13.5px;font-weight:700;color:#111827;margin-bottom:4px}
   .info-cell .ic-detail{font-size:11.5px;color:#6b7280;line-height:1.65}
-  .info-cell .ic-val{font-size:13px;font-weight:600;color:#374151;margin-bottom:4px}
-  .info-cell .ic-sub{font-size:11.5px;color:#6b7280;line-height:1.6}
 
   /* ── Products table ── */
   .tbl-section{padding:0 40px}
@@ -8915,16 +8917,10 @@ function serabutStore() {
   thead th{padding:11px 14px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af}
   thead th:first-child{text-align:left;padding-left:18px}
   thead th:nth-child(2){text-align:center;width:60px}
-  thead th:nth-child(3){text-align:right;width:130px}
-  thead th:nth-child(4){text-align:right;width:130px;padding-right:18px}
-  tbody tr{border-bottom:1px solid #f9fafb;transition:background .1s}
-  tbody tr:last-child{border-bottom:none}
+  thead th:nth-child(3){text-align:right;width:120px}
+  thead th:nth-child(4){text-align:right;width:120px;padding-right:18px}
+  tbody tr:last-child td{border-bottom:none}
   tbody tr:hover{background:#fafafa}
-  tbody td{padding:12px 14px;font-size:13px;color:#374151}
-  tbody td:first-child{padding-left:18px;color:#111827;font-weight:500}
-  tbody td:nth-child(2){text-align:center;color:#6b7280}
-  tbody td:nth-child(3){text-align:right;color:#6b7280}
-  tbody td:nth-child(4){text-align:right;font-weight:700;color:#111827;padding-right:18px}
 
   /* ── Totals ── */
   .totals-wrap{display:flex;justify-content:flex-end;padding:16px 40px 0}
@@ -8937,7 +8933,7 @@ function serabutStore() {
   .tot-grand .tv{font-weight:900;color:#fff;font-size:18px}
 
   /* ── Footer section ── */
-  .doc-footer{margin:24px 40px;padding:20px;background:#f9fafb;border-radius:10px;border:1px solid #f3f4f6;display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .doc-footer{margin:24px 40px;padding:20px;background:#f9fafb;border-radius:10px;border:1px solid #f3f4f6}
   .df-block .df-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;margin-bottom:5px}
   .df-block .df-val{font-size:13px;font-weight:600;color:#1f2937;line-height:1.5}
   .df-block .df-note{font-size:11px;color:#9ca3af;margin-top:3px;line-height:1.5}
@@ -8961,19 +8957,20 @@ function serabutStore() {
   <div class="toolbar-left">
     <span class="toolbar-chip">${orderId||'–'}</span>
     <span>${nowDate}</span>
-    <span class="toolbar-status">${isInvoice ? '✓ Lunas' : 'Penawaran'}</span>
+    <span class="toolbar-status">${isInvoice ? '✓ Paid' : 'Quotation'}</span>
   </div>
   <button class="btn-print" onclick="window.print()">
     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-    Cetak / Simpan PDF
+    Print / Save PDF
   </button>
 </div>
 
 <div class="page">
+  <!-- Corner ribbon — outside doc-head, clipped by page overflow:hidden -->
+  <div class="page-ribbon"><span>${isInvoice ? 'PAID' : 'QUOTE'}</span></div>
 
   <!-- Colored Header Bar -->
   <div class="doc-head">
-    <div class="page-ribbon">${isInvoice ? 'LUNAS' : 'PENAWARAN'}</div>
     <div class="doc-head-top">
       <!-- Brand -->
       <div class="brand">
@@ -8983,38 +8980,31 @@ function serabutStore() {
           <div class="sub">PT Serabut Solusi Digital · serabut.id</div>
         </div>
       </div>
-      <!-- Doc title -->
+      <!-- Doc title — no interference with ribbon in page corner -->
       <div class="doc-title-block">
-        <div class="doc-label-text">${isInvoice ? 'INVOICE' : 'QUOTATION'}</div>
+        <div class="doc-label-text">${docLabel}</div>
         <div class="doc-ref">
           No: <strong>${orderId||'–'}</strong><br>
-          Tanggal: ${nowDate}
+          Date: ${nowDate}
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Info grid -->
+  <!-- Info grid — 2 col only -->
   <div class="doc-info-section">
     <div class="info-grid">
       <div class="info-cell">
-        <div class="ic-lbl">Dari</div>
+        <div class="ic-lbl">From</div>
         <div class="ic-name">PT Serabut Solusi Digital</div>
-        <div class="ic-detail">Jl. Mampang Prpt. Raya, Duren Tiga<br>Pancoran, Jakarta Selatan 12790<br>(+62) 888-1500-555 · halo@serabut.id</div>
+        <div class="ic-detail">Jl. Mampang Prpt. Raya, Duren Tiga<br>Pancoran, South Jakarta 12790<br>(+62) 888-1500-555 · halo@serabut.id</div>
       </div>
       <div class="info-cell">
-        <div class="ic-lbl">Tagih Kepada</div>
+        <div class="ic-lbl">Bill To</div>
         <div class="ic-name">${nama||'–'}</div>
         <div class="ic-detail">
-          ${email ? email+'<br>' : ''}
-          ${noWA ? waFormatted : ''}
-          ${alamat ? '<br>'+alamat : ''}
+          ${email ? email+'<br>' : ''}${noWA ? waFormatted : ''}${alamat ? '<br>'+alamat : ''}
         </div>
-      </div>
-      <div class="info-cell">
-        <div class="ic-lbl">Detail Dokumen</div>
-        <div class="ic-val">${payMethod}</div>
-        <div class="ic-sub">${bName}<br>${bAccount}<br>a.n ${bHolder}</div>
       </div>
     </div>
   </div>
@@ -9025,10 +9015,10 @@ function serabutStore() {
       <table>
         <thead>
           <tr>
-            <th>Deskripsi Produk</th>
+            <th>Product Description</th>
             <th>Qty</th>
-            <th>Harga Satuan</th>
-            <th>Subtotal</th>
+            <th>Unit Price</th>
+            <th>Amount</th>
           </tr>
         </thead>
         <tbody>${itemRows}</tbody>
@@ -9040,27 +9030,22 @@ function serabutStore() {
   <div class="totals-wrap">
     <div class="totals-inner">
       <div class="tot-row"><span>Subtotal</span><span class="tv">${fp(computedSubtotal)}</span></div>
-      ${computedDiscount>0 ? `<div class="tot-row"><span style="color:#ef4444">Diskon</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>` : ''}
-      <div class="tot-grand"><span class="tl">Total Pembayaran</span><span class="tv">${fp(computedTotal)}</span></div>
+      ${computedDiscount>0 ? `<div class="tot-row"><span style="color:#ef4444">Discount</span><span class="tv" style="color:#ef4444">– ${fp(computedDiscount)}</span></div>` : ''}
+      <div class="tot-grand"><span class="tl">Total Amount</span><span class="tv">${fp(computedTotal)}</span></div>
     </div>
   </div>
 
   <!-- Footer -->
   <div class="doc-footer">
     <div class="df-block">
-      <div class="df-lbl">Instruksi Pembayaran</div>
+      <div class="df-lbl">Payment Method</div>
       <div class="df-val">${payMethod}</div>
-      <div class="df-note">${bName} · ${bAccount}<br>a.n ${bHolder}</div>
+      ${bankDetails}
     </div>
-    <div class="df-block">
-      <div class="df-lbl">Garansi Produk</div>
-      <div class="df-val">Penuh selama masa aktif</div>
-      <div class="df-note">Produk tidak aktif akan diganti<br>tanpa biaya tambahan</div>
-    </div>
-    ${note ? `<div class="df-block" style="grid-column:span 2"><div class="df-lbl">Catatan</div><div class="df-val" style="font-weight:400;color:#4b5563;white-space:pre-wrap">${note}</div></div>` : ''}
+    ${note ? `<div class="df-block" style="margin-top:12px"><div class="df-lbl">Notes</div><div class="df-val" style="font-weight:400;color:#4b5563;white-space:pre-wrap">${note}</div></div>` : ''}
   </div>
 
-  <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; Dokumen ini diterbitkan secara digital</div>
+  <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital &nbsp;·&nbsp; serabut.id &nbsp;·&nbsp; This document is issued digitally</div>
 </div>
 </body>
 </html>`;
