@@ -8824,8 +8824,8 @@ function serabutStore() {
             const waFormatted = noWA ? `+${String(noWA).replace(/^628/,'62 8').replace(/(\d{4})(?=\d)/g,'$1 ').trim()}` : '–';
 
             const logoImg = logoSrc
-                ? `<img src="${logoSrc}" alt="Serabut" style="width:44px;height:44px;border-radius:10px;object-fit:contain;display:block"/>`
-                : `<div style="width:44px;height:44px;background:${docColor};border-radius:10px;display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="white" fill-opacity="0.9"/></svg></div>`;
+                ? `<img src="${logoSrc}" alt="Serabut" style="width:52px;height:52px;object-fit:contain;display:block"/>`
+                : `<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="white" fill-opacity="0.9"/></svg>`;
 
             return `<!DOCTYPE html>
 <html lang="id">
@@ -8848,19 +8848,25 @@ function serabutStore() {
 
   /* ── Page ── */
   .page{max-width:740px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06);overflow:hidden;position:relative}
-  /* Odoo ribbon sudut kanan atas */
-  .page-ribbon{position:absolute;top:20px;right:-32px;width:150px;padding:9px 0;text-align:center;background:${isInvoice?'#10b981':'#e84343'};color:#fff;font-size:13px;font-weight:900;letter-spacing:3px;text-transform:uppercase;transform:rotate(45deg);box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:10}
 
-  /* ── Odoo-style header ── */
-  .doc-head{padding:32px 40px 28px;border-bottom:1px solid #f3f4f6}
-  .doc-head-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:28px}
-  .brand{display:flex;align-items:center;gap:12px}
-  .brand-info .name{font-weight:800;font-size:15px;color:#111827;letter-spacing:-.2px}
-  .brand-info .sub{font-size:11px;color:#9ca3af;margin-top:2px}
-  .doc-title-block{text-align:right}
-  .doc-label-text{font-size:32px;font-weight:900;letter-spacing:1.5px;color:#111827;line-height:1}
-  .doc-ref{margin-top:8px;font-size:11.5px;color:#6b7280;line-height:1.7}
-  .doc-ref strong{color:#111827;font-weight:700;font-family:monospace}
+  /* ── Colored header bar (modern) ── */
+  .doc-head{background:${docColor};padding:28px 40px 24px;position:relative;overflow:hidden}
+  .doc-head::after{content:'';position:absolute;bottom:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,0.06)}
+  .doc-head-top{display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand-logo{width:52px;height:52px;border-radius:10px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+  .brand-logo img{width:52px;height:52px;object-fit:contain;display:block}
+  .brand-info .name{font-weight:800;font-size:16px;color:#fff;letter-spacing:-.2px}
+  .brand-info .sub{font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px}
+  .doc-title-block{text-align:right;padding-right:72px} /* reserved for ribbon */
+  .doc-label-text{font-size:38px;font-weight:900;letter-spacing:2px;color:#fff;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.12)}
+  .doc-ref{margin-top:8px;font-size:12px;color:rgba(255,255,255,0.8);line-height:1.8}
+  .doc-ref strong{color:#fff;font-weight:700;font-family:monospace;font-size:13px}
+  /* ribbon */
+  .page-ribbon{position:absolute;top:22px;right:-38px;width:160px;padding:9px 0;text-align:center;background:rgba(255,255,255,0.22);border:1.5px solid rgba(255,255,255,0.4);color:#fff;font-size:12px;font-weight:900;letter-spacing:3px;text-transform:uppercase;transform:rotate(45deg);z-index:10}
+
+  /* ── Info grid — below header ── */
+  .doc-info-section{padding:0 40px;margin-top:24px}
 
   /* ── Info grid (Odoo-style 3-col) ── */
   .info-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;border:1px solid #f3f4f6;border-radius:10px;overflow:hidden}
@@ -8912,6 +8918,7 @@ function serabutStore() {
     body{background:#fff}
     .toolbar{display:none}
     .page{margin:0;border-radius:0;box-shadow:none;max-width:none}
+    .doc-info-section{padding:0 32px}
     .tbl-section{padding:0 32px}
     .totals-wrap{padding:16px 32px 0}
     .doc-footer{margin:24px 32px}
@@ -8934,14 +8941,14 @@ function serabutStore() {
 </div>
 
 <div class="page">
-  <div class="page-ribbon">${isInvoice ? 'LUNAS' : 'PENAWARAN'}</div>
 
-  <!-- Header -->
+  <!-- Colored Header Bar -->
   <div class="doc-head">
+    <div class="page-ribbon">${isInvoice ? 'LUNAS' : 'PENAWARAN'}</div>
     <div class="doc-head-top">
       <!-- Brand -->
       <div class="brand">
-        ${logoImg}
+        <div class="brand-logo">${logoImg}</div>
         <div class="brand-info">
           <div class="name">Serabut Store</div>
           <div class="sub">PT Serabut Solusi Digital · serabut.id</div>
@@ -8956,8 +8963,10 @@ function serabutStore() {
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Info grid -->
+  <!-- Info grid -->
+  <div class="doc-info-section">
     <div class="info-grid">
       <div class="info-cell">
         <div class="ic-lbl">Dari</div>
