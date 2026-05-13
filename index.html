@@ -8914,32 +8914,35 @@ function serabutStore() {
   .brand-name{font-size:17px;font-weight:800;color:#111827;letter-spacing:-.3px;margin-top:2px}
   .brand-sub{font-size:11px;color:#9ca3af;margin-top:3px}
   .brand-contact{font-size:10.5px;color:#6b7280;margin-top:10px;line-height:1.75}
-  /* INVOICE flush right — padding-right:0, same as the Amount col outer right edge */
-  .doc-meta{text-align:right;padding-right:0;margin-right:24px}
-  .doc-type{font-size:36px;font-weight:900;color:#111827;letter-spacing:0;line-height:1}
-  .doc-num{font-size:12px;color:#6b7280;margin-top:8px;line-height:1.9}
-  .doc-num strong{color:#111827;font-family:monospace;font-weight:700;font-size:13px}
+  /* INVOICE flush right — header already has padding-right:24px, so margin-right:0 */
+  .doc-meta{text-align:right;margin-right:0}
+  /* INVOICE label in accent color — modern, professional */
+  .doc-type{font-size:38px;font-weight:900;color:${accentColor};letter-spacing:0;line-height:1}
+  .doc-num{font-size:12px;color:#6b7280;margin-top:10px;line-height:2}
+  .doc-num strong{color:#111827;font-family:monospace;font-weight:700;font-size:13.5px}
 
-  /* ── Info band ── */
-  .info-band{background:#f9fafb;border-top:1px solid #f3f4f6;border-bottom:1px solid #f3f4f6;padding:18px 24px 18px 32px;display:grid;grid-template-columns:1fr 1fr}
-  .ib-cell .ib-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin-bottom:5px}
-  .ib-cell .ib-name{font-size:13px;font-weight:700;color:#111827}
-  .ib-cell .ib-detail{font-size:11px;color:#6b7280;line-height:1.65;margin-top:2px}
+  /* ── Info band — accent bottom border ── */
+  .info-band{background:#f9fafb;border-top:1px solid #f3f4f6;border-bottom:3px solid ${accentColor};padding:20px 24px 20px 32px;display:grid;grid-template-columns:1fr 1fr}
+  .ib-cell .ib-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#b0b7c3;margin-bottom:6px}
+  .ib-cell .ib-name{font-size:13.5px;font-weight:800;color:#111827;letter-spacing:-.2px}
+  .ib-cell .ib-detail{font-size:11px;color:#6b7280;line-height:1.7;margin-top:3px}
 
-  /* ── Products table ── */
-  .tbl-section{padding:24px 0 0}
+  /* ── Products table — accent thead bg ── */
+  .tbl-section{padding:28px 0 0}
   table{width:100%;border-collapse:collapse;font-size:13px}
-  thead th{padding:10px 16px;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#9ca3af;border-bottom:2px solid #f3f4f6}
+  thead tr{background:${accentColor}14} /* 8% accent tint */
+  thead th{padding:11px 16px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:${accentColor};border-bottom:2px solid ${accentColor}30}
   thead th:first-child{text-align:left;padding-left:32px}
   thead th:nth-child(2){text-align:center;width:56px}
   thead th:nth-child(3){text-align:right;width:120px}
   thead th:nth-child(4){text-align:right;width:120px;padding-right:24px}
-  tbody td{color:#374151;vertical-align:top}
+  tbody td{color:#374151;vertical-align:top;border-bottom:1px solid #f8f8f8}
   tbody td:first-child{padding-left:32px;font-weight:500;color:#111827}
   tbody td:nth-child(2){text-align:center;color:#6b7280}
   tbody td:nth-child(3){text-align:right;color:#6b7280}
   tbody td:nth-child(4){text-align:right;font-weight:700;color:#111827;padding-right:24px}
   tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fafafa}
 
   /* ── Totals — right edge = 24px, matches Amount col ── */
   .totals-wrap{display:flex;justify-content:flex-end;padding:8px 24px 0 0}
