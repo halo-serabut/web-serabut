@@ -6531,47 +6531,12 @@ function serabutStore() {
                     localStorage.removeItem('serabut_catalog_cache');
                     localStorage.removeItem('serabutSettings');
                     if (pendingPayment) sessionStorage.setItem('srb_pending_payment', JSON.stringify(pendingPayment));
-                    // srb_pending_quo sudah di sessionStorage — survive reload
                     location.reload(true);
                     return;
                 }
                 localStorage.setItem('srb_app_v', this.APP_VERSION);
             } catch {}
 
-            // ── Load quo preview (fetch setelah cache-bust selesai) ──
-            if (_pendingQuo || sessionStorage.getItem('srb_pending_quo')) {
-                const quoId = _pendingQuo || sessionStorage.getItem('srb_pending_quo');
-                sessionStorage.removeItem('srb_pending_quo');
-                this.quoPublicVisible = true;
-                ;(async () => {
-                    try {
-                        const res  = await fetch(`${this.GAS_URL}?action=getPublicQuo&quoId=${encodeURIComponent(quoId)}`);
-                        const json = await res.json();
-                        if (json.success && json.formDataJson) {
-                            const form = JSON.parse(json.formDataJson);
-                            const logo = await this._getLogoDataURL();
-                            const html = this._buildInvoiceDoc({
-                                orderId: quoId, tanggal: form.tanggal||'', nama: form.nama||'',
-                                email: form.email||'', noWA: form.noHP||'', alamat: form.alamat||'',
-                                items: (form.items||[]).map(it => ({
-                                    produk: it.deskripsi, varian:'', masaAktif:'',
-                                    harga: Number(it.harga||0)*Number(it.qty||1), qty: it.qty||1
-                                })),
-                                total: (form.items||[]).reduce((s,it)=>s+Number(it.harga||0)*Number(it.qty||1),0),
-                                paymentMethod: form.payMethod, bankName: form.bankName,
-                                bankAccount: form.bankAccount, bankHolder: form.bankHolder,
-                                note: form.note, docType: 'quotation', logoSrc: logo,
-                            });
-                            this.quoPublicHtml = html;
-                        } else {
-                            this.quoPublicHtml = `<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#ef4444;font-size:14px">Dokumen tidak ditemukan: ${json.error||''}</body></html>`;
-                        }
-                    } catch(e) {
-                        console.error('getPublicQuo error', e);
-                        this.quoPublicHtml = '<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#ef4444;font-size:14px">Gagal memuat dokumen</body></html>';
-                    }
-                })();
-            }
             // ── Load site settings dari cache dulu (instant) ──
             try {
                 const cached = localStorage.getItem('serabutSettings');
