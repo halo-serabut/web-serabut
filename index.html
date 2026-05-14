@@ -3271,16 +3271,29 @@
 
                 <div x-show="!adminOrdersLoading">
 
-                    <!-- Toolbar: per-page + summary -->
-                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-                        <span class="text-xs text-gray-400" x-text="adminGroupedOrders.length + ' order' + (adminGroupedOrders.length !== adminOrders.length ? ' (filtered)' : '')"></span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-gray-500">Tampilkan</span>
-                            <select x-model.number="adminOrdersPerPage" @change="adminOrdersPage=1"
-                                    class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-brand-400 bg-white">
-                                <template x-for="n in [10,20,30,40,50]" :key="n"><option :value="n" x-text="n"></option></template>
-                            </select>
-                            <span class="text-xs text-gray-500">per halaman</span>
+                    <!-- Toolbar: search + per-page + summary -->
+                    <div class="flex flex-col gap-2 mb-3">
+                        <!-- Search bar -->
+                        <div class="relative">
+                            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+                            <input x-model="adminOrderSearch" @input="adminOrdersPage=1" type="text" placeholder="Cari nama, no. order, email, produk..."
+                                   class="w-full pl-8 pr-8 py-2 text-xs border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 bg-white">
+                            <button x-show="adminOrderSearch" @click="adminOrderSearch='';adminOrdersPage=1"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                        <!-- Per-page + summary -->
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-xs text-gray-400" x-text="adminGroupedOrders.length + ' order' + (adminGroupedOrders.length !== adminOrders.length ? ' (filtered)' : '')"></span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-500">Tampilkan</span>
+                                <select x-model.number="adminOrdersPerPage" @change="adminOrdersPage=1"
+                                        class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-brand-400 bg-white">
+                                    <template x-for="n in [5,10,20,30,40,50]" :key="n"><option :value="n" x-text="n"></option></template>
+                                </select>
+                                <span class="text-xs text-gray-500">per halaman</span>
+                            </div>
                         </div>
                     </div>
 
@@ -3310,7 +3323,7 @@
                                                 <select x-model="adminStatusConfirm.payMethod"
                                                         class="text-xs border border-brand-300 rounded-lg px-2 py-1.5 focus:outline-none bg-white text-gray-700">
                                                     <option value="">Metode Bayar...</option>
-                                                    <template x-for="pm in ['Transfer Bank','QRIS','Cash','iPaymu','COD','Lainnya']" :key="pm">
+                                                    <template x-for="pm in (adminPaymentList.filter(p=>p.active).length ? adminPaymentList.filter(p=>p.active).map(p=>p.label) : ['Transfer Bank','QRIS','Cash','iPaymu','COD','Lainnya'])" :key="pm">
                                                         <option :value="pm" x-text="pm"></option>
                                                     </template>
                                                 </select>
@@ -3411,7 +3424,7 @@
                                                 <select x-model="adminPayMethodVal"
                                                         class="text-[11px] border border-brand-300 rounded-lg px-2 py-1 focus:outline-none bg-white text-gray-700">
                                                     <option value="">-- Pilih --</option>
-                                                    <template x-for="pm in (adminPaymentList.length ? adminPaymentList.map(p=>p.name) : ['Transfer Bank','QRIS','Cash','iPaymu','COD','Xendit','Lainnya'])" :key="pm">
+                                                    <template x-for="pm in (adminPaymentList.filter(p=>p.active).length ? adminPaymentList.filter(p=>p.active).map(p=>p.label) : ['Transfer Bank','QRIS','Cash','iPaymu','COD','Xendit','Lainnya'])" :key="pm">
                                                         <option :value="pm" x-text="pm"></option>
                                                     </template>
                                                 </select>
@@ -6066,7 +6079,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260514-6',
+        APP_VERSION:      '20260514-7',
 
         // PWA Install
         pwaPopup:            false,
@@ -6295,6 +6308,7 @@ function serabutStore() {
         adminStatusConfirm: null, // {g, newStatus} — confirm payment method before Selesai
         adminPayMethodEdit: null,  // orderId yang sedang diedit metode bayarnya
         adminPayMethodVal:  '',
+        adminOrderSearch:   '',
         adminOrdersPerPage: 10,
         adminEditProduct: null,
         adminAddMode:    false,
@@ -7844,7 +7858,21 @@ function serabutStore() {
                 const g = map.get(o.orderId);
                 g.items.push(o); g.total += (Number(o.harga)||0);
             }
-            return list;
+            const q = (this.adminOrderSearch||'').trim().toLowerCase();
+            if (!q) return list;
+            return list.filter(g => {
+                if (g.orderId?.toLowerCase().includes(q)) return true;
+                if (g.nama?.toLowerCase().includes(q)) return true;
+                if (g.email?.toLowerCase().includes(q)) return true;
+                if (g.wa?.toLowerCase().includes(q)) return true;
+                return g.items.some(i =>
+                    i.produk?.toLowerCase().includes(q) ||
+                    i.emailAktif?.toLowerCase().includes(q) ||
+                    i.microsoftEmail?.toLowerCase().includes(q) ||
+                    i.adobeEmail?.toLowerCase().includes(q) ||
+                    i.namaAkun?.toLowerCase().includes(q)
+                );
+            });
         },
         get adminOrdersTotalPages() { return Math.max(1, Math.ceil(this.adminGroupedOrders.length / this.adminOrdersPerPage)); },
         get quoSubtotal()  { return (this.quoForm.items||[]).reduce((s,i)=>s+Number(i.qty||1)*Number(i.harga||0),0); },
