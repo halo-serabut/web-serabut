@@ -6021,7 +6021,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260514-2',
+        APP_VERSION:      '20260514-3',
 
         // PWA Install
         pwaPopup:            false,
@@ -6511,10 +6511,43 @@ function serabutStore() {
                 }
                 if (payStatus || payOrderId) window.history.replaceState({}, '', window.location.pathname);
 
-                // ── ?quo=QUO-xxx → tampilkan preview quotation publik (iframe overlay) ──
-                const quoParam = urlParams.get('quo');
+                // ── ?quo=QUO-xxx → simpan ke sessionStorage sebelum URL di-strip ──
+                // (cache-bust reload akan strip URL, jadi harus survive via sessionStorage)
+                const quoParam = urlParams.get('quo') || (() => { try { return sessionStorage.getItem('srb_pending_quo'); } catch { return null; } })();
                 if (quoParam) {
+                    try { sessionStorage.setItem('srb_pending_quo', quoParam); } catch {}
                     window.history.replaceState({}, '', window.location.pathname);
+                }
+            } catch {}
+            // Ambil dari sessionStorage jika tidak ada di URL (misal setelah cache-bust reload)
+            if (!pendingPayment) {
+                try {
+                    const ss = sessionStorage.getItem('srb_pending_payment');
+                    if (ss) pendingPayment = JSON.parse(ss);
+                } catch {}
+            }
+            try { sessionStorage.removeItem('srb_pending_payment'); } catch {}
+
+            // ── Cache busting — auto-reload jika versi baru terdeteksi ──
+            try {
+                const storedV = localStorage.getItem('srb_app_v');
+                if (storedV && storedV !== this.APP_VERSION) {
+                    localStorage.setItem('srb_app_v', this.APP_VERSION);
+                    localStorage.removeItem('serabut_catalog_cache');
+                    localStorage.removeItem('serabutSettings');
+                    if (pendingPayment) sessionStorage.setItem('srb_pending_payment', JSON.stringify(pendingPayment));
+                    // quoParam sudah di sessionStorage — survive reload otomatis
+                    location.reload(true);
+                    return;
+                }
+                localStorage.setItem('srb_app_v', this.APP_VERSION);
+            } catch {}
+
+            // ── Render quo preview setelah semua init selesai ──
+            try {
+                const quoParam = sessionStorage.getItem('srb_pending_quo');
+                if (quoParam) {
+                    sessionStorage.removeItem('srb_pending_quo');
                     (async () => {
                         try {
                             const res  = await fetch(`${this.GAS_URL}?action=getPublicQuo&quoId=${encodeURIComponent(quoParam)}`);
@@ -6533,35 +6566,12 @@ function serabutStore() {
                                 });
                                 this.quoPublicHtml    = html;
                                 this.quoPublicVisible = true;
+                            } else {
+                                console.error('getPublicQuo failed:', json.error);
                             }
                         } catch(e) { console.error('getPublicQuo error', e); }
                     })();
                 }
-            } catch {}
-            // Ambil dari sessionStorage jika tidak ada di URL (misal setelah cache-bust reload)
-            if (!pendingPayment) {
-                try {
-                    const ss = sessionStorage.getItem('srb_pending_payment');
-                    if (ss) pendingPayment = JSON.parse(ss);
-                } catch {}
-            }
-            try { sessionStorage.removeItem('srb_pending_payment'); } catch {}
-
-            // ── Cache busting — auto-reload jika versi baru terdeteksi ──
-            // sessionStorage survive reload → pendingPayment aman
-            try {
-                const storedV = localStorage.getItem('srb_app_v');
-                if (storedV && storedV !== this.APP_VERSION) {
-                    localStorage.setItem('srb_app_v', this.APP_VERSION);
-                    // clear catalog cache agar data fresh dari GAS
-                    localStorage.removeItem('serabut_catalog_cache');
-                    localStorage.removeItem('serabutSettings');
-                    // simpan ulang ke sessionStorage agar survive reload
-                    if (pendingPayment) sessionStorage.setItem('srb_pending_payment', JSON.stringify(pendingPayment));
-                    location.reload(true);
-                    return;
-                }
-                localStorage.setItem('srb_app_v', this.APP_VERSION);
             } catch {}
             // ── Load site settings dari cache dulu (instant) ──
             try {
