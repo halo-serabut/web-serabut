@@ -3797,36 +3797,59 @@
                         </div>
                     </div>
 
-                    <!-- Action buttons -->
-                    <div class="mt-5 space-y-3">
-                        <!-- Row 1: Preview -->
+                    <!-- Action buttons — minimalist -->
+                    <div class="mt-6 space-y-2.5">
+                        <!-- Preview -->
                         <button @click="quoGenerate()"
                                 :disabled="!quoForm.nama || quoForm.items.length===0"
-                                class="w-full py-3 bg-brand-500 hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                class="w-full py-2.5 bg-gray-900 hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl transition-all flex items-center justify-center gap-2">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             Preview & Print
                         </button>
-                        <!-- Row 2: Send via WA + Email -->
-                        <div class="grid grid-cols-2 gap-3">
+                        <!-- Save + WA + Email row -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <!-- Save -->
+                            <button @click="quoSaveDraft()"
+                                    :disabled="!quoForm.nama || quoWASending || quoEmailSending"
+                                    class="py-2.5 border border-gray-200 hover:border-gray-300 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed text-gray-700 font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                                Simpan
+                            </button>
+                            <!-- WA -->
                             <button @click="quoSendWA()"
                                     :disabled="!quoForm.nama || quoForm.items.length===0 || quoWASending"
-                                    class="py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
-                                <svg x-show="quoWASending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                                <svg x-show="!quoWASending" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.534 5.862L.057 23.943l6.235-1.469A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.525-5.17-1.435l-.37-.22-3.7.872.932-3.604-.241-.371A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-                                <span x-text="quoWASending ? 'Mengirim...' : 'Kirim WA'"></span>
+                                    class="py-2.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5">
+                                <svg x-show="quoWASending" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                <svg x-show="!quoWASending" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.534 5.862L.057 23.943l6.235-1.469A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.525-5.17-1.435l-.37-.22-3.7.872.932-3.604-.241-.371A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                                <span x-text="quoWASending ? '...' : 'WA'"></span>
                             </button>
+                            <!-- Email -->
                             <button @click="quoSendEmail()"
                                     :disabled="!quoForm.nama || quoForm.items.length===0 || quoEmailSending"
-                                    class="py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
-                                <svg x-show="quoEmailSending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                                <svg x-show="!quoEmailSending" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                <span x-text="quoEmailSending ? 'Mengirim...' : 'Kirim Email'"></span>
+                                    class="py-2.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5">
+                                <svg x-show="quoEmailSending" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                <svg x-show="!quoEmailSending" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                <span x-text="quoEmailSending ? '...' : 'Email'"></span>
                             </button>
                         </div>
-                        <!-- Status msg -->
-                        <div x-show="quoSendMsg" class="text-center text-sm font-semibold px-4 py-2.5 rounded-xl"
-                             :class="quoSendMsg.startsWith('✓') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'"
-                             x-text="quoSendMsg"></div>
+                        <!-- Toast notification -->
+                        <transition x-show="quoSendMsg"
+                            x-transition:enter="transition ease-out duration-200"
+                            x-transition:enter-start="opacity-0 translate-y-1"
+                            x-transition:enter-end="opacity-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="opacity-100"
+                            x-transition:leave-end="opacity-0">
+                            <div class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium"
+                                 :class="quoSendMsg.startsWith('✓') ? 'bg-emerald-50 border border-emerald-100 text-emerald-700' : 'bg-red-50 border border-red-100 text-red-600'">
+                                <svg x-show="quoSendMsg.startsWith('✓')" class="w-4 h-4 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <svg x-show="!quoSendMsg.startsWith('✓')" class="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span x-text="quoSendMsg"></span>
+                                <button @click="quoSendMsg=''" class="ml-auto text-current opacity-50 hover:opacity-100">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                </button>
+                            </div>
+                        </transition>
                     </div>
                 </div><!-- end form view -->
 
@@ -9204,6 +9227,28 @@ function serabutStore() {
         },
         quoNewForm() { this.quoReset(); this.quoView = 'form'; },
         quoBackToList() { this.quoView = 'list'; },
+        async quoSaveDraft() {
+            this._quoEnsureId();
+            this._quoSaveToList('draft');
+            // simpan juga ke GAS Sheet
+            try {
+                await this.gasPost({
+                    action:       'saveQuotation',
+                    adminEmail:   this.currentUser?.email,
+                    adminToken:   this.currentUser?.sessionToken,
+                    quoId:        this._quoId,
+                    nama:         this.quoForm.nama,
+                    email:        this.quoForm.email,
+                    noHP:         this.quoForm.noHP,
+                    total:        this.quoTotal,
+                    itemCount:    this.quoForm.items.length,
+                    status:       'draft',
+                    formDataJson: JSON.stringify(this.quoForm),
+                });
+            } catch {}
+            this.quoSendMsg = '✓ Tersimpan — ' + this._quoId;
+            setTimeout(() => { this.quoSendMsg = ''; }, 3000);
+        },
         _quoSaveToList(status) {
             const f = this.quoForm;
             const existing = this.quoList.findIndex(q => q.id === this._quoId);
@@ -9348,7 +9393,7 @@ function serabutStore() {
                     to:         f.email,
                     quoId:      this._quoId,
                     nama:       f.nama,
-                    subject:    `Penawaran ${this._quoId} dari Serabut Store`,
+                    subject:    `Penawaran ${this._quoId}${f.nama?' untuk '+f.nama:''} dari Serabut Store`,
                     htmlBody:   htmlContent,   // backward compat GAS lama
                     htmlContent,               // GAS baru (attachment)
                 });
