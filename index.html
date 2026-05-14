@@ -3576,7 +3576,8 @@
                     <!-- List -->
                     <div x-show="quoList.length>0" class="space-y-2">
                         <template x-for="(q,idx) in quoList" :key="q.id">
-                            <div class="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all">
+                            <div class="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all cursor-pointer"
+                                 @click="quoOpenDraft(q)">
                                 <!-- Icon -->
                                 <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                                     <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -3598,7 +3599,7 @@
                                 </div>
                                 <!-- Actions -->
                                 <div class="flex items-center gap-1.5 flex-shrink-0">
-                                    <button @click="quoList.splice(idx,1); localStorage.setItem('srb_quotations',JSON.stringify(quoList))"
+                                    <button @click.stop="if(confirm('Hapus quotation '+q.id+'?')){ quoList.splice(idx,1); localStorage.setItem('srb_quotations',JSON.stringify(quoList)) }"
                                             class="w-7 h-7 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors" title="Hapus">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     </button>
@@ -3808,18 +3809,18 @@
                         <!-- Row 2: Send via WA + Email -->
                         <div class="grid grid-cols-2 gap-3">
                             <button @click="quoSendWA()"
-                                    :disabled="!quoForm.nama || quoForm.items.length===0 || quoSending"
+                                    :disabled="!quoForm.nama || quoForm.items.length===0 || quoWASending"
                                     class="py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
-                                <svg x-show="quoSending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                                <svg x-show="!quoSending" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.534 5.862L.057 23.943l6.235-1.469A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.525-5.17-1.435l-.37-.22-3.7.872.932-3.604-.241-.371A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-                                <span x-text="quoSending ? 'Mengirim...' : 'Kirim WA'"></span>
+                                <svg x-show="quoWASending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                <svg x-show="!quoWASending" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.534 5.862L.057 23.943l6.235-1.469A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.525-5.17-1.435l-.37-.22-3.7.872.932-3.604-.241-.371A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                                <span x-text="quoWASending ? 'Mengirim...' : 'Kirim WA'"></span>
                             </button>
                             <button @click="quoSendEmail()"
-                                    :disabled="!quoForm.nama || quoForm.items.length===0 || quoSending"
+                                    :disabled="!quoForm.nama || quoForm.items.length===0 || quoEmailSending"
                                     class="py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
-                                <svg x-show="quoSending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                                <svg x-show="!quoSending" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                                <span x-text="quoSending ? 'Mengirim...' : 'Kirim Email'"></span>
+                                <svg x-show="quoEmailSending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                <svg x-show="!quoEmailSending" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                <span x-text="quoEmailSending ? 'Mengirim...' : 'Kirim Email'"></span>
                             </button>
                         </div>
                         <!-- Status msg -->
@@ -6254,10 +6255,11 @@ function serabutStore() {
             note:'', discountType:'nominal', discountVal:0,
             items:[]
         },
-        quoView:    'list', // 'list' | 'form'
-        quoList:    JSON.parse(localStorage.getItem('srb_quotations')||'[]'),
-        quoSending: false,
-        quoSendMsg: '',
+        quoView:         'list', // 'list' | 'form'
+        quoList:         JSON.parse(localStorage.getItem('srb_quotations')||'[]'),
+        quoWASending:    false,
+        quoEmailSending: false,
+        quoSendMsg:      '',
         _logoDataURL: null,
         quoProductSearch: -1,
         quoSearchQuery:   '',
@@ -9175,11 +9177,30 @@ function serabutStore() {
         _quoSaveToList(status) {
             const f = this.quoForm;
             const existing = this.quoList.findIndex(q => q.id === this._quoId);
-            const entry = { id:this._quoId, tanggal:new Date().toISOString(), nama:f.nama, email:f.email, noHP:f.noHP, total:this.quoTotal, itemCount:f.items.length, status };
+            const entry = {
+                id: this._quoId, tanggal: new Date().toISOString(),
+                nama: f.nama, email: f.email, noHP: f.noHP,
+                total: this.quoTotal, itemCount: f.items.length, status,
+                formData: JSON.parse(JSON.stringify(f)), // simpan full form untuk buka draft
+            };
             if (existing >= 0) { this.quoList[existing] = {...this.quoList[existing], ...entry}; }
             else { this.quoList.unshift(entry); }
-            this.quoList = this.quoList.slice(0,100);
+            this.quoList = this.quoList.slice(0, 100);
             localStorage.setItem('srb_quotations', JSON.stringify(this.quoList));
+        },
+        quoOpenDraft(q) {
+            if (q.formData) {
+                this.quoForm = JSON.parse(JSON.stringify(q.formData));
+            } else {
+                // fallback: isi fields dasar saja
+                this.quoForm.nama  = q.nama  || '';
+                this.quoForm.email = q.email || '';
+                this.quoForm.noHP  = q.noHP  || '';
+            }
+            this._quoId   = q.id;
+            this.quoSendMsg = '';
+            this.quoView  = 'form';
+            this.quoRecalc();
         },
         async _getLogoDataURL() {
             if (this._logoDataURL) return this._logoDataURL;
@@ -9258,7 +9279,7 @@ function serabutStore() {
             const rawNum = String(f.noHP||'').replace(/\D/g,'');
             if (!rawNum || rawNum.length < 8) { this.quoSendMsg = '⚠️ No. HP penerima belum diisi'; return; }
             this._quoEnsureId();
-            this.quoSending = true; this.quoSendMsg = '';
+            this.quoWASending = true; this.quoSendMsg = '';
             try {
                 const logo  = await this._getLogoDataURL();
                 const htmlContent = await this._quoBuildDoc(logo);
@@ -9280,32 +9301,33 @@ function serabutStore() {
                     this._quoSaveToList('sent_wa');
                 } else { this.quoSendMsg = '✗ ' + (data.error||'Gagal kirim WA'); }
             } catch { this.quoSendMsg = '✗ Gagal terhubung ke server'; }
-            finally  { this.quoSending = false; }
+            finally  { this.quoWASending = false; }
         },
         async quoSendEmail() {
             const f = this.quoForm;
             if (!f.email) { this.quoSendMsg = '⚠️ Email penerima belum diisi'; return; }
             this._quoEnsureId();
-            this.quoSending = true; this.quoSendMsg = '';
+            this.quoEmailSending = true; this.quoSendMsg = '';
             try {
                 const logo = await this._getLogoDataURL();
                 const htmlContent = await this._quoBuildDoc(logo);
                 const data = await this.gasPost({
-                    action: 'sendQuotationEmail',
+                    action:     'sendQuotationEmail',
                     adminEmail: this.currentUser?.email,
                     adminToken: this.currentUser?.sessionToken,
-                    to:      f.email,
-                    quoId:   this._quoId,
-                    nama:    f.nama,
-                    subject: `Penawaran ${this._quoId} dari Serabut Store`,
-                    htmlContent,
+                    to:         f.email,
+                    quoId:      this._quoId,
+                    nama:       f.nama,
+                    subject:    `Penawaran ${this._quoId} dari Serabut Store`,
+                    htmlBody:   htmlContent,   // backward compat GAS lama
+                    htmlContent,               // GAS baru (attachment)
                 });
                 if (data.success) {
                     this.quoSendMsg = '✓ Email terkirim ke ' + f.email;
                     this._quoSaveToList('sent_email');
                 } else { this.quoSendMsg = '✗ ' + (data.error||'Gagal kirim email'); }
             } catch { this.quoSendMsg = '✗ Gagal terhubung ke server'; }
-            finally  { this.quoSending = false; }
+            finally  { this.quoEmailSending = false; }
         },
         // ─────────────────────────────────────────────────────────────────
         // ─────────────────────────────────────────────────────────────────
