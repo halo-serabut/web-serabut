@@ -8884,7 +8884,7 @@ function serabutStore() {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=820,initial-scale=1.0">
 <title>${docLabel} ${orderId||''}</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -8962,59 +8962,6 @@ function serabutStore() {
   .pf-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:6px}
   .pf-val{font-size:14px;font-weight:700;color:#111827}
   .copyright{text-align:center;padding:12px 24px 20px;font-size:10.5px;color:#d1d5db}
-
-  /* ── Mobile responsive ── */
-  @media(max-width:600px){
-    body{background:#fff}
-    .toolbar{padding:10px 16px;position:sticky;top:0}
-    .toolbar-left{gap:6px}
-    .toolbar-chip{font-size:10px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .btn-print{padding:7px 14px;font-size:11.5px}
-
-    .page{margin:0;border-radius:0;box-shadow:none;min-height:auto;flex-direction:row}
-    .left-bar{width:5px}
-
-    .doc-header{padding:20px 16px 18px 18px;flex-direction:column;gap:16px}
-    .brand{gap:10px}
-    .brand-logo{width:44px;height:44px}
-    .brand-name{font-size:15px}
-    .brand-sub{font-size:10px}
-    .brand-contact{font-size:10px;margin-top:6px}
-    .doc-meta{text-align:left;margin-top:0}
-    .doc-type{font-size:28px}
-    .doc-num{font-size:11.5px;margin-top:6px;line-height:1.9}
-
-    .info-band{grid-template-columns:1fr;gap:14px;padding:16px 16px 16px 18px}
-    .ib-cell:last-child{padding-left:0;border-top:1px solid #e5e7eb;padding-top:14px}
-    .ib-cell .ib-name{font-size:12.5px}
-    .ib-cell .ib-detail{font-size:10.5px}
-
-    .tbl-section{padding:18px 0 0}
-    table{font-size:12px}
-    thead th{padding:9px 10px;font-size:8px}
-    thead th:first-child{padding-left:18px}
-    thead th:nth-child(3){width:90px}
-    thead th:nth-child(4){width:90px;padding-right:14px}
-    tbody td{font-size:11.5px}
-    tbody td:first-child{padding-left:18px}
-    tbody td:last-child{padding-right:14px}
-
-    .totals-wrap{padding:8px 14px 0 0}
-    .totals-inner{width:100%;max-width:260px}
-    .tot-row{font-size:12px;padding:6px 0}
-    .tot-grand{padding:11px 14px}
-    .tot-grand .tl{font-size:13px}
-    .tot-grand .tv{font-size:15px}
-
-    .bottom-section{flex-direction:column;margin:12px 14px 0 18px;padding:14px 16px;gap:14px}
-    .stamp-area{width:100%!important;justify-content:flex-start;padding-bottom:14px;border-bottom:1px solid #e5e7eb}
-    .pay-area{border-left:none;padding-left:0;border-top:1px solid #e5e7eb;padding-top:14px}
-    .warranty-area{border-left:none;padding-left:0;border-top:1px solid #e5e7eb;padding-top:14px}
-    .qr-col{border-left:none!important;padding-left:0!important;width:100%!important;flex-direction:row!important;align-items:center!important;gap:12px!important;border-top:1px solid #e5e7eb;padding-top:14px}
-    .pf-val{font-size:13px}
-
-    .copyright{font-size:10px;padding:12px 16px 24px}
-  }
 
   /* ── Print ── */
   @media print{
