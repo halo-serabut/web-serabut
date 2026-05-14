@@ -2905,7 +2905,10 @@
                 </div>
 
                 <!-- Produk: loading -->
-                <div x-show="adminProductsLoading" class="text-center py-10 text-gray-400 text-sm">Memuat produk...</div>
+                <div x-show="adminProductsLoading" class="flex flex-col items-center justify-center py-12 gap-3 text-gray-400">
+                    <div class="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-sm">Memuat produk...</span>
+                </div>
 
                 <!-- Produk: scorecard grid (semua ukuran layar) -->
                 <div x-show="!adminProductsLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -3108,7 +3111,10 @@
                 </div>
 
                 <!-- Guide loading -->
-                <div x-show="adminGuidesLoading" class="text-center py-8 text-gray-400 text-sm">Memuat panduan...</div>
+                <div x-show="adminGuidesLoading" class="flex flex-col items-center justify-center py-12 gap-3 text-gray-400">
+                    <div class="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-sm">Memuat panduan...</span>
+                </div>
 
                 <!-- Form tambah/edit guide -->
                 <div x-show="!adminGuidesLoading && (adminAddGuideMode || adminEditGuideIdx>=0)" x-transition class="bg-brand-50 rounded-2xl p-4 mb-4 border border-brand-100">
@@ -3256,7 +3262,10 @@
                         </template>
                     </div>
                 </div>
-                <div x-show="adminOrdersLoading" class="text-center py-10 text-gray-400 text-sm">Memuat order...</div>
+                <div x-show="adminOrdersLoading" class="flex flex-col items-center justify-center py-12 gap-3 text-gray-400">
+                    <div class="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-sm">Memuat order...</span>
+                </div>
 
                 <div x-show="!adminOrdersLoading">
 
@@ -3574,8 +3583,8 @@
                         </div>
                     </div>
                     <!-- Loading state -->
-                    <div x-show="quoListLoading" class="flex items-center justify-center py-12 gap-3 text-gray-400">
-                        <div class="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div x-show="quoListLoading" class="flex flex-col items-center justify-center py-12 gap-3 text-gray-400">
+                        <div class="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
                         <span class="text-sm">Memuat quotation...</span>
                     </div>
                     <!-- Empty state -->
