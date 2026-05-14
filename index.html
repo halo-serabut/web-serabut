@@ -6021,7 +6021,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260514-4',
+        APP_VERSION:      '20260514-5',
 
         // PWA Install
         pwaPopup:            false,
@@ -6495,25 +6495,9 @@ function serabutStore() {
 
         // ── Init ──────────────────────────────────────
         async init() {
-            // ── PRIORITAS PERTAMA: deteksi ?quo= sebelum apapun ──
-            // Harus sync agar quoPublicVisible = true sebelum Alpine render selesai
-            const _pendingQuo = (() => {
-                try {
-                    const p = new URLSearchParams(window.location.search).get('quo')
-                              || sessionStorage.getItem('srb_pending_quo');
-                    if (p) {
-                        sessionStorage.setItem('srb_pending_quo', p);
-                        window.history.replaceState({}, '', window.location.pathname);
-                        return p;
-                    }
-                } catch {}
-                return null;
-            })();
-            if (_pendingQuo) {
-                // Tampilkan overlay SEGERA (loading state) sebelum fetch
-                this.quoPublicVisible = true;
-                this.quoPublicHtml = '<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#9ca3af;font-size:14px">Memuat dokumen penawaran...</body></html>';
-            }
+            // ── PRIORITAS PERTAMA: ?quo= → redirect ke quo.html (standalone page) ──
+            const _quo = new URLSearchParams(window.location.search).get('quo');
+            if (_quo) { window.location.replace('/quo.html?id=' + encodeURIComponent(_quo)); return; }
 
             // Live countdown — update `now` tiap 30 detik
             setInterval(() => { this.now = Date.now(); }, 30000);
@@ -9436,7 +9420,7 @@ function serabutStore() {
                 const fp = v => 'Rp ' + Number(v||0).toLocaleString('id-ID');
                 const itemLines = f.items.map((it,i) => `${i+1}. ${it.deskripsi} x${it.qty||1} — ${fp(Number(it.harga||0)*Number(it.qty||1))}`).join('\n');
                 const bankInfo = f.bankName ? `${f.bankName}: ${f.bankAccount} (a.n ${f.bankHolder})` : '';
-                const quoLink = `https://serabut.id/?quo=${this._quoId}`;
+                const quoLink = `https://serabut.id/quo.html?id=${this._quoId}`;
                 const data = await this.gasPost({
                     action: 'sendQuotationWA',
                     adminEmail: this.currentUser?.email,
@@ -9468,7 +9452,7 @@ function serabutStore() {
                     total: this.quoTotal, itemCount: f.items.length, status: 'sent_email',
                     formDataJson: JSON.stringify(this.quoForm),
                 }).catch(() => {});
-                const quoLink = `https://serabut.id/?quo=${this._quoId}`;
+                const quoLink = `https://serabut.id/quo.html?id=${this._quoId}`;
                 const data = await this.gasPost({
                     action:     'sendQuotationEmail',
                     adminEmail: this.currentUser?.email,

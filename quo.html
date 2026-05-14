@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=820,initial-scale=1.0">
+<title>Dokumen Penawaran — Serabut Store</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif;background:#eef0f3;color:#111827;font-size:13px}
+  #loading{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:12px;color:#6b7280;font-size:14px}
+  #loading .spinner{width:36px;height:36px;border:3px solid #e5e7eb;border-top-color:#dc2626;border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #error{display:none;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;color:#374151;text-align:center;padding:24px}
+  #error h2{font-size:18px;font-weight:700;color:#111827}
+  #error p{font-size:14px;color:#6b7280}
+  #error a{display:inline-block;margin-top:4px;padding:10px 24px;background:#dc2626;color:#fff;border-radius:8px;text-decoration:none;font-weight:600;font-size:13px}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <span>Memuat dokumen penawaran...</span>
+</div>
+
+<div id="error">
+  <h2>Dokumen Tidak Ditemukan</h2>
+  <p id="error-msg">Link penawaran ini tidak valid atau sudah kadaluarsa.</p>
+  <a href="https://serabut.id">Kembali ke Serabut Store</a>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec';
+
+function fp(n) {
+  return 'Rp ' + Number(n||0).toLocaleString('id-ID');
+}
+
+function showError(msg) {
+  document.getElementById('loading').style.display = 'none';
+  const el = document.getElementById('error');
+  el.style.display = 'flex';
+  if (msg) document.getElementById('error-msg').textContent = msg;
+}
+
+function buildDoc(quoId, form) {
+  const accentColor = '#2563eb';
+  const nowDate = (() => {
+    const d = new Date();
+    const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return d.getDate() + ' ' + m[d.getMonth()] + ' ' + d.getFullYear();
+  })();
+
+  const items = (form.items||[]).map((it,i) => {
+    const qty = Number(it.qty||1);
+    const unit = Number(it.harga||0) / qty;
+    const rowTotal = Number(it.harga||0) * qty;
+    return `<tr>
+      <td style="padding:14px 16px 14px 24px;border-bottom:1px solid #f3f4f6;font-weight:500;color:#111827;vertical-align:top">${i+1}. ${it.deskripsi||''}</td>
+      <td style="padding:14px 16px;border-bottom:1px solid #f3f4f6;text-align:center;color:#6b7280;vertical-align:top">${qty}</td>
+      <td style="padding:14px 16px;border-bottom:1px solid #f3f4f6;text-align:right;color:#6b7280;vertical-align:top">${fp(unit)}</td>
+      <td style="padding:14px 24px 14px 16px;border-bottom:1px solid #f3f4f6;text-align:right;font-weight:700;color:#111827;vertical-align:top">${fp(rowTotal)}</td>
+    </tr>`;
+  }).join('');
+
+  const total = (form.items||[]).reduce((s,it)=>s+Number(it.harga||0)*Number(it.qty||1),0);
+  const isTransfer = /transfer|bank/i.test(form.payMethod||'');
+  const bankInfo = isTransfer && form.bankName
+    ? `<div style="font-size:11.5px;color:#6b7280;margin-top:3px;line-height:1.6">${form.bankName} · ${form.bankAccount||''}<br><span style="color:#9ca3af">a.n</span> ${form.bankHolder||''}</div>`
+    : '';
+  const waFormatted = form.noHP ? `+62 ${form.noHP}` : '';
+
+  const stamp = `<svg width="160" height="72" viewBox="0 0 160 72" xmlns="http://www.w3.org/2000/svg" style="transform:rotate(-20deg);display:block;overflow:visible">
+    <rect x="4" y="4" width="152" height="64" rx="9" fill="none" stroke="${accentColor}" stroke-width="4"/>
+    <rect x="10" y="10" width="140" height="52" rx="6" fill="none" stroke="${accentColor}" stroke-width="1.5" stroke-dasharray="4 2.5"/>
+    <text x="80" y="33" text-anchor="middle" font-family="Arial" font-size="20" font-weight="900" letter-spacing="5" fill="${accentColor}">QUOTE</text>
+    <text x="80" y="48" text-anchor="middle" font-family="Arial" font-size="9" font-weight="700" letter-spacing="3.5" fill="${accentColor}">APPROVED</text>
+  </svg>`;
+
+  return `<!DOCTYPE html><html lang="id"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=820,initial-scale=1.0">
+<title>QUOTATION ${quoId}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:#eef0f3;color:#111827;-webkit-print-color-adjust:exact;print-color-adjust:exact;font-size:13px}
+  .toolbar{background:#fff;border-bottom:1px solid #e5e7eb;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+  .toolbar-left{display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280}
+  .toolbar-chip{background:#f3f4f6;border:1px solid #e5e7eb;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;color:#374151;font-family:monospace}
+  .toolbar-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#dbeafe;color:#1e40af}
+  .btn-print{background:${accentColor};color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .page{max-width:794px;margin:24px auto 48px;background:#fff;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.06),0 12px 32px rgba(0,0,0,.07);overflow:hidden;display:flex;min-height:900px}
+  .left-bar{width:8px;flex-shrink:0;background:${accentColor};-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .grow{flex:1}
+  .doc-header{padding:32px 24px 28px 32px;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid #f3f4f6}
+  .brand{display:flex;align-items:flex-start;gap:14px}
+  .brand-logo{width:54px;height:54px;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
+  .brand-name{font-size:17px;font-weight:800;color:#111827;letter-spacing:-.3px;margin-top:2px}
+  .brand-sub{font-size:11px;color:#9ca3af;margin-top:3px}
+  .brand-contact{font-size:10.5px;color:#6b7280;margin-top:10px;line-height:1.75}
+  .doc-meta{text-align:right}
+  .doc-type{font-size:38px;font-weight:900;color:${accentColor};line-height:1}
+  .doc-num{font-size:12px;color:#6b7280;margin-top:10px;line-height:2}
+  .doc-num strong{color:#111827;font-family:monospace;font-weight:700;font-size:13.5px}
+  .info-band{background:#f9fafb;border-top:1px solid #f3f4f6;border-bottom:3px solid ${accentColor};padding:20px 24px 20px 32px;display:grid;grid-template-columns:1fr 1fr}
+  .ib-cell-right{padding-left:24px}
+  .ib-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#b0b7c3;margin-bottom:6px}
+  .ib-name{font-size:13.5px;font-weight:800;color:#111827;letter-spacing:-.2px}
+  .ib-detail{font-size:11px;color:#6b7280;line-height:1.7;margin-top:3px}
+  .tbl-section{padding:28px 0 0}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead tr{background:${accentColor}14}
+  thead th{padding:11px 16px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:${accentColor};border-bottom:2px solid ${accentColor}30}
+  thead th:first-child{text-align:left;padding-left:32px}
+  thead th:nth-child(2){text-align:center;width:56px}
+  thead th:nth-child(3){text-align:right;width:120px}
+  thead th:nth-child(4){text-align:right;width:120px;padding-right:24px}
+  .totals-wrap{display:flex;justify-content:flex-end;padding:8px 24px 0 0}
+  .totals-inner{width:280px}
+  .tot-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13px;border-bottom:1px solid #f3f4f6;color:#6b7280}
+  .tot-row .tv{font-weight:600;color:#374151}
+  .tot-grand{display:flex;justify-content:space-between;align-items:center;background:${accentColor};border-radius:8px;padding:13px 18px;margin-top:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tot-grand .tl{font-weight:700;color:#fff;font-size:14px}
+  .tot-grand .tv{font-weight:900;color:#fff;font-size:17px}
+  .bottom-section{display:flex;align-items:stretch;margin:0 24px 0 32px;padding:18px 20px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:10px}
+  .stamp-area{flex-shrink:0;width:190px;display:flex;align-items:center;justify-content:center}
+  .pay-area,.warranty-area{flex:1;min-width:0;border-left:1px solid #e5e7eb;padding-left:20px}
+  .pf-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#9ca3af;margin-bottom:6px}
+  .pf-val{font-size:14px;font-weight:700;color:#111827}
+  .copyright{text-align:center;padding:12px 24px 20px;font-size:10.5px;color:#d1d5db}
+  @media print{
+    @page{size:A4 portrait;margin:6mm 8mm}
+    html{zoom:0.82}
+    html,body{height:100%;overflow:hidden;background:#fff}
+    .toolbar{display:none!important}
+    .page{margin:0!important;border-radius:0;box-shadow:none;width:100%!important;max-width:100%!important;height:calc(297mm - 12mm)!important;min-height:0!important;overflow:hidden!important}
+    .left-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .tot-grand,.info-band{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .grow{max-height:160px!important}
+  }
+</style></head><body>
+<div class="toolbar">
+  <div class="toolbar-left">
+    <span class="toolbar-chip">${quoId}</span>
+    <span>${nowDate}</span>
+    <span class="toolbar-badge">Quotation</span>
+  </div>
+  <button class="btn-print" onclick="window.print()">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+    Print / Save PDF
+  </button>
+</div>
+<div class="page">
+  <div class="left-bar"></div>
+  <div class="main">
+    <div class="doc-header">
+      <div class="brand">
+        <div class="brand-logo"><img src="https://serabut.id/logo.png" alt="Serabut" style="width:52px;height:52px;object-fit:contain"/></div>
+        <div>
+          <div class="brand-name">Serabut Store</div>
+          <div class="brand-sub">PT Serabut Solusi Digital · serabut.id</div>
+          <div class="brand-contact">(+62) 888-1500-555<br>halo@serabut.id</div>
+        </div>
+      </div>
+      <div class="doc-meta">
+        <div class="doc-type">QUOTATION</div>
+        <div class="doc-num">No: <strong>${quoId}</strong><br>Date: ${nowDate}<br>Due: <strong>Upon approval</strong></div>
+      </div>
+    </div>
+    <div class="info-band">
+      <div class="ib-cell">
+        <div class="ib-lbl">From</div>
+        <div class="ib-name">PT Serabut Solusi Digital</div>
+        <div class="ib-detail">Jl. Mampang Prpt. Raya, Duren Tiga<br>Pancoran, South Jakarta 12790</div>
+      </div>
+      <div class="ib-cell ib-cell-right">
+        <div class="ib-lbl">Bill To</div>
+        <div class="ib-name">${form.nama||'–'}</div>
+        <div class="ib-detail">${[form.email, waFormatted, form.alamat].filter(Boolean).join('<br>')}</div>
+      </div>
+    </div>
+    <div class="tbl-section">
+      <table>
+        <thead><tr><th>Product / Service</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr></thead>
+        <tbody>${items}</tbody>
+      </table>
+    </div>
+    <div class="totals-wrap">
+      <div class="totals-inner">
+        <div class="tot-row"><span>Subtotal</span><span class="tv">${fp(total)}</span></div>
+        <div class="tot-grand"><span class="tl">Total (IDR)</span><span class="tv">${fp(total)}</span></div>
+      </div>
+    </div>
+    <div class="grow"></div>
+    <div class="bottom-section">
+      <div class="stamp-area">${stamp}</div>
+      <div class="pay-area">
+        <div class="pf-lbl">Payment Method</div>
+        <div class="pf-val">${form.payMethod||'Transfer Bank'}</div>
+        ${bankInfo}
+        ${form.note?`<div style="margin-top:10px;padding-top:10px;border-top:1px dashed #e5e7eb"><div class="pf-lbl">Notes</div><div style="font-size:12px;color:#4b5563;white-space:pre-wrap;margin-top:3px">${form.note}</div></div>`:''}
+      </div>
+      <div class="warranty-area">
+        <div class="pf-lbl">Warranty &amp; Guarantee</div>
+        <div style="font-size:12px;font-weight:700;color:#111827;margin-bottom:6px">Full warranty during active plan</div>
+        <div style="font-size:10.5px;color:#6b7280;line-height:1.8">
+          ✓ Replaced at no charge if product goes inactive<br>
+          ✓ WhatsApp support throughout service period<br>
+          ✓ Covers full subscription duration
+        </div>
+      </div>
+    </div>
+    <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital · serabut.id · Issued digitally</div>
+  </div>
+</div>
+</body></html>`;
+}
+
+async function main() {
+  const quoId = new URLSearchParams(window.location.search).get('id');
+  if (!quoId) { showError('Parameter ID tidak ditemukan di URL.'); return; }
+
+  document.title = 'Memuat ' + quoId + ' — Serabut Store';
+
+  try {
+    const res  = await fetch(`${GAS_URL}?action=getPublicQuo&quoId=${encodeURIComponent(quoId)}`);
+    const json = await res.json();
+    if (!json.success || !json.formDataJson) {
+      showError(json.error || 'Quotation tidak ditemukan. Pastikan link yang digunakan benar.');
+      return;
+    }
+    const form = JSON.parse(json.formDataJson);
+    document.open();
+    document.write(buildDoc(quoId, form));
+    document.close();
+  } catch(e) {
+    showError('Gagal terhubung ke server. Periksa koneksi internet Anda.');
+    console.error(e);
+  }
+}
+
+main();
+</script>
+</body>
+</html>
