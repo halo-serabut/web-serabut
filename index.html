@@ -7562,10 +7562,19 @@ function serabutStore() {
             if (!tanggal || !masaAktif || masaAktif === '-' || masaAktif === '') return null;
             const lower = masaAktif.toLowerCase();
             if (lower.includes('lifetime') || lower.includes('seumur')) return null;
-            // Parse tanggal "dd/MM/yyyy HH:mm"
-            const parts = tanggal.split(' ')[0].split('/');
-            if (parts.length < 3) return null;
-            const base = new Date(parts[2], parts[1] - 1, parts[0]);
+            // Parse tanggal — handle dd/MM/yyyy dan yyyy-MM-dd
+            const datePart = String(tanggal).split(' ')[0];
+            let base;
+            if (datePart.indexOf('-') >= 4) {
+                // ISO: yyyy-MM-dd
+                const [y, mo, d] = datePart.split('-');
+                base = new Date(Number(y), Number(mo) - 1, Number(d));
+            } else {
+                // Legacy: dd/MM/yyyy
+                const parts = datePart.split('/');
+                if (parts.length < 3) return null;
+                base = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+            }
             if (isNaN(base)) return null;
             // Parse masa aktif
             const num = parseInt(masaAktif) || 1;
