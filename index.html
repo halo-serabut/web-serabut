@@ -3395,8 +3395,31 @@
                                         <template x-if="g.status==='Pending' && orderMsLeft({tanggal:g.tanggal, status:g.status}) <= 0">
                                             <span class="text-[10px] font-semibold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Waktu habis</span>
                                         </template>
-                                        <template x-if="g.items[0]?.paymentMethod">
-                                            <span class="text-[10px] font-semibold bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full" x-text="g.items[0].paymentMethod"></span>
+                                        <!-- Payment method — klik untuk edit -->
+                                        <template x-if="adminPayMethodEdit!==g.orderId">
+                                            <button @click.stop="adminPayMethodEdit=g.orderId; adminPayMethodVal=g.items[0]?.paymentMethod||''"
+                                                    class="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all"
+                                                    :class="g.items[0]?.paymentMethod ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'"
+                                                    :title="'Klik untuk ubah metode bayar'">
+                                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                                <span x-text="g.items[0]?.paymentMethod || 'Metode Bayar'"></span>
+                                                <svg class="w-2 h-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                            </button>
+                                        </template>
+                                        <template x-if="adminPayMethodEdit===g.orderId">
+                                            <div class="flex items-center gap-1" @click.stop>
+                                                <select x-model="adminPayMethodVal"
+                                                        class="text-[11px] border border-brand-300 rounded-lg px-2 py-1 focus:outline-none bg-white text-gray-700">
+                                                    <option value="">-- Pilih --</option>
+                                                    <template x-for="pm in (adminPaymentList.length ? adminPaymentList.map(p=>p.name) : ['Transfer Bank','QRIS','Cash','iPaymu','COD','Xendit','Lainnya'])" :key="pm">
+                                                        <option :value="pm" x-text="pm"></option>
+                                                    </template>
+                                                </select>
+                                                <button @click="adminSavePayMethod(g)"
+                                                        class="text-[11px] font-bold px-2 py-1 bg-brand-500 text-white rounded-lg hover:bg-brand-600">Simpan</button>
+                                                <button @click="adminPayMethodEdit=null"
+                                                        class="text-[11px] font-bold px-2 py-1 bg-gray-100 text-gray-600 rounded-lg">✕</button>
+                                            </div>
                                         </template>
                                         <template x-if="g.items[0]?.paymentStatus">
                                             <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
@@ -6270,6 +6293,8 @@ function serabutStore() {
         adminOrderFilter:   'Semua',
         adminOrdersPage:    1,
         adminStatusConfirm: null, // {g, newStatus} — confirm payment method before Selesai
+        adminPayMethodEdit: null,  // orderId yang sedang diedit metode bayarnya
+        adminPayMethodVal:  '',
         adminOrdersPerPage: 10,
         adminEditProduct: null,
         adminAddMode:    false,
@@ -9543,6 +9568,21 @@ function serabutStore() {
             group.status = newStatus;
             group.items.forEach(i => { i.status = newStatus; if(payMethod) i.paymentMethod = payMethod; });
             this._adminShowMsg(`${group.orderId} (${group.items.length} item) → ${newStatus}${payMethod?' via '+payMethod:''} ✓`);
+        },
+        async adminSavePayMethod(group) {
+            const pm = this.adminPayMethodVal.trim();
+            if (!pm) { this._adminShowMsg('Pilih metode pembayaran dulu'); return; }
+            try {
+                await Promise.all(group.items.map(item =>
+                    this.gasPost({ action:'updateOrderStatus', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:item.rowIndex, status:item.status, paymentMethod:pm })
+                ));
+                group.items.forEach(i => { i.paymentMethod = pm; });
+                this.adminPayMethodEdit = null;
+                this._adminShowMsg(`${group.orderId} metode bayar → ${pm} ✓`);
+                // Update juga di buyer orders jika ada di memory
+                const buyerOrder = this.orders.find(o => o.orderId === group.orderId);
+                if (buyerOrder) { buyerOrder.paymentMethod = pm; buyerOrder.items?.forEach(i => { i.paymentMethod = pm; }); }
+            } catch { this._adminShowMsg('Gagal update metode bayar'); }
         },
 
         // ── getCategoryIconSVG (icon preset) ──────────

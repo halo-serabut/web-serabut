@@ -45,7 +45,7 @@ function doGet(e) {
   const action = e.parameter.action;
 
   // [SEC] GET hanya untuk endpoint publik read-only
-  const PUBLIC_ACTIONS = ['getCatalog', 'getSettings', 'getGuides', 'checkStatus', 'smartSearch', 'getReviews'];
+  const PUBLIC_ACTIONS = ['getCatalog', 'getSettings', 'getGuides', 'checkStatus', 'smartSearch', 'getReviews', 'getPublicQuo'];
   if (!PUBLIC_ACTIONS.includes(action)) {
     return _jsonOut({ success: false, error: 'Gunakan POST untuk aksi ini' });
   }
@@ -58,8 +58,9 @@ function doGet(e) {
       case 'smartSearch': result = smartSearch(e.parameter.query); break;
       case 'getSettings': result = getSettings(); break;
       case 'getGuides':   result = getGuides(); break;
-      case 'getReviews':  result = getReviews(e.parameter.produk); break;
-      default:            result = { success: false, error: 'Unknown action' };
+      case 'getReviews':    result = getReviews(e.parameter.produk); break;
+      case 'getPublicQuo':  result = getPublicQuo(e.parameter); break;
+      default:              result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
     Logger.log('doGet ERROR [' + action + ']: ' + err.message);
@@ -137,6 +138,8 @@ function doPost(e) {
       case 'likeReview':                result = likeReview(params); break;
       case 'sendQuotationEmail':        result = sendQuotationEmail(params); break;
       case 'sendQuotationWA':          result = sendQuotationWA(params); break;
+      case 'saveQuotation':            result = saveQuotation(params); break;
+      case 'getQuotations':            result = getQuotations(params); break;
       case 'sendReviewReminder':        result = sendReviewReminder(params); break;
       case 'editReview':                result = editReview(params); break;
       case 'toggleReview':              result = toggleReview(params); break;
@@ -698,16 +701,22 @@ function getAllOrders({ adminEmail, adminToken }) {
 // ────────────────────────────────────────────────────────
 //  UPDATE ORDER STATUS (admin)
 // ────────────────────────────────────────────────────────
-function updateOrderStatus({ adminEmail, adminToken, rowIndex, status }) {
+function updateOrderStatus({ adminEmail, adminToken, rowIndex, status, paymentMethod }) {
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
-  if (!rowIndex || !status) return { success: false, error: 'Data tidak lengkap' };
+  if (!rowIndex || (!status && !paymentMethod)) return { success: false, error: 'Data tidak lengkap' };
 
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
   if (!sheet) return { success: false, error: 'Tab Orders tidak ditemukan' };
 
   const ri = Number(rowIndex);
-  sheet.getRange(ri, 10).setValue(status);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+  if (status) sheet.getRange(ri, 10).setValue(status);
+  if (paymentMethod) {
+    const pmIdx = headers.findIndex(h => /payment.?method/i.test(String(h)));
+    if (pmIdx >= 0) sheet.getRange(ri, pmIdx + 1).setValue(paymentMethod);
+  }
 
   // Kirim notif ke buyer jika status jadi Aktif atau Selesai
   if (status === 'Aktif' || status === 'Selesai') {
@@ -2617,9 +2626,9 @@ function sendBuyerOrderConfirm(waNumber, email, nama, orderId, items, total) {
   if (email) {
     try {
       GmailApp.sendEmail(email,
-        `✅ Pesanan #${orderId} Diterima — Serabut Store`,
+        `Pesanan #${orderId} Diterima — Serabut Store`,
         `Halo ${nama},\n\nTerima kasih sudah order! Order ID kamu: ${orderId}\nTotal: Rp ${Number(total).toLocaleString('id-ID')}\n\nTim kami akan segera menghubungi kamu.\n\n— Serabut Store`,
-        { name: STORE_NAME, htmlBody: buildOrderConfirmEmailHTML(nama, orderId, items, total), replyTo: 'halo@serabut.id' }
+        { name: 'No Reply - Serabut Store', htmlBody: buildOrderConfirmEmailHTML(nama, orderId, items, total) }
       );
     } catch(e) { Logger.log('Email buyer confirm error: ' + e.message); }
   }
@@ -2627,9 +2636,9 @@ function sendBuyerOrderConfirm(waNumber, email, nama, orderId, items, total) {
 
 // Kirim notif perubahan status ke buyer (Aktif / Selesai)
 function sendBuyerStatusNotif(waNumber, email, nama, orderId, produk, varian, masaAktif, harga, emailAktif, status) {
-  const statusLabel = status === 'Aktif' ? '✅ Aktif' : '🎉 Selesai';
+  const statusLabel = status === 'Aktif' ? 'Aktif' : 'Selesai';
   const produkLine  = `${produk}${varian && varian!=='-' ? ' - '+varian : ''}${masaAktif && masaAktif!=='-' ? ' ('+masaAktif+')' : ''}`;
-  const waMsg = `Halo *${nama}*! ${status === 'Aktif' ? '🎉' : '✅'}\n\nPesanan kamu sudah diproses!\n\n*Order ID: ${orderId}*\n*Produk: ${produkLine}*\nStatus: *${statusLabel}*\n${emailAktif && emailAktif!=='-' ? '\nEmail Aktif: '+emailAktif : ''}\n\nCek detail di profil: https://serabut.id\n\nAda pertanyaan? Chat kami di +62 888 1500 555\n\n— Tim Serabut Store`;
+  const waMsg = `Halo *${nama}*!\n\nPesanan kamu sudah diproses!\n\n*Order ID: ${orderId}*\n*Produk: ${produkLine}*\nStatus: *${statusLabel}*\n${emailAktif && emailAktif!=='-' ? '\nEmail Aktif: '+emailAktif : ''}\n\nCek detail di profil: https://serabut.id\n\nAda pertanyaan? Chat kami di +62 888 1500 555\n\n— Tim Serabut Store`;
 
   if (FONNTE_TOKEN && waNumber) {
     try {
@@ -2645,76 +2654,83 @@ function sendBuyerStatusNotif(waNumber, email, nama, orderId, produk, varian, ma
   if (email) {
     try {
       GmailApp.sendEmail(email,
-        `${status === 'Aktif' ? '✅' : '🎉'} Pesanan #${orderId} ${status} — Serabut Store`,
+        `Pesanan #${orderId} ${status} — Serabut Store`,
         `Halo ${nama},\n\nPesanan kamu sudah ${status}!\nOrder ID: ${orderId}\nProduk: ${produkLine}\n${emailAktif && emailAktif!=='-' ? 'Email Aktif: '+emailAktif+'\n' : ''}\nCek detail di: https://serabut.id\n\n— Serabut Store`,
-        { name: STORE_NAME, htmlBody: buildStatusEmailHTML(nama, orderId, produkLine, harga, emailAktif, status), replyTo: 'halo@serabut.id' }
+        { name: 'No Reply - Serabut Store', htmlBody: buildStatusEmailHTML(nama, orderId, produkLine, harga, emailAktif, status) }
       );
     } catch(e) { Logger.log('Email status notif error: ' + e.message); }
   }
 }
 
+// ── Shared email shell ──
+function _emailShell(heroLabel, heroTitle, bodyHtml) {
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
+  <tr><td style="background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">
+    <table width="100%" cellpadding="0" cellspacing="0">
+      <tr><td style="background:#DC2626;padding:24px 32px 20px">
+        <p style="margin:0 0 4px;font-size:10px;font-weight:700;color:#fca5a5;letter-spacing:1.5px;text-transform:uppercase">${heroLabel}</p>
+        <p style="margin:0;font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.3px">${heroTitle}</p>
+      </td></tr>
+      <tr><td style="padding:28px 32px 24px">${bodyHtml}</td></tr>
+      <tr><td style="border-top:1px solid #f1f5f9"></td></tr>
+      <tr><td style="background:#f8fafc;padding:16px 32px;border-radius:0 0 12px 12px">
+        <p style="margin:0;font-size:12px;color:#64748b;line-height:1.7">Salam hangat,<br><strong style="color:#111827">Tim Serabut Store</strong><br><a href="https://serabut.id" style="color:#DC2626;text-decoration:none">serabut.id</a></p>
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding:16px 0 0;text-align:center">
+    <p style="margin:0;font-size:11px;color:#cbd5e1">Email ini dikirim otomatis oleh sistem Serabut Store &middot; Jangan balas email ini</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`;
+}
+
 function buildOrderConfirmEmailHTML(nama, orderId, items, total) {
   const rows = items.map((it, i) => {
     const produkStr = `${it.produk}${it.varian && it.varian!=='-' ? ' – '+it.varian : ''}`;
-    const dur       = it.masaAktif && it.masaAktif!=='-' ? ` <span style="color:#6b7280;font-size:12px;">(${it.masaAktif})</span>` : '';
-    return `<tr><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#374151;">${i+1}. ${produkStr}${dur}</td><td style="padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:14px;color:#111827;font-weight:700;text-align:right;">Rp ${Number(it.harga).toLocaleString('id-ID')}</td></tr>`;
+    const dur       = it.masaAktif && it.masaAktif!=='-' ? ` <span style="color:#6b7280;font-size:12px">(${it.masaAktif})</span>` : '';
+    return `<tr><td style="padding:9px 0;border-bottom:1px solid #f3f4f6;font-size:13px;color:#374151">${i+1}. ${produkStr}${dur}</td><td style="padding:9px 0;border-bottom:1px solid #f3f4f6;font-size:13px;color:#111827;font-weight:700;text-align:right">Rp ${Number(it.harga).toLocaleString('id-ID')}</td></tr>`;
   }).join('');
-  return `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Konfirmasi Pesanan</title></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 16px;"><tr><td align="center">
-<table width="100%" style="max-width:460px;" cellpadding="0" cellspacing="0">
-<tr><td style="background:linear-gradient(135deg,#dc2626,#b91c1c);padding:28px 40px;text-align:center;border-radius:16px 16px 0 0;">
-<div style="font-size:20px;font-weight:900;color:#fff;letter-spacing:3px;">SERABUT STORE</div></td></tr>
-<tr><td style="background:#fff;padding:32px 36px;border-radius:0 0 16px 16px;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
-<p style="margin:0 0 4px;font-size:20px;font-weight:700;color:#111827;">Halo, ${nama}!</p>
-<p style="margin:0 0 24px;font-size:14px;color:#6b7280;">Terima kasih sudah order di Serabut Store. Berikut ringkasan pesanan kamu.</p>
-<div style="background:#f8fafc;border:1.5px solid #e5e7eb;border-radius:12px;padding:16px 20px;margin-bottom:20px;">
-<div style="font-size:11px;font-weight:700;color:#9ca3af;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">ORDER ID</div>
-<div style="font-size:20px;font-weight:900;color:#dc2626;">${orderId}</div></div>
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">${rows}
-<tr><td style="padding:12px 0 4px;font-size:15px;font-weight:700;color:#111827;">Total</td><td style="padding:12px 0 4px;font-size:16px;font-weight:900;color:#dc2626;text-align:right;">Rp ${Number(total).toLocaleString('id-ID')}</td></tr>
-</table>
-<div style="background:#fef3c7;border-radius:10px;padding:12px 16px;margin-bottom:24px;">
-<p style="margin:0;font-size:13px;color:#92400e;line-height:1.5;">⏳ Tim kami akan segera menghubungi kamu untuk konfirmasi &amp; proses pesanan. Biasanya dalam <strong>1–2 jam</strong> kerja.</p></div>
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;"><tr><td align="center">
-<a href="https://serabut.id" style="display:inline-block;background:#dc2626;color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:10px;">Cek Status Pesanan</a>
-</td></tr></table>
-<div style="height:1px;background:#f3f4f6;margin:0 0 16px;"></div>
-<p style="margin:0;font-size:12px;color:#9ca3af;">Ada pertanyaan? Hubungi CS kami di <a href="https://wa.me/628881500555" style="color:#dc2626;">+62 888 1500 555</a></p>
-</td></tr><tr><td style="padding:20px 0;text-align:center;"><p style="margin:0;font-size:11px;color:#9ca3af;">&copy; 2019–2026 PT Serabut Solusi Digital &middot; <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a></p></td></tr>
-</table></td></tr></table></body></html>`;
+  const body = `<p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#111827">Halo, <span style="color:#DC2626">${nama}</span></p>
+    <p style="margin:0 0 20px;font-size:14px;color:#64748b;line-height:1.6">Terima kasih sudah order di Serabut Store. Berikut ringkasan pesanan kamu.</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px">${rows}
+      <tr><td style="padding:12px 0 0;font-size:14px;font-weight:700;color:#111827">Total</td><td style="padding:12px 0 0;font-size:15px;font-weight:800;color:#DC2626;text-align:right">Rp ${Number(total).toLocaleString('id-ID')}</td></tr>
+    </table>
+    <p style="margin:0 0 20px;font-size:13px;color:#92400e;background:#fef3c7;border-radius:8px;padding:12px 14px;line-height:1.5">Tim kami akan segera memproses pesanan kamu. Estimasi: <strong>1&ndash;2 jam</strong> kerja.</p>
+    <table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="border-radius:8px;background:#DC2626">
+      <a href="https://serabut.id" target="_blank" style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">Cek Status Pesanan &rarr;</a>
+    </td></tr></table>
+    <p style="margin:0;font-size:11px;color:#94a3b8">Ada pertanyaan? Hubungi CS kami di <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (08.00&ndash;22.00 WIB)</p>`;
+  return _emailShell('Konfirmasi Pesanan', orderId, body);
 }
 
 function buildStatusEmailHTML(nama, orderId, produkLine, harga, emailAktif, status) {
-  const icon     = status === 'Aktif' ? '✅' : '🎉';
-  const headline = status === 'Aktif' ? 'Pesanan Aktif!' : 'Pesanan Selesai!';
+  const headline = status === 'Aktif' ? 'Pesanan Aktif' : 'Pesanan Selesai';
   const emailRow = emailAktif && emailAktif !== '-'
-    ? `<tr style="background:#f0fdf4;"><td style="padding:8px 12px;font-size:13px;color:#374151;font-weight:600;">Email Aktif</td><td style="padding:8px 12px;font-size:13px;color:#059669;font-weight:700;">${emailAktif}</td></tr>` : '';
-  return `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><title>Update Pesanan</title></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 16px;"><tr><td align="center">
-<table width="100%" style="max-width:460px;" cellpadding="0" cellspacing="0">
-<tr><td style="background:linear-gradient(135deg,#dc2626,#b91c1c);padding:28px 40px;text-align:center;border-radius:16px 16px 0 0;">
-<div style="font-size:20px;font-weight:900;color:#fff;letter-spacing:3px;">SERABUT STORE</div></td></tr>
-<tr><td style="background:#fff;padding:32px 36px;border-radius:0 0 16px 16px;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
-<div style="text-align:center;font-size:48px;margin-bottom:12px;">${icon}</div>
-<p style="margin:0 0 4px;font-size:22px;font-weight:700;color:#111827;text-align:center;">${headline}</p>
-<p style="margin:0 0 24px;font-size:14px;color:#6b7280;text-align:center;">Halo ${nama}, pesanan kamu sudah diproses!</p>
-<table width="100%" cellpadding="0" cellspacing="0" style="border:1.5px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:24px;">
-<tr style="background:#f8fafc;"><td style="padding:8px 12px;font-size:13px;color:#374151;font-weight:600;">Order ID</td><td style="padding:8px 12px;font-size:14px;color:#dc2626;font-weight:900;">${orderId}</td></tr>
-<tr><td style="padding:8px 12px;font-size:13px;color:#374151;font-weight:600;">Produk</td><td style="padding:8px 12px;font-size:13px;color:#374151;">${produkLine}</td></tr>
-<tr style="background:#f8fafc;"><td style="padding:8px 12px;font-size:13px;color:#374151;font-weight:600;">Harga</td><td style="padding:8px 12px;font-size:14px;color:#111827;font-weight:700;">Rp ${Number(harga).toLocaleString('id-ID')}</td></tr>
-<tr><td style="padding:8px 12px;font-size:13px;color:#374151;font-weight:600;">Status</td><td style="padding:8px 12px;font-size:14px;font-weight:700;color:${status==='Aktif'?'#059669':'#2563eb'};">${status}</td></tr>
-${emailRow}
-</table>
-<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px;"><tr><td align="center">
-<a href="https://serabut.id" style="display:inline-block;background:#dc2626;color:#fff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:10px;">Lihat Detail di Profil</a>
-</td></tr></table>
-<div style="height:1px;background:#f3f4f6;margin:0 0 16px;"></div>
-<p style="margin:0;font-size:12px;color:#9ca3af;">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#dc2626;">+62 888 1500 555</a></p>
-</td></tr><tr><td style="padding:20px 0;text-align:center;"><p style="margin:0;font-size:11px;color:#9ca3af;">&copy; 2019–2026 PT Serabut Solusi Digital &middot; <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a></p></td></tr>
-</table></td></tr></table></body></html>`;
+    ? `<tr style="background:#f0fdf4"><td style="padding:9px 14px;font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb">Email Aktif</td><td style="padding:9px 14px;font-size:13px;color:#059669;font-weight:700;border-bottom:1px solid #e5e7eb">${emailAktif}</td></tr>` : '';
+  const body = `<p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#111827">Halo, <span style="color:#DC2626">${nama}</span></p>
+    <p style="margin:0 0 20px;font-size:14px;color:#64748b;line-height:1.6">Pesanan kamu sudah diproses!</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:24px">
+      <tr style="background:#f8fafc"><td style="padding:9px 14px;font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb" width="35%">Order ID</td><td style="padding:9px 14px;font-size:14px;color:#DC2626;font-weight:800;border-bottom:1px solid #e5e7eb">${orderId}</td></tr>
+      <tr><td style="padding:9px 14px;font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb">Produk</td><td style="padding:9px 14px;font-size:13px;color:#374151;border-bottom:1px solid #e5e7eb">${produkLine}</td></tr>
+      <tr style="background:#f8fafc"><td style="padding:9px 14px;font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb">Harga</td><td style="padding:9px 14px;font-size:14px;color:#111827;font-weight:700;border-bottom:1px solid #e5e7eb">Rp ${Number(harga).toLocaleString('id-ID')}</td></tr>
+      <tr${emailAktif && emailAktif!=='-' ? '' : ''}><td style="padding:9px 14px;font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px${emailAktif && emailAktif!=='-' ? ';border-bottom:1px solid #e5e7eb' : ''}">Status</td><td style="padding:9px 14px;font-size:14px;font-weight:700;color:${status==='Aktif'?'#059669':'#2563eb'}${emailAktif && emailAktif!=='-' ? ';border-bottom:1px solid #e5e7eb' : ''}">${status}</td></tr>
+      ${emailRow}
+    </table>
+    <table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="border-radius:8px;background:#DC2626">
+      <a href="https://serabut.id" target="_blank" style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">Lihat Detail di Profil &rarr;</a>
+    </td></tr></table>
+    <p style="margin:0;font-size:11px;color:#94a3b8">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (08.00&ndash;22.00 WIB)</p>`;
+  return _emailShell('Update Status Pesanan', headline, body);
 }
+
 
 // ────────────────────────────────────────────────────────
 //  EMAIL
@@ -2724,31 +2740,20 @@ function sendOTPEmail(email, nama, otp) {
   const htmlBody = buildOTPEmailHTML(nama, otp);
   GmailApp.sendEmail(email, subject,
     `Kode OTP kamu: ${otp}\nBerlaku ${OTP_EXPIRY_MIN} menit.\nJangan bagikan kode ini kepada siapapun.`,
-    { name: STORE_NAME, htmlBody }
+    { name: 'No Reply - Serabut Store', htmlBody }
   );
 }
 
 function buildOTPEmailHTML(nama, otp) {
   const digits = String(otp).split('').map(d =>
-    `<td style="padding:0 5px;"><div style="width:46px;height:58px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;text-align:center;line-height:58px;font-size:28px;font-weight:800;color:#111827;font-family:'Courier New',Courier,monospace;">${d}</div></td>`
+    `<td style="padding:0 4px"><div style="width:44px;height:56px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;text-align:center;line-height:56px;font-size:26px;font-weight:800;color:#111827;font-family:'Courier New',Courier,monospace">${d}</div></td>`
   ).join('');
-  return `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Kode OTP Serabut Store</title></head>
-<body style="margin:0;padding:0;background:#f1f5f9;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:40px 16px;">
-<tr><td align="center"><table width="100%" style="max-width:460px;" cellpadding="0" cellspacing="0">
-<tr><td style="background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);padding:28px 40px;text-align:center;border-radius:16px 16px 0 0;">
-<div style="font-size:20px;font-weight:900;color:#ffffff;letter-spacing:3px;">SERABUT STORE</div></td></tr>
-<tr><td style="background:#ffffff;padding:36px 40px 28px;border-radius:0 0 16px 16px;box-shadow:0 8px 32px rgba(0,0,0,0.08);">
-<p style="margin:0 0 6px;font-size:22px;font-weight:700;color:#111827;">Halo, ${nama}</p>
-<p style="margin:0 0 28px;font-size:14px;color:#6b7280;line-height:1.65;">Masukkan kode berikut untuk menyelesaikan verifikasi akun kamu di Serabut Store.</p>
-<table cellpadding="0" cellspacing="0" style="margin:0 auto 14px;"><tr>${digits}</tr></table>
-<p style="text-align:center;margin:0 0 28px;font-size:12px;color:#9ca3af;">Berlaku <strong style="color:#111827;">${OTP_EXPIRY_MIN} menit</strong> &nbsp;&middot;&nbsp; Jangan bagikan ke siapapun</p>
-<div style="height:1px;background:#f3f4f6;margin:0 0 20px;"></div>
-<p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">Tidak mendaftar di Serabut Store? Abaikan email ini.</p>
-</td></tr>
-<tr><td style="padding:20px 0;text-align:center;">
-<p style="margin:0;font-size:11px;color:#9ca3af;">&copy; 2019&#8211;2026 PT Serabut Solusi Digital &nbsp;&middot;&nbsp; <a href="https://serabut.id" style="color:#dc2626;text-decoration:none;">serabut.id</a></p>
-</td></tr></table></td></tr></table></body></html>`;
+  const body = `<p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#111827">Halo, <span style="color:#DC2626">${nama}</span></p>
+    <p style="margin:0 0 20px;font-size:14px;color:#64748b;line-height:1.6">Masukkan kode berikut untuk menyelesaikan verifikasi akun kamu di Serabut Store.</p>
+    <table cellpadding="0" cellspacing="0" style="margin:0 0 12px"><tr>${digits}</tr></table>
+    <p style="margin:0 0 20px;font-size:12px;color:#94a3b8">Berlaku <strong style="color:#111827">${OTP_EXPIRY_MIN} menit</strong> &nbsp;&middot;&nbsp; Jangan bagikan ke siapapun</p>
+    <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6">Tidak mendaftar di Serabut Store? Abaikan email ini.</p>`;
+  return _emailShell('Verifikasi Akun', 'Kode OTP Kamu', body);
 }
 
 function sendWelcomeEmail(email, nama) {
@@ -2757,30 +2762,19 @@ function sendWelcomeEmail(email, nama) {
     const htmlBody = buildWelcomeEmailHTML(nama);
     GmailApp.sendEmail(email, subject,
       `Halo ${nama}! Akun kamu sudah aktif. Terima kasih sudah bergabung — yuk nikmati promo eksklusif di serabut.id`,
-      { name: STORE_NAME, htmlBody, replyTo: 'halo@serabut.id' }
+      { name: 'No Reply - Serabut Store', htmlBody }
     );
   } catch(e) { Logger.log('Welcome email error: ' + e.message); }
 }
 
 function buildWelcomeEmailHTML(nama) {
-  return `<!DOCTYPE html><html lang="id"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Konfirmasi Akun Serabut Store</title></head>
-<body style="margin:0;padding:0;background:#f3f4f6;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 16px;">
-<tr><td align="center"><table width="100%" style="max-width:460px;" cellpadding="0" cellspacing="0">
-<tr><td style="background:#b91c1c;padding:28px 40px;text-align:center;border-radius:16px 16px 0 0;">
-<div style="font-size:20px;font-weight:900;color:#ffffff;letter-spacing:3px;">SERABUT STORE</div></td></tr>
-<tr><td style="background:#ffffff;padding:36px 40px 32px;border-radius:0 0 16px 16px;">
-<p style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">Halo, ${nama}!</p>
-<p style="margin:0 0 24px;font-size:14px;color:#6b7280;line-height:1.7;">Akun kamu di <strong style="color:#111827;">Serabut Store</strong> telah berhasil diverifikasi dan siap digunakan.</p>
-<table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 28px;">
-<tr><td align="center"><a href="https://serabut.id" style="display:inline-block;background:#b91c1c;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:14px 44px;border-radius:10px;">Kunjungi serabut.id</a></td></tr>
-</table>
-<div style="height:1px;background:#f3f4f6;margin:0 0 20px;"></div>
-<p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">Pertanyaan? Hubungi CS kami di WhatsApp <a href="https://wa.me/${WA_STORE_NO}" style="color:#b91c1c;text-decoration:none;font-weight:600;">0888-1500-555</a> (08.00&#8211;22.00 WIB)</p>
-</td></tr>
-<tr><td style="padding:20px 0;text-align:center;">
-<p style="margin:0;font-size:11px;color:#9ca3af;">&copy; 2019&#8211;2026 PT Serabut Solusi Digital &nbsp;&middot;&nbsp; <a href="https://serabut.id" style="color:#b91c1c;text-decoration:none;">serabut.id</a></p>
-</td></tr></table></td></tr></table></body></html>`;
+  const body = `<p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#111827">Halo, <span style="color:#DC2626">${nama}</span></p>
+    <p style="margin:0 0 20px;font-size:14px;color:#64748b;line-height:1.6">Akun kamu di <strong style="color:#111827">Serabut Store</strong> telah berhasil diverifikasi dan siap digunakan.</p>
+    <table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="border-radius:8px;background:#DC2626">
+      <a href="https://serabut.id" target="_blank" style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">Kunjungi serabut.id &rarr;</a>
+    </td></tr></table>
+    <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6">Ada pertanyaan? Hubungi CS kami di <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (08.00&ndash;22.00 WIB)</p>`;
+  return _emailShell('Selamat Datang', 'Akun Kamu Sudah Aktif', body);
 }
 
 // ────────────────────────────────────────────────────────
@@ -3035,9 +3029,22 @@ function sendBuyerOrderConfirmed(nama, email, wa, orderId, produk, varian, masaA
   const waMsg = `Halo *${nama}*! 🎉\n\nPembayaran kamu sudah kami terima!\n\n*Detail Order:*\nOrder ID: ${orderId}\nProduk: ${produkStr}\nTotal: ${hargaStr}\nMetode: ${method}\nTanggal: ${tanggal}\n\nTim kami sedang memproses pesananmu. Estimasi aktivasi: *5–30 menit*.\n\nTerima kasih sudah berbelanja di Serabut Store! 🙏`;
   if (wa) _sendWA(wa, waMsg);
   if (email) {
-    const subject = `[Serabut Store] Pembayaran Diterima — ${orderId}`;
-    const body    = `<p>Halo <b>${nama}</b>,</p><p>Pembayaran kamu sudah kami terima ✅</p><p><b>Detail Order:</b><br>Order ID: ${orderId}<br>Produk: ${produkStr}<br>Total: ${hargaStr}<br>Metode: ${method}<br>Tanggal: ${tanggal}</p><p>Tim kami sedang memproses pesanan. Estimasi aktivasi: <b>5–30 menit</b>.</p><p>Terima kasih sudah berbelanja di <b>Serabut Store</b> 🙏</p>`;
-    try { GmailApp.sendEmail(email, subject, '', { htmlBody: body, name: STORE_NAME }); } catch(ex) { Logger.log('sendBuyerOrderConfirmed email error: ' + ex.message); }
+    const subject  = `[Serabut Store] Pembayaran Diterima — ${orderId}`;
+    const bodyHtml = `<p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#111827">Halo, <span style="color:#DC2626">${nama}</span></p>
+      <p style="margin:0 0 20px;font-size:14px;color:#64748b;line-height:1.6">Pembayaran kamu sudah kami terima. Berikut detail pesanan kamu.</p>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:20px">
+        <tr style="background:#f8fafc"><td style="padding:9px 14px;font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb" width="35%">Order ID</td><td style="padding:9px 14px;font-size:14px;color:#DC2626;font-weight:800;border-bottom:1px solid #e5e7eb">${orderId}</td></tr>
+        <tr><td style="padding:9px 14px;font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb">Produk</td><td style="padding:9px 14px;font-size:13px;color:#374151;border-bottom:1px solid #e5e7eb">${produkStr}</td></tr>
+        <tr style="background:#f8fafc"><td style="padding:9px 14px;font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb">Total</td><td style="padding:9px 14px;font-size:14px;color:#111827;font-weight:700;border-bottom:1px solid #e5e7eb">${hargaStr}</td></tr>
+        <tr><td style="padding:9px 14px;font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e5e7eb">Metode</td><td style="padding:9px 14px;font-size:13px;color:#374151;border-bottom:1px solid #e5e7eb">${method}</td></tr>
+        <tr style="background:#f8fafc"><td style="padding:9px 14px;font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Tanggal</td><td style="padding:9px 14px;font-size:13px;color:#374151">${tanggal}</td></tr>
+      </table>
+      <p style="margin:0 0 20px;font-size:13px;color:#92400e;background:#fef3c7;border-radius:8px;padding:12px 14px;line-height:1.5">Tim kami sedang memproses pesanan kamu. Estimasi aktivasi: <strong>5&ndash;30 menit</strong>.</p>
+      <table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="border-radius:8px;background:#DC2626">
+        <a href="https://serabut.id" target="_blank" style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">Cek Status Pesanan &rarr;</a>
+      </td></tr></table>
+      <p style="margin:0;font-size:11px;color:#94a3b8">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (08.00&ndash;22.00 WIB)</p>`;
+    try { GmailApp.sendEmail(email, subject, '', { htmlBody: _emailShell('Konfirmasi Pembayaran', 'Pembayaran Diterima', bodyHtml), name: 'No Reply - Serabut Store' }); } catch(ex) { Logger.log('sendBuyerOrderConfirmed email error: ' + ex.message); }
   }
 }
 
@@ -3969,21 +3976,14 @@ function sendReviewReminder({ sessionToken, email, orderId, produk, varian, buye
 
   // Email
   if (email) {
-    const subject = `⭐ Bagaimana ${produk} kamu? — Serabut Store`;
-    const html    = `<div style="font-family:sans-serif;max-width:480px;margin:auto">
-      <h2 style="color:#DC2626">Terima kasih sudah berbelanja! 🎉</h2>
-      <p>Halo <strong>${buyerNama || 'Kak'}</strong>,</p>
-      <p>Pesanan <strong>${produk}</strong> kamu sudah aktif. Bagaimana pengalamannya?</p>
-      <p style="margin:24px 0">
-        <a href="${prodUrl}" style="background:#DC2626;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold">
-          ⭐ Tulis Ulasan Sekarang
-        </a>
-      </p>
-      <p style="color:#6b7280;font-size:13px">Ulasan kamu membantu ribuan pembeli lain membuat keputusan yang tepat.</p>
-      <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-      <p style="color:#9ca3af;font-size:12px">— Tim Serabut Store | serabut.id</p>
-    </div>`;
-    try { GmailApp.sendEmail(email, subject, '', { htmlBody: html }); } catch(e) { Logger.log('Email reminder error: ' + e.message); }
+    const subject   = `Bagaimana ${produk} kamu? — Serabut Store`;
+    const bodyHtml  = `<p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#111827">Halo, <span style="color:#DC2626">${buyerNama || 'Kak'}</span></p>
+      <p style="margin:0 0 20px;font-size:14px;color:#64748b;line-height:1.6">Pesanan <strong>${produk}</strong> kamu sudah aktif. Bagaimana pengalamannya? Ulasan kamu membantu ribuan pembeli lain membuat keputusan yang tepat.</p>
+      <table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="border-radius:8px;background:#DC2626">
+        <a href="${prodUrl}" target="_blank" style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">Tulis Ulasan Sekarang &rarr;</a>
+      </td></tr></table>
+      <p style="margin:0;font-size:12px;color:#94a3b8">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (08.00&ndash;22.00 WIB)</p>`;
+    try { GmailApp.sendEmail(email, subject, '', { htmlBody: _emailShell('Review Produk', produk, bodyHtml), name: 'No Reply - Serabut Store' }); } catch(e) { Logger.log('Email reminder error: ' + e.message); }
   }
 
   // Mark reminder sent di Orders sheet
@@ -4201,18 +4201,156 @@ function toggleReview({ adminEmail, adminToken, reviewId, published }) {
 }
 
 // ── Quotation: kirim email dengan HTML invoice sebagai body ──
-function sendQuotationEmail({ adminEmail, adminToken, to, subject, htmlBody }) {
+// ── Quotation: public endpoint — ambil formData by quoId (no auth) ──
+function getQuotations({ adminEmail, adminToken }) {
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
-  if (!to)        return { success: false, error: 'Email tujuan kosong' };
-  if (!htmlBody)  return { success: false, error: 'Konten quotation kosong' };
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('Quotations');
+  if (!sheet) return { success: true, data: [] };
+  const data    = sheet.getDataRange().getValues();
+  if (data.length < 2) return { success: true, data: [] };
+  const h = data[0];
+  const col = k => h.indexOf(k);
+  const idC = col('ID'), namaC = col('Nama'), emailC = col('Email'), totalC = col('Total'),
+        statusC = col('Status'), tglC = col('Tanggal'), itemsC = col('Item Count');
+  const rows = [];
+  for (let r = 1; r < data.length; r++) {
+    const row = data[r];
+    if (!row[idC]) continue;
+    rows.push({
+      id:     row[idC],
+      nama:   row[namaC],
+      email:  row[emailC] || '',
+      total:  row[totalC] || 0,
+      status: row[statusC] || '',
+      tgl:    row[tglC] ? String(row[tglC]).slice(0,10) : '',
+      items:  row[itemsC] || 0,
+    });
+  }
+  rows.reverse(); // terbaru dulu
+  return { success: true, data: rows };
+}
 
-  const subj = subject || 'Penawaran dari Serabut Store';
+function getPublicQuo({ quoId }) {
+  if (!quoId) return { success: false, error: 'quoId required' };
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('Quotations');
+  if (!sheet) return { success: false, error: 'Not found' };
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idCol   = headers.indexOf('ID');
+  const fdCol   = headers.indexOf('Form Data');
+  const namaCol = headers.indexOf('Nama');
+  for (let r = 1; r < data.length; r++) {
+    if (String(data[r][idCol]) === String(quoId)) {
+      return { success: true, quoId, nama: data[r][namaCol], formDataJson: data[r][fdCol] || '' };
+    }
+  }
+  return { success: false, error: 'Quotation not found' };
+}
+
+// ── Helper: simpan HTML quotation ke Drive, return public download URL ──
+function _saveQuoToDrive(quoId, htmlContent) {
+  const blob = Utilities.newBlob(htmlContent, 'text/html', (quoId||'quotation') + '.html');
+  const file = DriveApp.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return 'https://drive.google.com/uc?id=' + file.getId() + '&export=download';
+}
+
+function sendQuotationEmail({ adminEmail, adminToken, to, subject, quoId, nama, quoLink }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+  if (!to)      return { success: false, error: 'Email tujuan kosong' };
+  if (!quoLink) return { success: false, error: 'Link quotation tidak tersedia' };
+
+  const subj = subject || ('Penawaran ' + (quoId||'') + (nama ? ' untuk ' + nama : '') + ' dari Serabut Store');
+  const emailHtml = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 16px">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%">
+
+  <!-- Card utama — border sebagai "frame" -->
+  <tr><td style="background:#ffffff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">
+    <table width="100%" cellpadding="0" cellspacing="0">
+
+      <!-- Hero strip merah -->
+      <tr><td style="background:#DC2626;padding:24px 32px 20px">
+        <p style="margin:0 0 4px;font-size:10px;font-weight:700;color:#fca5a5;letter-spacing:1.5px;text-transform:uppercase">Dokumen Penawaran Harga</p>
+        <p style="margin:0;font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.3px">${quoId||'Quotation'}</p>
+      </td></tr>
+
+      <!-- Body -->
+      <tr><td style="padding:28px 32px 24px">
+        <p style="margin:0 0 6px;font-size:15px;font-weight:700;color:#111827">Halo, <span style="color:#DC2626">${nama||to}</span></p>
+        <p style="margin:0 0 24px;font-size:14px;color:#64748b;line-height:1.6">
+          Kami telah menyiapkan penawaran harga untuk Anda. Klik tombol di bawah untuk melihat detail lengkap, mencetak, atau menyimpan sebagai PDF.
+        </p>
+
+        <!-- CTA button -->
+        <table cellpadding="0" cellspacing="0" style="margin:0 0 24px">
+          <tr><td style="border-radius:8px;background:#DC2626">
+            <a href="${quoLink}" target="_blank"
+               style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">
+              Lihat Penawaran &rarr;
+            </a>
+          </td></tr>
+        </table>
+
+        <!-- Info pills -->
+        <table cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 24px;border:1px solid #e2e8f0;border-radius:8px">
+          <tr>
+            <td style="padding:12px 16px;border-right:1px solid #e2e8f0" width="50%">
+              <p style="margin:0 0 2px;font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:0.6px">Berlaku</p>
+              <p style="margin:0;font-size:13px;font-weight:700;color:#111827">7 Hari</p>
+            </td>
+            <td style="padding:12px 16px" width="50%">
+              <p style="margin:0 0 2px;font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:0.6px">Respon</p>
+              <p style="margin:0;font-size:13px;font-weight:700;color:#111827">08.00 - 22.00 WIB</p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Link fallback -->
+        <p style="margin:0 0 4px;font-size:11px;color:#94a3b8">Tombol tidak bisa diklik? Salin link berikut ke browser:</p>
+        <p style="margin:0;font-size:11px;color:#2563eb;word-break:break-all">${quoLink}</p>
+      </td></tr>
+
+      <!-- Divider -->
+      <tr><td style="border-top:1px solid #f1f5f9"></td></tr>
+
+      <!-- Footer -->
+      <tr><td style="background:#f8fafc;padding:16px 32px;border-radius:0 0 12px 12px">
+        <table cellpadding="0" cellspacing="0" width="100%"><tr>
+          <td>
+            <p style="margin:0;font-size:12px;color:#64748b;line-height:1.7">
+              Salam hangat,<br>
+              <strong style="color:#111827">Tim Serabut Store</strong><br>
+              <a href="https://serabut.id" style="color:#DC2626;text-decoration:none">serabut.id</a>
+            </p>
+          </td>
+        </tr></table>
+      </td></tr>
+
+    </table>
+  </td></tr>
+
+  <!-- Bottom note -->
+  <tr><td style="padding:16px 0 0;text-align:center">
+    <p style="margin:0;font-size:11px;color:#cbd5e1">Email ini dikirim otomatis oleh sistem Serabut Store &middot; Jangan balas email ini</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body></html>`;
+
   try {
     GmailApp.sendEmail(to, subj, '', {
-      htmlBody: htmlBody,
-      name: 'Serabut Store',
-      replyTo: 'halo@serabut.id'
+      htmlBody: emailHtml,
+      name:     'No Reply - Serabut Store',
     });
     return { success: true };
   } catch (e) {
@@ -4222,7 +4360,7 @@ function sendQuotationEmail({ adminEmail, adminToken, to, subject, htmlBody }) {
 }
 
 // ── Quotation: kirim WA via Fonnte ke nomor penerima ──
-function sendQuotationWA({ adminEmail, adminToken, noHP, quoId, nama, itemLines, total, payMethod, bankInfo }) {
+function sendQuotationWA({ adminEmail, adminToken, noHP, quoId, nama, itemLines, total, payMethod, bankInfo, quoLink, htmlContent }) {
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
 
@@ -4230,7 +4368,19 @@ function sendQuotationWA({ adminEmail, adminToken, noHP, quoId, nama, itemLines,
   if (!wa || wa.length < 10) return { success: false, error: 'No. WA tidak valid' };
   if (!FONNTE_TOKEN)         return { success: false, error: 'FONNTE_TOKEN belum diset' };
 
+  // Simpan ke Drive untuk dapat link download
+  let downloadLine = '';
+  if (htmlContent) {
+    try {
+      const url = _saveQuoToDrive(quoId, htmlContent);
+      downloadLine = '\n\n📥 *Download Quotation:*\n' + url;
+    } catch(e) {
+      Logger.log('Drive save error: ' + e.message);
+    }
+  }
+
   const fp  = v => 'Rp ' + Number(v||0).toLocaleString('id-ID');
+  const linkLine = quoLink ? '\n\n🔗 *Preview Quotation:*\n' + quoLink : (downloadLine || '');
   const msg =
 `Halo *${nama||''}*! 👋
 
@@ -4243,10 +4393,9 @@ ${itemLines||''}
 💰 *Total: ${fp(total)}*
 
 Pembayaran: ${payMethod||'Transfer Bank'}
-${bankInfo||''}
+${bankInfo||''}${linkLine}
 
-Penawaran berlaku *7 hari*. Balas pesan ini untuk konfirmasi atau pertanyaan 😊
-🌐 serabut.id | halo@serabut.id`;
+Penawaran berlaku *7 hari*. Balas pesan ini untuk konfirmasi 😊`;
 
   try {
     const resp = UrlFetchApp.fetch('https://api.fonnte.com/send', {
@@ -4262,4 +4411,38 @@ Penawaran berlaku *7 hari*. Balas pesan ini untuk konfirmasi atau pertanyaan �
   } catch (e) {
     return { success: false, error: e.message };
   }
+}
+
+// ── Quotation: simpan ke Sheet "Quotations" ──
+function saveQuotation({ adminEmail, adminToken, quoId, nama, email, noHP, total, itemCount, status, formDataJson }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet   = ss.getSheetByName('Quotations');
+  if (!sheet) {
+    sheet = ss.insertSheet('Quotations');
+    sheet.appendRow(['ID', 'Tanggal', 'Nama', 'Email', 'No HP', 'Total', 'Item Count', 'Status', 'Form Data']);
+    sheet.getRange(1, 1, 1, 9).setFontWeight('bold');
+  }
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idCol = headers.indexOf('ID');
+
+  // Update jika sudah ada, insert jika baru
+  for (let r = 1; r < data.length; r++) {
+    if (data[r][idCol] === quoId) {
+      const row = r + 1;
+      sheet.getRange(row, 1, 1, 9).setValues([[
+        quoId, new Date(), nama||'', email||'', noHP||'',
+        Number(total||0), Number(itemCount||0), status||'draft', formDataJson||''
+      ]]);
+      SpreadsheetApp.flush();
+      return { success: true, action: 'updated' };
+    }
+  }
+  sheet.appendRow([quoId, new Date(), nama||'', email||'', noHP||'', Number(total||0), Number(itemCount||0), status||'draft', formDataJson||'']);
+  SpreadsheetApp.flush();
+  return { success: true, action: 'inserted' };
 }
