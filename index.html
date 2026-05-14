@@ -3844,7 +3844,7 @@
                                  :class="quoSendMsg.startsWith('✓') ? 'bg-emerald-50 border border-emerald-100 text-emerald-700' : 'bg-red-50 border border-red-100 text-red-600'">
                                 <svg x-show="quoSendMsg.startsWith('✓')" class="w-4 h-4 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                                 <svg x-show="!quoSendMsg.startsWith('✓')" class="w-4 h-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                <span x-text="quoSendMsg"></span>
+                                <span x-text="quoSendMsg.replace(/^[✓✗⚠️]\s*/,'')"></span>
                                 <button @click="quoSendMsg=''" class="ml-auto text-current opacity-50 hover:opacity-100">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
@@ -6506,6 +6506,34 @@ function serabutStore() {
                     sessionStorage.setItem('srb_pending_payment', JSON.stringify(pendingPayment));
                 }
                 if (payStatus || payOrderId) window.history.replaceState({}, '', window.location.pathname);
+
+                // ── ?quo=QUO-xxx → buka preview quotation publik ──
+                const quoParam = urlParams.get('quo');
+                if (quoParam) {
+                    window.history.replaceState({}, '', window.location.pathname);
+                    (async () => {
+                        try {
+                            const GAS_URL = this.GAS_URL;
+                            const res  = await fetch(`${GAS_URL}?action=getPublicQuo&quoId=${encodeURIComponent(quoParam)}`);
+                            const json = await res.json();
+                            if (json.success && json.formDataJson) {
+                                const form = JSON.parse(json.formDataJson);
+                                const logo = await this._getLogoDataURL();
+                                const html = this._buildInvoiceDoc({
+                                    orderId: quoParam, tanggal: form.tanggal||'', nama: form.nama||'',
+                                    email: form.email||'', noWA: form.noHP||'', alamat: form.alamat||'',
+                                    items: (form.items||[]).map(it => ({ produk: it.deskripsi, varian:'', masaAktif:'', harga: Number(it.harga||0)*Number(it.qty||1), qty: it.qty||1 })),
+                                    total: form.items ? form.items.reduce((s,it)=>s+Number(it.harga||0)*Number(it.qty||1),0) : 0,
+                                    paymentMethod: form.payMethod, bankName: form.bankName,
+                                    bankAccount: form.bankAccount, bankHolder: form.bankHolder,
+                                    note: form.note, docType: 'quotation', logoSrc: logo,
+                                });
+                                const win = window.open('', '_blank', 'width=800,height=960,scrollbars=yes');
+                                win.document.write(html); win.document.close();
+                            }
+                        } catch(e) { console.error('getPublicQuo error', e); }
+                    })();
+                }
             } catch {}
             // Ambil dari sessionStorage jika tidak ada di URL (misal setelah cache-bust reload)
             if (!pendingPayment) {
@@ -9342,12 +9370,22 @@ function serabutStore() {
             });
         },
         async quoGenerate() {
-            this._quoId = null;
+            this._quoEnsureId();
             const logo = await this._getLogoDataURL();
             const html  = await this._quoBuildDoc(logo);
             const win = window.open('', '_blank', 'width=800,height=960,scrollbars=yes');
             win.document.write(html); win.document.close();
             this._quoSaveToList('preview');
+            // simpan ke GAS Sheet agar link preview bisa diakses
+            this.gasPost({
+                action: 'saveQuotation',
+                adminEmail: this.currentUser?.email,
+                adminToken: this.currentUser?.sessionToken,
+                quoId: this._quoId, nama: this.quoForm.nama,
+                email: this.quoForm.email, noHP: this.quoForm.noHP,
+                total: this.quoTotal, itemCount: this.quoForm.items.length,
+                status: 'preview', formDataJson: JSON.stringify(this.quoForm),
+            }).catch(() => {});
         },
         async quoSendWA() {
             const f = this.quoForm;
@@ -9356,11 +9394,21 @@ function serabutStore() {
             this._quoEnsureId();
             this.quoWASending = true; this.quoSendMsg = '';
             try {
+                // simpan ke Sheet dulu agar link preview bisa diakses
+                await this.gasPost({
+                    action: 'saveQuotation',
+                    adminEmail: this.currentUser?.email,
+                    adminToken: this.currentUser?.sessionToken,
+                    quoId: this._quoId, nama: f.nama, email: f.email, noHP: f.noHP,
+                    total: this.quoTotal, itemCount: f.items.length,
+                    status: 'sent_wa', formDataJson: JSON.stringify(f),
+                }).catch(() => {});
                 const logo  = await this._getLogoDataURL();
                 const htmlContent = await this._quoBuildDoc(logo);
                 const fp = v => 'Rp ' + Number(v||0).toLocaleString('id-ID');
                 const itemLines = f.items.map((it,i) => `${i+1}. ${it.deskripsi} x${it.qty||1} — ${fp(Number(it.harga||0)*Number(it.qty||1))}`).join('\n');
                 const bankInfo = f.bankName ? `${f.bankName}: ${f.bankAccount} (a.n ${f.bankHolder})` : '';
+                const quoLink = `https://serabut.id/?quo=${this._quoId}`;
                 const data = await this.gasPost({
                     action: 'sendQuotationWA',
                     adminEmail: this.currentUser?.email,
@@ -9369,7 +9417,7 @@ function serabutStore() {
                     quoId: this._quoId, nama: f.nama,
                     itemLines, total: this.quoTotal,
                     payMethod: f.payMethod, bankInfo,
-                    htmlContent,
+                    quoLink, htmlContent,
                 });
                 if (data.success) {
                     this.quoSendMsg = '✓ WA terkirim ke +62' + rawNum;
