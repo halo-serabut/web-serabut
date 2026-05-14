@@ -3808,10 +3808,11 @@
                         <!-- Row 2: Send via WA + Email -->
                         <div class="grid grid-cols-2 gap-3">
                             <button @click="quoSendWA()"
-                                    :disabled="!quoForm.nama || quoForm.items.length===0"
+                                    :disabled="!quoForm.nama || quoForm.items.length===0 || quoSending"
                                     class="py-3 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.534 5.862L.057 23.943l6.235-1.469A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.525-5.17-1.435l-.37-.22-3.7.872.932-3.604-.241-.371A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
-                                Kirim WA
+                                <svg x-show="quoSending" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                <svg x-show="!quoSending" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.127.558 4.126 1.534 5.862L.057 23.943l6.235-1.469A11.95 11.95 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.659-.525-5.17-1.435l-.37-.22-3.7.872.932-3.604-.241-.371A9.952 9.952 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+                                <span x-text="quoSending ? 'Mengirim...' : 'Kirim WA'"></span>
                             </button>
                             <button @click="quoSendEmail()"
                                     :disabled="!quoForm.nama || quoForm.items.length===0 || quoSending"
@@ -9258,18 +9259,21 @@ function serabutStore() {
             if (!rawNum || rawNum.length < 8) { this.quoSendMsg = '⚠️ No. HP penerima belum diisi'; return; }
             this._quoEnsureId();
             this.quoSending = true; this.quoSendMsg = '';
-            const fp = v => 'Rp ' + Number(v||0).toLocaleString('id-ID');
-            const itemLines = f.items.map((it,i) => `${i+1}. ${it.deskripsi} x${it.qty||1} — ${fp(Number(it.harga||0)*Number(it.qty||1))}`).join('\n');
-            const bankInfo = f.bankName ? `${f.bankName}: ${f.bankAccount} (a.n ${f.bankHolder})` : '';
             try {
+                const logo  = await this._getLogoDataURL();
+                const htmlContent = await this._quoBuildDoc(logo);
+                const fp = v => 'Rp ' + Number(v||0).toLocaleString('id-ID');
+                const itemLines = f.items.map((it,i) => `${i+1}. ${it.deskripsi} x${it.qty||1} — ${fp(Number(it.harga||0)*Number(it.qty||1))}`).join('\n');
+                const bankInfo = f.bankName ? `${f.bankName}: ${f.bankAccount} (a.n ${f.bankHolder})` : '';
                 const data = await this.gasPost({
                     action: 'sendQuotationWA',
                     adminEmail: this.currentUser?.email,
-                    adminToken: this.sessionToken,
+                    adminToken: this.currentUser?.sessionToken,
                     noHP: '62' + rawNum.replace(/^0/,''),
                     quoId: this._quoId, nama: f.nama,
                     itemLines, total: this.quoTotal,
                     payMethod: f.payMethod, bankInfo,
+                    htmlContent,
                 });
                 if (data.success) {
                     this.quoSendMsg = '✓ WA terkirim ke +62' + rawNum;
@@ -9285,14 +9289,16 @@ function serabutStore() {
             this.quoSending = true; this.quoSendMsg = '';
             try {
                 const logo = await this._getLogoDataURL();
-                const html = await this._quoBuildDoc(logo);
+                const htmlContent = await this._quoBuildDoc(logo);
                 const data = await this.gasPost({
                     action: 'sendQuotationEmail',
                     adminEmail: this.currentUser?.email,
-                    adminToken: this.sessionToken,
-                    to:       f.email,
-                    subject:  `Penawaran ${this._quoId} dari Serabut Store`,
-                    htmlBody: html,
+                    adminToken: this.currentUser?.sessionToken,
+                    to:      f.email,
+                    quoId:   this._quoId,
+                    nama:    f.nama,
+                    subject: `Penawaran ${this._quoId} dari Serabut Store`,
+                    htmlContent,
                 });
                 if (data.success) {
                     this.quoSendMsg = '✓ Email terkirim ke ' + f.email;
