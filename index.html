@@ -8967,12 +8967,15 @@ function serabutStore() {
   @media print{
     @page{size:A4 portrait;margin:6mm 8mm}
     html{zoom:0.82}
+    html,body{height:100%;overflow:hidden}
     body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .toolbar{display:none!important}
     .page{
       margin:0!important;border-radius:0;box-shadow:none;
       width:100%!important;max-width:100%!important;
-      min-height:calc(297mm - 12mm)!important;
+      height:calc(297mm - 12mm)!important;
+      min-height:0!important;max-height:calc(297mm - 12mm)!important;
+      overflow:hidden!important;
       display:flex!important;flex-direction:row!important;
       page-break-inside:avoid;page-break-after:avoid;break-after:avoid
     }
