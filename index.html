@@ -9,6 +9,9 @@
     <meta name="keywords" content="serabut store, serabut, beli software original, microsoft office 365 murah, adobe creative cloud murah, windows original, software original indonesia, lisensi software murah, office 365 personal, office 365 family, serabut.id">
     <meta name="robots" content="index, follow">
     <meta name="author" content="Serabut Store">
+    <!-- [SEC-18] Security headers via meta tags — HSTS & X-Frame-Options wajib via Cloudflare HTTP headers -->
+    <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self'; frame-src 'self' https://payment.xendit.co https://checkout.xendit.co https://payment.ipaymu.com https://my.ipaymu.com;">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <link rel="canonical" href="https://serabut.id/">
     <script>
       // GitHub Pages SPA routing — restore path dari ?p= redirect 404.html
@@ -6676,16 +6679,21 @@ function serabutStore() {
             }
 
             this.loadCart();
+            // [SEC-02] Token disimpan terpisah di srb_tok — user obj tidak mengandung token
             const saved = localStorage.getItem('serabutUser');
+            const savedTok = localStorage.getItem('srb_tok');
             if(saved) {
                 try {
                     const u = JSON.parse(saved);
+                    // Merge token dari srb_tok (prioritas) atau fallback ke token di user obj (migrasi sesi lama)
+                    const token = savedTok || u.sessionToken || '';
                     // H5: auto-logout jika sessionToken missing atau sesi > 30 hari
                     const expired = u.loginAt && (Date.now() - new Date(u.loginAt).getTime()) > 30 * 24 * 60 * 60 * 1000;
-                    if(!u.sessionToken || expired) {
+                    if(!token || expired) {
                         localStorage.removeItem('serabutUser');
+                        localStorage.removeItem('srb_tok');
                     } else {
-                        this.currentUser = u;
+                        this.currentUser = { ...u, sessionToken: token };
                     }
                 } catch {}
             }
@@ -6740,7 +6748,9 @@ function serabutStore() {
                 const data = await this.gasPost({ action:'getProfile', email:this.currentUser.email, sessionToken:this.currentUser.sessionToken });
                 if(data.success && data.profile?.role) {
                     this.currentUser = { ...this.currentUser, role: data.profile.role };
-                    localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
+                    const { sessionToken: _st4, ...userPub4 } = this.currentUser;
+                    localStorage.setItem('serabutUser', JSON.stringify(userPub4));
+                    if(_st4) localStorage.setItem('srb_tok', _st4);
                 } else if(!data.success) {
                     // Token expired/invalid — auto logout
                     this.logout();
@@ -7135,7 +7145,9 @@ function serabutStore() {
                 const data = await this.gasPost({ action:'login', email, password:hashed, passwordLegacy:hashedLegacy });
                 if(data.success) {
                     this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
-                    localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
+                    const { sessionToken: _st1, ...userPub1 } = this.currentUser;
+                    localStorage.setItem('serabutUser', JSON.stringify(userPub1));
+                    if(_st1) localStorage.setItem('srb_tok', _st1);
                     this._loadMyReviews(); // Restore ulasan dari localStorage
                     this.closeAuthModal();
                     this.loginForm = {email:'',password:''};
@@ -7196,7 +7208,9 @@ function serabutStore() {
                 const data = await this.gasPost({ action:'verifyOTP', email:this.otpEmail, otp:this.otpCode });
                 if(data.success) {
                     this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
-                    localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
+                    const { sessionToken: _st2, ...userPub2 } = this.currentUser;
+                    localStorage.setItem('serabutUser', JSON.stringify(userPub2));
+                    if(_st2) localStorage.setItem('srb_tok', _st2);
                     this._loadMyReviews(); // Restore ulasan dari localStorage
                     this.closeOTPModal();
                     this.registerForm = {nama:'',email:'',wa:'',password:''};
@@ -7218,6 +7232,7 @@ function serabutStore() {
             this.setPage('home');
             this.currentUser = null;
             localStorage.removeItem('serabutUser');
+            localStorage.removeItem('srb_tok'); // [SEC-02] hapus token terpisah
             this.orders        = [];
             this.ordersLoaded  = false;
             this.ordersFilter  = 'semua';
@@ -8562,7 +8577,9 @@ function serabutStore() {
             const data = await this.gasPost({ action:'googleLogin', credential });
             if(data.success) {
                 this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
-                localStorage.setItem('serabutUser', JSON.stringify(this.currentUser));
+                const { sessionToken: _st3, ...userPub3 } = this.currentUser;
+                localStorage.setItem('serabutUser', JSON.stringify(userPub3));
+                if(_st3) localStorage.setItem('srb_tok', _st3);
                 this.closeAuthModal();
                 if(data.user.role==='admin') this.setPage('admin');
             } else {
@@ -9811,8 +9828,10 @@ function serabutStore() {
                     provinsi:     this.editForm.provinsi,
                 });
                 if(data.success) {
-                    this.currentUser = data.user;
-                    localStorage.setItem('serabutUser', JSON.stringify(data.user));
+                    this.currentUser = { ...data.user, sessionToken: this.currentUser.sessionToken };
+                    const { sessionToken: _st5, ...userPub5 } = this.currentUser;
+                    localStorage.setItem('serabutUser', JSON.stringify(userPub5));
+                    if(_st5) localStorage.setItem('srb_tok', _st5);
                     this.profileExtra = { ...this.profileExtra, ...this.editForm };
                     this.editMode = false;
                 } else { this.editError = data.error||'Gagal menyimpan'; }
@@ -9838,8 +9857,11 @@ function serabutStore() {
                     newPassword:      newHash,
                     oldPasswordLegacy: oldHashLegacy,
                 });
-                if(data.success) { this.resetPwSuccess=true; }
-                else { this.resetPwError = data.error||'Gagal mengubah password'; }
+                if(data.success) {
+                    this.resetPwSuccess=true;
+                    // [SEC-05] Server invalidate session — auto logout setelah 2 detik
+                    if(data.requireLogin) setTimeout(()=>{ this.logout(); this.openAuthModal('login'); }, 2000);
+                } else { this.resetPwError = data.error||'Gagal mengubah password'; }
             } catch { this.resetPwError='Gagal terhubung ke server'; }
             this.resetPwLoading=false;
         },
