@@ -212,6 +212,10 @@ function buildDoc(quoId, form) {
           ✓ Covers full subscription duration
         </div>
       </div>
+      <div style="flex-shrink:0;width:90px;border-left:1px solid #e5e7eb;padding-left:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent('https://serabut.id/quo.html?id='+quoId)}&size=76x76&margin=2&color=111827&bgcolor=ffffff" alt="QR" width="76" height="76" style="border-radius:6px;border:1px solid #e5e7eb;display:block" onerror="this.style.display='none'"/>
+        <div style="font-size:8.5px;color:#9ca3af;text-align:center;font-weight:600;letter-spacing:.3px">SCAN TO VERIFY</div>
+      </div>
     </div>
     <div class="copyright">© ${new Date().getFullYear()} PT Serabut Solusi Digital · serabut.id · Issued digitally</div>
   </div>

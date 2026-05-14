@@ -3559,22 +3559,33 @@
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="font-black text-gray-900 text-base">Quotation</h2>
-                            <p class="text-xs text-gray-400 mt-0.5" x-text="quoList.length + ' dokumen tersimpan'"></p>
+                            <p class="text-xs text-gray-400 mt-0.5" x-text="quoListLoading ? 'Memuat...' : quoList.length + ' dokumen tersimpan'"></p>
                         </div>
-                        <button @click="quoNewForm()"
-                                class="flex items-center gap-1.5 text-sm font-bold bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                            Buat Quotation
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button @click="quoListLoaded=false; adminLoadQuotations()"
+                                    class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all" title="Refresh">
+                                <svg class="w-4 h-4" :class="quoListLoading?'animate-spin':''" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            </button>
+                            <button @click="quoNewForm()"
+                                    class="flex items-center gap-1.5 text-sm font-bold bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-xl transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                                Buat Quotation
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Loading state -->
+                    <div x-show="quoListLoading" class="flex items-center justify-center py-12 gap-3 text-gray-400">
+                        <div class="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-sm">Memuat quotation...</span>
                     </div>
                     <!-- Empty state -->
-                    <div x-show="quoList.length===0" class="text-center py-12 text-gray-400">
+                    <div x-show="!quoListLoading && quoList.length===0" class="text-center py-12 text-gray-400">
                         <svg class="w-10 h-10 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         <p class="text-sm font-medium">Belum ada quotation</p>
                         <p class="text-xs mt-1">Klik "Buat Quotation" untuk membuat dokumen pertama</p>
                     </div>
                     <!-- List -->
-                    <div x-show="quoList.length>0" class="space-y-2">
+                    <div x-show="!quoListLoading && quoList.length>0" class="space-y-2">
                         <template x-for="(q,idx) in quoList" :key="q.id">
                             <div class="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all cursor-pointer"
                                  @click="quoOpenDraft(q)">
@@ -3874,7 +3885,7 @@
                                     class="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
                                 Batal
                             </button>
-                            <button @click="quoList.splice(quoDeleteIdx,1); localStorage.setItem('srb_quotations',JSON.stringify(quoList)); quoDeleteIdx=null"
+                            <button @click="quoList.splice(quoDeleteIdx,1); quoDeleteIdx=null"
                                     class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-sm font-bold text-white transition-colors">
                                 Hapus
                             </button>
@@ -6309,7 +6320,9 @@ function serabutStore() {
             items:[]
         },
         quoView:         'list', // 'list' | 'form'
-        quoList:         JSON.parse(localStorage.getItem('srb_quotations')||'[]'),
+        quoList:         [],
+        quoListLoading:  false,
+        quoListLoaded:   false,
         quoSavingSending:  false,
         quoWASending:      false,
         quoEmailSending:   false,
@@ -7701,7 +7714,7 @@ function serabutStore() {
             if(page==='catalog') this.activeCategory='Semua';
             if(page!=='status')  this.statusResult=null;
             if(page==='profile') { this.profileTab='diri'; this.editMode=false; this.loadProfile(); }
-            if(page==='admin')   { this.adminTab='flashsale'; this.adminInitTab('flashsale'); }
+            if(page==='admin')   { this.adminTab='flashsale'; this.adminInitTab('flashsale'); this._adminPrefetch(); }
         },
         initPageFromURL() {
             const pathMap = { '/':'home', '/produk':'catalog', '/panduan':'panduan', '/faq':'faq', '/cek-status':'status', '/admin':'admin', '/akun':'profile' };
@@ -7841,6 +7854,8 @@ function serabutStore() {
                 }
             } else if(tab==='ulasan') {
                 this.adminLoadReviews();
+            } else if(tab==='quotation') {
+                if (!this.quoListLoaded) this.adminLoadQuotations();
             }
         },
 
@@ -8850,6 +8865,33 @@ function serabutStore() {
             } catch { this.adminOrders=[]; }
             this.adminOrdersLoading=false;
         },
+        async adminLoadQuotations() {
+            this.quoListLoading = true;
+            try {
+                const res = await this.gasPost({ action:'getQuotations', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken });
+                if (res.success && Array.isArray(res.data)) {
+                    this.quoList = res.data.map(q => ({
+                        id:        q.id,
+                        nama:      q.nama,
+                        email:     q.email,
+                        total:     q.total,
+                        itemCount: q.items,
+                        status:    q.status,
+                        tanggal:   q.tgl,
+                    }));
+                }
+                this.quoListLoaded = true;
+            } catch { /* keep empty */ }
+            this.quoListLoading = false;
+        },
+        // Prefetch semua data admin di background saat masuk halaman admin
+        _adminPrefetch() {
+            if (!this.currentUser?.sessionToken) return;
+            setTimeout(() => { if (!this.adminOrdersLoaded) this.adminLoadOrders(); }, 200);
+            setTimeout(() => { if (!this.adminReviewsLoaded) this.adminLoadReviews(); }, 600);
+            setTimeout(() => { if (!this.quoListLoaded) this.adminLoadQuotations(); }, 1000);
+            setTimeout(() => { if (!this.adminPaymentLoaded) this.adminLoadPaymentMethods(); }, 1400);
+        },
         async adminUpdateOrderStatus(order, newStatus, silent=false, payMethod) {
             if(!newStatus) return;
             try {
@@ -9148,7 +9190,7 @@ function serabutStore() {
         </div>
       </div>
       <div class="qr-col" style="flex-shrink:0;width:100px;border-left:1px solid #e5e7eb;padding-left:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent('https://serabut.id/?order='+(orderId||''))}&size=80x80&margin=2&color=111827&bgcolor=ffffff" alt="QR" width="80" height="80" style="border-radius:6px;border:1px solid #e5e7eb;display:block" onerror="this.style.display='none'"/>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(docType==='quotation' ? 'https://serabut.id/quo.html?id='+(orderId||'') : 'https://serabut.id/?order='+(orderId||''))}&size=80x80&margin=2&color=111827&bgcolor=ffffff" alt="QR" width="80" height="80" style="border-radius:6px;border:1px solid #e5e7eb;display:block" onerror="this.style.display='none'"/>
         <div style="font-size:8.5px;color:#9ca3af;text-align:center;font-weight:600;letter-spacing:.3px">SCAN TO VERIFY</div>
       </div>
     </div>
@@ -9258,28 +9300,39 @@ function serabutStore() {
             const f = this.quoForm;
             const existing = this.quoList.findIndex(q => q.id === this._quoId);
             const entry = {
-                id: this._quoId, tanggal: new Date().toISOString(),
+                id: this._quoId, tanggal: new Date().toISOString().slice(0,10),
                 nama: f.nama, email: f.email, noHP: f.noHP,
                 total: this.quoTotal, itemCount: f.items.length, status,
-                formData: JSON.parse(JSON.stringify(f)), // simpan full form untuk buka draft
+                formData: JSON.parse(JSON.stringify(f)),
             };
             if (existing >= 0) { this.quoList[existing] = {...this.quoList[existing], ...entry}; }
             else { this.quoList.unshift(entry); }
-            this.quoList = this.quoList.slice(0, 100);
-            localStorage.setItem('srb_quotations', JSON.stringify(this.quoList));
+            this.quoList = this.quoList.slice(0, 200);
         },
-        quoOpenDraft(q) {
+        async quoOpenDraft(q) {
             if (q.formData) {
                 this.quoForm = JSON.parse(JSON.stringify(q.formData));
-            } else {
-                // fallback: isi fields dasar saja
-                this.quoForm.nama  = q.nama  || '';
-                this.quoForm.email = q.email || '';
-                this.quoForm.noHP  = q.noHP  || '';
+                this._quoId = q.id;
+                this.quoSendMsg = '';
+                this.quoView = 'form';
+                this.quoRecalc();
+                return;
             }
-            this._quoId   = q.id;
+            // Fetch formDataJson dari GAS
+            this.quoListLoading = true;
+            try {
+                const res = await this.gasPost({ action:'getPublicQuo', quoId: q.id });
+                if (res.success && res.formDataJson) {
+                    this.quoForm = JSON.parse(res.formDataJson);
+                    q.formData = JSON.parse(JSON.stringify(this.quoForm)); // cache lokal
+                } else {
+                    this.quoForm.nama = q.nama || ''; this.quoForm.email = q.email || '';
+                }
+            } catch { this.quoForm.nama = q.nama || ''; }
+            this.quoListLoading = false;
+            this._quoId = q.id;
             this.quoSendMsg = '';
-            this.quoView  = 'form';
+            this.quoView = 'form';
             this.quoRecalc();
         },
         async _getLogoDataURL() {
