@@ -216,36 +216,39 @@
             position: fixed; inset: 0; z-index: 99999;
             background: #ffffff;
             display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
+            align-items: center; justify-content: center; gap: 0;
             transition: opacity .4s ease;
         }
         #pwa-splash.splash-hide { opacity: 0; pointer-events: none; }
         .splash-icon {
-            width: 96px; height: 96px;
-            border-radius: 22px;
-            box-shadow: 0 8px 32px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);
+            width: 100px; height: 100px;
+            border-radius: 24px;
+            box-shadow: 0 4px 24px rgba(0,0,0,.10), 0 1px 6px rgba(0,0,0,.06);
             overflow: hidden;
             animation: splash-icon-in .5s cubic-bezier(.34,1.56,.64,1) both;
         }
         .splash-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .splash-name {
-            font-size: 19px; font-weight: 800; color: #111827;
-            letter-spacing: -.3px; margin-top: 14px;
+            font-size: 20px; font-weight: 800; color: #111827;
+            letter-spacing: -.3px; margin-top: 16px;
             animation: splash-fade-up .4s .18s both;
         }
         .splash-sub {
-            font-size: 11px; color: #9CA3AF; margin-top: 3px;
+            font-size: 12px; color: #9CA3AF; margin-top: 4px;
             animation: splash-fade-up .4s .28s both;
         }
-        .splash-bar-track {
-            position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%);
-            width: 52px; height: 3px; background: #F3F4F6; border-radius: 99px; overflow: hidden;
+        /* Loading dots — 3 titik berdenyut, inline di bawah tagline */
+        .splash-dots-row {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            margin-top: 28px;
             animation: splash-fade-up .3s .4s both;
         }
-        .splash-bar-fill {
-            height: 100%; width: 0; background: #DC2626; border-radius: 99px;
-            animation: splash-bar 1.4s .5s cubic-bezier(.4,0,.2,1) forwards;
+        .splash-dots-row span {
+            width: 6px; height: 6px; border-radius: 50%; background: #DC2626;
+            animation: splash-dot-pulse 1.2s ease-in-out infinite;
         }
+        .splash-dots-row span:nth-child(2) { animation-delay: .2s; }
+        .splash-dots-row span:nth-child(3) { animation-delay: .4s; }
         @keyframes splash-icon-in {
             from { opacity: 0; transform: scale(.65); }
             to   { opacity: 1; transform: scale(1); }
@@ -254,8 +257,9 @@
             from { opacity: 0; transform: translateY(8px); }
             to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes splash-bar {
-            from { width: 0; } to { width: 100%; }
+        @keyframes splash-dot-pulse {
+            0%, 80%, 100% { transform: scale(.6); opacity: .4; }
+            40%            { transform: scale(1); opacity: 1; }
         }
     </style>
 </head>
@@ -263,14 +267,24 @@
 <body class="font-sans bg-gray-50 min-h-screen antialiased flex flex-col" x-cloak>
 
 <!-- PWA Splash Screen — muncul saat launch dari Home Screen (Android & iOS standalone) -->
+<script>
+// Jalankan SEAWAL MUNGKIN — sebelum body render — agar menutupi Android native splash
+(function() {
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+    if (!isStandalone) return;
+    // Sembunyikan body sementara agar tidak ada flicker
+    document.documentElement.style.background = '#fff';
+})();
+</script>
 <div id="pwa-splash" style="display:none">
     <div class="splash-icon">
         <img src="icon-192.png" alt="Serabut Store">
     </div>
     <div class="splash-name">Serabut Store</div>
-    <div class="splash-sub">Software Original Terpercaya</div>
-    <div class="splash-bar-track">
-        <div class="splash-bar-fill"></div>
+    <div class="splash-sub">Platform Produk Digital Terpercaya</div>
+    <div class="splash-dots-row">
+        <span></span><span></span><span></span>
     </div>
 </div>
 <script>
@@ -280,10 +294,9 @@
     if (!isStandalone) return;
     var s = document.getElementById('pwa-splash');
     s.style.display = 'flex';
-    // Hide setelah 1.8s — cukup untuk animasi dots 1–2 siklus
     setTimeout(function() {
         s.classList.add('splash-hide');
-        setTimeout(function() { s.style.display = 'none'; }, 520);
+        setTimeout(function() { s.style.display = 'none'; }, 420);
     }, 1800);
 })();
 </script>
