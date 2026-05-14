@@ -6021,7 +6021,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260514-3',
+        APP_VERSION:      '20260514-4',
 
         // PWA Install
         pwaPopup:            false,
@@ -6495,11 +6495,31 @@ function serabutStore() {
 
         // ── Init ──────────────────────────────────────
         async init() {
+            // ── PRIORITAS PERTAMA: deteksi ?quo= sebelum apapun ──
+            // Harus sync agar quoPublicVisible = true sebelum Alpine render selesai
+            const _pendingQuo = (() => {
+                try {
+                    const p = new URLSearchParams(window.location.search).get('quo')
+                              || sessionStorage.getItem('srb_pending_quo');
+                    if (p) {
+                        sessionStorage.setItem('srb_pending_quo', p);
+                        window.history.replaceState({}, '', window.location.pathname);
+                        return p;
+                    }
+                } catch {}
+                return null;
+            })();
+            if (_pendingQuo) {
+                // Tampilkan overlay SEGERA (loading state) sebelum fetch
+                this.quoPublicVisible = true;
+                this.quoPublicHtml = '<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#9ca3af;font-size:14px">Memuat dokumen penawaran...</body></html>';
+            }
+
             // Live countdown — update `now` tiap 30 detik
             setInterval(() => { this.now = Date.now(); }, 30000);
             this.initPageFromURL();
 
-            // ── iPaymu return URL — capture & simpan ke sessionStorage SEBELUM reload ──
+            // ── iPaymu return URL ──
             let pendingPayment = null;
             try {
                 const urlParams  = new URLSearchParams(window.location.search);
@@ -6510,16 +6530,7 @@ function serabutStore() {
                     sessionStorage.setItem('srb_pending_payment', JSON.stringify(pendingPayment));
                 }
                 if (payStatus || payOrderId) window.history.replaceState({}, '', window.location.pathname);
-
-                // ── ?quo=QUO-xxx → simpan ke sessionStorage sebelum URL di-strip ──
-                // (cache-bust reload akan strip URL, jadi harus survive via sessionStorage)
-                const quoParam = urlParams.get('quo') || (() => { try { return sessionStorage.getItem('srb_pending_quo'); } catch { return null; } })();
-                if (quoParam) {
-                    try { sessionStorage.setItem('srb_pending_quo', quoParam); } catch {}
-                    window.history.replaceState({}, '', window.location.pathname);
-                }
             } catch {}
-            // Ambil dari sessionStorage jika tidak ada di URL (misal setelah cache-bust reload)
             if (!pendingPayment) {
                 try {
                     const ss = sessionStorage.getItem('srb_pending_payment');
@@ -6528,7 +6539,7 @@ function serabutStore() {
             }
             try { sessionStorage.removeItem('srb_pending_payment'); } catch {}
 
-            // ── Cache busting — auto-reload jika versi baru terdeteksi ──
+            // ── Cache busting ──
             try {
                 const storedV = localStorage.getItem('srb_app_v');
                 if (storedV && storedV !== this.APP_VERSION) {
@@ -6536,43 +6547,47 @@ function serabutStore() {
                     localStorage.removeItem('serabut_catalog_cache');
                     localStorage.removeItem('serabutSettings');
                     if (pendingPayment) sessionStorage.setItem('srb_pending_payment', JSON.stringify(pendingPayment));
-                    // quoParam sudah di sessionStorage — survive reload otomatis
+                    // srb_pending_quo sudah di sessionStorage — survive reload
                     location.reload(true);
                     return;
                 }
                 localStorage.setItem('srb_app_v', this.APP_VERSION);
             } catch {}
 
-            // ── Render quo preview setelah semua init selesai ──
-            try {
-                const quoParam = sessionStorage.getItem('srb_pending_quo');
-                if (quoParam) {
-                    sessionStorage.removeItem('srb_pending_quo');
-                    (async () => {
-                        try {
-                            const res  = await fetch(`${this.GAS_URL}?action=getPublicQuo&quoId=${encodeURIComponent(quoParam)}`);
-                            const json = await res.json();
-                            if (json.success && json.formDataJson) {
-                                const form = JSON.parse(json.formDataJson);
-                                const logo = await this._getLogoDataURL();
-                                const html = this._buildInvoiceDoc({
-                                    orderId: quoParam, tanggal: form.tanggal||'', nama: form.nama||'',
-                                    email: form.email||'', noWA: form.noHP||'', alamat: form.alamat||'',
-                                    items: (form.items||[]).map(it => ({ produk: it.deskripsi, varian:'', masaAktif:'', harga: Number(it.harga||0)*Number(it.qty||1), qty: it.qty||1 })),
-                                    total: form.items ? form.items.reduce((s,it)=>s+Number(it.harga||0)*Number(it.qty||1),0) : 0,
-                                    paymentMethod: form.payMethod, bankName: form.bankName,
-                                    bankAccount: form.bankAccount, bankHolder: form.bankHolder,
-                                    note: form.note, docType: 'quotation', logoSrc: logo,
-                                });
-                                this.quoPublicHtml    = html;
-                                this.quoPublicVisible = true;
-                            } else {
-                                console.error('getPublicQuo failed:', json.error);
-                            }
-                        } catch(e) { console.error('getPublicQuo error', e); }
-                    })();
-                }
-            } catch {}
+            // ── Load quo preview (fetch setelah cache-bust selesai) ──
+            if (_pendingQuo || sessionStorage.getItem('srb_pending_quo')) {
+                const quoId = _pendingQuo || sessionStorage.getItem('srb_pending_quo');
+                sessionStorage.removeItem('srb_pending_quo');
+                this.quoPublicVisible = true;
+                ;(async () => {
+                    try {
+                        const res  = await fetch(`${this.GAS_URL}?action=getPublicQuo&quoId=${encodeURIComponent(quoId)}`);
+                        const json = await res.json();
+                        if (json.success && json.formDataJson) {
+                            const form = JSON.parse(json.formDataJson);
+                            const logo = await this._getLogoDataURL();
+                            const html = this._buildInvoiceDoc({
+                                orderId: quoId, tanggal: form.tanggal||'', nama: form.nama||'',
+                                email: form.email||'', noWA: form.noHP||'', alamat: form.alamat||'',
+                                items: (form.items||[]).map(it => ({
+                                    produk: it.deskripsi, varian:'', masaAktif:'',
+                                    harga: Number(it.harga||0)*Number(it.qty||1), qty: it.qty||1
+                                })),
+                                total: (form.items||[]).reduce((s,it)=>s+Number(it.harga||0)*Number(it.qty||1),0),
+                                paymentMethod: form.payMethod, bankName: form.bankName,
+                                bankAccount: form.bankAccount, bankHolder: form.bankHolder,
+                                note: form.note, docType: 'quotation', logoSrc: logo,
+                            });
+                            this.quoPublicHtml = html;
+                        } else {
+                            this.quoPublicHtml = `<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#ef4444;font-size:14px">Dokumen tidak ditemukan: ${json.error||''}</body></html>`;
+                        }
+                    } catch(e) {
+                        console.error('getPublicQuo error', e);
+                        this.quoPublicHtml = '<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#ef4444;font-size:14px">Gagal memuat dokumen</body></html>';
+                    }
+                })();
+            }
             // ── Load site settings dari cache dulu (instant) ──
             try {
                 const cached = localStorage.getItem('serabutSettings');
