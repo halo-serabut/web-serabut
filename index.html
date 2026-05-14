@@ -8965,26 +8965,27 @@ function serabutStore() {
 
   /* ── Print ── */
   @media print{
-    @page{size:A4 portrait;margin:10mm 10mm}
+    @page{size:A4 portrait;margin:6mm 8mm}
+    html{zoom:0.82}
     body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .toolbar{display:none!important}
-    /* A4 at 96dpi = 794px wide, 1123px tall; subtract @page margins (20mm each side = 76px) */
     .page{
       margin:0!important;border-radius:0;box-shadow:none;
       width:100%!important;max-width:100%!important;
-      min-height:calc(297mm - 20mm)!important;
+      min-height:calc(297mm - 12mm)!important;
       display:flex!important;flex-direction:row!important;
-      page-break-inside:avoid
+      page-break-inside:avoid;page-break-after:avoid;break-after:avoid
     }
     .left-bar{width:6px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .main{display:flex!important;flex-direction:column!important;flex:1!important}
     .grow{flex:1!important}
     .info-band{display:grid!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .bottom-section{display:flex!important;page-break-inside:avoid;margin-bottom:0!important}
+    .bottom-section{display:flex!important;page-break-inside:avoid;break-inside:avoid;margin-bottom:0!important}
     .stamp-area{width:190px!important;min-width:190px!important}
     .pay-area,.warranty-area{flex:1!important}
     .qr-col{width:100px!important;min-width:100px!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .tot-grand,.left-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .copyright{page-break-inside:avoid;break-inside:avoid}
   }
 </style>
 </head>
