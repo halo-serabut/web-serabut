@@ -701,7 +701,7 @@ function getAllOrders({ adminEmail, adminToken }) {
 // ────────────────────────────────────────────────────────
 //  UPDATE ORDER STATUS (admin)
 // ────────────────────────────────────────────────────────
-function updateOrderStatus({ adminEmail, adminToken, rowIndex, status, paymentMethod }) {
+function updateOrderStatus({ adminEmail, adminToken, rowIndex, status, paymentMethod, skipNotify }) {
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
   if (!rowIndex || (!status && !paymentMethod)) return { success: false, error: 'Data tidak lengkap' };
@@ -718,8 +718,8 @@ function updateOrderStatus({ adminEmail, adminToken, rowIndex, status, paymentMe
     if (pmIdx >= 0) sheet.getRange(ri, pmIdx + 1).setValue(paymentMethod);
   }
 
-  // Kirim notif ke buyer jika status jadi Aktif atau Selesai
-  if (status === 'Aktif' || status === 'Selesai') {
+  // Kirim notif ke buyer jika status jadi Aktif atau Selesai (skip jika hanya update paymentMethod)
+  if (!skipNotify && (status === 'Aktif' || status === 'Selesai')) {
     try {
       const row = sheet.getRange(ri, 1, 1, 15).getValues()[0];
       const buyerNama   = String(row[2] || '');
