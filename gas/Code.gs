@@ -2478,7 +2478,7 @@ function buildCSSystemPrompt(guidesText) {
 3. Buat password baru di halaman Microsoft yang muncul
 4. Login ke office.com dengan akun yang dikirim
 5. Download Office di office.com/install → install → login dengan akun yang sama
-Akun aktif 5–15 menit setelah konfirmasi pembayaran (jam 08.00–22.00 WIB)
+Akun aktif 5–15 menit setelah konfirmasi pembayaran (jam 09.00–22.00 WIB)
 
 ## CARA AKTIVASI WINDOWS
 1. Klik kanan Start → Settings → System → Activation
@@ -2509,7 +2509,7 @@ Setiap produk punya halaman sendiri di: https://serabut.id/produk/[slug]
 Cara buat slug: nama produk → huruf kecil → spasi jadi "-" → hapus karakter non-alfanumerik kecuali "-"
 
 ## FAQ
-- Kapan akun dikirim? → 5–15 menit setelah pembayaran dikonfirmasi, jam 08.00–22.00 WIB
+- Kapan akun dikirim? → 5–15 menit setelah pembayaran dikonfirmasi, jam 09.00–22.00 WIB
 - Garansi? → Garansi penuh selama masa aktif
 - Metode bayar? → Transfer bank, QRIS, dompet digital — konfirmasi via WA setelah transfer
 - Cek status akun? → https://serabut.id/cek-status
@@ -2584,7 +2584,7 @@ function sendWAToGroup(message) {
 
 function sendWAWelcome(waNumber, nama) {
   if (!FONNTE_TOKEN || !waNumber) return;
-  const msg = `Halo, *${nama}*! 🎉\n\nSelamat bergabung di *Serabut Store*!\n\nAkun kamu sudah aktif. Terima kasih sudah menjadi bagian dari keluarga kami 😊\n\nYuk nikmati promo-promo eksklusif di *serabut.id* — hemat hingga 70% dari harga resmi! ✨\n\nAda pertanyaan? CS kami siap membantu kamu jam 08.00–22.00 WIB.\n\n— Tim Serabut Store 🛍️`;
+  const msg = `Halo, *${nama}*! 🎉\n\nSelamat bergabung di *Serabut Store*!\n\nAkun kamu sudah aktif. Terima kasih sudah menjadi bagian dari keluarga kami 😊\n\nYuk nikmati promo-promo eksklusif di *serabut.id* — hemat hingga 70% dari harga resmi! ✨\n\nAda pertanyaan? CS kami siap membantu kamu jam 09.00–22.00 WIB.\n\n— Tim Serabut Store 🛍️`;
   try {
     UrlFetchApp.fetch('https://api.fonnte.com/send', {
       method: 'post',
@@ -2707,7 +2707,7 @@ function buildOrderConfirmEmailHTML(nama, orderId, items, total) {
     <table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="border-radius:8px;background:#DC2626">
       <a href="https://serabut.id" target="_blank" style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">Cek Status Pesanan &rarr;</a>
     </td></tr></table>
-    <p style="margin:0;font-size:11px;color:#94a3b8">Ada pertanyaan? Hubungi CS kami di <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (08.00&ndash;22.00 WIB)</p>`;
+    <p style="margin:0;font-size:11px;color:#94a3b8">Ada pertanyaan? Hubungi CS kami di <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (09.00&ndash;22.00 WIB)</p>`;
   return _emailShell('Konfirmasi Pesanan', orderId, body);
 }
 
@@ -2727,7 +2727,7 @@ function buildStatusEmailHTML(nama, orderId, produkLine, harga, emailAktif, stat
     <table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="border-radius:8px;background:#DC2626">
       <a href="https://serabut.id" target="_blank" style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">Lihat Detail di Profil &rarr;</a>
     </td></tr></table>
-    <p style="margin:0;font-size:11px;color:#94a3b8">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (08.00&ndash;22.00 WIB)</p>`;
+    <p style="margin:0;font-size:11px;color:#94a3b8">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (09.00&ndash;22.00 WIB)</p>`;
   return _emailShell('Update Status Pesanan', headline, body);
 }
 
@@ -2773,7 +2773,7 @@ function buildWelcomeEmailHTML(nama) {
     <table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="border-radius:8px;background:#DC2626">
       <a href="https://serabut.id" target="_blank" style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">Kunjungi serabut.id &rarr;</a>
     </td></tr></table>
-    <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6">Ada pertanyaan? Hubungi CS kami di <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (08.00&ndash;22.00 WIB)</p>`;
+    <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6">Ada pertanyaan? Hubungi CS kami di <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (09.00&ndash;22.00 WIB)</p>`;
   return _emailShell('Selamat Datang', 'Akun Kamu Sudah Aktif', body);
 }
 
@@ -3043,7 +3043,7 @@ function sendBuyerOrderConfirmed(nama, email, wa, orderId, produk, varian, masaA
       <table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="border-radius:8px;background:#DC2626">
         <a href="https://serabut.id" target="_blank" style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">Cek Status Pesanan &rarr;</a>
       </td></tr></table>
-      <p style="margin:0;font-size:11px;color:#94a3b8">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (08.00&ndash;22.00 WIB)</p>`;
+      <p style="margin:0;font-size:11px;color:#94a3b8">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (09.00&ndash;22.00 WIB)</p>`;
     try { GmailApp.sendEmail(email, subject, '', { htmlBody: _emailShell('Konfirmasi Pembayaran', 'Pembayaran Diterima', bodyHtml), name: 'No Reply - Serabut Store' }); } catch(ex) { Logger.log('sendBuyerOrderConfirmed email error: ' + ex.message); }
   }
 }
@@ -3388,7 +3388,7 @@ function _populateDefaultSettings(sheet) {
     ['footer.desc',        'Software original terpercaya. Microsoft, Adobe, Windows & lebih banyak dengan harga terjangkau.'],
     ['footer.email',       'halo@serabut.id'],
     ['footer.phone',       '0888-150-0555'],
-    ['footer.jam',         '08.00 – 22.00 WIB'],
+    ['footer.jam',         '09.00 – 22.00 WIB'],
     ['footer.copyright',   '© 2019–2026 PT Serabut Solusi Digital. Seluruh hak cipta dilindungi.'],
     ['renewal.discountPct', '10'],
     ['renewal.discountMax', '10000'],
@@ -3982,7 +3982,7 @@ function sendReviewReminder({ sessionToken, email, orderId, produk, varian, buye
       <table cellpadding="0" cellspacing="0" style="margin:0 0 20px"><tr><td style="border-radius:8px;background:#DC2626">
         <a href="${prodUrl}" target="_blank" style="display:inline-block;padding:13px 28px;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none">Tulis Ulasan Sekarang &rarr;</a>
       </td></tr></table>
-      <p style="margin:0;font-size:12px;color:#94a3b8">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (08.00&ndash;22.00 WIB)</p>`;
+      <p style="margin:0;font-size:12px;color:#94a3b8">Ada pertanyaan? <a href="https://wa.me/628881500555" style="color:#2563eb">+62 888 1500 555</a> (09.00&ndash;22.00 WIB)</p>`;
     try { GmailApp.sendEmail(email, subject, '', { htmlBody: _emailShell('Review Produk', produk, bodyHtml), name: 'No Reply - Serabut Store' }); } catch(e) { Logger.log('Email reminder error: ' + e.message); }
   }
 
@@ -4308,7 +4308,7 @@ function sendQuotationEmail({ adminEmail, adminToken, to, subject, quoId, nama, 
             </td>
             <td style="padding:12px 16px" width="50%">
               <p style="margin:0 0 2px;font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:0.6px">Respon</p>
-              <p style="margin:0;font-size:13px;font-weight:700;color:#111827">08.00 - 22.00 WIB</p>
+              <p style="margin:0;font-size:13px;font-weight:700;color:#111827">09.00 - 22.00 WIB</p>
             </td>
           </tr>
         </table>
