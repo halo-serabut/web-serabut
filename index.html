@@ -260,6 +260,14 @@
             0%, 80%, 100% { transform: scale(.6); opacity: .4; }
             40%            { transform: scale(1); opacity: 1; }
         }
+        @keyframes draw-circle {
+            from { stroke-dashoffset: 276; }
+            to   { stroke-dashoffset: 0; }
+        }
+        @keyframes draw-check {
+            from { stroke-dashoffset: 60; }
+            to   { stroke-dashoffset: 0; }
+        }
     </style>
 </head>
 
@@ -2419,6 +2427,124 @@
                     </div>
                 </div>
             </div>
+
+        </div>
+    </section>
+
+    <!-- ───────── ORDER DETAIL / PAYMENT SUCCESS ───────── -->
+    <section x-show="activePage==='order-detail'" class="page-enter">
+        <div class="max-w-lg mx-auto px-4 py-8 pb-28 md:pb-12">
+
+            <!-- Payment Success State -->
+            <template x-if="orderDetailPayment==='success'">
+                <div class="text-center mb-8">
+                    <!-- Animated checkmark -->
+                    <div class="flex items-center justify-center mb-4">
+                        <div class="relative w-24 h-24">
+                            <svg class="w-24 h-24 text-green-500" viewBox="0 0 96 96" fill="none">
+                                <circle cx="48" cy="48" r="44" stroke="currentColor" stroke-width="4"
+                                    stroke-dasharray="276" stroke-dashoffset="0"
+                                    style="animation: draw-circle 0.5s ease forwards"/>
+                                <path stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"
+                                    d="M28 50l14 14 26-28"
+                                    stroke-dasharray="60" stroke-dashoffset="0"
+                                    style="animation: draw-check 0.4s 0.5s ease forwards"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="text-2xl font-black text-gray-900 mb-1">Pembayaran Berhasil! 🎉</h2>
+                    <p class="text-gray-500 text-sm">Tim kami sedang memproses pesananmu.<br>Estimasi <strong>5–30 menit</strong> (jam 08.00–22.00 WIB)</p>
+                </div>
+            </template>
+
+            <!-- Payment Cancel State -->
+            <template x-if="orderDetailPayment==='cancel'">
+                <div class="text-center mb-8">
+                    <div class="text-5xl mb-3">⏳</div>
+                    <h2 class="text-xl font-black text-gray-900 mb-1">Pembayaran Belum Selesai</h2>
+                    <p class="text-gray-500 text-sm">Pesananmu tersimpan. Kamu bisa bayar kapan saja sebelum kedaluwarsa.</p>
+                </div>
+            </template>
+
+            <!-- Default / No payment param -->
+            <template x-if="!orderDetailPayment">
+                <div class="text-center mb-8">
+                    <div class="text-5xl mb-3">📦</div>
+                    <h2 class="text-xl font-black text-gray-900 mb-1">Detail Pesanan</h2>
+                </div>
+            </template>
+
+            <!-- Order ID card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Order ID</span>
+                    <span class="text-xs font-black text-brand-600" x-text="orderDetailId"></span>
+                </div>
+                <div x-show="orderDetailLoading" class="flex justify-center py-4">
+                    <svg class="animate-spin w-6 h-6 text-brand-500" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                </div>
+                <template x-if="!orderDetailLoading && orderDetailData">
+                    <div>
+                        <!-- Status badge -->
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="text-xs font-bold px-3 py-1 rounded-full"
+                                :class="{
+                                    'bg-green-100 text-green-700': orderDetailData.status==='Aktif'||orderDetailData.status==='Selesai',
+                                    'bg-yellow-100 text-yellow-700': orderDetailData.status==='Diproses',
+                                    'bg-gray-100 text-gray-600': orderDetailData.status==='Pending',
+                                    'bg-red-100 text-red-600': orderDetailData.status==='Dibatalkan'
+                                }"
+                                x-text="orderDetailData.status"></span>
+                            <span class="text-xs text-gray-400" x-text="orderDetailData.tanggal"></span>
+                        </div>
+                        <!-- Items -->
+                        <template x-for="item in orderDetailData.items" :key="item.produk+item.varian">
+                            <div class="flex items-start gap-3 py-3 border-t border-gray-50">
+                                <img :src="getProductLogo(item.produk)" class="w-10 h-10 rounded-xl object-contain bg-gray-50 p-1 flex-none" onerror="this.src='https://via.placeholder.com/40'">
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-bold text-gray-900 leading-tight" x-text="item.produk"></p>
+                                    <p class="text-xs text-gray-500" x-text="[item.varian, item.masaAktif].filter(v=>v&&v!=='-').join(' · ')"></p>
+                                </div>
+                                <span class="text-sm font-black text-gray-900 flex-none" x-text="'Rp '+Number(item.harga).toLocaleString('id-ID')"></span>
+                            </div>
+                        </template>
+                        <!-- Total -->
+                        <div class="flex justify-between items-center pt-3 border-t border-gray-100">
+                            <span class="text-sm font-bold text-gray-700">Total</span>
+                            <span class="text-base font-black text-brand-600" x-text="'Rp '+Number(orderDetailData.total).toLocaleString('id-ID')"></span>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="!orderDetailLoading && !orderDetailData">
+                    <p class="text-sm text-gray-400 text-center py-2">Data pesanan tidak ditemukan</p>
+                </template>
+            </div>
+
+            <!-- Next steps (success only) -->
+            <template x-if="orderDetailPayment==='success'">
+                <div class="bg-green-50 border border-green-100 rounded-2xl p-4 mb-4">
+                    <p class="text-xs font-bold text-green-800 mb-2">📋 Langkah selanjutnya</p>
+                    <ul class="text-xs text-green-700 space-y-1">
+                        <li>✅ Screenshot Order ID kamu sebagai bukti</li>
+                        <li>⏳ Tim kami proses dalam 5–30 menit</li>
+                        <li>📲 Akun dikirim ke WA / email kamu</li>
+                    </ul>
+                </div>
+            </template>
+
+            <!-- CTA Buttons -->
+            <button @click="openWhatsAppCS()"
+                class="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 rounded-2xl transition-all mb-3">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Hubungi CS via WhatsApp
+            </button>
+            <button @click="navigateTo('profile'); profileTab='pesanan'"
+                class="w-full text-center text-sm text-gray-500 py-2 hover:text-brand-600 transition-colors">
+                Lihat semua pesananku →
+            </button>
 
         </div>
     </section>
@@ -6221,6 +6347,10 @@ function serabutStore() {
         pdTab: 'deskripsi',
         selectedVariant:      null,
         pendingProductSlug:   null,
+        orderDetailId:        null,
+        orderDetailPayment:   null, // 'success' | 'cancel' | null
+        orderDetailLoading:   false,
+        orderDetailData:      null,
 
         // Auth
         authTab:      'login',
@@ -7535,7 +7665,7 @@ function serabutStore() {
         },
 
         startPaymentRedirect(orderId, paymentUrl) {
-            this.redirectPayment = { orderId, paymentUrl, countdown: 5 };
+            this.redirectPayment = { orderId, paymentUrl, countdown: 3 };
             const tick = setInterval(() => {
                 this.redirectPayment.countdown--;
                 if (this.redirectPayment.countdown <= 0) {
@@ -7837,6 +7967,37 @@ function serabutStore() {
             const el = this.$refs.csScrollArea;
             if (el) el.scrollTop = el.scrollHeight;
         },
+
+        async loadOrderDetail(orderId) {
+            this.orderDetailLoading = true;
+            this.orderDetailData = null;
+            try {
+                const res = await this.gasPost({ action: 'getOrders', email: this.currentUser?.email || '', sessionToken: this.currentUser?.sessionToken || '' });
+                if (res.success && Array.isArray(res.orders)) {
+                    const orderItems = res.orders.filter(o => o.orderId === orderId);
+                    if (orderItems.length > 0) {
+                        const first = orderItems[0];
+                        this.orderDetailData = {
+                            status:  first.status,
+                            tanggal: first.tanggal,
+                            total:   orderItems.reduce((s, o) => s + Number(o.harga || 0), 0),
+                            items:   orderItems.map(o => ({ produk: o.produk, varian: o.varian, masaAktif: o.masaAktif, harga: o.harga })),
+                        };
+                    }
+                }
+            } catch(e) { /* silent */ }
+            this.orderDetailLoading = false;
+        },
+
+        goToOrderDetail(orderId, payment) {
+            this.orderDetailId = orderId;
+            this.orderDetailPayment = payment || null;
+            this.orderDetailData = null;
+            this.activePage = 'order-detail';
+            history.pushState({ page: 'order-detail', orderId, payment }, '', '/pesanan/' + orderId + (payment ? '?payment=' + payment : ''));
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            this.loadOrderDetail(orderId);
+        },
         flashItemDrop(toIdx) {
             const from = this.flashItemDragIdx;
             if (from === null || from === toIdx) return;
@@ -7951,9 +8112,20 @@ function serabutStore() {
         initPageFromURL() {
             const pathMap = { '/':'home', '/produk':'catalog', '/panduan':'panduan', '/faq':'faq', '/cek-status':'status', '/admin':'admin', '/akun':'profile' };
             const path = window.location.pathname;
+            const searchParams = new URLSearchParams(window.location.search);
+            // Detect /pesanan/[orderId] — order detail page
+            const pesananMatch = path.match(/^\/pesanan\/(.+)$/);
+            if (pesananMatch) {
+                const orderId = pesananMatch[1];
+                const payment = searchParams.get('payment'); // 'success' | 'cancel'
+                this.orderDetailId = orderId;
+                this.orderDetailPayment = payment;
+                this.activePage = 'order-detail';
+                history.replaceState({ page: 'order-detail', orderId, payment }, '', path);
+                this.$nextTick(() => this.loadOrderDetail(orderId));
             // Detect /produk/[slug] — product detail deep link
-            const produkMatch = path.match(/^\/produk\/(.+)$/);
-            if(produkMatch) {
+            } else if (path.match(/^\/produk\/(.+)$/)) {
+                const produkMatch = path.match(/^\/produk\/(.+)$/);
                 this.pendingProductSlug = produkMatch[1];
                 this.activePage = 'catalog'; // will redirect after products load
                 history.replaceState({ page:'product-detail', slug:produkMatch[1] }, '', path);

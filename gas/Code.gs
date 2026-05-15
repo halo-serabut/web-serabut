@@ -87,6 +87,16 @@ function doPost(e) {
     return _jsonOut({ success: false, error: 'Bad request' });
   }
 
+  // [SEC-03] Centralized session validation untuk semua user-authenticated endpoints
+  const USER_AUTH_ACTIONS = [
+    'getOrders','getProfile','updateProfile','changePassword',
+    'confirmPayment','checkIPaymuOrderStatus','cancelOrder',
+    'submitReview','getBuyerReviews','likeReview','editReview','deleteReview','sendReviewReminder',
+  ];
+  if (USER_AUTH_ACTIONS.includes(action) && !validateSession(params.email, params.sessionToken)) {
+    return _jsonOut({ success: false, error: 'Sesi tidak valid. Silakan login ulang.' });
+  }
+
   try {
     switch (action) {
       // Auth
@@ -184,6 +194,31 @@ function _generateSalt() {
 // [SEC] Terapkan server-side salt ke client hash: SHA256(clientHash + ':' + salt)
 function _applyServerSalt(clientHash, salt) {
   return _sha256GAS(String(clientHash) + ':' + String(salt));
+}
+
+// [SEC-15] Cegah formula injection di Google Sheets — prefix ' jika string diawali = + - @ |
+function _sanitizeCell(val) {
+  const s = String(val === null || val === undefined ? '' : val);
+  return /^[=+\-@|]/.test(s) ? "'" + s : s;
+}
+
+// ────────────────────────────────────────────────────────
+//  [SEC-11] ADMIN AUDIT LOG — catat setiap aksi admin ke sheet "Admin-Log"
+// ────────────────────────────────────────────────────────
+function _logAdminAction(adminEmail, action, details) {
+  try {
+    const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+    let log     = ss.getSheetByName('Admin-Log');
+    if (!log) {
+      log = ss.insertSheet('Admin-Log');
+      log.appendRow(['Timestamp', 'Admin Email', 'Action', 'Details']);
+      log.getRange(1, 1, 1, 4).setFontWeight('bold');
+    }
+    const ts = formatJkt(new Date(), 'yyyy-MM-dd HH:mm:ss');
+    log.appendRow([ts, adminEmail, action, typeof details === 'object' ? JSON.stringify(details) : String(details || '')]);
+  } catch (e) {
+    Logger.log('_logAdminAction error (non-fatal): ' + e.message);
+  }
 }
 
 // [SEC] Rate limiter via CacheService — return false jika sudah melebihi batas
@@ -498,6 +533,9 @@ function addProduct({ adminEmail, adminToken, nama, varian, masaAktif, harga, li
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
   if (!nama || !varian) return { success: false, error: 'Nama dan varian wajib diisi' };
+  // [SEC-06] Validasi harga: harus angka positif
+  const hargaNum = Number(harga);
+  if (!hargaNum || hargaNum <= 0) return { success: false, error: 'Harga harus lebih dari Rp 0' };
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(TAB_CATALOG);
@@ -515,14 +553,14 @@ function addProduct({ adminEmail, adminToken, nama, varian, masaAktif, harga, li
   const numCols = Math.max(headers.length, cBen >= 0 ? cBen + 1 : 15);
 
   const row   = new Array(numCols).fill('');
-  row[0] = String(nama).trim();
-  row[1] = String(varian).trim();
-  row[2] = String(masaAktif || '-').trim();
+  row[0] = _sanitizeCell(nama);
+  row[1] = _sanitizeCell(varian);
+  row[2] = _sanitizeCell(masaAktif || '-');
   row[3] = Number(harga) || 0;
-  row[4] = String(linkProduk || '').trim();
+  row[4] = _sanitizeCell(linkProduk || '');
   row[5] = (aktif === 'true' || aktif === true);
   row[6] = (stok === '' || stok === null || stok === undefined) ? '' : Number(stok);
-  if (cKat  >= 0) row[cKat]  = String(kategori || '').trim();
+  if (cKat  >= 0) row[cKat]  = _sanitizeCell(kategori || '');
   if (cIcon >= 0) row[cIcon] = String(iconUrl  || '').trim();
   if (benefits !== undefined && benefits !== null && benefits !== '') {
     if (cBen >= 0) row[cBen] = String(benefits).trim();
@@ -534,6 +572,7 @@ function addProduct({ adminEmail, adminToken, nama, varian, masaAktif, harga, li
     sheet.getRange(sheet.getLastRow(), 15).setValue(String(benefits).trim());
   }
 
+  _logAdminAction(adminEmail, 'addProduct', { nama, varian, masaAktif, harga, kategori });
   return { success: true };
 }
 
@@ -544,6 +583,11 @@ function updateProduct({ adminEmail, adminToken, rowIndex, nama, varian, masaAkt
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
   if (!rowIndex) return { success: false, error: 'rowIndex diperlukan' };
+  // [SEC-06] Validasi harga: harus angka positif jika disertakan
+  if (harga !== undefined && harga !== null && harga !== '') {
+    const hargaNum = Number(harga);
+    if (!hargaNum || hargaNum <= 0) return { success: false, error: 'Harga harus lebih dari Rp 0' };
+  }
 
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
   if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
@@ -556,19 +600,20 @@ function updateProduct({ adminEmail, adminToken, rowIndex, nama, varian, masaAkt
   const cIcon   = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
   const cBen    = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
 
-  sheet.getRange(row, 1).setValue(String(nama || '').trim());
-  sheet.getRange(row, 2).setValue(String(varian || '').trim());
-  sheet.getRange(row, 3).setValue(String(masaAktif || '-').trim());
+  sheet.getRange(row, 1).setValue(_sanitizeCell(nama || ''));
+  sheet.getRange(row, 2).setValue(_sanitizeCell(varian || ''));
+  sheet.getRange(row, 3).setValue(_sanitizeCell(masaAktif || '-'));
   sheet.getRange(row, 4).setValue(Number(harga) || 0);
-  sheet.getRange(row, 5).setValue(String(linkProduk || '').trim());
+  sheet.getRange(row, 5).setValue(_sanitizeCell(linkProduk || ''));
   sheet.getRange(row, 6).setValue(isAktif);
   sheet.getRange(row, 7).setValue(stokVal);
-  if (cKat  >= 0 && kategori !== undefined) sheet.getRange(row, cKat  + 1).setValue(String(kategori || '').trim());
-  if (cIcon >= 0)                           sheet.getRange(row, cIcon + 1).setValue(String(iconUrl  || '').trim());
+  if (cKat  >= 0 && kategori !== undefined) sheet.getRange(row, cKat  + 1).setValue(_sanitizeCell(kategori || ''));
+  if (cIcon >= 0)                           sheet.getRange(row, cIcon + 1).setValue(_sanitizeCell(iconUrl  || ''));
   if (benefits !== undefined && benefits !== null && benefits !== '') {
     sheet.getRange(row, cBen >= 0 ? cBen + 1 : 15).setValue(String(benefits).trim());
   }
 
+  _logAdminAction(adminEmail, 'updateProduct', { rowIndex, nama, varian, masaAktif, harga, aktif, kategori });
   return { success: true };
 }
 
@@ -631,6 +676,7 @@ function deleteProduct({ adminEmail, adminToken, rowIndex }) {
   if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
 
   sheet.deleteRow(Number(rowIndex));
+  _logAdminAction(adminEmail, 'deleteProduct', { rowIndex });
   return { success: true };
 }
 
@@ -734,6 +780,7 @@ function updateOrderStatus({ adminEmail, adminToken, rowIndex, status, paymentMe
       sendBuyerStatusNotif(buyerWa, buyerEmail, buyerNama, orderId, produk, varian, masaAktif, harga, emailAktif, status);
     } catch(e) { Logger.log('Notif buyer error: ' + e.message); }
   }
+  _logAdminAction(adminEmail, 'updateOrderStatus', { rowIndex, status, paymentMethod });
   return { success: true };
 }
 
@@ -755,6 +802,7 @@ function setUserRole({ adminEmail, adminToken, targetEmail, role }) {
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][1]).toLowerCase().trim() !== targetEmail.toLowerCase().trim()) continue;
     sheet.getRange(i + 1, 10).setValue(role); // col J = index 9 = Role
+    _logAdminAction(adminEmail, 'setUserRole', { targetEmail, role });
     return { success: true };
   }
   return { success: false, error: 'Email tidak ditemukan' };
@@ -1161,6 +1209,12 @@ function verifyOTP({ email, otp }) {
 // ────────────────────────────────────────────────────────
 function resendOTP({ email }) {
   if (!email) return { success: false, error: 'Email tidak boleh kosong' };
+  const emailNorm = email.toLowerCase().trim();
+
+  // [SEC-07] Rate limit resendOTP: max 3 kali per jam — cegah bypass brute force OTP via resend
+  if (!_rateLimit('resendotp_' + emailNorm, 3, 3600)) {
+    return { success: false, error: 'Terlalu banyak permintaan OTP. Tunggu 1 jam.' };
+  }
 
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(TAB_USERS);
@@ -1169,7 +1223,6 @@ function resendOTP({ email }) {
   const data    = sheet.getDataRange().getValues();
   const headers = data[0].map(h => String(h).toLowerCase().trim());
   const attCol  = _colIndex(headers, 'otp attempts');
-  const emailNorm = email.toLowerCase().trim();
 
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][1]).toLowerCase().trim() !== emailNorm) continue;
@@ -1415,27 +1468,17 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
 
   let groupMsg;
   if (isFamily) {
-    groupMsg = `*ORDER 365 FAMILY: ${produk}*\nOrder ID: *${orderId}*\nEmail Microsoft (invite): *${microsoftEmail || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNama Pembeli: ${userNama}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *Belum payment, please follow up!*`;
+    groupMsg = `*ORDER 365 FAMILY: ${produk}*\nOrder ID: *${orderId}*\nEmail Microsoft (invite): *${microsoftEmail || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNama Pembeli: ${userNama}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
   } else if (isWeb) {
-    groupMsg = `*ORDER WEB: ${produk}*\nOrder ID: *${orderId}*\nNama MS: ${msNama || '-'}\nUsername Request: *${username || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *Belum payment, please follow up!*`;
+    groupMsg = `*ORDER WEB: ${produk}*\nOrder ID: *${orderId}*\nNama MS: ${msNama || '-'}\nUsername Request: *${username || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
   } else {
-    groupMsg = `*ORDER BARU: ${produk}*\nOrder ID: *${orderId}*\nVarian: ${varian || '-'}\nDurasi: ${masaAktif || '-'}\nNama: ${userNama}\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *Belum payment, please follow up!*`;
+    groupMsg = `*ORDER BARU: ${produk}*\nOrder ID: *${orderId}*\nVarian: ${varian || '-'}\nDurasi: ${masaAktif || '-'}\nNama: ${userNama}\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
   }
 
   // Kirim notif WAG segera saat order dibuat
   sendWAToGroup(groupMsg);
 
-  // Kirim WA + email ke buyer: "pesanan diterima"
-  if (userWa || userEmail) {
-    sendBuyerOrderConfirm(
-      userWa ? _normalizeWA(userWa) : '',
-      userEmail || '',
-      userNama || 'Pembeli',
-      orderId,
-      [{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum }],
-      hargaNum
-    );
-  }
+  // WA + email ke buyer dikirim setelah pembayaran berhasil (xenditCallback / syncOrders)
 
   const isUat      = String(env || '').toLowerCase() === 'uat';
   const paymentMode = isUat ? 'xendit' : (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
@@ -1658,7 +1701,15 @@ function changePassword({ email, sessionToken, oldPassword, oldPasswordLegacy, n
                      (oldPasswordLegacy && storedPw === String(oldPasswordLegacy));
     if (!matched) return { success: false, error: 'Password lama salah' };
     sheet.getRange(i + 1, 4).setValue(newPassword);
-    return { success: true };
+
+    // [SEC-05] Invalidate session setelah ganti password — paksa login ulang
+    const hdrs   = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(h => String(h).toLowerCase().trim());
+    const tokCol = _colIndex(hdrs, 'session token', 'sessiontoken');
+    const expCol = _colIndex(hdrs, 'session token expiry', 'sessiontokenexpiry');
+    if (tokCol >= 0) sheet.getRange(i + 1, tokCol + 1).setValue('');
+    if (expCol >= 0) sheet.getRange(i + 1, expCol + 1).setValue('');
+
+    return { success: true, requireLogin: true };
   }
   return { success: false, error: 'User tidak ditemukan' };
 }
@@ -1841,23 +1892,10 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
                       firstVar.includes('web')    ? `ORDER WEB: ${firstProduk}` :
                       firstProduk.toLowerCase().includes('adobe') ? `ORDER ADOBE: ${firstProduk}` :
                       items.length > 1 ? `ORDER BARU (${items.length} item)` : `ORDER BARU: ${firstProduk}`;
-  const cartGroupMsg = `*${cartTitle}*\nOrder ID: *${orderId}*\nPembeli: ${userNama}\n────────────────────\n${waLines.join('\n')}\n────────────────────\nTotal: Rp ${totalHarga.toLocaleString('id-ID')}\nStatus: *Belum payment, please follow up!*`;
+  const cartGroupMsg = `*${cartTitle}*\nOrder ID: *${orderId}*\nPembeli: ${userNama}\n────────────────────\n${waLines.join('\n')}\n────────────────────\nTotal: Rp ${totalHarga.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
   sendWAToGroup(cartGroupMsg);
 
-  // Kirim WA + email ke buyer: "pesanan diterima"
-  const buyerNotifItems = computedItems;
-  if (userWa || userEmail) {
-    try {
-      sendBuyerOrderConfirm(
-        userWa ? _normalizeWA(userWa) : '',
-        userEmail || '',
-        userNama || 'Pembeli',
-        orderId,
-        buyerNotifItems,
-        totalHarga
-      );
-    } catch(e) { Logger.log('createCartOrder: buyer notif error: ' + e.message); }
-  }
+  // WA + email ke buyer dikirim setelah pembayaran berhasil (xenditCallback / syncOrders)
 
   const isUat       = String(env || '').toLowerCase() === 'uat';
   const paymentMode = isUat ? 'xendit' : (PropertiesService.getScriptProperties().getProperty('PAYMENT_MODE') || 'xendit').toLowerCase();
@@ -2005,6 +2043,11 @@ function ipaymuCallback(params) {
 
   for (var i = 1; i < data.length; i++) {
     if (String(data[i][idCol]).trim() === String(referenceId).trim()) {
+      // [SEC-04] Idempotency: skip jika order sudah dibayar sebelumnya
+      if (psCol >= 0 && String(data[i][psCol]).trim() === 'Berhasil') {
+        Logger.log('ipaymuCallback: already paid, skip: ' + referenceId);
+        return { success: true };
+      }
       if (data[i][stCol] === 'Pending') {
         sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
         Logger.log('ipaymuCallback: order ' + referenceId + ' → Diproses');
@@ -2330,6 +2373,27 @@ function ensureUserSheetHeaders(sheet) {
 function handleCSChat({ sessionId, message, userName, userEmail }) {
   if (!sessionId || !message) return { success: false, error: 'sessionId dan message wajib' };
 
+  // [SEC-16] Rate limit: max 15 pesan per sesi per menit
+  if (!_rateLimit('cschat_' + sessionId, 15, 60)) {
+    return { success: false, error: 'Terlalu cepat. Tunggu sebentar sebelum mengirim pesan lagi.' };
+  }
+
+  // [SEC-16] Max panjang pesan
+  const msgClean = String(message).trim().substring(0, 500);
+
+  // [SEC-16] Prompt injection detection — pola umum untuk manipulasi AI
+  const injectionPatterns = [
+    /ignore (previous|above|system|all)/i,
+    /forget (all|everything|your|the)/i,
+    /you are now/i,
+    /act as (a |an )?(?!customer|buyer|user)/i,
+    /\[system\]/i,
+    /new instruction/i,
+  ];
+  if (injectionPatterns.some(p => p.test(msgClean))) {
+    return { success: false, error: 'Format pesan tidak valid. Silakan ulangi pertanyaan kamu.' };
+  }
+
   const sheet   = getOrCreateCSSheet();
   const history = getChatHistory(sheet, sessionId);
   const guides  = loadGuidesText();
@@ -2337,7 +2401,7 @@ function handleCSChat({ sessionId, message, userName, userEmail }) {
   const messages = [
     { role: 'system', content: buildCSSystemPrompt(guides) },
     ...history,
-    { role: 'user', content: String(message).trim() },
+    { role: 'user', content: msgClean },
   ];
 
   const aiResponse = callOpenRouter(messages);
@@ -2346,11 +2410,11 @@ function handleCSChat({ sessionId, message, userName, userEmail }) {
   }
 
   let reply      = (aiResponse.choices[0].message.content || '').trim();
-  const escalate = shouldEscalate(message, reply);
+  const escalate = shouldEscalate(msgClean, reply);
   reply          = reply.replace('[ESCALATE]', '').trim();
 
   const ts = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss');
-  sheet.appendRow([sessionId, ts, 'user',      String(message).trim(), userName || '', userEmail || '', false]);
+  sheet.appendRow([sessionId, ts, 'user',      msgClean, userName || '', userEmail || '', false]);
   sheet.appendRow([sessionId, ts, 'assistant', reply,                   userName || '', userEmail || '', escalate]);
 
   return { success: true, reply, escalate };
@@ -2610,7 +2674,7 @@ function sendBuyerOrderConfirm(waNumber, email, nama, orderId, items, total) {
     return line;
   }).join('\n');
 
-  const waMsg = `Halo Kak *${nama}*! 👋\n\nTerima kasih sudah order di *Serabut Store*! 🛍️\n\nBerikut detail pesanan kamu:\n\n*Order ID: ${orderId}*\n────────────────────\n${itemLines}\n────────────────────\nTotal: *Rp ${Number(total).toLocaleString('id-ID')}*\n\nTim kami akan segera menghubungi kamu untuk konfirmasi & proses pesanan.\nMohon tunggu ya! 🙏\n\n— Serabut Store`;
+  const waMsg = `Halo Kak *${nama}*! 👋\n\nPesanan kamu di *Serabut Store* sudah kami terima dan sedang kami proses! ✅\n\nBerikut detail pesanan kamu:\n\n*Order ID: ${orderId}*\n────────────────────\n${itemLines}\n────────────────────\nTotal: *Rp ${Number(total).toLocaleString('id-ID')}*\n\nMohon tunggu ya! 🙏\n\n— Serabut Store`;
 
   if (FONNTE_TOKEN && waNumber) {
     try {
@@ -2876,16 +2940,19 @@ function _xenditRequest(endpoint, body) {
   const apiKey = (props.getProperty('XENDIT_API_KEY') || '').trim();
   if (!apiKey) return { success: false, error: 'XENDIT_API_KEY belum dikonfigurasi' };
 
-  const auth = Utilities.base64Encode(apiKey + ':');
-  const resp = UrlFetchApp.fetch('https://api.xendit.co' + endpoint, {
-    method: 'post',
+  const auth    = Utilities.base64Encode(apiKey + ':');
+  const isGet   = body === null || body === undefined;
+  const options = {
+    method: isGet ? 'get' : 'post',
     headers: {
       'Authorization': 'Basic ' + auth,
       'Content-Type':  'application/json',
     },
-    payload: JSON.stringify(body),
     muteHttpExceptions: true
-  });
+  };
+  if (!isGet) options.payload = JSON.stringify(body);
+
+  const resp   = UrlFetchApp.fetch('https://api.xendit.co' + endpoint, options);
   const result = JSON.parse(resp.getContentText());
   Logger.log('Xendit [' + resp.getResponseCode() + ']: ' + JSON.stringify(result).substring(0, 300));
   return result;
@@ -2916,8 +2983,8 @@ function createXenditInvoice({ orderId, items, buyerName, buyerEmail, buyerPhone
       invoice_reminder: buyerEmail ? ['email','whatsapp'] : ['whatsapp'],
       invoice_paid:     buyerEmail ? ['email','whatsapp'] : ['whatsapp'],
     },
-    success_redirect_url: 'https://serabut.id/?payment=success&orderId=' + orderId,
-    failure_redirect_url: 'https://serabut.id/?payment=cancel&orderId=' + orderId,
+    success_redirect_url: 'https://serabut.id/pesanan/' + orderId + '?payment=success',
+    failure_redirect_url: 'https://serabut.id/pesanan/' + orderId + '?payment=cancel',
     currency: 'IDR',
     items:    xenItems,
     fees: [],
@@ -2931,11 +2998,16 @@ function createXenditInvoice({ orderId, items, buyerName, buyerEmail, buyerPhone
 }
 
 // Validasi callback webhook dari Xendit
-function xenditWebhookValid(callbackToken) {
+function xenditWebhookValid(callbackToken, payloadTimestamp) {
   const props = PropertiesService.getScriptProperties();
   const token = (props.getProperty('XENDIT_WEBHOOK_TOKEN') || '').trim();
-  if (!token) return true; // skip validasi jika token belum diset
-  return callbackToken === token;
+  // [SEC-08] Tolak jika XENDIT_WEBHOOK_TOKEN belum diset — jangan pernah skip validasi
+  if (!token) {
+    Logger.log('[SEC] PERINGATAN: XENDIT_WEBHOOK_TOKEN belum diset di Script Properties! Webhook ditolak.');
+    return false;
+  }
+  if (callbackToken !== token) return false;
+  return true;
 }
 
 // ────────────────────────────────────────────────────────
@@ -2945,8 +3017,10 @@ function xenditCallback(params, e) {
   // Validasi: GAS tidak expose HTTP headers, jadi pakai query param ?token=... di webhook URL
   // Set webhook URL di Xendit: https://script.google.com/.../exec?action=xenditCallback&token=WEBHOOK_TOKEN
   try {
-    const qToken = (e && e.parameter && e.parameter.token) || '';
-    if (!xenditWebhookValid(qToken)) {
+    // Baca token dari query param (direct) atau body (_xenditToken dari CF Worker proxy)
+    const qToken = (e && e.parameter && e.parameter.token) || params._xenditToken || '';
+    // [SEC-08] Pass timestamp dari payload untuk replay protection
+    if (!xenditWebhookValid(qToken, params.updated || params.created)) {
       Logger.log('xenditCallback: invalid token');
       return { success: false, error: 'Unauthorized' };
     }
@@ -2982,6 +3056,11 @@ function xenditCallback(params, e) {
     Logger.log('xenditCallback: orderId=' + extId + ' status=' + status + ' curStatus=' + curStatus);
 
     if (status === 'PAID') {
+      // [SEC-04] Idempotency: skip jika order sudah bertanda Lunas
+      if (psCol >= 0 && String(data[i][psCol]).trim() === 'Lunas') {
+        Logger.log('xenditCallback: already paid (Lunas), skip: ' + extId);
+        break;
+      }
       // Update status → Diproses jika masih Pending
       if (curStatus === 'Pending' || curStatus === 'Dibatalkan') {
         sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
@@ -3150,7 +3229,7 @@ function iPaymuAdminGetTransaction(params) {
   return { success: false, error: res.Message || 'Transaksi tidak ditemukan' };
 }
 
-// Sync semua order Pending/Dibatalkan ke iPaymu — pakai History API lalu match ReferenceId
+// Sync semua order Pending ke Xendit — cek invoice by external_id per orderId
 function iPaymuAdminSyncOrders(params) {
   const authErr = _requireAdmin(params.adminEmail, params.adminToken);
   if (authErr) return { success: false, error: authErr };
@@ -3178,71 +3257,39 @@ function iPaymuAdminSyncOrders(params) {
   const eaCol    = headers.indexOf('email aktif');
   const erCol    = headers.indexOf('email reminder');
 
-  // Kumpulkan orderId unik yang Pending atau Dibatalkan
+  // Kumpulkan orderId unik yang Pending
   const pendingIds = {};
   for (let i = 1; i < data.length; i++) {
     const st = String(data[i][stCol] || '').trim();
-    if (st === 'Pending' || st === 'Dibatalkan') {
+    if (st === 'Pending') {
       const oid = String(data[i][idCol] || '').trim();
       if (oid) pendingIds[oid] = true;
     }
   }
 
   const pendingCount = Object.keys(pendingIds).length;
-  Logger.log('syncOrders: ' + pendingCount + ' pending orders, list: ' + JSON.stringify(Object.keys(pendingIds)));
-
+  Logger.log('syncOrders: ' + pendingCount + ' pending orders');
   if (pendingCount === 0) return { success: true, checked: 0, updated: 0 };
 
-  const props = PropertiesService.getScriptProperties();
-  const va    = (props.getProperty('IPAYMU_VA') || '').trim();
-
-  // Ambil history iPaymu TANPA filter status — filter paid di kode kita
-  // (status filter iPaymu kadang return kosong — lebih aman ambil semua lalu filter)
-  const paidMap = {}; // referenceId → paymentMethod
-  let page = 1;
-  let apiError = '';
-  while (page <= 10) {
+  // Cek setiap orderId ke Xendit via external_id
+  const paidMap = {}; // orderId → paymentMethod
+  for (const orderId of Object.keys(pendingIds)) {
     try {
-      const histRes = _iPaymuRequest('https://my.ipaymu.com/api/v2/history', {
-        account: va, page: page, limit: 20, orderBy: 'id', order: 'DESC', date: 'created_at'
-      });
-      Logger.log('syncOrders history page ' + page + ' HTTP=' + histRes.Status + ' trx=' + JSON.stringify((histRes.Data || {}).Transaction || []).substring(0, 300));
-      if (Number(histRes.Status) !== 200 || !histRes.Data || !histRes.Data.Transaction) {
-        apiError = histRes.Message || ('HTTP ' + histRes.Status);
-        break;
-      }
-      const trxList = histRes.Data.Transaction;
-      if (!trxList || trxList.length === 0) break;
-
-      trxList.forEach(function(t) {
-        const ref        = String(t.ReferenceId || '').trim();
-        const stNum      = Number(t.Status);
-        const stDesc     = String(t.StatusDesc || '').toLowerCase();
-        const paidStatus = String(t.PaidStatus || '').toLowerCase();
-        // Status 1 = Berhasil, 6 = Berhasil Unsettled, 7 = Escrow
-        const isPaid = (stNum === 1 || stNum === 6 || stNum === 7 ||
-                        stDesc === 'berhasil' || paidStatus === 'paid');
-        if (ref && ref.startsWith('SRB-') && isPaid) {
-          paidMap[ref] = t.PaymentMethod || t.PaymentChannel || 'iPaymu';
-          Logger.log('syncOrders: found paid ref=' + ref + ' method=' + paidMap[ref] + ' status=' + stNum + '/' + stDesc);
+      const res = _xenditRequest('/v2/invoices?external_id=' + encodeURIComponent(orderId), null);
+      const invoices = Array.isArray(res) ? res : [];
+      for (const inv of invoices) {
+        if (String(inv.status || '').toUpperCase() === 'PAID') {
+          paidMap[orderId] = inv.payment_method || inv.payment_channel || 'Xendit';
+          Logger.log('syncOrders: paid orderId=' + orderId + ' method=' + paidMap[orderId]);
+          break;
         }
-      });
-
-      const totalPages = (histRes.Data.Pagination || {}).total_pages || 1;
-      if (page >= totalPages || trxList.length < 20) break;
-      page++;
+      }
     } catch(e) {
-      Logger.log('syncOrders history error page ' + page + ': ' + e.message);
-      apiError = e.message;
-      break;
+      Logger.log('syncOrders Xendit check error for ' + orderId + ': ' + e.message);
     }
   }
 
   Logger.log('syncOrders: paidMap = ' + JSON.stringify(paidMap));
-
-  if (apiError && Object.keys(paidMap).length === 0) {
-    return { success: false, error: 'Gagal ambil history iPaymu: ' + apiError };
-  }
 
   // Ensure payment cols exist
   let pmCol = headers.indexOf('payment method');
@@ -3829,7 +3876,8 @@ function getBuyerReviews({ sessionToken, email }) {
 function submitReview({ sessionToken, email, orderId, produk, varian, rating, komentar, anonim }) {
   if (!orderId || !produk || !rating) return { success: false, error: 'Data tidak lengkap' };
   if (rating < 1 || rating > 5)      return { success: false, error: 'Rating tidak valid' };
-  if (!komentar || komentar.trim().length < 5) return { success: false, error: 'Komentar minimal 5 karakter' };
+  if (!komentar || komentar.trim().length < 5)  return { success: false, error: 'Komentar minimal 5 karakter' };
+  if (komentar.trim().length > 1000)            return { success: false, error: 'Komentar maksimal 1000 karakter' }; // [SEC-17]
 
   // Resolve nama buyer
   let namaTampil = 'Anonim';
@@ -4173,6 +4221,7 @@ function deleteReview({ adminEmail, adminToken, reviewId }) {
     if (String(data[i][cId]) === String(reviewId)) {
       sheet.deleteRow(i + 1);
       SpreadsheetApp.flush();
+      _logAdminAction(adminEmail, 'deleteReview', { reviewId });
       return { success: true };
     }
   }
@@ -4194,6 +4243,7 @@ function toggleReview({ adminEmail, adminToken, reviewId, published }) {
     if (String(data[i][cId]) === String(reviewId)) {
       sheet.getRange(i + 1, cPub + 1).setValue(published ? true : false);
       SpreadsheetApp.flush();
+      _logAdminAction(adminEmail, 'toggleReview', { reviewId, published });
       return { success: true };
     }
   }
