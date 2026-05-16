@@ -5021,17 +5021,21 @@
             <div class="h-px bg-gradient-to-r from-transparent via-brand-600 to-transparent opacity-60 mb-14"></div>
 
             <!-- CTA row -->
-            <div class="flex items-center justify-between mb-14">
-                <div>
-                    <div class="flex items-center gap-3 mb-2">
-                        <img src="/logo.png" alt="Serabut" class="w-10 h-10 rounded-xl">
-                        <span class="font-black text-xl tracking-tight">Serabut Store</span>
+            <div class="flex items-center gap-10 mb-14">
+                <!-- Left: brand + desc -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 mb-3">
+                        <img src="/logo.png" alt="Serabut" class="w-10 h-10 rounded-xl flex-none">
+                        <span class="font-black text-xl tracking-tight text-white">Serabut Store</span>
                     </div>
-                    <p class="text-gray-500 text-sm leading-relaxed " x-text="siteSettings.footer.desc"></p>
+                    <p class="text-gray-400 text-sm leading-relaxed max-w-md" x-text="siteSettings.footer.desc"></p>
                 </div>
-                <div class="flex items-center gap-3">
+                <!-- Right: CTA card -->
+                <div class="flex-none bg-gray-800 rounded-2xl px-8 py-6 flex flex-col items-center gap-3 border border-gray-700 min-w-[220px]">
+                    <p class="text-white text-sm font-semibold text-center">Siap mulai berlangganan?</p>
+                    <p class="text-gray-400 text-xs text-center">Aktivasi instan, harga terjangkau</p>
                     <button @click="setPage('catalog')"
-                            class="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all hover:scale-105">
+                            class="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all hover:scale-105 w-full justify-center mt-1">
                         Mulai Belanja
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                     </button>
