@@ -5427,6 +5427,27 @@
     <span x-text="cartToast"></span>
 </div>
 
+<!-- Global Toast -->
+<div x-show="globalToast.show"
+     x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0"
+     x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 -translate-y-2"
+     class="fixed top-5 left-1/2 -translate-x-1/2 z-[999] max-w-xs w-[90vw] shadow-xl rounded-2xl px-4 py-3 flex items-center gap-3"
+     :class="{
+         'bg-gray-900 text-white': globalToast.type==='default',
+         'bg-red-600 text-white':  globalToast.type==='error',
+         'bg-emerald-500 text-white': globalToast.type==='success',
+     }" style="display:none">
+    <!-- icon -->
+    <div x-show="globalToast.type==='default'" class="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0 text-lg" x-text="globalToast.emoji||'👋'"></div>
+    <div x-show="globalToast.type==='success'" class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <div x-show="globalToast.type==='error'" class="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <span class="text-sm font-semibold leading-snug" x-text="globalToast.msg"></span>
+</div>
+
 <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
     <div class="h-16 flex">
         <template x-for="item in navItems.filter(i => i.mobile)" :key="item.id">
@@ -6847,6 +6868,7 @@ function serabutStore() {
         cartCheckoutSuccess: false,
         cartOrderIds: [],
         cartToast: '',
+        globalToast: { show: false, msg: '', type: 'default', timer: null },
         cartToastTimer: null,
         // Cart add modal (product-specific fields)
         cartAddModal: false,
@@ -7776,9 +7798,10 @@ function serabutStore() {
                     const { sessionToken: _st1, ...userPub1 } = this.currentUser;
                     localStorage.setItem('serabutUser', JSON.stringify(userPub1));
                     if(_st1) localStorage.setItem('srb_tok', _st1);
-                    this._loadMyReviews(); // Restore ulasan dari localStorage
+                    this._loadMyReviews();
                     this.closeAuthModal();
                     this.loginForm = {email:'',password:''};
+                    this._greetUser(data.user, 'login');
                     if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
                 } else { this.authError = data.error||'Login gagal'; }
             } catch { this.authError='Gagal terhubung ke server'; }
@@ -7842,9 +7865,10 @@ function serabutStore() {
                     const { sessionToken: _st2, ...userPub2 } = this.currentUser;
                     localStorage.setItem('serabutUser', JSON.stringify(userPub2));
                     if(_st2) localStorage.setItem('srb_tok', _st2);
-                    this._loadMyReviews(); // Restore ulasan dari localStorage
+                    this._loadMyReviews();
                     this.closeOTPModal();
                     this.registerForm = {nama:'',email:'',wa:'',password:''};
+                    this._greetUser(data.user, 'register');
                     if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
                 } else { this.otpError = data.error||'Verifikasi gagal'; }
             } catch { this.otpError='Gagal terhubung ke server'; }
@@ -8785,6 +8809,30 @@ function serabutStore() {
         async _adminSave(key, value) {
             return this.gasPost({ action:'saveSettings', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, key, value });
         },
+        _showToast(msg, type='default', emoji='', duration=3500) {
+            if (this.globalToast.timer) clearTimeout(this.globalToast.timer);
+            this.globalToast = { show: true, msg, type, emoji };
+            this.globalToast.timer = setTimeout(() => { this.globalToast.show = false; }, duration);
+        },
+        showToast(msg) { this._showToast(msg, 'success'); },
+
+        _greetUser(user, mode='login') {
+            const nama = (user?.nama || '').split(' ')[0] || 'kamu';
+            if (mode === 'register') {
+                this._showToast(`Hai, ${nama}! Selamat datang di Serabut Store 🎉`, 'default', '🎉', 4000);
+            } else {
+                // Login — variasi acak biar tidak monoton
+                const greetings = [
+                    `Halo lagi, ${nama}! 👋`,
+                    `Eh, ${nama} balik lagi nih!`,
+                    `Selamat datang kembali, ${nama} 😊`,
+                    `Hai ${nama}, lama nggak lihat!`,
+                ];
+                const msg = greetings[Math.floor(Math.random() * greetings.length)];
+                this._showToast(msg, 'default', '👋', 3500);
+            }
+        },
+
         _adminShowMsg(msg) {
             this.adminSaveMsg = msg;
             setTimeout(()=>{ this.adminSaveMsg=''; }, 3000);
@@ -9306,6 +9354,7 @@ function serabutStore() {
                 localStorage.setItem('serabutUser', JSON.stringify(userPub3));
                 if(_st3) localStorage.setItem('srb_tok', _st3);
                 this.closeAuthModal();
+                this._greetUser(data.user, 'login');
                 if(data.user.role==='admin') this.setPage('admin');
             } else {
                 this.authError = data.error || 'Gagal login dengan Google.';
