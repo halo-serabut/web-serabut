@@ -624,7 +624,7 @@
         </div>
 
         <!-- Why Us -->
-        <div id="sec-kenapa" class="bg-white border-t border-gray-100 py-10">
+        <div id="sec-kenapa" class="bg-white py-10">
             <div class="max-w-6xl mx-auto px-4">
                 <h2 class="text-lg md:text-xl font-black text-gray-900 mb-8 text-center">Kenapa Serabut Store?</h2>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -636,7 +636,8 @@
         </div>
 
         <!-- Cek Status Section -->
-        <div id="sec-status" class="bg-gray-50 border-t border-gray-100 py-14">
+        <div class="h-12 bg-gradient-to-b from-white to-gray-50 pointer-events-none"></div>
+        <div id="sec-status" class="bg-gray-50 py-14">
             <div class="max-w-lg mx-auto px-4">
                 <div class="text-center mb-8">
                     <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -681,7 +682,8 @@
 
         <!-- Panduan Section -->
         <!-- Panduan Section — pills di atas -->
-        <div id="sec-panduan" class="bg-white border-t border-gray-100 py-14">
+        <div class="h-12 bg-gradient-to-b from-gray-50 to-white pointer-events-none"></div>
+        <div id="sec-panduan" class="bg-white py-14">
             <div class="max-w-3xl mx-auto px-4">
                 <div class="text-center mb-6">
                     <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Panduan Instalasi</h2>
@@ -725,7 +727,8 @@
         </div>
 
         <!-- FAQ Section — pills di atas, x-html answers -->
-        <div id="sec-faq" class="bg-gray-50 border-t border-gray-100 py-14">
+        <div class="h-12 bg-gradient-to-b from-white to-gray-50 pointer-events-none"></div>
+        <div id="sec-faq" class="bg-gray-50 py-14">
             <div x-data="{ homeFaqFilter: 'semua', homeFaqOpen: null }" class="max-w-3xl mx-auto px-4">
                 <div class="text-center mb-6">
                     <div class="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl mb-4 shadow-lg shadow-brand-200">
@@ -770,7 +773,8 @@
         </div>
 
         <!-- Download Section — sidebar kategori style -->
-        <div id="sec-download" class="bg-white border-t border-gray-100 py-14">
+        <div class="h-12 bg-gradient-to-b from-gray-50 to-white pointer-events-none"></div>
+        <div id="sec-download" class="bg-white py-14">
             <div x-data="{ dlCat: 'windows' }" class="max-w-3xl mx-auto px-4">
                 <div class="text-center mb-6">
                     <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Download Software Resmi</h2>
@@ -810,6 +814,7 @@
         </div>
 
         <!-- Testimoni -->
+        <div class="h-12 bg-gradient-to-b from-white to-gray-50 pointer-events-none"></div>
         <div id="sec-testimoni" class="bg-gray-50 py-12">
             <div class="max-w-6xl mx-auto px-4">
                 <div class="text-center mb-8">
@@ -865,113 +870,79 @@
         </div>
 
         <!-- CTA Section -->
+        <div class="h-12 bg-gradient-to-b from-gray-50 to-gray-50 pointer-events-none"></div>
         <div id="sec-cta" class="overflow-hidden">
-            <div class="flex flex-col md:flex-row">
-                <!-- Kiri: ilustrasi colorful di bg abu-abu muda -->
-                <div class="hidden md:flex flex-none items-center justify-center bg-gray-50 px-10 py-10" style="width:400px;min-height:260px">
-                    <svg width="340" height="230" viewBox="0 0 340 230" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <filter id="cs" x="-30%" y="-30%" width="160%" height="160%">
-                                <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#000" flood-opacity="0.09"/>
-                            </filter>
-                        </defs>
-                        <!-- Desk -->
-                        <rect x="30" y="183" width="280" height="12" rx="6" fill="#CBD5E1"/>
-                        <rect x="70" y="195" width="14" height="30" rx="4" fill="#94A3B8"/>
-                        <rect x="256" y="195" width="14" height="30" rx="4" fill="#94A3B8"/>
-                        <!-- Monitor -->
-                        <rect x="88" y="68" width="164" height="114" rx="12" fill="#1E293B"/>
-                        <rect x="96" y="76" width="148" height="98" rx="7" fill="#0F172A"/>
-                        <!-- Accent gradient on screen -->
-                        <rect x="96" y="76" width="148" height="98" rx="7" fill="#3B82F6" fill-opacity="0.08"/>
-                        <!-- Top bar -->
-                        <rect x="100" y="80" width="140" height="10" rx="5" fill="#1D4ED8" fill-opacity="0.5"/>
-                        <circle cx="107" cy="85" r="2.5" fill="#EF4444"/>
-                        <circle cx="114" cy="85" r="2.5" fill="#F59E0B"/>
-                        <circle cx="121" cy="85" r="2.5" fill="#10B981"/>
-                        <!-- URL bar -->
-                        <rect x="128" y="82" width="70" height="6" rx="3" fill="white" fill-opacity="0.12"/>
-                        <!-- Screen content -->
-                        <rect x="104" y="98" width="65" height="8" rx="4" fill="#3B82F6" fill-opacity="0.7"/>
-                        <rect x="104" y="112" width="115" height="5" rx="2.5" fill="white" fill-opacity="0.22"/>
-                        <rect x="104" y="122" width="95" height="5" rx="2.5" fill="white" fill-opacity="0.16"/>
-                        <rect x="104" y="132" width="75" height="5" rx="2.5" fill="white" fill-opacity="0.1"/>
-                        <!-- Cart icon on screen -->
-                        <rect x="192" y="96" width="44" height="44" rx="9" fill="#EF4444" fill-opacity="0.85"/>
-                        <path d="M204 111h20l-3 10h-14l-3-10zm-2 0l-2-4h-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="208" cy="124" r="1.5" fill="white"/>
-                        <circle cx="218" cy="124" r="1.5" fill="white"/>
-                        <!-- Monitor stand -->
-                        <rect x="162" y="182" width="16" height="14" rx="2" fill="#94A3B8"/>
-                        <rect x="150" y="194" width="40" height="5" rx="2.5" fill="#94A3B8"/>
-                        <!-- Keyboard -->
-                        <rect x="140" y="178" width="60" height="8" rx="4" fill="#334155"/>
-                        <!-- Person - chair back -->
-                        <rect x="280" y="108" width="12" height="80" rx="6" fill="#94A3B8"/>
-                        <rect x="270" y="148" width="40" height="10" rx="5" fill="#CBD5E1"/>
-                        <!-- Person body (shirt: purple) -->
-                        <path d="M278 138 Q274 124 268 120 Q262 116 254 115 L242 113 Q233 112 229 118 L225 145 Z" fill="#7C3AED"/>
-                        <!-- Head -->
-                        <ellipse cx="252" cy="103" rx="17" ry="18" fill="#FBBF24"/>
-                        <!-- Hair -->
-                        <path d="M235 100 Q236 85 252 84 Q268 84 269 96 Q267 90 262 89 Q252 86 241 92 Z" fill="#92400E"/>
-                        <rect x="234" y="97" width="5" height="9" rx="2.5" fill="#92400E"/>
-                        <!-- Eyes -->
-                        <ellipse cx="245" cy="104" rx="2.5" ry="2.5" fill="#1E293B"/>
-                        <ellipse cx="258" cy="104" rx="2.5" ry="2.5" fill="#1E293B"/>
-                        <circle cx="246" cy="103" r="1" fill="white"/>
-                        <circle cx="259" cy="103" r="1" fill="white"/>
-                        <!-- Smile -->
-                        <path d="M246 111 Q252 115 258 111" stroke="#92400E" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-                        <!-- Right arm at mouse -->
-                        <path d="M278 132 Q290 137 300 142" stroke="#FBBF24" stroke-width="9" stroke-linecap="round" fill="none"/>
-                        <!-- Left arm on desk -->
-                        <path d="M225 134 Q212 141 198 146" stroke="#FBBF24" stroke-width="9" stroke-linecap="round" fill="none"/>
+            <div class="flex flex-col md:flex-row min-h-[280px]">
+                <!-- Kiri: product showcase cards di bg putih bersih -->
+                <div class="hidden md:flex flex-none items-center justify-center bg-white px-8 py-10 relative overflow-hidden" style="width:420px">
+                    <!-- Subtle grid pattern bg -->
+                    <div class="absolute inset-0 opacity-[0.03]" style="background-image: repeating-linear-gradient(0deg,#000 0,#000 1px,transparent 1px,transparent 40px), repeating-linear-gradient(90deg,#000 0,#000 1px,transparent 1px,transparent 40px)"></div>
+                    <!-- Floating soft blobs -->
+                    <div class="absolute top-8 left-8 w-28 h-28 bg-blue-100 rounded-full blur-2xl opacity-60"></div>
+                    <div class="absolute bottom-8 right-8 w-24 h-24 bg-red-100 rounded-full blur-2xl opacity-60"></div>
 
-                        <!-- Floating card: Office -->
-                        <g filter="url(#cs)">
-                            <rect x="8" y="22" width="82" height="54" rx="11" fill="white"/>
-                            <rect x="18" y="32" width="26" height="26" rx="7" fill="#EFF6FF"/>
-                            <text x="31" y="49" text-anchor="middle" font-size="16">📘</text>
-                            <rect x="50" y="35" width="30" height="5" rx="2.5" fill="#1E293B" fill-opacity="0.55"/>
-                            <rect x="50" y="44" width="22" height="4" rx="2" fill="#CBD5E1"/>
-                            <rect x="50" y="52" width="26" height="4" rx="2" fill="#CBD5E1"/>
-                        </g>
+                    <!-- Product cards stack -->
+                    <div class="relative z-10 flex flex-col gap-3 w-full max-w-xs">
+                        <!-- Card 1: Office 365 -->
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 flex items-center gap-3 hover:shadow-xl transition-shadow" style="transform: rotate(-1deg)">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none" style="background:#e8f0fe">
+                                <img src="https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/svg/office_48x1.svg" class="w-6 h-6" alt="Office"/>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-bold text-gray-800">Microsoft 365 Family</div>
+                                <div class="text-[10px] text-gray-400">1 Tahun · 6 User</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs font-black text-brand-600">Rp 319K</div>
+                                <div class="text-[10px] text-green-600 font-semibold">✓ Aktif</div>
+                            </div>
+                        </div>
 
-                        <!-- Floating card: Windows -->
-                        <g filter="url(#cs)">
-                            <rect x="254" y="15" width="78" height="52" rx="11" fill="white"/>
-                            <rect x="263" y="25" width="12" height="12" rx="3" fill="#0078D4"/>
-                            <rect x="277" y="25" width="12" height="12" rx="3" fill="#0078D4" fill-opacity="0.55"/>
-                            <rect x="263" y="39" width="12" height="12" rx="3" fill="#0078D4" fill-opacity="0.55"/>
-                            <rect x="277" y="39" width="12" height="12" rx="3" fill="#0078D4"/>
-                            <rect x="295" y="27" width="28" height="5" rx="2.5" fill="#1E293B" fill-opacity="0.45"/>
-                            <rect x="295" y="36" width="22" height="4" rx="2" fill="#CBD5E1"/>
-                            <rect x="295" y="44" width="24" height="4" rx="2" fill="#CBD5E1"/>
-                        </g>
+                        <!-- Card 2: Windows (slightly overlapping, rotated other way) -->
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 flex items-center gap-3 hover:shadow-xl transition-shadow" style="transform: rotate(0.8deg)">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none" style="background:#e6f4ff">
+                                <svg width="24" height="24" viewBox="0 0 88 88"><path d="M0 12.5L36 7v29H0V12.5z" fill="#0078D4"/><path d="M40 6.4L88 0v36H40V6.4z" fill="#0078D4"/><path d="M0 40h36v29L0 63V40z" fill="#0078D4"/><path d="M40 40h48v36L40 69.6V40z" fill="#0078D4"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-bold text-gray-800">Windows 11 Pro</div>
+                                <div class="text-[10px] text-gray-400">Lifetime · 1 PC</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs font-black text-brand-600">Rp 399K</div>
+                                <div class="text-[10px] bg-amber-50 text-amber-600 font-semibold px-1.5 py-0.5 rounded-full">7% OFF</div>
+                            </div>
+                        </div>
 
-                        <!-- Rating badge -->
-                        <g filter="url(#cs)">
-                            <rect x="256" y="158" width="78" height="38" rx="11" fill="white"/>
-                            <text x="266" y="174" font-size="11" fill="#F59E0B">★★★★★</text>
-                            <text x="266" y="188" font-size="9" fill="#64748B" font-weight="600">4.9 / 5.0</text>
-                        </g>
+                        <!-- Card 3: Adobe -->
+                        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 flex items-center gap-3 hover:shadow-xl transition-shadow" style="transform: rotate(-0.5deg)">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none" style="background:#fff0eb">
+                                <svg width="24" height="24" viewBox="0 0 240 234" fill="#FF0000"><path d="M42.5 0h72.3L240 234h-72.5L42.5 0z"/><path d="M197.3 0H240v175L197.3 0z"/><path d="M0 234L42.7 96.5 85 234H0z"/></svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-bold text-gray-800">Adobe Creative Cloud</div>
+                                <div class="text-[10px] text-gray-400">1 Bulan · All Apps</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs font-black text-brand-600">Rp 249K</div>
+                                <div class="text-[10px] text-green-600 font-semibold">✓ Terlaris</div>
+                            </div>
+                        </div>
 
-                        <!-- Check badge -->
-                        <g filter="url(#cs)">
-                            <rect x="8" y="155" width="76" height="40" rx="11" fill="white"/>
-                            <circle cx="30" cy="175" r="11" fill="#DCFCE7"/>
-                            <path d="M24 175l4.5 4.5 9-9" stroke="#16A34A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <rect x="46" y="167" width="28" height="5" rx="2.5" fill="#1E293B" fill-opacity="0.45"/>
-                            <text x="46" y="186" font-size="8" fill="#64748B">Aktif ✓</text>
-                        </g>
-
-                        <!-- Sparkles -->
-                        <path d="M62 14l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" fill="#F59E0B"/>
-                        <path d="M298 120l1.2 2.4 2.4 1.2-2.4 1.2-1.2 2.4-1.2-2.4-2.4-1.2 2.4-1.2z" fill="#7C3AED" fill-opacity="0.6"/>
-                        <circle cx="22" cy="148" r="5" fill="#EF4444" fill-opacity="0.2"/>
-                        <circle cx="318" cy="78" r="6" fill="#3B82F6" fill-opacity="0.2"/>
-                    </svg>
+                        <!-- Trust badge -->
+                        <div class="flex items-center justify-center gap-4 pt-1">
+                            <div class="flex items-center gap-1.5 text-[10px] text-gray-400">
+                                <svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1l2.39 4.843L18 7.273l-4 3.899.944 5.505L10 14.013l-4.944 2.664L6 11.172 2 7.273l5.61-.43L10 1z" clip-rule="evenodd"/></svg>
+                                Original & Resmi
+                            </div>
+                            <div class="w-px h-3 bg-gray-200"></div>
+                            <div class="flex items-center gap-1.5 text-[10px] text-gray-400">
+                                <svg class="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                4.9 Rating
+                            </div>
+                            <div class="w-px h-3 bg-gray-200"></div>
+                            <div class="text-[10px] text-gray-400">⚡ &lt;5 mnt aktivasi</div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Kanan: teks di bg gradient merah -->
