@@ -319,7 +319,7 @@
         </button>
 
         <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1">
-            <template x-for="item in navItems" :key="item.id">
+            <template x-for="item in navItems.filter(i => i.desktop !== false)" :key="item.id">
                 <button @click="item.id==='home' ? (activePage==='home' ? scrollToSection('hero') : setPage('home')) : (activePage==='home' && ['status','panduan','faq','download'].includes(item.id) ? scrollToSection(item.id) : setPage(item.id))" :class="activePage===item.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" x-text="item.label"></button>
             </template>
             <template x-if="currentUser?.role?.toLowerCase()==='admin'">
@@ -770,52 +770,41 @@
 
         <!-- Download Section — sidebar kategori style -->
         <div id="sec-download" class="bg-white border-t border-gray-100 py-14">
-            <div x-data="{ dlCat: 'windows' }" class="max-w-5xl mx-auto px-4">
-                <div class="text-center mb-8">
+            <div x-data="{ dlCat: 'windows' }" class="max-w-3xl mx-auto px-4">
+                <div class="text-center mb-6">
                     <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Download Software Resmi</h2>
                     <p class="text-sm text-gray-500">Link resmi langsung dari Microsoft — aman & terpercaya</p>
                 </div>
-                <!-- Mobile: pills -->
-                <div class="flex gap-2 overflow-x-auto pb-2 mb-5 no-scrollbar md:hidden">
+                <!-- Pills di atas -->
+                <div class="flex gap-2 justify-center flex-wrap mb-8">
                     <template x-for="group in downloadGroups" :key="group.id">
-                        <button @click="dlCat=group.id" :class="dlCat===group.id?'bg-brand-500 text-white':'bg-white text-gray-600 border border-gray-200'" class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all">
-                            <img :src="group.logo" :alt="group.title" class="w-4 h-4 object-contain">
+                        <button @click="dlCat=group.id"
+                                :class="dlCat===group.id ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-300 hover:text-brand-600'"
+                                class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95">
+                            <img :src="group.logo" :alt="group.title" class="w-4 h-4 object-contain" :class="dlCat===group.id?'opacity-100':'opacity-60'">
                             <span x-text="group.title"></span>
                         </button>
                     </template>
                 </div>
-                <!-- Desktop: sidebar + content -->
-                <div class="md:flex md:gap-5 md:items-start">
-                    <nav class="hidden md:flex flex-col gap-0.5 w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-16">
-                        <template x-for="group in downloadGroups" :key="group.id">
-                            <button @click="dlCat=group.id" :class="dlCat===group.id?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
-                                <img :src="group.logo" :alt="group.title" class="w-4 h-4 object-contain flex-none">
-                                <span x-text="group.title" class="truncate flex-1"></span>
-                                <div x-show="dlCat===group.id" class="w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
-                            </button>
-                        </template>
-                    </nav>
-                    <div class="md:flex-1 md:min-w-0">
-                        <template x-for="group in downloadGroups" :key="group.id">
-                            <div x-show="dlCat===group.id" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                                <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
-                                    <img :src="group.logo" :alt="group.title" class="w-5 h-5 object-contain">
-                                    <span class="font-bold text-gray-800 text-sm" x-text="group.title"></span>
-                                </div>
-                                <div class="divide-y divide-gray-50">
-                                    <template x-for="item in group.items" :key="item.name">
-                                        <a :href="item.url" target="_blank" rel="noopener noreferrer"
-                                           class="flex items-center justify-between px-5 py-4 hover:bg-blue-50 transition-colors group">
-                                            <span class="text-sm text-gray-700 group-hover:text-blue-600 transition-colors font-medium" x-text="item.name"></span>
-                                            <svg class="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                        </a>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-                        <p class="text-xs text-gray-400 mt-4">Semua link di atas adalah link resmi dari server Microsoft</p>
+                <!-- Content -->
+                <template x-for="group in downloadGroups" :key="group.id">
+                    <div x-show="dlCat===group.id" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
+                            <img :src="group.logo" :alt="group.title" class="w-5 h-5 object-contain">
+                            <span class="font-bold text-gray-800 text-sm" x-text="group.title"></span>
+                        </div>
+                        <div class="divide-y divide-gray-50">
+                            <template x-for="item in group.items" :key="item.name">
+                                <a :href="item.url" target="_blank" rel="noopener noreferrer"
+                                   class="flex items-center justify-between px-5 py-4 hover:bg-blue-50 transition-colors group">
+                                    <span class="text-sm text-gray-700 group-hover:text-blue-600 transition-colors font-medium" x-text="item.name"></span>
+                                    <svg class="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                </a>
+                            </template>
+                        </div>
                     </div>
-                </div>
+                </template>
+                <p class="text-xs text-gray-400 mt-4 text-center">Semua link di atas adalah link resmi dari server Microsoft</p>
             </div>
         </div>
 
@@ -826,8 +815,8 @@
                     <h2 class="text-lg md:text-xl font-black text-gray-900 mb-2">Apa Kata Pelanggan Kami</h2>
                     <p class="text-sm text-gray-500">10.000+ transaksi sukses dari seluruh Indonesia</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <template x-for="r in reviews.slice(0,6)" :key="r.nama+r.produk">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <template x-for="r in reviews.slice(0,8)" :key="r.nama+r.produk">
                         <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
                             <div class="flex items-center gap-1 mb-3">
                                 <template x-for="i in 5" :key="i">
@@ -846,7 +835,7 @@
                     </template>
                     <!-- Fallback jika reviews kosong -->
                     <template x-if="!reviews || reviews.length === 0">
-                        <template x-for="t in [{nama:'Budi S.',produk:'Office 365 Family',text:'Aktivasi langsung berhasil! Recommended banget buat yg butuh Office.'},{nama:'Rina A.',produk:'Windows 11 Pro',text:'Harga terjangkau, proses cepat dan CS nya responsif.'},{nama:'Deni P.',produk:'Adobe Creative Cloud',text:'Udah langganan 2 tahun, selalu memuaskan. Original & legal.'},{nama:'Sari W.',produk:'Office 365 Web',text:'Pertama kali beli di sini, ternyata mudah banget prosesnya!'},{nama:'Fajar R.',produk:'Microsoft Project',text:'Aktivasi dalam 5 menit setelah bayar. Sangat direkomendasikan.'},{nama:'Lina M.',produk:'Office 365 Family',text:'Keluarga senang bisa pakai Office di 6 device sekaligus!'}]" :key="t.nama">
+                        <template x-for="t in [{nama:'Budi S.',produk:'Office 365 Family',text:'Aktivasi langsung berhasil! Recommended banget buat yg butuh Office.'},{nama:'Rina A.',produk:'Windows 11 Pro',text:'Harga terjangkau, proses cepat dan CS nya responsif.'},{nama:'Deni P.',produk:'Adobe Creative Cloud',text:'Udah langganan 2 tahun, selalu memuaskan. Original & legal.'},{nama:'Sari W.',produk:'Office 365 Web',text:'Pertama kali beli di sini, ternyata mudah banget prosesnya!'},{nama:'Fajar R.',produk:'Microsoft Project',text:'Aktivasi dalam 5 menit setelah bayar. Sangat direkomendasikan.'},{nama:'Lina M.',produk:'Office 365 Family',text:'Keluarga senang bisa pakai Office di 6 device sekaligus!'},{nama:'Arif T.',produk:'Windows 10 Pro',text:'Harga jauh lebih murah dari toko resmi, tapi produknya sama originalnya!'},{nama:'Dewi K.',produk:'Adobe Creative Cloud',text:'CS sangat helpful, dibantu sampai berhasil install. Puas banget!'}]" :key="t.nama">
                             <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
                                 <div class="flex items-center gap-1 mb-3">
                                     <template x-for="i in 5" :key="i">
@@ -7687,9 +7676,9 @@ function serabutStore() {
         navItems: [
             { id:'home',    label:'Beranda',    mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
             { id:'catalog', label:'Produk',     mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>` },
-            { id:'status',  label:'Cek Status', mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
-            { id:'panduan', label:'Panduan',    mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>` },
-            { id:'faq',     label:'FAQ',        mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
+            { id:'status',  label:'Cek Status', mobile:false, desktop:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
+            { id:'panduan', label:'Panduan',    mobile:true,  desktop:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>` },
+            { id:'faq',     label:'FAQ',        mobile:false, desktop:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
         ],
         _categoryIconMap: {
             'Office 365':    `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
