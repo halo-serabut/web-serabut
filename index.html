@@ -2855,32 +2855,80 @@
             <div class="md:flex md:gap-5 md:items-start">
 
             <!-- Sidebar Desktop -->
-            <nav class="hidden md:flex flex-col gap-0.5 w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-20">
-                <template x-for="tab in [
-                    {id:'flashsale', label:'Diskon',      icon:'M13 10V3L4 14h7v7l9-11h-7z'},
-                    {id:'hero',      label:'Hero',         icon:'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z'},
-                    {id:'kategori',  label:'Kategori',     icon:'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z'},
-                    {id:'produk',    label:'Produk',       icon:'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'},
-                    {id:'populer',   label:'Populer',      icon:'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'},
-                    {id:'panduan',   label:'Panduan',      icon:'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'},
-                    {id:'footer',    label:'Footer',       icon:'M4 6h16M4 12h16M4 18h7'},
-                    {id:'orders',    label:'Semua Order',  icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},
-                    {id:'users',     label:'Users',        icon:'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'},
-                    {id:'quotation', label:'Quotation',    icon:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'},
-                    {id:'ulasan',    label:'Ulasan',       icon:'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'},
-                    {id:'payment',   label:'Pembayaran',   icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'},
-                    {id:'ipaymu',    label:'Xendit',       icon:'M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z'}
-                ]" :key="tab.id">
-                    <button @click="adminTab=tab.id; adminInitTab(tab.id)"
-                            :class="adminTab===tab.id ? 'bg-brand-50 text-brand-600 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'"
-                            class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
-                        <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" :d="tab.icon"/>
-                        </svg>
-                        <span x-text="tab.label"></span>
-                        <div x-show="adminTab===tab.id" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
-                    </button>
-                </template>
+            <nav class="hidden md:flex flex-col w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-20 overflow-y-auto max-h-[calc(100vh-6rem)]">
+                <!-- Group: Konten -->
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 pt-3 pb-1">Konten</p>
+                <button @click="adminTab='flashsale'; adminInitTab('flashsale')" :class="adminTab==='flashsale'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <span>Diskon</span><div x-show="adminTab==='flashsale'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <button @click="adminTab='hero'; adminInitTab('hero')" :class="adminTab==='hero'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span>Hero</span><div x-show="adminTab==='hero'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <button @click="adminTab='kategori'; adminInitTab('kategori')" :class="adminTab==='kategori'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                    <span>Kategori</span><div x-show="adminTab==='kategori'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <button @click="adminTab='panduan'; adminInitTab('panduan')" :class="adminTab==='panduan'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    <span>Panduan</span><div x-show="adminTab==='panduan'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <button @click="adminTab='footer'; adminInitTab('footer')" :class="adminTab==='footer'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>
+                    <span>Footer</span><div x-show="adminTab==='footer'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-100 my-1.5 mx-2"></div>
+
+                <!-- Group: Produk -->
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 pb-1">Produk</p>
+                <button @click="adminTab='produk'; adminInitTab('produk')" :class="adminTab==='produk'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    <span>Produk</span><div x-show="adminTab==='produk'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <button @click="adminTab='populer'; adminInitTab('populer')" :class="adminTab==='populer'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                    <span>Populer</span><div x-show="adminTab==='populer'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-100 my-1.5 mx-2"></div>
+
+                <!-- Group: Transaksi -->
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 pb-1">Transaksi</p>
+                <button @click="adminTab='orders'; adminInitTab('orders')" :class="adminTab==='orders'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <span>Semua Order</span><div x-show="adminTab==='orders'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <button @click="adminTab='quotation'; adminInitTab('quotation')" :class="adminTab==='quotation'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>Quotation</span><div x-show="adminTab==='quotation'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <button @click="adminTab='payment'; adminInitTab('payment')" :class="adminTab==='payment'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                    <span>Pembayaran</span><div x-show="adminTab==='payment'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <button @click="adminTab='ipaymu'; adminInitTab('ipaymu')" :class="adminTab==='ipaymu'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <span>Xendit</span><div x-show="adminTab==='ipaymu'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+
+                <!-- Divider -->
+                <div class="border-t border-gray-100 my-1.5 mx-2"></div>
+
+                <!-- Group: Komunitas -->
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 pb-1">Komunitas</p>
+                <button @click="adminTab='users'; adminInitTab('users')" :class="adminTab==='users'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <span>Users</span><div x-show="adminTab==='users'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <button @click="adminTab='ulasan'; adminInitTab('ulasan')" :class="adminTab==='ulasan'?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm transition-all w-full text-left">
+                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                    <span>Ulasan</span><div x-show="adminTab==='ulasan'" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                </button>
+                <div class="pb-2"></div>
             </nav>
 
             <!-- Content Area -->
