@@ -623,6 +623,7 @@
         </div>
 
         <!-- Why Us -->
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
         <div id="sec-kenapa" class="bg-white py-10">
             <div class="max-w-6xl mx-auto px-4">
                 <h2 class="text-lg md:text-xl font-black text-gray-900 mb-8 text-center">Kenapa Serabut Store?</h2>
@@ -635,7 +636,8 @@
         </div>
 
         <!-- Cek Status Section -->
-        <div id="sec-status" class="bg-gray-50 py-14">
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
+        <div id="sec-status" class="bg-white py-14">
             <div class="max-w-lg mx-auto px-4">
                 <div class="text-center mb-8">
                     <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -680,6 +682,7 @@
 
         <!-- Panduan Section -->
         <!-- Panduan Section — pills di atas -->
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
         <div id="sec-panduan" class="bg-white py-14">
             <div class="max-w-3xl mx-auto px-4">
                 <div class="text-center mb-6">
@@ -724,7 +727,8 @@
         </div>
 
         <!-- FAQ Section — pills di atas, x-html answers -->
-        <div id="sec-faq" class="bg-gray-50 py-14">
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
+        <div id="sec-faq" class="bg-white py-14">
             <div x-data="{ homeFaqFilter: 'semua', homeFaqOpen: null }" class="max-w-3xl mx-auto px-4">
                 <div class="text-center mb-6">
                     <div class="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl mb-4 shadow-lg shadow-brand-200">
@@ -769,6 +773,7 @@
         </div>
 
         <!-- Download Section — sidebar kategori style -->
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
         <div id="sec-download" class="bg-white py-14">
             <div x-data="{ dlCat: 'windows' }" class="max-w-3xl mx-auto px-4">
                 <div class="text-center mb-6">
@@ -809,6 +814,7 @@
         </div>
 
         <!-- Testimoni -->
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
         <div id="sec-testimoni" class="bg-white py-12">
             <div class="max-w-6xl mx-auto px-4">
                 <div class="text-center mb-8">
@@ -884,7 +890,7 @@
                 <!-- Product cards: real dari featuredProducts -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                     <template x-for="p in featuredProducts.slice(0,3)" :key="p.linkProduk+p.varian">
-                        <button @click="goToProductDetail(p)" class="bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-red-700/50 rounded-2xl px-4 py-4 flex items-center gap-3 text-left transition-all hover:shadow-lg hover:shadow-red-900/20 active:scale-95 group w-full">
+                        <button @click="p.stok!==0 ? goToProductDetail(p) : (searchQuery=p.nama, setPage('catalog'))" class="bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-red-700/50 rounded-2xl px-4 py-4 flex items-center gap-3 text-left transition-all hover:shadow-lg hover:shadow-red-900/20 active:scale-95 group w-full">
                             <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-none bg-gray-700 group-hover:bg-gray-600 transition-colors overflow-hidden">
                                 <img :src="getProductLogo(p.nama)" :alt="p.nama" class="w-7 h-7 object-contain" onerror="this.style.display='none'"/>
                             </div>
