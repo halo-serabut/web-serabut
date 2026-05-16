@@ -781,7 +781,7 @@
                         <button @click="dlCat=group.id"
                                 :class="dlCat===group.id ? 'bg-brand-500 text-white shadow-md ring-2 ring-brand-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-300 hover:text-brand-600'"
                                 class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95 outline-none focus:outline-none">
-                            <img :src="group.logo" :alt="group.title" class="w-4 h-4 object-contain" :class="dlCat===group.id?'opacity-100':'opacity-60'">
+                            <img :src="group.logo" :alt="group.title" class="w-4 h-4 object-contain transition-all" :style="dlCat===group.id ? 'filter:brightness(0) invert(1)' : ''">
                             <span x-text="group.title"></span>
                         </button>
                     </template>
@@ -864,20 +864,72 @@
         </div>
 
         <!-- CTA Section -->
-        <div id="sec-cta" class="gradient-hero py-14">
-            <div class="max-w-3xl mx-auto px-4 text-center text-white">
-                <h2 class="text-2xl md:text-3xl font-black mb-3 leading-tight">Siap Mulai Berlangganan?</h2>
-                <p class="text-white/75 text-base mb-8 max-w-lg mx-auto">Ribuan pelanggan sudah menikmati produk original kami. Giliran kamu!</p>
-                <div class="flex flex-wrap gap-3 justify-center">
-                    <button @click="setPage('catalog')"
-                            class="bg-white text-brand-600 font-bold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-all shadow-lg active:scale-95">
-                        Lihat Semua Produk
-                    </button>
-                    <button @click="authModal=true; authTab='register'"
-                            x-show="!currentUser"
-                            class="bg-white/15 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95">
-                        Daftar Gratis
-                    </button>
+        <div id="sec-cta" class="gradient-hero py-16 overflow-hidden relative">
+            <!-- Decorative blobs -->
+            <div class="absolute -top-16 -left-16 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-16 -right-16 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center gap-10 md:gap-16">
+                <!-- Ilustrasi kiri -->
+                <div class="flex-none hidden md:block">
+                    <svg width="260" height="220" viewBox="0 0 260 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Laptop body -->
+                        <rect x="40" y="60" width="160" height="100" rx="10" fill="white" fill-opacity="0.15" stroke="white" stroke-opacity="0.35" stroke-width="2"/>
+                        <!-- Laptop screen -->
+                        <rect x="52" y="70" width="136" height="78" rx="5" fill="white" fill-opacity="0.1"/>
+                        <!-- Screen content lines -->
+                        <rect x="62" y="82" width="60" height="7" rx="3.5" fill="white" fill-opacity="0.5"/>
+                        <rect x="62" y="96" width="90" height="5" rx="2.5" fill="white" fill-opacity="0.3"/>
+                        <rect x="62" y="107" width="75" height="5" rx="2.5" fill="white" fill-opacity="0.3"/>
+                        <rect x="62" y="118" width="50" height="5" rx="2.5" fill="white" fill-opacity="0.3"/>
+                        <!-- Checkmark badge on screen -->
+                        <circle cx="162" cy="100" r="18" fill="white" fill-opacity="0.2" stroke="white" stroke-opacity="0.5" stroke-width="1.5"/>
+                        <path d="M154 100l6 6 10-12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <!-- Laptop base -->
+                        <path d="M30 162h180l-10-10H40L30 162z" fill="white" fill-opacity="0.1" stroke="white" stroke-opacity="0.25" stroke-width="1.5"/>
+                        <rect x="30" y="162" width="180" height="6" rx="3" fill="white" fill-opacity="0.12"/>
+                        <!-- Floating product icons -->
+                        <!-- Office bubble -->
+                        <circle cx="30" cy="85" r="18" fill="white" fill-opacity="0.15" stroke="white" stroke-opacity="0.3" stroke-width="1.5"/>
+                        <text x="30" y="90" text-anchor="middle" font-size="14">📄</text>
+                        <!-- Windows bubble -->
+                        <circle cx="220" cy="75" r="18" fill="white" fill-opacity="0.15" stroke="white" stroke-opacity="0.3" stroke-width="1.5"/>
+                        <text x="220" y="80" text-anchor="middle" font-size="14">🪟</text>
+                        <!-- Adobe bubble -->
+                        <circle cx="215" cy="140" r="15" fill="white" fill-opacity="0.15" stroke="white" stroke-opacity="0.3" stroke-width="1.5"/>
+                        <text x="215" y="145" text-anchor="middle" font-size="11">🎨</text>
+                        <!-- Star rating -->
+                        <text x="68" y="145" font-size="10" fill="#FFD700">★★★★★</text>
+                        <!-- Person silhouette -->
+                        <circle cx="130" cy="35" r="16" fill="white" fill-opacity="0.2"/>
+                        <path d="M113 58c0-9.4 7.6-17 17-17s17 7.6 17 17" fill="white" fill-opacity="0.1"/>
+                        <!-- Sparkles -->
+                        <path d="M195 55l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="white" fill-opacity="0.6"/>
+                        <path d="M50 135l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" fill="white" fill-opacity="0.4"/>
+                        <circle cx="205" cy="175" r="4" fill="white" fill-opacity="0.3"/>
+                        <circle cx="55" cy="50" r="3" fill="white" fill-opacity="0.3"/>
+                    </svg>
+                </div>
+
+                <!-- Teks & CTA -->
+                <div class="text-white text-center md:text-left flex-1">
+                    <div class="inline-flex items-center gap-2 bg-white/15 text-white/90 text-xs font-semibold px-3 py-1.5 rounded-full mb-4 border border-white/20">
+                        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                        10.000+ pelanggan puas
+                    </div>
+                    <h2 class="text-2xl md:text-3xl font-black mb-3 leading-tight">Siap Mulai<br>Berlangganan?</h2>
+                    <p class="text-white/75 text-sm md:text-base mb-7 max-w-sm">Produk original bergaransi, aktivasi cepat, harga terjangkau. Giliran kamu!</p>
+                    <div class="flex flex-wrap gap-3 justify-center md:justify-start">
+                        <button @click="setPage('catalog')"
+                                class="bg-white text-brand-600 font-bold px-7 py-3 rounded-xl hover:bg-brand-50 transition-all shadow-lg active:scale-95 text-sm">
+                            Lihat Semua Produk →
+                        </button>
+                        <button @click="authModal=true; authTab='register'"
+                                x-show="!currentUser"
+                                class="bg-white/15 text-white font-semibold px-7 py-3 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95 text-sm">
+                            Daftar Gratis
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
