@@ -655,21 +655,29 @@
                         </button>
                     </div>
                     <!-- Result -->
-                    <div x-show="statusResult" x-transition class="border-t border-gray-100 pt-4 mt-2">
-                        <template x-if="statusResult && statusResult.found">
-                            <div>
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="font-bold text-gray-900 text-sm" x-text="statusResult.productName||statusResult.produk"></div>
-                                    <span class="text-xs font-bold px-2.5 py-1 rounded-full" :class="statusResult.status==='Active'?'bg-green-100 text-green-700':'bg-red-100 text-red-600'" x-text="statusResult.status==='Active'?'Aktif':'Tidak Aktif'"></span>
-                                </div>
-                                <div class="space-y-1.5 text-xs text-gray-500">
-                                    <div class="flex justify-between"><span>Email/Username</span><span class="font-medium text-gray-700" x-text="statusResult.username||statusResult.email||'-'"></span></div>
-                                    <div class="flex justify-between"><span>Masa Berlaku</span><span class="font-medium text-gray-700" x-text="statusResult.expiry||statusResult.masaBerlaku||'-'"></span></div>
-                                </div>
-                                <button @click="setPage('status')" class="mt-4 w-full text-center text-brand-600 text-xs font-semibold hover:underline">Lihat detail lengkap →</button>
+                    <div x-show="statusResult !== null" x-transition class="border-t border-gray-100 pt-4 mt-2">
+                        <!-- Ada hasil -->
+                        <template x-if="Array.isArray(statusResult) && statusResult.length > 0">
+                            <div class="space-y-3">
+                                <template x-for="(r, idx) in statusResult.slice(0,2)" :key="idx">
+                                    <div class="bg-gray-50 rounded-xl p-3">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="font-bold text-gray-900 text-sm" x-text="r.productName||r.produk||'Akun'"></div>
+                                            <span class="text-xs font-bold px-2 py-0.5 rounded-full"
+                                                  :class="r.status==='Active'?'bg-green-100 text-green-700':'bg-red-100 text-red-600'"
+                                                  x-text="r.status==='Active'?'Aktif':'Tidak Aktif'"></span>
+                                        </div>
+                                        <div class="space-y-1 text-xs text-gray-500">
+                                            <div class="flex justify-between"><span>Akun</span><span class="font-medium text-gray-700 truncate max-w-[160px]" x-text="r.username||r.email||'-'"></span></div>
+                                            <div class="flex justify-between"><span>Masa Berlaku</span><span class="font-medium text-gray-700" x-text="r.expiry||r.masaBerlaku||'-'"></span></div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <button @click="setPage('status')" class="w-full text-center text-brand-600 text-xs font-semibold hover:underline pt-1">Lihat detail lengkap →</button>
                             </div>
                         </template>
-                        <template x-if="statusResult && !statusResult.found">
+                        <!-- Tidak ditemukan -->
+                        <template x-if="Array.isArray(statusResult) && statusResult.length === 0">
                             <div class="text-center py-3">
                                 <p class="text-sm text-gray-500 mb-2">Akun tidak ditemukan</p>
                                 <button @click="setPage('status')" class="text-brand-600 text-xs font-semibold hover:underline">Coba cek di halaman lengkap →</button>
