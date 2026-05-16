@@ -538,6 +538,9 @@
             </div></div>
         </div>
 
+        <!-- Gradient: hero merah → putih -->
+        <div class="h-16 bg-gradient-to-b from-red-50 to-white pointer-events-none -mt-1"></div>
+
         <!-- Categories -->
         <div id="sec-kategori" class="max-w-6xl mx-auto px-4 py-6">
             <h2 class="text-base font-black text-gray-900 mb-3">Kategori Produk</h2>
@@ -870,102 +873,73 @@
         </div>
 
         <!-- CTA Section -->
-        <div class="h-12 bg-gradient-to-b from-gray-50 to-gray-50 pointer-events-none"></div>
-        <div id="sec-cta" class="overflow-hidden">
-            <div class="flex flex-col md:flex-row min-h-[280px]">
-                <!-- Kiri: product showcase cards di bg putih bersih -->
-                <div class="hidden md:flex flex-none items-center justify-center bg-white px-8 py-10 relative overflow-hidden" style="width:420px">
-                    <!-- Subtle grid pattern bg -->
-                    <div class="absolute inset-0 opacity-[0.03]" style="background-image: repeating-linear-gradient(0deg,#000 0,#000 1px,transparent 1px,transparent 40px), repeating-linear-gradient(90deg,#000 0,#000 1px,transparent 1px,transparent 40px)"></div>
-                    <!-- Floating soft blobs -->
-                    <div class="absolute top-8 left-8 w-28 h-28 bg-blue-100 rounded-full blur-2xl opacity-60"></div>
-                    <div class="absolute bottom-8 right-8 w-24 h-24 bg-red-100 rounded-full blur-2xl opacity-60"></div>
+        <div class="h-20 bg-gradient-to-b from-gray-50 to-gray-900 pointer-events-none"></div>
+        <div id="sec-cta" class="bg-gray-900 py-14 overflow-hidden relative">
+            <!-- Decorative -->
+            <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/30 to-transparent"></div>
+            <div class="absolute -top-24 -right-24 w-72 h-72 bg-red-900/30 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-red-950/40 rounded-full blur-3xl pointer-events-none"></div>
 
-                    <!-- Product cards stack -->
-                    <div class="relative z-10 flex flex-col gap-3 w-full max-w-xs">
-                        <!-- Card 1: Office 365 -->
-                        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 flex items-center gap-3 hover:shadow-xl transition-shadow" style="transform: rotate(-1deg)">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none" style="background:#e8f0fe">
-                                <img src="https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/svg/office_48x1.svg" class="w-6 h-6" alt="Office"/>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-xs font-bold text-gray-800">Microsoft 365 Family</div>
-                                <div class="text-[10px] text-gray-400">1 Tahun · 6 User</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-xs font-black text-brand-600">Rp 319K</div>
-                                <div class="text-[10px] text-green-600 font-semibold">✓ Aktif</div>
-                            </div>
-                        </div>
-
-                        <!-- Card 2: Windows (slightly overlapping, rotated other way) -->
-                        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 flex items-center gap-3 hover:shadow-xl transition-shadow" style="transform: rotate(0.8deg)">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none" style="background:#e6f4ff">
-                                <svg width="24" height="24" viewBox="0 0 88 88"><path d="M0 12.5L36 7v29H0V12.5z" fill="#0078D4"/><path d="M40 6.4L88 0v36H40V6.4z" fill="#0078D4"/><path d="M0 40h36v29L0 63V40z" fill="#0078D4"/><path d="M40 40h48v36L40 69.6V40z" fill="#0078D4"/></svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-xs font-bold text-gray-800">Windows 11 Pro</div>
-                                <div class="text-[10px] text-gray-400">Lifetime · 1 PC</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-xs font-black text-brand-600">Rp 399K</div>
-                                <div class="text-[10px] bg-amber-50 text-amber-600 font-semibold px-1.5 py-0.5 rounded-full">7% OFF</div>
-                            </div>
-                        </div>
-
-                        <!-- Card 3: Adobe -->
-                        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 px-4 py-3 flex items-center gap-3 hover:shadow-xl transition-shadow" style="transform: rotate(-0.5deg)">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none" style="background:#fff0eb">
-                                <svg width="24" height="24" viewBox="0 0 240 234" fill="#FF0000"><path d="M42.5 0h72.3L240 234h-72.5L42.5 0z"/><path d="M197.3 0H240v175L197.3 0z"/><path d="M0 234L42.7 96.5 85 234H0z"/></svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-xs font-bold text-gray-800">Adobe Creative Cloud</div>
-                                <div class="text-[10px] text-gray-400">1 Bulan · All Apps</div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-xs font-black text-brand-600">Rp 249K</div>
-                                <div class="text-[10px] text-green-600 font-semibold">✓ Terlaris</div>
-                            </div>
-                        </div>
-
-                        <!-- Trust badge -->
-                        <div class="flex items-center justify-center gap-4 pt-1">
-                            <div class="flex items-center gap-1.5 text-[10px] text-gray-400">
-                                <svg class="w-3 h-3 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1l2.39 4.843L18 7.273l-4 3.899.944 5.505L10 14.013l-4.944 2.664L6 11.172 2 7.273l5.61-.43L10 1z" clip-rule="evenodd"/></svg>
-                                Original & Resmi
-                            </div>
-                            <div class="w-px h-3 bg-gray-200"></div>
-                            <div class="flex items-center gap-1.5 text-[10px] text-gray-400">
-                                <svg class="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                4.9 Rating
-                            </div>
-                            <div class="w-px h-3 bg-gray-200"></div>
-                            <div class="text-[10px] text-gray-400">⚡ &lt;5 mnt aktivasi</div>
-                        </div>
+            <div class="max-w-5xl mx-auto px-4">
+                <!-- Header -->
+                <div class="text-center mb-10">
+                    <div class="inline-flex items-center gap-2 bg-red-900/40 text-red-300 text-xs font-semibold px-3 py-1.5 rounded-full mb-4 border border-red-800/40">
+                        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                        10.000+ pelanggan puas · Aktivasi instan
                     </div>
+                    <h2 class="text-2xl md:text-3xl font-black text-white mb-3">Siap Mulai Berlangganan?</h2>
+                    <p class="text-gray-400 text-sm md:text-base max-w-lg mx-auto">Produk original bergaransi, aktivasi cepat, harga terjangkau.</p>
                 </div>
 
-                <!-- Kanan: teks di bg gradient merah -->
-                <div class="flex-1 gradient-hero py-14 px-8 md:px-14 flex items-center relative overflow-hidden">
-                    <div class="absolute -top-20 -right-20 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-                    <div class="text-white text-center md:text-left max-w-md">
-                        <div class="inline-flex items-center gap-2 bg-white/15 text-white/90 text-xs font-semibold px-3 py-1.5 rounded-full mb-5 border border-white/20">
-                            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                            10.000+ pelanggan puas
-                        </div>
-                        <h2 class="text-2xl md:text-3xl font-black mb-3 leading-tight">Siap Mulai<br>Berlangganan?</h2>
-                        <p class="text-white/75 text-sm md:text-base mb-7">Produk original bergaransi, aktivasi cepat, harga terjangkau. Giliran kamu!</p>
-                        <div class="flex flex-wrap gap-3 justify-center md:justify-start">
-                            <button @click="setPage('catalog')"
-                                    class="bg-white text-brand-600 font-bold px-7 py-3 rounded-xl hover:bg-brand-50 transition-all shadow-lg active:scale-95 text-sm">
-                                Lihat Semua Produk →
-                            </button>
-                            <button @click="authModal=true; authTab='register'"
-                                    x-show="!currentUser"
-                                    class="bg-white/15 text-white font-semibold px-7 py-3 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95 text-sm">
-                                Daftar Gratis
-                            </button>
-                        </div>
+                <!-- Product cards: real dari featuredProducts -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <template x-for="p in featuredProducts.slice(0,3)" :key="p.linkProduk+p.varian">
+                        <button @click="goToProductDetail(p)" class="bg-gray-800 hover:bg-gray-750 border border-gray-700 hover:border-red-700/50 rounded-2xl px-4 py-4 flex items-center gap-3 text-left transition-all hover:shadow-lg hover:shadow-red-900/20 active:scale-95 group w-full">
+                            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-none bg-gray-700 group-hover:bg-gray-600 transition-colors overflow-hidden">
+                                <img :src="getProductLogo(p.nama)" :alt="p.nama" class="w-7 h-7 object-contain" onerror="this.style.display='none'"/>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-xs font-bold text-white truncate" x-text="p.nama"></div>
+                                <div class="text-[10px] text-gray-400 mt-0.5" x-text="(p.varian||'')+' · '+(p.masaAktif||p.durasi||'')" ></div>
+                            </div>
+                            <div class="text-right flex-none">
+                                <div class="text-xs font-black text-red-400" x-text="'Rp '+Math.round(p.harga/1000)+'K'"></div>
+                                <div class="text-[10px] text-gray-500 mt-0.5">Detail →</div>
+                            </div>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="flex flex-wrap gap-3 justify-center">
+                    <button @click="setPage('catalog')"
+                            class="bg-brand-600 hover:bg-brand-700 text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-lg shadow-red-900/30 active:scale-95 text-sm">
+                        Lihat Semua Produk →
+                    </button>
+                    <button @click="authModal=true; authTab='register'"
+                            x-show="!currentUser"
+                            class="bg-white/10 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/15 transition-all border border-white/15 active:scale-95 text-sm">
+                        Daftar Gratis
+                    </button>
+                </div>
+
+                <!-- Trust strip -->
+                <div class="flex flex-wrap items-center justify-center gap-6 mt-8 pt-8 border-t border-gray-800">
+                    <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                        <svg class="w-3.5 h-3.5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1l2.39 4.843L18 7.273l-4 3.899.944 5.505L10 14.013l-4.944 2.664L6 11.172 2 7.273l5.61-.43L10 1z" clip-rule="evenodd"/></svg>
+                        Original & Bergaransi
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                        <svg class="w-3.5 h-3.5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        Rating 4.9 / 5.0
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                        <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Aktivasi &lt;5 Menit
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-gray-500">
+                        <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Support 24/7
                     </div>
                 </div>
             </div>
