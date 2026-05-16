@@ -443,7 +443,7 @@
                     <div class="flex-none w-full md:w-[340px]">
 
                         <!-- ── Mobile banner (solid white) ── -->
-                        <div class="md:hidden bg-white rounded-2xl p-3 shadow-lg">
+                        <div class="md:hidden bg-white rounded-2xl p-3 shadow-md">
                             <!-- Header: badge + countdown -->
                             <div class="flex items-center justify-between gap-2 mb-2.5">
                                 <div class="flex items-center gap-1.5">
@@ -606,7 +606,7 @@
                                     <template x-if="!isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
                                         <div>
                                             <div class="font-black text-brand-500 text-sm" x-text="formatPrice(product.harga)"></div>
-                                            <div class="text-[9px] text-red-500 font-bold leading-tight" x-text="'Member hemat '+(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'%'"></div>
+                                            <div class="text-[9px] text-brand-500 font-bold leading-tight" x-text="'Member hemat '+(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'%'"></div>
                                         </div>
                                     </template>
                                     <!-- Tidak ada flash sale -->
@@ -762,7 +762,7 @@
                                         <template x-if="!isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
                                             <div class="mb-2">
                                                 <div class="font-black text-brand-500 text-base" x-text="formatPrice(product.harga)"></div>
-                                                <div class="text-[9px] text-red-500 font-bold leading-tight" x-text="'Member hemat '+(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'%'"></div>
+                                                <div class="text-[9px] text-brand-500 font-bold leading-tight" x-text="'Member hemat '+(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'%'"></div>
                                             </div>
                                         </template>
                                         <!-- Tidak ada flash sale -->
@@ -912,7 +912,7 @@
                                             <template x-if="!isMember && flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
                                                 <div>
                                                     <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
-                                                    <span class="text-[9px] text-red-500 font-bold mt-0.5 block">Member hemat <span x-text="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.diskon+'%'"></span></span>
+                                                    <span class="text-[9px] text-brand-500 font-bold mt-0.5 block">Member hemat <span x-text="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.diskon+'%'"></span></span>
                                                 </div>
                                             </template>
                                             <template x-if="!flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
@@ -1208,7 +1208,7 @@
                                         <template x-if="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
                                             <div class="flex items-center gap-1.5 mt-1">
                                                 <span class="text-[10px] font-black bg-red-500 text-white px-1.5 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon+'% OFF'"></span>
-                                                <span class="text-[10px] text-red-500 font-bold">Member → <span x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></span></span>
+                                                <span class="text-[10px] text-brand-500 font-bold">Member → <span x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></span></span>
                                             </div>
                                         </template>
                                     </div>
@@ -2330,6 +2330,154 @@
         </div>
     </div>
 
+    <!-- ══ Admin Order Detail Modal ══ -->
+    <div x-show="adminOrderDetail"
+         x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-[480] flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm"
+         @click.self="adminOrderDetail=null" style="display:none">
+        <div x-show="adminOrderDetail"
+             x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-y-full md:translate-y-0 md:scale-95 opacity-0" x-transition:enter-end="translate-y-0 md:scale-100 opacity-100"
+             x-transition:leave="transition ease-in duration-200" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full opacity-0"
+             class="bg-white w-full md:max-w-lg md:rounded-3xl rounded-t-3xl max-h-[92vh] flex flex-col shadow-xl">
+            <!-- Handle -->
+            <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+            <!-- Header -->
+            <div class="px-5 py-4 border-b flex-shrink-0" x-bind:class="adminOrderDetail ? _orderCardHeader(adminOrderDetail.status) : ''">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span class="font-mono text-xs font-bold text-gray-700 bg-white border border-gray-200 px-2 py-0.5 rounded-lg" x-text="adminOrderDetail?.orderId"></span>
+                            <span :class="getStatusBadge(adminOrderDetail?.status||'')" class="text-xs font-bold px-2.5 py-0.5 rounded-full" x-text="adminOrderDetail?.status"></span>
+                            <template x-if="adminOrderDetail?.status==='Selesai'">
+                                <button @click.stop="adminDownloadInvoice(adminOrderDetail)"
+                                        class="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-white border border-emerald-300 px-2 py-0.5 rounded-full hover:bg-emerald-50 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                                    Invoice
+                                </button>
+                            </template>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-full bg-brand-100 text-brand-600 text-xs font-bold flex items-center justify-center flex-shrink-0" x-text="adminOrderDetail?.nama?.charAt(0)?.toUpperCase()||'?'"></div>
+                            <div>
+                                <div class="text-sm font-semibold text-gray-800" x-text="adminOrderDetail?.nama"></div>
+                                <div class="text-[11px] text-gray-400" x-text="adminOrderDetail ? adminFormatDate(adminOrderDetail.tanggal) : ''"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button @click="adminOrderDetail=null" class="w-7 h-7 flex items-center justify-center rounded-full bg-white/80 text-gray-400 hover:text-gray-700 flex-shrink-0 mt-0.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Items scroll area -->
+            <div class="overflow-y-auto flex-1 divide-y divide-gray-50">
+                <template x-for="(item, idx) in (adminOrderDetail?.items||[])" :key="item.rowIndex||idx">
+                    <div class="px-5 py-3.5">
+                        <div class="flex items-start gap-3">
+                            <span class="text-[10px] text-gray-400 font-mono w-4 flex-shrink-0 mt-0.5" x-text="idx+1+'.'"></span>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        <span class="text-sm font-semibold text-gray-800" x-text="item.produk"></span>
+                                        <template x-if="item.varian && item.varian!=='-'"><span class="text-xs text-gray-500 ml-1" x-text="'– '+item.varian"></span></template>
+                                        <template x-if="item.masaAktif && item.masaAktif!=='-'"><span class="text-xs text-gray-400 ml-1" x-text="'· '+item.masaAktif"></span></template>
+                                    </div>
+                                    <span class="text-sm font-bold text-gray-800 flex-shrink-0" x-text="formatPrice(item.harga)"></span>
+                                </div>
+                                <div class="mt-1.5 space-y-0.5" x-show="_adminOrderHasDetails(item)">
+                                    <template x-if="_isVal(item.emailAktif)">
+                                        <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Email Aktif</span><span class="text-gray-700 font-medium break-all" x-text="item.emailAktif"></span></div>
+                                    </template>
+                                    <template x-if="_isVal(item.microsoftEmail)">
+                                        <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Email MS</span><span class="text-gray-700 font-medium break-all" x-text="item.microsoftEmail"></span></div>
+                                    </template>
+                                    <template x-if="_isVal(item.msNama)">
+                                        <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Nama MS</span><span class="text-gray-700 font-medium" x-text="item.msNama"></span></div>
+                                    </template>
+                                    <template x-if="_isVal(item.username)">
+                                        <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Username Req.</span><span class="text-gray-700 font-medium" x-text="item.username"></span></div>
+                                    </template>
+                                    <template x-if="_isVal(item.emailReminder)">
+                                        <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Email Reminder</span><span class="text-gray-700 font-medium break-all" x-text="item.emailReminder"></span></div>
+                                    </template>
+                                    <template x-if="_isVal(item.adobeEmail)">
+                                        <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Adobe Email</span><span class="text-gray-700 font-medium break-all" x-text="item.adobeEmail"></span></div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <!-- Footer: payment + Ubah Status -->
+            <div class="px-5 py-4 border-t flex-shrink-0 space-y-3" x-bind:class="adminOrderDetail ? _orderCardFooter(adminOrderDetail.status) : ''">
+                <!-- Payment info + total -->
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs text-gray-400" x-text="(adminOrderDetail?.items?.length||0)+' item'"></span>
+                        <!-- Payment method edit -->
+                        <template x-if="adminOrderDetail && adminPayMethodEdit!==adminOrderDetail.orderId">
+                            <button @click.stop="adminPayMethodEdit=adminOrderDetail.orderId; adminPayMethodVal=adminOrderDetail.items[0]?.paymentMethod||''"
+                                    class="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all"
+                                    :class="adminOrderDetail.items[0]?.paymentMethod?'bg-blue-50 text-blue-600 hover:bg-blue-100':'bg-gray-100 text-gray-400 hover:bg-gray-200'">
+                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                <span x-text="adminOrderDetail.items[0]?.paymentMethod||'Metode Bayar'"></span>
+                                <svg class="w-2 h-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </button>
+                        </template>
+                        <template x-if="adminOrderDetail && adminPayMethodEdit===adminOrderDetail.orderId">
+                            <div class="flex items-center gap-1" @click.stop>
+                                <select x-model="adminPayMethodVal" class="text-[11px] border border-brand-300 rounded-lg px-2 py-1 focus:outline-none bg-white text-gray-700">
+                                    <option value="">-- Pilih --</option>
+                                    <template x-for="pm in (adminPaymentList.filter(p=>p.active).length?adminPaymentList.filter(p=>p.active).map(p=>p.label):['Transfer Bank','QRIS','Cash','iPaymu','COD','Xendit','Lainnya'])" :key="pm">
+                                        <option :value="pm" x-text="pm"></option>
+                                    </template>
+                                </select>
+                                <button @click="adminSavePayMethod(adminOrderDetail)" :disabled="adminPayMethodSaving===adminOrderDetail.orderId"
+                                        class="text-[11px] font-bold px-2 py-1 bg-brand-500 text-white rounded-lg disabled:opacity-60">
+                                    <span x-text="adminPayMethodSaving===adminOrderDetail.orderId?'...':'Simpan'"></span>
+                                </button>
+                                <button @click="adminPayMethodEdit=null" class="text-[11px] font-bold px-2 py-1 bg-gray-100 text-gray-600 rounded-lg">✕</button>
+                            </div>
+                        </template>
+                        <template x-if="adminOrderDetail?.items[0]?.paymentStatus">
+                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                                  :class="adminOrderDetail.items[0].paymentStatus==='Lunas'||adminOrderDetail.items[0].paymentStatus==='Berhasil'?'bg-emerald-50 text-emerald-600':'bg-amber-50 text-amber-600'"
+                                  x-text="adminOrderDetail.items[0].paymentStatus"></span>
+                        </template>
+                    </div>
+                    <span class="text-base font-black text-brand-600" x-text="adminOrderDetail ? formatPrice(adminOrderDetail.total) : ''"></span>
+                </div>
+                <!-- Ubah Status row -->
+                <div class="flex items-center gap-2">
+                    <template x-if="adminOrderDetail && adminStatusConfirm && adminStatusConfirm.orderId===adminOrderDetail.orderId">
+                        <div class="flex items-center gap-2 w-full">
+                            <select x-model="adminStatusConfirm.payMethod" class="flex-1 text-sm border border-brand-300 rounded-xl px-3 py-2.5 focus:outline-none bg-white text-gray-700">
+                                <option value="">Metode Bayar...</option>
+                                <template x-for="pm in (adminPaymentList.filter(p=>p.active).length?adminPaymentList.filter(p=>p.active).map(p=>p.label):['Transfer Bank','QRIS','Cash','iPaymu','COD','Lainnya'])" :key="pm">
+                                    <option :value="pm" x-text="pm"></option>
+                                </template>
+                            </select>
+                            <button @click="if(adminStatusConfirm.payMethod){adminUpdateGroupStatus(adminOrderDetail,'Selesai',adminStatusConfirm.payMethod);adminStatusConfirm=null;adminOrderDetail=null}else{_adminShowMsg('Pilih metode pembayaran dulu')}"
+                                    class="px-4 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold">OK</button>
+                            <button @click="adminStatusConfirm=null" class="px-3 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold">Batal</button>
+                        </div>
+                    </template>
+                    <template x-if="!adminStatusConfirm || !adminOrderDetail || adminStatusConfirm.orderId!==adminOrderDetail.orderId">
+                        <select @change="if($event.target.value==='Selesai'){adminStatusConfirm={orderId:adminOrderDetail.orderId,g:adminOrderDetail,payMethod:''}}else{adminUpdateGroupStatus(adminOrderDetail,$event.target.value);adminOrderDetail=null}; $event.target.value=''"
+                                class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700">
+                            <option value="">Ubah Status...</option>
+                            <template x-for="st in ['Pending','Diproses','Aktif','Selesai','Dibatalkan']" :key="st">
+                                <option :value="st" x-text="st"></option>
+                            </template>
+                        </select>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ───────── FAQ ───────── -->
     <section x-show="activePage==='faq'" class="page-enter">
         <div x-data="{ faqFilter: 'semua', faqOpen: null }" class="max-w-5xl mx-auto px-4 py-8 pb-28 md:pb-12">
@@ -2667,7 +2815,7 @@
             <!-- Tab Navigation Mobile: horizontal scroll -->
             <div class="relative mb-4 md:hidden">
                 <div class="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar">
-                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'quotation',label:'Quotation'},{id:'ulasan',label:'Ulasan'},{id:'payment',label:'Pembayaran'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
+                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'orders',label:'Semua Order'},{id:'users',label:'Users'},{id:'quotation',label:'Quotation'},{id:'ulasan',label:'Ulasan'},{id:'payment',label:'Pembayaran'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
                         <button @click="adminTab=tab.id; adminInitTab(tab.id); $el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})"
                                 :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
                                 class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
@@ -2691,6 +2839,7 @@
                     {id:'panduan',   label:'Panduan',      icon:'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253'},
                     {id:'footer',    label:'Footer',       icon:'M4 6h16M4 12h16M4 18h7'},
                     {id:'orders',    label:'Semua Order',  icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'},
+                    {id:'users',     label:'Users',        icon:'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z'},
                     {id:'quotation', label:'Quotation',    icon:'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z'},
                     {id:'ulasan',    label:'Ulasan',       icon:'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z'},
                     {id:'payment',   label:'Pembayaran',   icon:'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'},
@@ -3170,7 +3319,7 @@
                 <!-- Produk: scorecard grid (semua ukuran layar) -->
                 <div x-show="!adminProductsLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                     <template x-for="(p, pi) in adminFilteredProducts" :key="p.rowIndex">
-                        <div class="bg-white rounded-2xl border shadow-sm hover:shadow-lg transition-all duration-200 overflow-hidden group"
+                        <div class="bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group"
                              :class="p.aktif ? 'border-gray-100' : 'border-gray-100 opacity-60'">
                             <!-- Status strip -->
                             <div class="h-1 w-full transition-colors duration-300" :class="p.aktif ? 'bg-emerald-400' : 'bg-gray-200'"></div>
@@ -3288,31 +3437,40 @@
                     <h2 class="font-bold text-gray-900">Produk Populer</h2>
                     <span class="text-xs text-gray-400 font-medium" x-text="adminFeaturedItems.length + '/10 produk'"></span>
                 </div>
-                <p class="text-xs text-gray-400 mb-4">Pilih produk yang tampil di beranda. Urutan dapat diatur dengan tombol naik/turun.</p>
+                <p class="text-xs text-gray-400 mb-3 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                    Seret untuk mengubah urutan
+                </p>
 
                 <!-- Daftar produk terpilih -->
                 <div class="space-y-2 mb-4">
                     <template x-for="(p, i) in adminFeaturedItems" :key="p.nama+p.varian+p.masaAktif">
-                        <div class="flex items-center gap-3 bg-gray-50 rounded-2xl px-3 py-2.5">
-                            <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-none" :class="getCategoryBg(p.category||getCategory(p.nama))">
-                                <img :src="getProductLogo(p.category||getCategory(p.nama))" class="w-6 h-6 object-contain" onerror="this.style.display='none'">
+                        <div class="flex items-center gap-2 rounded-2xl px-2.5 py-2.5 border transition-all duration-150 cursor-grab active:cursor-grabbing select-none"
+                             :class="featuredDragOverIdx===i ? 'border-brand-400 bg-brand-50 scale-[1.01]' : 'border-gray-100 bg-gray-50 hover:border-gray-200'"
+                             draggable="true"
+                             @dragstart.stop="featuredDragStart(i)"
+                             @dragover.prevent.stop="featuredDragOver(i)"
+                             @drop.prevent.stop="featuredDrop(i)"
+                             @dragend.stop="featuredDragIdx=null; featuredDragOverIdx=null"
+                             @touchstart.passive="featuredTouchStart($event, i)"
+                             @touchmove.passive="featuredTouchMove($event)"
+                             @touchend.passive="featuredTouchEnd()">
+                            <!-- Drag handle -->
+                            <div class="flex-none text-gray-300 touch-none">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                            </div>
+                            <div class="flex-none w-4 h-4 rounded bg-brand-100 text-brand-600 text-[10px] font-black flex items-center justify-center" x-text="i+1"></div>
+                            <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-none" :class="getCategoryBg(p.category||getCategory(p.nama))">
+                                <img :src="getProductLogo(p.category||getCategory(p.nama))" class="w-5 h-5 object-contain" onerror="this.style.display='none'">
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="font-semibold text-gray-800 text-xs leading-snug line-clamp-1" x-text="p.nama"></div>
                                 <div class="text-[10px] text-gray-400 truncate"><span x-text="p.varian"></span><span x-show="p.masaAktif&&p.masaAktif!=='-'" x-text="' · '+p.masaAktif"></span></div>
                             </div>
                             <div class="font-black text-brand-500 text-xs flex-none" x-text="formatPrice(p.harga)"></div>
-                            <div class="flex items-center gap-0.5 flex-none">
-                                <button @click="adminFeaturedMoveUp(i)" :disabled="i===0" class="p-1 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors">
-                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-                                </button>
-                                <button @click="adminFeaturedMoveDown(i)" :disabled="i>=adminFeaturedItems.length-1" class="p-1 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors">
-                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                                </button>
-                                <button @click="adminFeaturedRemove(i)" class="p-1 rounded hover:bg-red-100 text-red-400 transition-colors">
-                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                </button>
-                            </div>
+                            <button @click.stop="adminFeaturedRemove(i)" class="p-1 rounded hover:bg-red-100 text-red-400 transition-colors flex-none">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
                         </div>
                     </template>
                     <div x-show="!adminFeaturedItems.length" class="text-center py-6 text-gray-400 text-sm">Belum ada produk dipilih. Cari produk di bawah.</div>
@@ -3552,158 +3710,46 @@
                         </div>
                     </div>
 
-                    <!-- Grouped order cards -->
-                    <div class="space-y-3">
+                    <!-- Scorecard grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         <template x-for="g in adminPagedOrders" :key="g.orderId">
-                            <div class="bg-white rounded-2xl border shadow-sm overflow-hidden" :class="_orderCardBorder(g.status)">
-
-                                <!-- Group header: No Pesanan kiri, status+buyer tengah, ubah status kanan -->
-                                <div class="px-4 py-3 border-b" :class="_orderCardHeader(g.status)">
-                                    <!-- Row 1: No Pesanan + action buttons + Ubah Status -->
-                                    <div class="flex items-center justify-between gap-2 mb-2">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <span class="font-mono text-xs font-bold text-gray-700 bg-white border border-gray-200 px-2 py-0.5 rounded-lg" x-text="g.orderId"></span>
-                                            <span :class="getStatusBadge(g.status)" class="text-xs font-semibold px-2.5 py-0.5 rounded-full" x-text="g.status"></span>
-                                            <!-- Invoice: hanya status Selesai -->
-                                            <template x-if="g.status==='Selesai'">
-                                                <button @click.stop="adminDownloadInvoice(g)"
-                                                        class="flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-white border border-emerald-300 px-2 py-0.5 rounded-full hover:bg-emerald-50 transition-colors">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-                                                    Invoice
-                                                </button>
-                                            </template>
-                                        </div>
-                                        <template x-if="adminStatusConfirm && adminStatusConfirm.orderId===g.orderId">
-                                            <div class="flex items-center gap-1.5 flex-shrink-0">
-                                                <select x-model="adminStatusConfirm.payMethod"
-                                                        class="text-xs border border-brand-300 rounded-lg px-2 py-1.5 focus:outline-none bg-white text-gray-700">
-                                                    <option value="">Metode Bayar...</option>
-                                                    <template x-for="pm in (adminPaymentList.filter(p=>p.active).length ? adminPaymentList.filter(p=>p.active).map(p=>p.label) : ['Transfer Bank','QRIS','Cash','iPaymu','COD','Lainnya'])" :key="pm">
-                                                        <option :value="pm" x-text="pm"></option>
-                                                    </template>
-                                                </select>
-                                                <button @click="if(adminStatusConfirm.payMethod){adminUpdateGroupStatus(g,'Selesai',adminStatusConfirm.payMethod);adminStatusConfirm=null}else{_adminShowMsg('Pilih metode pembayaran dulu')}"
-                                                        class="text-[11px] font-bold px-2.5 py-1.5 bg-brand-500 text-white rounded-lg">OK</button>
-                                                <button @click="adminStatusConfirm=null"
-                                                        class="text-[11px] font-bold px-2.5 py-1.5 bg-gray-100 text-gray-600 rounded-lg">Batal</button>
-                                            </div>
-                                        </template>
-                                        <template x-if="!adminStatusConfirm || adminStatusConfirm.orderId!==g.orderId">
-                                            <select @change="$event.target.value==='Selesai' ? (adminStatusConfirm={orderId:g.orderId,g,payMethod:''}) : (adminUpdateGroupStatus(g,$event.target.value),0); $event.target.value=''"
-                                                    class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700 flex-shrink-0">
-                                                <option value="">Ubah Status...</option>
-                                                <template x-for="st in ['Pending','Diproses','Aktif','Selesai','Dibatalkan']" :key="st">
-                                                    <option :value="st" x-text="st"></option>
-                                                </template>
-                                            </select>
-                                        </template>
+                            <div @click="adminOrderDetail=g"
+                                 class="bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer active:scale-[0.98] overflow-hidden"
+                                 :class="_orderCardBorder(g.status)">
+                                <!-- Header -->
+                                <div class="px-3.5 py-3 border-b" :class="_orderCardHeader(g.status)">
+                                    <div class="flex items-center justify-between gap-2 mb-1.5">
+                                        <span class="font-mono text-[11px] font-bold text-gray-600 bg-white border border-gray-200 px-2 py-0.5 rounded-lg" x-text="g.orderId"></span>
+                                        <span :class="getStatusBadge(g.status)" class="text-[10px] font-bold px-2 py-0.5 rounded-full" x-text="g.status"></span>
                                     </div>
-                                    <!-- Row 2: Avatar + Nama + Tanggal -->
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-7 h-7 rounded-full bg-brand-100 text-brand-600 text-xs font-bold flex items-center justify-center flex-shrink-0" x-text="g.nama?.charAt(0)?.toUpperCase()||'?'"></div>
-                                        <div>
-                                            <div class="text-sm font-semibold text-gray-800" x-text="g.nama"></div>
-                                            <div class="text-[11px] text-gray-400" x-text="adminFormatDate(g.tanggal)"></div>
-                                        </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <div class="w-5 h-5 rounded-full bg-brand-100 text-brand-600 text-[9px] font-bold flex items-center justify-center flex-shrink-0" x-text="g.nama?.charAt(0)?.toUpperCase()||'?'"></div>
+                                        <span class="text-xs font-semibold text-gray-700 truncate" x-text="g.nama"></span>
+                                        <span class="text-[10px] text-gray-400 flex-shrink-0 ml-auto" x-text="adminFormatDate(g.tanggal)"></span>
                                     </div>
                                 </div>
-
-                                <!-- Items list -->
-                                <div class="divide-y divide-gray-50">
-                                    <template x-for="(item, idx) in g.items" :key="item.rowIndex||idx">
-                                        <div class="px-4 py-3">
-                                            <!-- Produk row -->
-                                            <div class="flex items-start gap-3">
-                                                <span class="text-[10px] text-gray-400 font-mono w-4 flex-shrink-0 mt-0.5" x-text="idx+1+'.'"></span>
-                                                <div class="flex-1 min-w-0">
-                                                    <div class="flex items-start justify-between gap-2">
-                                                        <div>
-                                                            <span class="text-sm font-semibold text-gray-800" x-text="item.produk"></span>
-                                                            <template x-if="item.varian && item.varian!=='-'"><span class="text-xs text-gray-500 ml-1" x-text="'– '+item.varian"></span></template>
-                                                            <template x-if="item.masaAktif && item.masaAktif!=='-'"><span class="text-xs text-gray-400 ml-1" x-text="'· '+item.masaAktif"></span></template>
-                                                            <span class="ml-1 text-[10px] text-gray-400">x1</span>
-                                                        </div>
-                                                        <span class="text-sm font-bold text-gray-800 flex-shrink-0" x-text="formatPrice(item.harga)"></span>
-                                                    </div>
-                                                    <!-- Detail fields — tampil sesuai tipe order, skip "-" dan kosong -->
-                                                    <div class="mt-2 grid grid-cols-1 gap-0.5" x-show="_adminOrderHasDetails(item)">
-                                                        <template x-if="_isVal(item.emailAktif)">
-                                                            <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Email Aktif</span><span class="text-gray-700 font-medium break-all" x-text="item.emailAktif"></span></div>
-                                                        </template>
-                                                        <template x-if="_isVal(item.microsoftEmail)">
-                                                            <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Email MS</span><span class="text-gray-700 font-medium break-all" x-text="item.microsoftEmail"></span></div>
-                                                        </template>
-                                                        <template x-if="_isVal(item.msNama)">
-                                                            <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Nama MS</span><span class="text-gray-700 font-medium" x-text="item.msNama"></span></div>
-                                                        </template>
-                                                        <template x-if="_isVal(item.username)">
-                                                            <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Username Req.</span><span class="text-gray-700 font-medium" x-text="item.username"></span></div>
-                                                        </template>
-                                                        <template x-if="_isVal(item.emailReminder)">
-                                                            <div class="flex gap-2 text-[11px]"><span class="text-gray-400 w-24 flex-shrink-0">Email Reminder</span><span class="text-gray-700 font-medium break-all" x-text="item.emailReminder"></span></div>
-                                                        </template>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
+                                <!-- Product summary -->
+                                <div class="px-3.5 py-2.5">
+                                    <p class="text-xs text-gray-700 line-clamp-2 leading-relaxed" x-text="g.items[0]?.produk + (g.items[0]?.varian&&g.items[0]?.varian!=='-'?' – '+g.items[0].varian:'') + (g.items.length>1?' +'+( g.items.length-1)+' lainnya':'')"></p>
                                 </div>
-
-                                <!-- Footer: payment info + total -->
-                                <div class="flex items-center justify-between gap-3 px-4 py-2.5 border-t" :class="_orderCardFooter(g.status)">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="text-[11px] text-gray-400" x-text="g.items.length + ' item'"></span>
-                                        <!-- Countdown Belum Bayar -->
-                                        <template x-if="g.status==='Pending' && orderMsLeft({tanggal:g.tanggal, status:g.status}) > 0">
-                                            <span class="flex items-center gap-1 text-[10px] font-semibold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
-                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg>
-                                                Sisa <span x-text="orderTimeLeftStr({tanggal:g.tanggal, status:g.status})"></span>
-                                            </span>
-                                        </template>
-                                        <template x-if="g.status==='Pending' && orderMsLeft({tanggal:g.tanggal, status:g.status}) <= 0">
-                                            <span class="text-[10px] font-semibold text-red-500 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">Waktu habis</span>
-                                        </template>
-                                        <!-- Payment method — klik untuk edit -->
-                                        <template x-if="adminPayMethodEdit!==g.orderId">
-                                            <button @click.stop="adminPayMethodEdit=g.orderId; adminPayMethodVal=g.items[0]?.paymentMethod||''"
-                                                    class="flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all"
-                                                    :class="g.items[0]?.paymentMethod ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'"
-                                                    :title="'Klik untuk ubah metode bayar'">
-                                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                                                <span x-text="g.items[0]?.paymentMethod || 'Metode Bayar'"></span>
-                                                <svg class="w-2 h-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                            </button>
-                                        </template>
-                                        <template x-if="adminPayMethodEdit===g.orderId">
-                                            <div class="flex items-center gap-1" @click.stop>
-                                                <select x-model="adminPayMethodVal"
-                                                        class="text-[11px] border border-brand-300 rounded-lg px-2 py-1 focus:outline-none bg-white text-gray-700">
-                                                    <option value="">-- Pilih --</option>
-                                                    <template x-for="pm in (adminPaymentList.filter(p=>p.active).length ? adminPaymentList.filter(p=>p.active).map(p=>p.label) : ['Transfer Bank','QRIS','Cash','iPaymu','COD','Xendit','Lainnya'])" :key="pm">
-                                                        <option :value="pm" x-text="pm"></option>
-                                                    </template>
-                                                </select>
-                                                <button @click="adminSavePayMethod(g)" :disabled="adminPayMethodSaving===g.orderId"
-                                                        class="flex items-center gap-1 text-[11px] font-bold px-2 py-1 bg-brand-500 text-white rounded-lg hover:bg-brand-600 disabled:opacity-60">
-                                                    <svg x-show="adminPayMethodSaving===g.orderId" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                                                    <span x-text="adminPayMethodSaving===g.orderId ? 'Menyimpan...' : 'Simpan'"></span>
-                                                </button>
-                                                <button @click="adminPayMethodEdit=null"
-                                                        class="text-[11px] font-bold px-2 py-1 bg-gray-100 text-gray-600 rounded-lg">✕</button>
-                                            </div>
+                                <!-- Footer -->
+                                <div class="px-3.5 py-2 border-t flex items-center justify-between gap-2" :class="_orderCardFooter(g.status)">
+                                    <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+                                        <span class="text-[10px] text-gray-400" x-text="g.items.length+' item'"></span>
+                                        <template x-if="g.items[0]?.paymentMethod">
+                                            <span class="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full truncate max-w-[80px]" x-text="g.items[0].paymentMethod"></span>
                                         </template>
                                         <template x-if="g.items[0]?.paymentStatus">
-                                            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-                                                  :class="g.items[0].paymentStatus==='Lunas'||g.items[0].paymentStatus==='Berhasil' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'"
+                                            <span class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                                                  :class="g.items[0].paymentStatus==='Lunas'||g.items[0].paymentStatus==='Berhasil'?'bg-emerald-50 text-emerald-600':'bg-amber-50 text-amber-600'"
                                                   x-text="g.items[0].paymentStatus"></span>
                                         </template>
                                     </div>
-                                    <span class="text-sm font-bold text-brand-600" x-text="formatPrice(g.total)"></span>
+                                    <span class="text-sm font-bold text-brand-600 flex-shrink-0" x-text="formatPrice(g.total)"></span>
                                 </div>
-
                             </div>
                         </template>
-                        <div x-show="adminGroupedOrders.length===0" class="text-center py-10 text-gray-400 text-sm">Tidak ada order</div>
+                        <div x-show="adminGroupedOrders.length===0" class="col-span-3 text-center py-10 text-gray-400 text-sm">Tidak ada order</div>
                     </div>
 
                     <!-- Pagination -->
@@ -3729,6 +3775,118 @@
                         </div>
                     </div>
 
+                </div>
+            </div>
+
+            <!-- ══ Tab: Users ══════════════════════════════ -->
+            <div x-show="adminTab==='users'" x-init="if(adminTab==='users'&&!adminUsersLoaded) adminLoadUsers()">
+                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="font-bold text-gray-900">Manajemen Users</h2>
+                            <p class="text-xs text-gray-400 mt-0.5" x-text="adminUsers.length + ' user terdaftar'"></p>
+                        </div>
+                        <button @click="adminUsersLoaded=false; adminLoadUsers()"
+                                class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-brand-600 border border-gray-200 hover:border-brand-300 px-3 py-1.5 rounded-lg transition-all">
+                            <svg class="w-3.5 h-3.5" :class="adminUsersLoading?'animate-spin':''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Refresh
+                        </button>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="relative mb-4">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+                        <input x-model="adminUsersSearch" type="text" placeholder="Cari nama, email, nomor WA..."
+                               class="w-full pl-8 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-brand-400 bg-white">
+                    </div>
+
+                    <!-- Loading -->
+                    <div x-show="adminUsersLoading" class="flex flex-col items-center justify-center py-12 gap-3 text-gray-400">
+                        <div class="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span class="text-sm">Memuat data users...</span>
+                    </div>
+
+                    <!-- User list -->
+                    <div x-show="!adminUsersLoading" class="space-y-2">
+                        <template x-for="u in adminFilteredUsers" :key="u.email">
+                            <div class="flex items-center gap-3 bg-gray-50 rounded-2xl px-3.5 py-3 border border-gray-100 hover:border-gray-200 transition-all">
+                                <!-- Avatar -->
+                                <div class="w-9 h-9 rounded-full gradient-card flex items-center justify-center text-white font-black text-sm flex-shrink-0"
+                                     x-text="u.nama?.charAt(0)?.toUpperCase()||'?'"></div>
+                                <!-- Info -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-semibold text-gray-800 text-sm" x-text="u.nama"></span>
+                                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                                              :class="u.role==='admin'?'bg-purple-100 text-purple-700':'bg-gray-100 text-gray-500'"
+                                              x-text="u.role||'user'"></span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 truncate" x-text="u.email"></div>
+                                    <div class="text-[10px] text-gray-400 flex items-center gap-2 mt-0.5">
+                                        <span x-show="u.wa" x-text="'WA: '+u.wa"></span>
+                                        <span x-show="u.created" x-text="adminFormatDate(u.created)"></span>
+                                    </div>
+                                </div>
+                                <!-- Actions -->
+                                <div class="flex items-center gap-1 flex-shrink-0">
+                                    <button @click="adminStartEditUser(u)"
+                                            class="p-1.5 rounded-lg hover:bg-brand-50 text-gray-400 hover:text-brand-600 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    </button>
+                                    <button @click="adminDeleteUser(u)"
+                                            class="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="!adminUsersLoading && adminFilteredUsers.length===0" class="text-center py-10 text-gray-400 text-sm">Tidak ada user ditemukan</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ Modal Edit User ══ -->
+            <div x-show="adminEditUserModal"
+                 x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+                 class="fixed inset-0 z-[500] flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm"
+                 @click.self="adminEditUserModal=false" style="display:none">
+                <div class="bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl p-6 shadow-xl"
+                     x-data="{swipeY:0,swipeStart:0}"
+                     @touchstart.passive="swipeStart=$event.touches[0].clientY;swipeY=0"
+                     @touchmove.passive="swipeY=Math.max(0,$event.touches[0].clientY-swipeStart);$el.style.transform=swipeY>0?'translateY('+swipeY+'px)':''"
+                     @touchend="if(swipeY>80){adminEditUserModal=false;}$el.style.transform='';swipeY=0">
+                    <div class="md:hidden flex justify-center -mt-2 mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+                    <h3 class="font-black text-gray-900 text-base mb-4">Edit User</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Nama</label>
+                            <input x-model="adminEditUserForm.nama" type="text" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Email</label>
+                            <input :value="adminEditUserForm.email" type="text" disabled class="w-full px-4 py-3 bg-gray-100 border border-gray-100 rounded-xl text-sm text-gray-400 cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">No. WhatsApp</label>
+                            <input x-model="adminEditUserForm.wa" type="text" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Role</label>
+                            <select x-model="adminEditUserForm.role" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div x-show="adminUsersError" class="text-xs text-red-500 font-medium" x-text="adminUsersError"></div>
+                    </div>
+                    <div class="flex gap-3 mt-5">
+                        <button @click="adminEditUserModal=false" class="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm">Batal</button>
+                        <button @click="adminSaveUser()" :disabled="adminUsersSaving"
+                                class="flex-1 py-3 rounded-2xl gradient-card text-white font-bold text-sm disabled:opacity-50 flex items-center justify-center gap-2">
+                            <svg x-show="adminUsersSaving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                            <span x-text="adminUsersSaving?'Menyimpan...':'Simpan'"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -5377,7 +5535,11 @@
 ══════════════════════════════════════════════════════ -->
 <div x-show="authModal" class="fixed inset-0 z-[200] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeAuthModal()"></div>
-    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter max-h-[92vh] overflow-y-auto">
+    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter max-h-[92vh] overflow-y-auto"
+         x-data="{swipeY:0,swipeStart:0}"
+         @touchstart.passive="swipeStart=$event.touches[0].clientY;swipeY=0"
+         @touchmove.passive="swipeY=Math.max(0,$event.touches[0].clientY-swipeStart);$el.style.transform=swipeY>0?'translateY('+swipeY+'px)':''"
+         @touchend="if(swipeY>90){closeAuthModal();}$el.style.transform='';swipeY=0">
         <div class="md:hidden flex justify-center pt-3 pb-1 sticky top-0 bg-white z-10"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
 
         <!-- Tabs -->
@@ -6678,6 +6840,24 @@ function serabutStore() {
         adminFlashVariantIdx: 0,
         guideDragIdx: null,
         guideDragOverIdx: null,
+
+        // Featured drag
+        featuredDragIdx: null,
+        featuredDragOverIdx: null,
+        featuredTouchStartY: 0,
+
+        // Admin order detail
+        adminOrderDetail: null,
+
+        // Admin users
+        adminUsers: [],
+        adminUsersLoading: false,
+        adminUsersLoaded: false,
+        adminUsersSearch: '',
+        adminUsersError: '',
+        adminUsersSaving: false,
+        adminEditUserModal: false,
+        adminEditUserForm: { nama:'', email:'', wa:'', role:'user' },
         adminEditHero:   {},
         adminEditFooter: {},
         adminEditCats:   [],
@@ -8298,6 +8478,15 @@ function serabutStore() {
 
         // ── Admin computed ────────────────────────────
         get adminFormProduct() { return this.adminNewProduct; },
+        get adminFilteredUsers() {
+            const q = (this.adminUsersSearch||'').trim().toLowerCase();
+            if(!q) return this.adminUsers;
+            return this.adminUsers.filter(u =>
+                u.nama?.toLowerCase().includes(q) ||
+                u.email?.toLowerCase().includes(q) ||
+                u.wa?.toLowerCase().includes(q)
+            );
+        },
         get adminFilteredOrders() {
             const f = this.adminOrderFilter;
             if (f === 'Semua')          return this.adminOrders;
@@ -8404,6 +8593,8 @@ function serabutStore() {
                 this.adminLoadGuides();
             } else if(tab==='orders') {
                 if (!this.adminOrdersLoaded) this.adminLoadOrders();
+            } else if(tab==='users') {
+                if (!this.adminUsersLoaded) this.adminLoadUsers();
             } else if(tab==='payment') {
                 if (!this.adminPaymentLoaded) this.adminLoadPaymentMethods();
             } else if(tab==='ipaymu') {
@@ -9334,6 +9525,37 @@ function serabutStore() {
             [this.adminFeaturedItems[i], this.adminFeaturedItems[i+1]] = [this.adminFeaturedItems[i+1], this.adminFeaturedItems[i]];
             this.adminFeaturedItems = [...this.adminFeaturedItems];
         },
+        // Featured drag & drop (desktop HTML5 + mobile touch)
+        featuredDragStart(i) { this.featuredDragIdx = i; },
+        featuredDragOver(i)  { if(this.featuredDragIdx !== null && this.featuredDragIdx !== i) this.featuredDragOverIdx = i; },
+        featuredDrop(i) {
+            if(this.featuredDragIdx === null || this.featuredDragIdx === i) { this.featuredDragIdx=null; this.featuredDragOverIdx=null; return; }
+            const [moved] = this.adminFeaturedItems.splice(this.featuredDragIdx, 1);
+            this.adminFeaturedItems.splice(i, 0, moved);
+            this.adminFeaturedItems = [...this.adminFeaturedItems];
+            this.featuredDragIdx = null; this.featuredDragOverIdx = null;
+        },
+        featuredTouchStart(e, i) {
+            this.featuredDragIdx = i;
+            this.featuredTouchStartY = e.touches[0].clientY;
+            this.featuredDragOverIdx = null;
+        },
+        featuredTouchMove(e) {
+            if(this.featuredDragIdx === null) return;
+            const delta = e.touches[0].clientY - this.featuredTouchStartY;
+            const ITEM_H = 52;
+            const steps = Math.round(delta / ITEM_H);
+            const newIdx = Math.max(0, Math.min(this.adminFeaturedItems.length - 1, this.featuredDragIdx + steps));
+            this.featuredDragOverIdx = newIdx !== this.featuredDragIdx ? newIdx : null;
+        },
+        featuredTouchEnd() {
+            if(this.featuredDragIdx !== null && this.featuredDragOverIdx !== null && this.featuredDragIdx !== this.featuredDragOverIdx) {
+                const [moved] = this.adminFeaturedItems.splice(this.featuredDragIdx, 1);
+                this.adminFeaturedItems.splice(this.featuredDragOverIdx, 0, moved);
+                this.adminFeaturedItems = [...this.adminFeaturedItems];
+            }
+            this.featuredDragIdx = null; this.featuredDragOverIdx = null; this.featuredTouchStartY = 0;
+        },
         async adminSaveFeatured() {
             this.adminSaving = true;
             try {
@@ -9424,6 +9646,47 @@ function serabutStore() {
                 this.adminOrdersLoaded = true;
             } catch { this.adminOrders=[]; }
             this.adminOrdersLoading=false;
+        },
+        async adminLoadUsers() {
+            this.adminUsersLoading = true;
+            this.adminUsersError   = '';
+            try {
+                const res = await this.gasPost({ action:'getAdminUsers', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken });
+                this.adminUsers = res.success ? res.data : [];
+                this.adminUsersLoaded = true;
+            } catch { this.adminUsers = []; }
+            this.adminUsersLoading = false;
+        },
+        adminStartEditUser(u) {
+            this.adminEditUserForm = { nama: u.nama||'', email: u.email||'', wa: u.wa||'', role: u.role||'user' };
+            this.adminUsersError   = '';
+            this.adminEditUserModal = true;
+        },
+        async adminSaveUser() {
+            if(!this.adminEditUserForm.nama.trim()) { this.adminUsersError='Nama tidak boleh kosong'; return; }
+            this.adminUsersSaving = true;
+            this.adminUsersError  = '';
+            try {
+                const res = await this.gasPost({ action:'updateUserAdmin', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, ...this.adminEditUserForm });
+                if(res.success) {
+                    const idx = this.adminUsers.findIndex(u => u.email === this.adminEditUserForm.email);
+                    if(idx >= 0) this.adminUsers[idx] = { ...this.adminUsers[idx], ...this.adminEditUserForm };
+                    this.adminUsers = [...this.adminUsers];
+                    this.adminEditUserModal = false;
+                    this._adminShowMsg('User diperbarui ✓');
+                } else { this.adminUsersError = res.error || 'Gagal menyimpan'; }
+            } catch { this.adminUsersError = 'Gagal terhubung'; }
+            this.adminUsersSaving = false;
+        },
+        async adminDeleteUser(u) {
+            if(!confirm(`Hapus user "${u.nama}" (${u.email})? Aksi ini tidak bisa dibatalkan.`)) return;
+            try {
+                const res = await this.gasPost({ action:'deleteUserAdmin', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, email: u.email });
+                if(res.success) {
+                    this.adminUsers = this.adminUsers.filter(x => x.email !== u.email);
+                    this._adminShowMsg('User dihapus ✓');
+                } else { this._adminShowMsg(res.error||'Gagal menghapus'); }
+            } catch { this._adminShowMsg('Gagal terhubung'); }
         },
         async adminLoadQuotations() {
             this.quoListLoading = true;

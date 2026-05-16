@@ -135,6 +135,9 @@ function doPost(e) {
       case 'getGuides':         result = getGuides(); break;
       case 'saveGuides':        result = saveGuides(params); break;
       case 'setUserRole':       result = setUserRole(params); break;
+      case 'getAdminUsers':     result = getAdminUsers(params); break;
+      case 'updateUserAdmin':   result = updateUserAdmin(params); break;
+      case 'deleteUserAdmin':   result = deleteUserAdmin(params); break;
       case 'updateProductStock':    result = updateProductStock(params); break;
       case 'updateProductAktif':    result = updateProductAktif(params); break;
       case 'saveProductBenefits':       result = saveProductBenefits(params); break;
@@ -4588,4 +4591,62 @@ function saveQuotation({ adminEmail, adminToken, quoId, nama, email, noHP, total
   sheet.appendRow([quoId, new Date(), nama||'', email||'', noHP||'', Number(total||0), Number(itemCount||0), status||'draft', formDataJson||'']);
   SpreadsheetApp.flush();
   return { success: true, action: 'inserted' };
+}
+
+// ── Admin Users CRUD ──────────────────────────────────
+function getAdminUsers(params) {
+  _requireAdmin(params);
+  const sheet = SS.getSheetByName(TAB_USERS);
+  const data  = sheet.getDataRange().getValues();
+  if(data.length < 2) return { success:true, data:[] };
+  const rows = data.slice(1);
+  return {
+    success: true,
+    data: rows
+      .filter(r => r[1]) // harus ada email
+      .map(r => ({
+        nama:     r[0]  || '',
+        email:    r[1]  || '',
+        wa:       r[2]  || '',
+        created:  r[4] ? new Date(r[4]).toISOString() : '',
+        role:     r[9]  || 'user',
+        status:   r[5]  || 'active',
+        kota:     r[12] || '',
+        provinsi: r[13] || ''
+      }))
+  };
+}
+
+function updateUserAdmin(params) {
+  _requireAdmin(params);
+  const { email, nama, wa, role } = params;
+  if(!email) return { success:false, error:'Email wajib diisi' };
+  const sheet = SS.getSheetByName(TAB_USERS);
+  const data  = sheet.getDataRange().getValues();
+  for(let i = 1; i < data.length; i++) {
+    if(data[i][1] === email) {
+      if(nama !== undefined) sheet.getRange(i+1, 1).setValue(nama);
+      if(wa   !== undefined) sheet.getRange(i+1, 3).setValue(wa);
+      if(role !== undefined) sheet.getRange(i+1, 10).setValue(role);
+      SpreadsheetApp.flush();
+      return { success:true };
+    }
+  }
+  return { success:false, error:'User tidak ditemukan' };
+}
+
+function deleteUserAdmin(params) {
+  _requireAdmin(params);
+  const { email } = params;
+  if(!email) return { success:false, error:'Email wajib diisi' };
+  const sheet = SS.getSheetByName(TAB_USERS);
+  const data  = sheet.getDataRange().getValues();
+  for(let i = 1; i < data.length; i++) {
+    if(data[i][1] === email) {
+      sheet.deleteRow(i + 1);
+      SpreadsheetApp.flush();
+      return { success:true };
+    }
+  }
+  return { success:false, error:'User tidak ditemukan' };
 }
