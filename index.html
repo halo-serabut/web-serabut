@@ -1402,7 +1402,7 @@
             </div>
             <!-- Desktop: sidebar + content -->
             <div class="md:flex md:gap-5 md:items-start">
-            <nav class="hidden md:flex flex-col gap-0.5 w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-16">
+            <nav class="hidden md:flex flex-col gap-0.5 w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-16 mt-2">
                 <template x-for="tab in guideTabs" :key="tab.id">
                     <button @click="activeGuide=tab.id" :class="activeGuide===tab.id?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
                         <span x-html="tab.icon" class="flex-none opacity-70"></span>
