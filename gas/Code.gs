@@ -135,6 +135,9 @@ function doPost(e) {
       case 'getGuides':         result = getGuides(); break;
       case 'saveGuides':        result = saveGuides(params); break;
       case 'setUserRole':       result = setUserRole(params); break;
+      case 'getAdminUsers':     result = getAdminUsers(params); break;
+      case 'updateUserAdmin':   result = updateUserAdmin(params); break;
+      case 'deleteUserAdmin':   result = deleteUserAdmin(params); break;
       case 'updateProductStock':    result = updateProductStock(params); break;
       case 'updateProductAktif':    result = updateProductAktif(params); break;
       case 'saveProductBenefits':       result = saveProductBenefits(params); break;
@@ -809,6 +812,68 @@ function setUserRole({ adminEmail, adminToken, targetEmail, role }) {
     return { success: true };
   }
   return { success: false, error: 'Email tidak ditemukan' };
+}
+
+// ────────────────────────────────────────────────────────
+//  ADMIN USER MANAGEMENT
+// ────────────────────────────────────────────────────────
+function getAdminUsers({ adminEmail, adminToken }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_USERS);
+  if (!sheet) return { success: false, data: [] };
+
+  const data = sheet.getDataRange().getValues();
+  const users = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row[0] && !row[1]) continue; // skip empty rows
+    users.push({
+      nama:    String(row[0] || ''),
+      email:   String(row[1] || ''),
+      wa:      String(row[2] || ''),
+      created: String(row[4] || ''),
+      status:  String(row[5] || ''),
+      role:    String(row[9] || 'buyer'),
+    });
+  }
+  return { success: true, data: users };
+}
+
+function updateUserAdmin({ adminEmail, adminToken, email, nama, wa, role }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+  if (!email) return { success: false, error: 'Email wajib diisi' };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_USERS);
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).toLowerCase().trim() !== email.toLowerCase().trim()) continue;
+    if (nama !== undefined) sheet.getRange(i + 1, 1).setValue(nama);
+    if (wa   !== undefined) sheet.getRange(i + 1, 3).setValue(wa);
+    if (role !== undefined) sheet.getRange(i + 1, 10).setValue(role);
+    SpreadsheetApp.flush();
+    _logAdminAction(adminEmail, 'updateUserAdmin', { email, nama, wa, role });
+    return { success: true };
+  }
+  return { success: false, error: 'User tidak ditemukan' };
+}
+
+function deleteUserAdmin({ adminEmail, adminToken, email }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+  if (!email) return { success: false, error: 'Email wajib diisi' };
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_USERS);
+  const data = sheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][1]).toLowerCase().trim() !== email.toLowerCase().trim()) continue;
+    sheet.deleteRow(i + 1);
+    _logAdminAction(adminEmail, 'deleteUserAdmin', { email });
+    return { success: true };
+  }
+  return { success: false, error: 'User tidak ditemukan' };
 }
 
 // ────────────────────────────────────────────────────────
