@@ -269,6 +269,7 @@
             to   { stroke-dashoffset: 0; }
         }
     </style>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.8/dist/lottie-player.js" defer></script>
 </head>
 
 <body class="font-sans bg-gray-50 min-h-screen antialiased flex flex-col" x-cloak>
@@ -869,9 +870,9 @@
             <div class="absolute -top-16 -left-16 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute -bottom-16 -right-16 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
 
-            <div class="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center gap-10 md:gap-16">
-                <!-- Ilustrasi kiri -->
-                <div class="flex-none hidden md:block">
+            <div class="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center gap-10 md:gap-14">
+                <!-- Ilustrasi kiri: white card dengan Lottie -->
+                <div class="flex-none hidden md:block bg-white rounded-3xl shadow-2xl overflow-hidden p-4" style="width:280px;height:220px">
                     <svg width="300" height="240" viewBox="0 0 300 240" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <!-- Desk -->
                         <rect x="20" y="178" width="230" height="10" rx="5" fill="white" fill-opacity="0.2"/>
@@ -953,13 +954,14 @@
                             <rect x="7" y="25" width="28" height="3" rx="1.5" fill="white" fill-opacity="0.15"/>
                         </g>
 
-                        <!-- Decorative dots/sparkles -->
-                        <path d="M242 70l2 4 4 2-4 2-2 4-2-4-4-2 4-2z" fill="white" fill-opacity="0.55"/>
-                        <path d="M18 120l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" fill="white" fill-opacity="0.4"/>
-                        <circle cx="38" cy="60" r="4" fill="white" fill-opacity="0.25"/>
-                        <circle cx="12" cy="80" r="3" fill="white" fill-opacity="0.2"/>
-                        <circle cx="260" cy="115" r="5" fill="white" fill-opacity="0.2"/>
-                    </svg>
+                    <lottie-player
+                        src="https://assets1.lottiefiles.com/packages/lf20_fcfjwiyb.json"
+                        background="transparent"
+                        speed="1"
+                        style="width:252px;height:192px;margin:-4px"
+                        loop
+                        autoplay>
+                    </lottie-player>
                 </div>
 
                 <!-- Teks & CTA -->
