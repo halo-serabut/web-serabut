@@ -3706,52 +3706,22 @@
             <!-- ── Tab: Xendit ── -->
             <div x-show="adminTab==='ipaymu'" class="space-y-4">
 
-                <!-- Setup Info + Sync -->
-                <div class="grid md:grid-cols-2 gap-4">
-
-                    <!-- Setup Card -->
-                    <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:shadow-sm space-y-3">
-                        <h2 class="font-bold text-gray-900 text-sm">Konfigurasi Xendit</h2>
-                        <div class="space-y-2 text-xs text-gray-600">
-                            <div class="flex items-start gap-2">
-                                <span class="w-5 h-5 bg-brand-100 text-brand-700 font-bold rounded-full flex items-center justify-center flex-none text-[10px]">1</span>
-                                <span>Set <code class="bg-gray-100 px-1 rounded">XENDIT_API_KEY</code> di GAS Script Properties (sudah diisi)</span>
-                            </div>
-                            <div class="flex items-start gap-2">
-                                <span class="w-5 h-5 bg-brand-100 text-brand-700 font-bold rounded-full flex items-center justify-center flex-none text-[10px]">2</span>
-                                <span>Di Xendit Dashboard → Settings → Webhooks → Invoice paid → set URL:<br>
-                                    <code class="text-[10px] bg-gray-100 px-1 rounded break-all">https://script.google.com/...exec?action=xenditCallback&token=WEBHOOK_TOKEN</code>
-                                </span>
-                            </div>
-                            <div class="flex items-start gap-2">
-                                <span class="w-5 h-5 bg-brand-100 text-brand-700 font-bold rounded-full flex items-center justify-center flex-none text-[10px]">3</span>
-                                <span>Set <code class="bg-gray-100 px-1 rounded">XENDIT_WEBHOOK_TOKEN</code> di GAS Script Properties (sama dengan token di URL webhook)</span>
-                            </div>
-                        </div>
-                        <a href="https://dashboard.xendit.co" target="_blank" rel="noopener"
-                           class="flex items-center gap-2 text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-2 rounded-xl hover:bg-brand-100 transition-colors w-fit">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                            Buka Xendit Dashboard
-                        </a>
+                <!-- Sync Orders Card -->
+                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h2 class="font-bold text-gray-900 text-sm mb-1">Sinkronisasi Order Pending</h2>
+                        <p class="text-xs text-gray-500 mb-3">Cek semua order <strong>Pending</strong> ke Xendit — update otomatis jadi <em>Diproses</em> jika sudah dibayar.</p>
                     </div>
-
-                    <!-- Sync Orders Card -->
-                    <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:shadow-sm flex flex-col justify-between">
-                        <div>
-                            <h2 class="font-bold text-gray-900 text-sm mb-1">Sinkronisasi Order Pending</h2>
-                            <p class="text-xs text-gray-500 mb-3">Cek semua order <strong>Pending</strong> ke Xendit — update otomatis jadi <em>Diproses</em> jika sudah dibayar.</p>
-                        </div>
-                        <div>
-                            <div x-show="adminIPaymuSyncMsg" class="text-xs font-medium mb-2 px-3 py-2 rounded-lg"
-                                 :class="adminIPaymuSyncMsg.startsWith('✓') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'"
-                                 x-text="adminIPaymuSyncMsg"></div>
-                            <button @click="adminIPaymuSyncConfirm=true"
-                                    :disabled="adminIPaymuSyncLoading"
-                                    class="w-full bg-brand-500 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-brand-600 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
-                                <svg class="w-4 h-4" :class="adminIPaymuSyncLoading?'animate-spin':''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                                <span x-text="adminIPaymuSyncLoading ? 'Menyinkronkan...' : 'Sync Order Pending'"></span>
-                            </button>
-                        </div>
+                    <div>
+                        <div x-show="adminIPaymuSyncMsg" class="text-xs font-medium mb-2 px-3 py-2 rounded-lg"
+                             :class="adminIPaymuSyncMsg.startsWith('✓') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'"
+                             x-text="adminIPaymuSyncMsg"></div>
+                        <button @click="adminIPaymuSyncConfirm=true"
+                                :disabled="adminIPaymuSyncLoading"
+                                class="w-full bg-brand-500 text-white text-sm font-bold py-2.5 rounded-xl hover:bg-brand-600 disabled:opacity-50 transition-colors flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" :class="adminIPaymuSyncLoading?'animate-spin':''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            <span x-text="adminIPaymuSyncLoading ? 'Menyinkronkan...' : 'Sync Order Pending'"></span>
+                        </button>
                     </div>
                 </div>
 
