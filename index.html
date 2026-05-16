@@ -690,8 +690,8 @@
                 <div class="flex gap-2 justify-center flex-wrap mb-8">
                     <template x-for="tab in guideTabs" :key="tab.id">
                         <button @click="activeGuide=tab.id"
-                                :class="activeGuide===tab.id ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-300 hover:text-brand-600'"
-                                class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95">
+                                :class="activeGuide===tab.id ? 'bg-brand-500 text-white shadow-md ring-2 ring-brand-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-300 hover:text-brand-600'"
+                                class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95 outline-none focus:outline-none">
                             <span x-html="tab.icon" class="flex-none" :class="activeGuide===tab.id?'opacity-100':'opacity-60'"></span>
                             <span x-text="tab.label"></span>
                         </button>
@@ -738,7 +738,7 @@
                     <template x-for="pill in [{id:'semua',label:'Semua',color:'bg-gray-800 text-white',dot:'bg-gray-500'},{id:'office',label:'Office 365',color:'bg-blue-600 text-white',dot:'bg-blue-500'},{id:'windows',label:'Windows',color:'bg-sky-600 text-white',dot:'bg-sky-500'},{id:'adobe',label:'Adobe',color:'bg-red-600 text-white',dot:'bg-red-500'},{id:'pembayaran',label:'Pembayaran',color:'bg-emerald-600 text-white',dot:'bg-emerald-500'},{id:'akun',label:'Akun & Garansi',color:'bg-purple-600 text-white',dot:'bg-purple-500'}]" :key="pill.id">
                         <button @click="homeFaqFilter=pill.id; homeFaqOpen=null"
                                 :class="homeFaqFilter===pill.id ? pill.color+' shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'"
-                                class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all active:scale-95">
+                                class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all active:scale-95 outline-none focus:outline-none">
                             <span class="w-2 h-2 rounded-full flex-none" :class="homeFaqFilter===pill.id ? 'bg-white/60' : pill.dot"></span>
                             <span x-text="pill.label"></span>
                         </button>
@@ -779,8 +779,8 @@
                 <div class="flex gap-2 justify-center flex-wrap mb-8">
                     <template x-for="group in downloadGroups" :key="group.id">
                         <button @click="dlCat=group.id"
-                                :class="dlCat===group.id ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-300 hover:text-brand-600'"
-                                class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95">
+                                :class="dlCat===group.id ? 'bg-brand-500 text-white shadow-md ring-2 ring-brand-200' : 'bg-white text-gray-600 border border-gray-200 hover:border-brand-300 hover:text-brand-600'"
+                                class="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all active:scale-95 outline-none focus:outline-none">
                             <img :src="group.logo" :alt="group.title" class="w-4 h-4 object-contain" :class="dlCat===group.id?'opacity-100':'opacity-60'">
                             <span x-text="group.title"></span>
                         </button>
