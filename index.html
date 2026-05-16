@@ -2432,8 +2432,28 @@
     </section>
 
     <!-- ───────── ORDER DETAIL / PAYMENT SUCCESS ───────── -->
-    <section x-show="activePage==='order-detail'" class="page-enter bg-gray-50 min-h-screen">
-        <div class="max-w-lg mx-auto px-4 pt-6 pb-28 md:pb-12">
+    <section x-show="activePage==='order-detail'" class="page-enter bg-gray-50 min-h-screen flex flex-col">
+
+        <!-- ── Mobile top bar (native app style) ── -->
+        <div class="md:hidden sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center gap-3 px-4 h-14"
+             style="padding-top: env(safe-area-inset-top)">
+            <button @click="setPage('home')" class="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center active:scale-95 transition-transform flex-none">
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <p class="text-sm font-bold text-gray-900 flex-1">Detail Pesanan</p>
+            <span x-show="orderDetailData?.status" class="text-[10px] font-bold px-2.5 py-1 rounded-xl"
+                :class="{
+                    'bg-emerald-50 text-emerald-700': ['Aktif','Selesai'].includes(orderDetailData?.status),
+                    'bg-blue-50 text-blue-700':       orderDetailData?.status==='Diproses',
+                    'bg-amber-50 text-amber-700':     orderDetailData?.status==='Pending',
+                    'bg-red-50 text-red-600':         orderDetailData?.status==='Dibatalkan'
+                }"
+                x-text="orderDetailData?.status"></span>
+        </div>
+
+        <!-- ── Scrollable content ── -->
+        <div class="flex-1 max-w-lg w-full mx-auto px-4 pt-4 md:pt-8"
+             style="padding-bottom: calc(env(safe-area-inset-bottom) + 6rem)">
 
             <!-- Success banner -->
             <template x-if="orderDetailPayment==='success'">
@@ -2484,14 +2504,14 @@
             <template x-if="!orderDetailLoading && orderDetailData">
                 <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
 
-                    <!-- Header -->
-                    <div class="flex items-start justify-between px-5 pt-5 pb-4 border-b border-gray-50">
+                    <!-- Header (desktop) / mini header (mobile) -->
+                    <div class="flex items-start justify-between px-4 md:px-5 pt-4 md:pt-5 pb-3 border-b border-gray-50">
                         <div>
                             <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-1">Order ID</p>
                             <p class="font-mono text-sm font-black text-gray-900" x-text="orderDetailId"></p>
                             <p class="text-[11px] text-gray-400 mt-0.5" x-text="orderDetailData.tanggal ? new Date(orderDetailData.tanggal).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'}) : ''"></p>
                         </div>
-                        <span class="text-xs font-bold px-3 py-1.5 rounded-xl mt-0.5"
+                        <span class="hidden md:inline text-xs font-bold px-3 py-1.5 rounded-xl mt-0.5"
                             :class="{
                                 'bg-emerald-50 text-emerald-700': ['Aktif','Selesai'].includes(orderDetailData.status),
                                 'bg-blue-50 text-blue-700':       orderDetailData.status==='Diproses',
@@ -2502,16 +2522,16 @@
                     </div>
 
                     <!-- Products -->
-                    <div class="px-5">
+                    <div class="px-4 md:px-5">
                         <template x-for="(item, idx) in orderDetailData.items" :key="item.produk+item.varian+idx">
-                            <div class="flex items-center gap-3 py-4" :class="idx>0?'border-t border-gray-50':''">
+                            <div class="flex items-center gap-3 py-3.5" :class="idx>0?'border-t border-gray-50':''">
                                 <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center flex-none">
                                     <img :src="getProductLogo(item.produk)" class="w-7 h-7 object-contain">
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-bold text-gray-900 leading-snug" x-text="item.produk"></p>
-                                    <p class="text-xs text-gray-400 mt-0.5" x-text="[item.varian, item.masaAktif].filter(v=>v&&v!=='-').join(' · ')"></p>
-                                    <p x-show="item.emailAktif" class="text-[11px] text-gray-400 mt-0.5" x-text="item.emailAktif"></p>
+                                    <p class="text-sm font-bold text-gray-900 leading-snug truncate" x-text="item.produk"></p>
+                                    <p class="text-xs text-gray-400 mt-0.5 truncate" x-text="[item.varian, item.masaAktif].filter(v=>v&&v!=='-').join(' · ')"></p>
+                                    <p x-show="item.emailAktif" class="text-[11px] text-gray-400 mt-0.5 truncate" x-text="item.emailAktif"></p>
                                 </div>
                                 <p class="text-sm font-black text-gray-900 flex-none" x-text="'Rp '+Number(item.harga).toLocaleString('id-ID')"></p>
                             </div>
@@ -2519,7 +2539,7 @@
                     </div>
 
                     <!-- Total + Payment -->
-                    <div class="border-t border-dashed border-gray-200 mx-5 pt-4 pb-5 space-y-2">
+                    <div class="border-t border-dashed border-gray-200 mx-4 md:mx-5 pt-3.5 pb-4 space-y-2">
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-500">Total</span>
                             <span class="text-base font-black text-gray-900" x-text="'Rp '+Number(orderDetailData.total).toLocaleString('id-ID')"></span>
@@ -2543,7 +2563,7 @@
 
                     <!-- Next steps (success) -->
                     <template x-if="orderDetailPayment==='success'">
-                        <div class="border-t border-gray-50 bg-gray-50 px-5 py-4">
+                        <div class="border-t border-gray-100 bg-gray-50 px-4 md:px-5 py-4">
                             <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-3">Langkah Selanjutnya</p>
                             <div class="space-y-2.5">
                                 <div class="flex items-center gap-3">
@@ -2576,9 +2596,15 @@
                 </div>
             </template>
 
-            <!-- CTA -->
-            <div class="mt-4 space-y-2">
+            <!-- CTA desktop inline -->
+            <div class="hidden md:block mt-4 space-y-2">
                 <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store! \uD83D\uDC4B\nPesanan saya, details:\n\nOrder ID: *'+(orderDetailId||'')+'*\n\nKapan di proses ya? mohon bantuannya \uD83D\uDE4F')"
+                    target="_blank"
+                    class="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1fba5c] active:scale-95 text-white text-sm font-bold py-3.5 rounded-2xl transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    Hubungi CS via WhatsApp
+                </a>
+                <button @click="setPage('profile'); profileTab='pesanan'"
                     target="_blank"
                     class="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1fba5c] active:scale-95 text-white text-sm font-bold py-3.5 rounded-2xl transition-all shadow-sm">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -2591,8 +2617,30 @@
             </div>
 
         </div>
-    </section>
 
+        <!-- ── Mobile sticky CTA (above bottom nav) ── -->
+        <div class="md:hidden fixed bottom-16 left-0 right-0 z-30 px-4 pb-2 pt-3 bg-gradient-to-t from-gray-50 via-gray-50 to-transparent pointer-events-none">
+            <div class="pointer-events-auto space-y-1">
+                <a :href="'https://wa.me/62'+WA_NUMBER+'?text='+encodeURIComponent('Halo Serabut Store! \uD83D\uDC4B\nPesanan saya, details:\n\nOrder ID: *'+(orderDetailId||'')+'*\n\nKapan di proses ya? mohon bantuannya \uD83D\uDE4F')"
+                    target="_blank"
+                    class="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1fba5c] active:scale-95 text-white text-sm font-bold py-3.5 rounded-2xl transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    Hubungi CS via WhatsApp
+                </a>
+                <button @click="setPage('profile'); profileTab='pesanan'"
+                    target="_blank"
+                    class="w-full flex items-center justify-center gap-2 bg-[#25D366] active:bg-[#1fba5c] active:scale-[.98] text-white text-sm font-bold py-3 rounded-2xl transition-all shadow-lg">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    Hubungi CS via WhatsApp
+                </a>
+                <button @click="setPage('profile'); profileTab='pesanan'"
+                    class="w-full text-center text-xs text-gray-400 py-1.5 active:text-brand-500">
+                    Lihat semua pesananku →
+                </button>
+            </div>
+        </div>
+
+    </section>
     <!-- ───────── ADMIN DASHBOARD ───────── -->
     <section x-show="activePage==='admin'" class="page-enter bg-white md:bg-transparent">
         <template x-if="currentUser?.role!=='admin'">
