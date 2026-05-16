@@ -679,105 +679,166 @@
         </div>
 
         <!-- Panduan Section -->
+        <!-- Panduan Section — sidebar nav style -->
         <div id="sec-panduan" class="bg-white border-t border-gray-100 py-14">
             <div class="max-w-5xl mx-auto px-4">
                 <div class="text-center mb-8">
                     <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Panduan Instalasi</h2>
                     <p class="text-sm text-gray-500">Tutorial step-by-step untuk aktivasi produk kamu</p>
                 </div>
-                <!-- Tab pills -->
-                <div class="flex gap-2 justify-center flex-wrap mb-8">
+                <!-- Mobile: pills -->
+                <div class="flex gap-2 overflow-x-auto pb-2 mb-5 no-scrollbar md:hidden">
                     <template x-for="tab in guideTabs" :key="tab.id">
-                        <button @click="activeGuide=tab.id"
-                                :class="activeGuide===tab.id?'bg-brand-500 text-white shadow-sm':'bg-white text-gray-600 border border-gray-200 hover:border-brand-200'"
-                                class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all">
+                        <button @click="activeGuide=tab.id" :class="activeGuide===tab.id?'bg-brand-500 text-white':'bg-white text-gray-600 border border-gray-200'" class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all">
                             <span x-html="tab.icon" class="flex-none opacity-90"></span>
                             <span x-text="tab.label"></span>
                         </button>
                     </template>
                 </div>
-                <!-- Accordion guides -->
-                <div class="max-w-3xl mx-auto">
-                    <template x-for="tab in guideTabs" :key="tab.id">
-                        <div x-show="activeGuide===tab.id" class="flex flex-col gap-3">
-                            <template x-for="(guide,index) in guides[tab.id]" :key="guide.title">
-                                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                                    <button @click="guide.open=!guide.open" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center font-bold text-sm flex-none" x-text="index+1"></div>
-                                            <span class="font-semibold text-gray-800 text-sm" x-text="guide.title"></span>
-                                        </div>
-                                        <svg :class="guide.open?'rotate-180':''" class="w-4 h-4 text-gray-400 transition-transform flex-none ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                                    </button>
-                                    <div x-show="guide.open" x-transition class="px-5 pb-5 border-t border-gray-50">
-                                        <ol class="space-y-3 mt-4">
-                                            <template x-for="(step,si) in guide.steps" :key="si">
-                                                <li class="flex gap-3"><div class="w-6 h-6 gradient-card text-white rounded-full flex items-center justify-center text-xs font-bold flex-none mt-0.5" x-text="si+1"></div><p class="text-sm text-gray-600 leading-relaxed" x-html="renderGuideText(step)"></p></li>
-                                            </template>
-                                        </ol>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-                </div>
-            </div>
-        </div>
-
-        <!-- FAQ Section -->
-        <div id="sec-faq" class="bg-gray-50 border-t border-gray-100 py-14">
-            <div class="max-w-3xl mx-auto px-4">
-                <div class="text-center mb-8">
-                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Pertanyaan Umum</h2>
-                    <p class="text-sm text-gray-500">Jawaban untuk pertanyaan yang paling sering ditanya</p>
-                </div>
-                <div x-data="{ homeFaqOpen: null }" class="flex flex-col gap-3">
-                    <template x-for="(faq, idx) in faqItems.slice(0,8)" :key="idx">
-                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                            <button @click="homeFaqOpen = homeFaqOpen===faq.q ? null : faq.q"
-                                    class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-gray-50 transition-colors">
-                                <span class="font-semibold text-gray-800 text-sm" x-text="faq.q"></span>
-                                <svg :class="homeFaqOpen===faq.q?'rotate-180':''" class="w-4 h-4 text-gray-400 transition-transform flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                <!-- Desktop: sidebar + content -->
+                <div class="md:flex md:gap-5 md:items-start">
+                    <nav class="hidden md:flex flex-col gap-0.5 w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-16">
+                        <template x-for="tab in guideTabs" :key="tab.id">
+                            <button @click="activeGuide=tab.id" :class="activeGuide===tab.id?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
+                                <span x-html="tab.icon" class="flex-none opacity-70"></span>
+                                <span x-text="tab.label"></span>
+                                <div x-show="activeGuide===tab.id" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
                             </button>
-                            <div x-show="homeFaqOpen===faq.q" x-transition class="px-5 pb-5 border-t border-gray-50">
-                                <p class="text-sm text-gray-600 leading-relaxed mt-4" x-text="faq.a"></p>
+                        </template>
+                    </nav>
+                    <div class="md:flex-1 md:min-w-0">
+                        <template x-for="tab in guideTabs" :key="tab.id">
+                            <div x-show="activeGuide===tab.id" class="flex flex-col gap-3">
+                                <template x-for="(guide,index) in guides[tab.id]" :key="guide.title">
+                                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                        <button @click="guide.open=!guide.open" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center font-bold text-sm flex-none" x-text="index+1"></div>
+                                                <span class="font-semibold text-gray-800 text-sm" x-text="guide.title"></span>
+                                            </div>
+                                            <svg :class="guide.open?'rotate-180':''" class="w-4 h-4 text-gray-400 transition-transform flex-none ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                        </button>
+                                        <div x-show="guide.open" x-transition class="px-5 pb-5 border-t border-gray-50">
+                                            <ol class="space-y-3 mt-4">
+                                                <template x-for="(step,si) in guide.steps" :key="si">
+                                                    <li class="flex gap-3"><div class="w-6 h-6 gradient-card text-white rounded-full flex items-center justify-center text-xs font-bold flex-none mt-0.5" x-text="si+1"></div><p class="text-sm text-gray-600 leading-relaxed" x-html="renderGuideText(step)"></p></li>
+                                                </template>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
-                        </div>
-                    </template>
-                    <div class="text-center mt-4">
-                        <button @click="setPage('faq')" class="text-brand-600 text-sm font-semibold hover:underline">Lihat semua FAQ →</button>
+                        </template>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Download Section -->
-        <div id="sec-download" class="bg-white border-t border-gray-100 py-14">
-            <div class="max-w-4xl mx-auto px-4">
+        <!-- FAQ Section — sidebar nav style, x-html for answers -->
+        <div id="sec-faq" class="bg-gray-50 border-t border-gray-100 py-14">
+            <div class="max-w-5xl mx-auto px-4">
                 <div class="text-center mb-8">
-                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Download Software Resmi</h2>
-                    <p class="text-sm text-gray-500">Link resmi langsung dari Microsoft — aman &amp; terpercaya</p>
+                    <div class="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl mb-4 shadow-lg shadow-brand-200">
+                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Pertanyaan yang Sering Ditanya</h2>
+                    <p class="text-sm text-gray-500">Temukan jawaban cepat seputar produk & layanan Serabut Store</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <template x-for="group in downloadGroups" :key="group.title">
-                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                            <div class="px-5 py-3 border-b border-gray-50 flex items-center gap-2">
-                                <img :src="group.logo" :alt="group.title" class="w-5 h-5 object-contain">
-                                <h3 class="font-bold text-gray-800 text-sm" x-text="group.title"></h3>
-                            </div>
-                            <div class="divide-y divide-gray-50">
-                                <template x-for="item in group.items" :key="item.name">
-                                    <a :href="item.url" target="_blank" rel="noopener noreferrer"
-                                       class="flex items-center justify-between px-5 py-3.5 hover:bg-blue-50 transition-colors group">
-                                        <span class="text-sm text-gray-700 group-hover:text-blue-600 transition-colors" x-text="item.name"></span>
-                                        <svg class="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                    </a>
-                                </template>
-                            </div>
-                        </div>
+                <!-- Mobile: pills -->
+                <div class="flex flex-wrap gap-2 justify-center mb-6 md:hidden">
+                    <template x-for="pill in [{id:'semua',label:'Semua',dot:'bg-gray-500'},{id:'office',label:'Office 365',dot:'bg-blue-500'},{id:'windows',label:'Windows',dot:'bg-sky-500'},{id:'adobe',label:'Adobe',dot:'bg-red-500'},{id:'pembayaran',label:'Pembayaran',dot:'bg-emerald-500'},{id:'akun',label:'Akun & Garansi',dot:'bg-purple-500'}]" :key="pill.id">
+                        <button x-data="{}" @click="$dispatch('faq-filter', pill.id)"
+                                class="px-3 py-1.5 rounded-full text-xs font-semibold border border-gray-200 bg-white text-gray-600 transition-all"
+                                x-text="pill.label"></button>
                     </template>
                 </div>
-                <p class="text-center text-xs text-gray-400 mt-6">Semua link di atas adalah link resmi dari server Microsoft</p>
+                <!-- Desktop: sidebar + content -->
+                <div x-data="{ homeFaqFilter: 'semua', homeFaqOpen: null }">
+                    <div class="md:flex md:gap-5 md:items-start">
+                        <nav class="hidden md:flex flex-col gap-0.5 w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-16">
+                            <template x-for="pill in [{id:'semua',label:'Semua',dot:'bg-gray-500'},{id:'office',label:'Office 365',dot:'bg-blue-500'},{id:'windows',label:'Windows',dot:'bg-sky-500'},{id:'adobe',label:'Adobe',dot:'bg-red-500'},{id:'pembayaran',label:'Pembayaran',dot:'bg-emerald-500'},{id:'akun',label:'Akun & Garansi',dot:'bg-purple-500'}]" :key="pill.id">
+                                <button @click="homeFaqFilter=pill.id; homeFaqOpen=null"
+                                        :class="homeFaqFilter===pill.id?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'"
+                                        class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
+                                    <span class="w-2 h-2 rounded-full flex-none" :class="pill.dot"></span>
+                                    <span x-text="pill.label" class="truncate flex-1"></span>
+                                    <div x-show="homeFaqFilter===pill.id" class="w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                                </button>
+                            </template>
+                        </nav>
+                        <div class="md:flex-1 md:min-w-0 flex flex-col gap-3">
+                            <template x-for="(faq, idx) in faqItems.filter(f => homeFaqFilter==='semua' || f.cat===homeFaqFilter).slice(0,8)" :key="idx">
+                                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                    <button @click="homeFaqOpen = homeFaqOpen===faq.q ? null : faq.q"
+                                            class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-gray-50 transition-colors group">
+                                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                                            <span class="w-2 h-2 rounded-full flex-none" :class="({semua:'bg-gray-400',office:'bg-blue-500',windows:'bg-sky-500',adobe:'bg-red-500',pembayaran:'bg-emerald-500',akun:'bg-purple-500'})[faq.cat]||'bg-gray-400'"></span>
+                                            <span class="font-semibold text-gray-800 text-sm" x-text="faq.q"></span>
+                                        </div>
+                                        <svg :class="homeFaqOpen===faq.q?'rotate-180':''" class="w-4 h-4 text-gray-400 transition-transform flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                    </button>
+                                    <div x-show="homeFaqOpen===faq.q" x-transition class="px-5 pb-5 border-t border-gray-50">
+                                        <p class="text-sm text-gray-600 leading-relaxed mt-4" x-html="faq.a"></p>
+                                    </div>
+                                </div>
+                            </template>
+                            <div class="text-center mt-2">
+                                <button @click="setPage('faq')" class="text-brand-600 text-sm font-semibold hover:underline">Lihat semua FAQ →</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Section — sidebar kategori style -->
+        <div id="sec-download" class="bg-white border-t border-gray-100 py-14">
+            <div x-data="{ dlCat: 'windows' }" class="max-w-5xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Download Software Resmi</h2>
+                    <p class="text-sm text-gray-500">Link resmi langsung dari Microsoft — aman & terpercaya</p>
+                </div>
+                <!-- Mobile: pills -->
+                <div class="flex gap-2 overflow-x-auto pb-2 mb-5 no-scrollbar md:hidden">
+                    <template x-for="group in downloadGroups" :key="group.id">
+                        <button @click="dlCat=group.id" :class="dlCat===group.id?'bg-brand-500 text-white':'bg-white text-gray-600 border border-gray-200'" class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all">
+                            <img :src="group.logo" :alt="group.title" class="w-4 h-4 object-contain">
+                            <span x-text="group.title"></span>
+                        </button>
+                    </template>
+                </div>
+                <!-- Desktop: sidebar + content -->
+                <div class="md:flex md:gap-5 md:items-start">
+                    <nav class="hidden md:flex flex-col gap-0.5 w-44 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-16">
+                        <template x-for="group in downloadGroups" :key="group.id">
+                            <button @click="dlCat=group.id" :class="dlCat===group.id?'bg-brand-50 text-brand-600 font-semibold':'text-gray-500 hover:bg-gray-50 hover:text-gray-800'" class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
+                                <img :src="group.logo" :alt="group.title" class="w-4 h-4 object-contain flex-none">
+                                <span x-text="group.title" class="truncate flex-1"></span>
+                                <div x-show="dlCat===group.id" class="w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                            </button>
+                        </template>
+                    </nav>
+                    <div class="md:flex-1 md:min-w-0">
+                        <template x-for="group in downloadGroups" :key="group.id">
+                            <div x-show="dlCat===group.id" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
+                                    <img :src="group.logo" :alt="group.title" class="w-5 h-5 object-contain">
+                                    <span class="font-bold text-gray-800 text-sm" x-text="group.title"></span>
+                                </div>
+                                <div class="divide-y divide-gray-50">
+                                    <template x-for="item in group.items" :key="item.name">
+                                        <a :href="item.url" target="_blank" rel="noopener noreferrer"
+                                           class="flex items-center justify-between px-5 py-4 hover:bg-blue-50 transition-colors group">
+                                            <span class="text-sm text-gray-700 group-hover:text-blue-600 transition-colors font-medium" x-text="item.name"></span>
+                                            <svg class="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                        </a>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        <p class="text-xs text-gray-400 mt-4">Semua link di atas adalah link resmi dari server Microsoft</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -7756,16 +7817,16 @@ function serabutStore() {
             const winLogo = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iIzAwNzhENCIgZD0iTTIzIDNMMy41IDYuNSAzLjUgMjMgMjMgMjN6TTI1IDMgMjUgMjMgNDQuNSAyMyA0NC41IDYuNXpNMy41IDI1IDMuNSA0MS41IDIzIDQ1IDIzIDI1ek0yNSAyNSAyNSA0NSA0NC41IDQxLjUgNDQuNSAyNXoiLz48L3N2Zz4=`;
             const offLogo = `https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/svg/office_48x1.svg`;
             return [
-                { title: 'Windows', logo: winLogo, items: [
+                { id: 'windows', title: 'Windows', logo: winLogo, items: [
                     { name: 'Windows 10 Pro', url: 'https://www.microsoft.com/en-us/software-download/windows10ISO' },
                     { name: 'Windows 11 Pro', url: 'https://www.microsoft.com/en-us/software-download/windows11' },
                 ]},
-                { title: 'Windows Server', logo: winLogo, items: [
+                { id: 'server', title: 'Windows Server', logo: winLogo, items: [
                     { name: 'Windows Server 2016', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016' },
                     { name: 'Windows Server 2019', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2019' },
                     { name: 'Windows Server 2022', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022' },
                 ]},
-                { title: 'Microsoft Office 365', logo: offLogo, items: [
+                { id: 'office', title: 'Microsoft Office 365', logo: offLogo, items: [
                     { name: 'Office Setup (setup.office.com)', url: 'https://setup.office.com' },
                     { name: 'Office Deployment Tool', url: 'https://www.microsoft.com/en-us/download/details.aspx?id=49117' },
                 ]},
