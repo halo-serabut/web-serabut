@@ -4061,20 +4061,25 @@
                     </button>
                 </div>
 
-                <!-- List metode — chip style -->
-                <div class="flex flex-wrap gap-2">
+                <!-- List metode — toggle row minimalis -->
+                <div class="divide-y divide-gray-100">
                     <template x-for="(pm, idx) in adminPaymentList" :key="idx">
-                        <div class="flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-full border text-sm font-medium transition-all cursor-pointer select-none"
-                             :class="pm.active ? 'bg-brand-50 border-brand-300 text-brand-700' : 'bg-gray-50 border-gray-200 text-gray-400'"
-                             @click="pm.active=!pm.active">
-                            <!-- dot status -->
-                            <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 transition-colors"
-                                  :class="pm.active ? 'bg-brand-500' : 'bg-gray-300'"></span>
-                            <span x-text="pm.label"></span>
-                            <!-- hapus -->
-                            <button @click.stop="adminPaymentList.splice(idx,1)"
-                                    class="w-4 h-4 flex items-center justify-center rounded-full hover:bg-red-100 text-gray-300 hover:text-red-400 transition-all ml-0.5">
-                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                        <div class="flex items-center gap-3 py-2.5">
+                            <!-- Toggle switch -->
+                            <button @click="pm.active=!pm.active"
+                                    class="relative w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0 focus:outline-none"
+                                    :class="pm.active ? 'bg-brand-500' : 'bg-gray-200'">
+                                <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"
+                                      :class="pm.active ? 'translate-x-4' : 'translate-x-0'"></span>
+                            </button>
+                            <!-- Label -->
+                            <span class="flex-1 text-sm transition-colors"
+                                  :class="pm.active ? 'text-gray-800 font-medium' : 'text-gray-400'"
+                                  x-text="pm.label"></span>
+                            <!-- Hapus -->
+                            <button @click="adminPaymentList.splice(idx,1)"
+                                    class="text-gray-300 hover:text-red-400 transition-colors p-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                         </div>
                     </template>
