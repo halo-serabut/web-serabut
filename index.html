@@ -8326,10 +8326,8 @@ function serabutStore() {
             } else if(tab==='payment') {
                 if (!this.adminPaymentLoaded) this.adminLoadPaymentMethods();
             } else if(tab==='ipaymu') {
-                if (!this.adminIPaymuLoaded) {
-                    this.adminIPaymuLoadBalance();
-                    this.adminIPaymuLoadHistory();
-                }
+                this.xenditLoadBalance();
+                this.xenditLoadTrx();
             } else if(tab==='ulasan') {
                 this.adminLoadReviews();
             } else if(tab==='quotation') {
