@@ -5663,7 +5663,16 @@
             </template>
             <div><label class="text-xs font-bold text-gray-600 mb-1 block">Nama Lengkap</label><input x-model="registerForm.nama" type="text" autocomplete="name" placeholder="Nama kamu" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
             <div><label class="text-xs font-bold text-gray-600 mb-1 block">Email</label><input x-model="registerForm.email" type="email" autocomplete="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
-            <div><label class="text-xs font-bold text-gray-600 mb-1 block">No. WhatsApp</label><input x-model="registerForm.wa" type="tel" autocomplete="tel" placeholder="08xxxxxxxxxx" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
+            <div>
+                <label class="text-xs font-bold text-gray-600 mb-1 block">No. WhatsApp</label>
+                <div class="flex items-stretch bg-gray-50 border border-gray-200 rounded-xl overflow-hidden focus-within:border-brand-400 transition-all">
+                    <span class="flex items-center px-3 text-sm font-bold text-gray-500 bg-gray-100 border-r border-gray-200 select-none flex-shrink-0">+62</span>
+                    <input x-model="registerForm.wa" type="tel" autocomplete="tel" placeholder="812 3456 7890"
+                           inputmode="numeric"
+                           @input="registerForm.wa = registerForm.wa.replace(/[^0-9]/g,'')"
+                           class="flex-1 px-3 py-3 bg-transparent text-sm focus:outline-none">
+                </div>
+            </div>
             <div><label class="text-xs font-bold text-gray-600 mb-1 block">Password <span class="text-gray-400 font-normal">(min. 6 karakter)</span></label><input x-model="registerForm.password" type="password" autocomplete="new-password" placeholder="Buat password" @keyup.enter="submitRegister()" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 transition-all"></div>
             <!-- Privacy Notice scroll-to-accept -->
             <!-- State: belum dibaca → kotak scroll -->
@@ -7758,8 +7767,11 @@ function serabutStore() {
             this.authLoading=false;
         },
         async submitRegister() {
-            const {nama,wa,password,privacyAccepted}=this.registerForm;
+            const {nama,password,privacyAccepted}=this.registerForm;
             const email = (this.registerForm.email||'').toLowerCase().trim();
+            // Gabung prefix +62 dengan input user (strip leading 0 jika ada)
+            const waRaw = (this.registerForm.wa||'').replace(/^0+/,'');
+            const wa = waRaw ? '62' + waRaw : '';
             if(!nama||!email||!wa||!password){ this.authError='Semua field harus diisi'; return; }
             if(password.length<6){ this.authError='Password minimal 6 karakter'; return; }
             if(!privacyAccepted){ this.authError='Harap setujui Kebijakan Privasi terlebih dahulu'; return; }
