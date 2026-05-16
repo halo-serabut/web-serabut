@@ -647,9 +647,9 @@
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
                     <div class="flex gap-2 mb-4">
                         <input x-model="statusQuery" @keyup.enter="checkStatus()" type="text" placeholder="email@example.com atau username..." class="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
-                        <button @click="checkStatus()" :disabled="statusLoading" class="bg-brand-600 text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-brand-700 transition-all active:scale-95 flex-none disabled:opacity-60">
-                            <span x-show="!statusLoading">Cek</span>
-                            <svg x-show="statusLoading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 6.477 22 12h-4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></path></svg>
+                        <button @click="checkStatus()" :disabled="statusChecking" class="bg-brand-600 text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-brand-700 transition-all active:scale-95 flex-none disabled:opacity-60">
+                            <span x-show="!statusChecking">Cek</span>
+                            <svg x-show="statusChecking" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 6.477 22 12h-4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></path></svg>
                         </button>
                     </div>
                     <!-- Result -->
