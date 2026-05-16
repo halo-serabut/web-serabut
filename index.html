@@ -320,7 +320,7 @@
 
         <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1">
             <template x-for="item in navItems" :key="item.id">
-                <button @click="setPage(item.id)" :class="activePage===item.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" x-text="item.label"></button>
+                <button @click="item.id==='home' ? (activePage==='home' ? scrollToSection('hero') : setPage('home')) : (activePage==='home' && ['status','panduan','faq','download'].includes(item.id) ? scrollToSection(item.id) : setPage(item.id))" :class="activePage===item.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" x-text="item.label"></button>
             </template>
             <template x-if="currentUser?.role?.toLowerCase()==='admin'">
                 <button @click="setPage('admin')" :class="activePage==='admin'?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5">
@@ -423,16 +423,6 @@
 <div class="flex-1">
     <!-- ───────── HOME ───────── -->
     <section x-show="activePage==='home'" class="page-enter">
-        <!-- Section nav (desktop only, home only) -->
-        <div class="hidden md:flex sticky top-16 z-20 bg-white/90 backdrop-blur border-b border-gray-100 justify-center gap-1 py-2">
-            <template x-for="s in [{id:'hero',label:'Beranda'},{id:'kategori',label:'Kategori'},{id:'populer',label:'Populer'},{id:'kenapa',label:'Kenapa Kami'},{id:'testimoni',label:'Testimoni'}]" :key="s.id">
-                <button @click="scrollToSection(s.id)"
-                        :class="activeSection===s.id ? 'text-brand-600 bg-brand-50 font-semibold' : 'text-gray-500 hover:text-gray-800'"
-                        class="px-4 py-1.5 rounded-full text-xs transition-all">
-                    <span x-text="s.label"></span>
-                </button>
-            </template>
-        </div>
         <div id="sec-hero" class="gradient-hero text-white">
             <div class="max-w-6xl mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row md:items-center gap-8 md:gap-12">
                 <!-- Left: copy -->
@@ -641,6 +631,153 @@
                         <div class="text-center"><div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-brand-500" x-html="b.icon"></div><div class="font-bold text-gray-800 text-sm mb-1" x-text="b.title"></div><div class="text-xs text-gray-500 leading-relaxed" x-text="b.desc"></div></div>
                     </template>
                 </div>
+            </div>
+        </div>
+
+        <!-- Cek Status Section -->
+        <div id="sec-status" class="bg-gray-50 border-t border-gray-100 py-14">
+            <div class="max-w-lg mx-auto px-4">
+                <div class="text-center mb-8">
+                    <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Cek Status Akun</h2>
+                    <p class="text-sm text-gray-500">Masukkan email atau username akun kamu</p>
+                </div>
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div class="flex gap-2 mb-4">
+                        <input x-model="statusQuery" @keyup.enter="checkStatus()" type="text" placeholder="email@example.com atau username..." class="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                        <button @click="checkStatus()" :disabled="statusLoading" class="bg-brand-600 text-white px-5 py-3 rounded-xl font-semibold text-sm hover:bg-brand-700 transition-all active:scale-95 flex-none disabled:opacity-60">
+                            <span x-show="!statusLoading">Cek</span>
+                            <svg x-show="statusLoading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 22 6.477 22 12h-4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/></path></svg>
+                        </button>
+                    </div>
+                    <!-- Result -->
+                    <div x-show="statusResult" x-transition class="border-t border-gray-100 pt-4 mt-2">
+                        <template x-if="statusResult && statusResult.found">
+                            <div>
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="font-bold text-gray-900 text-sm" x-text="statusResult.productName||statusResult.produk"></div>
+                                    <span class="text-xs font-bold px-2.5 py-1 rounded-full" :class="statusResult.status==='Active'?'bg-green-100 text-green-700':'bg-red-100 text-red-600'" x-text="statusResult.status==='Active'?'Aktif':'Tidak Aktif'"></span>
+                                </div>
+                                <div class="space-y-1.5 text-xs text-gray-500">
+                                    <div class="flex justify-between"><span>Email/Username</span><span class="font-medium text-gray-700" x-text="statusResult.username||statusResult.email||'-'"></span></div>
+                                    <div class="flex justify-between"><span>Masa Berlaku</span><span class="font-medium text-gray-700" x-text="statusResult.expiry||statusResult.masaBerlaku||'-'"></span></div>
+                                </div>
+                                <button @click="setPage('status')" class="mt-4 w-full text-center text-brand-600 text-xs font-semibold hover:underline">Lihat detail lengkap →</button>
+                            </div>
+                        </template>
+                        <template x-if="statusResult && !statusResult.found">
+                            <div class="text-center py-3">
+                                <p class="text-sm text-gray-500 mb-2">Akun tidak ditemukan</p>
+                                <button @click="setPage('status')" class="text-brand-600 text-xs font-semibold hover:underline">Coba cek di halaman lengkap →</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panduan Section -->
+        <div id="sec-panduan" class="bg-white border-t border-gray-100 py-14">
+            <div class="max-w-5xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Panduan Instalasi</h2>
+                    <p class="text-sm text-gray-500">Tutorial step-by-step untuk aktivasi produk kamu</p>
+                </div>
+                <!-- Tab pills -->
+                <div class="flex gap-2 justify-center flex-wrap mb-8">
+                    <template x-for="tab in guideTabs" :key="tab.id">
+                        <button @click="activeGuide=tab.id"
+                                :class="activeGuide===tab.id?'bg-brand-500 text-white shadow-sm':'bg-white text-gray-600 border border-gray-200 hover:border-brand-200'"
+                                class="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all">
+                            <span x-html="tab.icon" class="flex-none opacity-90"></span>
+                            <span x-text="tab.label"></span>
+                        </button>
+                    </template>
+                </div>
+                <!-- Accordion guides -->
+                <div class="max-w-3xl mx-auto">
+                    <template x-for="tab in guideTabs" :key="tab.id">
+                        <div x-show="activeGuide===tab.id" class="flex flex-col gap-3">
+                            <template x-for="(guide,index) in guides[tab.id]" :key="guide.title">
+                                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                    <button @click="guide.open=!guide.open" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-8 h-8 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center font-bold text-sm flex-none" x-text="index+1"></div>
+                                            <span class="font-semibold text-gray-800 text-sm" x-text="guide.title"></span>
+                                        </div>
+                                        <svg :class="guide.open?'rotate-180':''" class="w-4 h-4 text-gray-400 transition-transform flex-none ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                    </button>
+                                    <div x-show="guide.open" x-transition class="px-5 pb-5 border-t border-gray-50">
+                                        <ol class="space-y-3 mt-4">
+                                            <template x-for="(step,si) in guide.steps" :key="si">
+                                                <li class="flex gap-3"><div class="w-6 h-6 gradient-card text-white rounded-full flex items-center justify-center text-xs font-bold flex-none mt-0.5" x-text="si+1"></div><p class="text-sm text-gray-600 leading-relaxed" x-html="renderGuideText(step)"></p></li>
+                                            </template>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div id="sec-faq" class="bg-gray-50 border-t border-gray-100 py-14">
+            <div class="max-w-3xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Pertanyaan Umum</h2>
+                    <p class="text-sm text-gray-500">Jawaban untuk pertanyaan yang paling sering ditanya</p>
+                </div>
+                <div x-data="{ homeFaqOpen: null }" class="flex flex-col gap-3">
+                    <template x-for="(faq, idx) in faqItems.slice(0,8)" :key="idx">
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <button @click="homeFaqOpen = homeFaqOpen===faq.q ? null : faq.q"
+                                    class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-gray-50 transition-colors">
+                                <span class="font-semibold text-gray-800 text-sm" x-text="faq.q"></span>
+                                <svg :class="homeFaqOpen===faq.q?'rotate-180':''" class="w-4 h-4 text-gray-400 transition-transform flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div x-show="homeFaqOpen===faq.q" x-transition class="px-5 pb-5 border-t border-gray-50">
+                                <p class="text-sm text-gray-600 leading-relaxed mt-4" x-text="faq.a"></p>
+                            </div>
+                        </div>
+                    </template>
+                    <div class="text-center mt-4">
+                        <button @click="setPage('faq')" class="text-brand-600 text-sm font-semibold hover:underline">Lihat semua FAQ →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Section -->
+        <div id="sec-download" class="bg-white border-t border-gray-100 py-14">
+            <div class="max-w-4xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Download Software Resmi</h2>
+                    <p class="text-sm text-gray-500">Link resmi langsung dari Microsoft — aman &amp; terpercaya</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <template x-for="group in downloadGroups" :key="group.title">
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div class="px-5 py-3 border-b border-gray-50 flex items-center gap-2">
+                                <img :src="group.logo" :alt="group.title" class="w-5 h-5 object-contain">
+                                <h3 class="font-bold text-gray-800 text-sm" x-text="group.title"></h3>
+                            </div>
+                            <div class="divide-y divide-gray-50">
+                                <template x-for="item in group.items" :key="item.name">
+                                    <a :href="item.url" target="_blank" rel="noopener noreferrer"
+                                       class="flex items-center justify-between px-5 py-3.5 hover:bg-blue-50 transition-colors group">
+                                        <span class="text-sm text-gray-700 group-hover:text-blue-600 transition-colors" x-text="item.name"></span>
+                                        <svg class="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    </a>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                <p class="text-center text-xs text-gray-400 mt-6">Semua link di atas adalah link resmi dari server Microsoft</p>
             </div>
         </div>
 
@@ -7615,6 +7752,25 @@ function serabutStore() {
             const s = (this.ordersCurrentPage - 1) * this.ordersPerPage;
             return this.ordersFiltered.slice(s, s + this.ordersPerPage);
         },
+        get downloadGroups() {
+            const winLogo = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iIzAwNzhENCIgZD0iTTIzIDNMMy41IDYuNSAzLjUgMjMgMjMgMjN6TTI1IDMgMjUgMjMgNDQuNSAyMyA0NC41IDYuNXpNMy41IDI1IDMuNSA0MS41IDIzIDQ1IDIzIDI1ek0yNSAyNSAyNSA0NSA0NC41IDQxLjUgNDQuNSAyNXoiLz48L3N2Zz4=`;
+            const offLogo = `https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/svg/office_48x1.svg`;
+            return [
+                { title: 'Windows', logo: winLogo, items: [
+                    { name: 'Windows 10 Pro', url: 'https://www.microsoft.com/en-us/software-download/windows10ISO' },
+                    { name: 'Windows 11 Pro', url: 'https://www.microsoft.com/en-us/software-download/windows11' },
+                ]},
+                { title: 'Windows Server', logo: winLogo, items: [
+                    { name: 'Windows Server 2016', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016' },
+                    { name: 'Windows Server 2019', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2019' },
+                    { name: 'Windows Server 2022', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022' },
+                ]},
+                { title: 'Microsoft Office 365', logo: offLogo, items: [
+                    { name: 'Office Setup (setup.office.com)', url: 'https://setup.office.com' },
+                    { name: 'Office Deployment Tool', url: 'https://www.microsoft.com/en-us/download/details.aspx?id=49117' },
+                ]},
+            ];
+        },
         get cartCount() { return this.cart.reduce((s,i) => s + (i.qty||1), 0); },
         get cartTotal() { return this.cart.reduce((s,i) => s + this.cartItemUnitPrice(i) * (i.qty||1), 0); },
         get cartMemberSavings() {
@@ -7699,7 +7855,7 @@ function serabutStore() {
             // Scroll spy untuk home sections
             window.addEventListener('scroll', () => {
                 if (this.activePage !== 'home') return;
-                const sections = ['hero','kategori','populer','kenapa','testimoni','cta'];
+                const sections = ['hero','kategori','populer','kenapa','status','panduan','faq','download','testimoni','cta'];
                 for (const id of sections) {
                     const el = document.getElementById('sec-' + id);
                     if (!el) continue;
