@@ -423,7 +423,17 @@
 <div class="flex-1">
     <!-- ───────── HOME ───────── -->
     <section x-show="activePage==='home'" class="page-enter">
-        <div class="gradient-hero text-white">
+        <!-- Section nav (desktop only, home only) -->
+        <div class="hidden md:flex sticky top-16 z-20 bg-white/90 backdrop-blur border-b border-gray-100 justify-center gap-1 py-2">
+            <template x-for="s in [{id:'hero',label:'Beranda'},{id:'kategori',label:'Kategori'},{id:'populer',label:'Populer'},{id:'kenapa',label:'Kenapa Kami'},{id:'testimoni',label:'Testimoni'}]" :key="s.id">
+                <button @click="scrollToSection(s.id)"
+                        :class="activeSection===s.id ? 'text-brand-600 bg-brand-50 font-semibold' : 'text-gray-500 hover:text-gray-800'"
+                        class="px-4 py-1.5 rounded-full text-xs transition-all">
+                    <span x-text="s.label"></span>
+                </button>
+            </template>
+        </div>
+        <div id="sec-hero" class="gradient-hero text-white">
             <div class="max-w-6xl mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row md:items-center gap-8 md:gap-12">
                 <!-- Left: copy -->
                 <div class="flex-1 max-w-2xl">
@@ -538,7 +548,7 @@
         </div>
 
         <!-- Categories -->
-        <div class="max-w-6xl mx-auto px-4 py-6">
+        <div id="sec-kategori" class="max-w-6xl mx-auto px-4 py-6">
             <h2 class="text-base font-black text-gray-900 mb-3">Kategori Produk</h2>
             <div class="grid grid-cols-5 md:grid-cols-10 gap-2">
                 <template x-for="cat in categories" :key="cat.name">
@@ -551,7 +561,7 @@
         </div>
 
         <!-- Featured Products -->
-        <div class="max-w-6xl mx-auto px-4 pb-8">
+        <div id="sec-populer" class="max-w-6xl mx-auto px-4 pb-8">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg md:text-xl font-black text-gray-900">Produk Populer</h2>
                 <button @click="setPage('catalog')" class="text-brand-500 text-sm font-semibold hover:text-brand-700">Lihat Semua →</button>
@@ -623,13 +633,87 @@
         </div>
 
         <!-- Why Us -->
-        <div class="bg-white border-t border-gray-100 py-10">
+        <div id="sec-kenapa" class="bg-white border-t border-gray-100 py-10">
             <div class="max-w-6xl mx-auto px-4">
                 <h2 class="text-lg md:text-xl font-black text-gray-900 mb-8 text-center">Kenapa Serabut Store?</h2>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <template x-for="b in benefits" :key="b.title">
                         <div class="text-center"><div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-brand-500" x-html="b.icon"></div><div class="font-bold text-gray-800 text-sm mb-1" x-text="b.title"></div><div class="text-xs text-gray-500 leading-relaxed" x-text="b.desc"></div></div>
                     </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Testimoni -->
+        <div id="sec-testimoni" class="bg-gray-50 py-12">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <h2 class="text-lg md:text-xl font-black text-gray-900 mb-2">Apa Kata Pelanggan Kami</h2>
+                    <p class="text-sm text-gray-500">10.000+ transaksi sukses dari seluruh Indonesia</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <template x-for="r in reviews.slice(0,6)" :key="r.nama+r.produk">
+                        <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                            <div class="flex items-center gap-1 mb-3">
+                                <template x-for="i in 5" :key="i">
+                                    <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                </template>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-3" x-text="r.ulasan||r.review||'Produk original, aktivasi cepat dan mudah!'"></p>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-full gradient-card flex items-center justify-center text-white text-xs font-bold flex-none" x-text="(r.nama||'A')[0].toUpperCase()"></div>
+                                <div>
+                                    <div class="text-xs font-bold text-gray-800" x-text="r.nama||'Pelanggan'"></div>
+                                    <div class="text-[10px] text-gray-400" x-text="r.produk||'Serabut Store'"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <!-- Fallback jika reviews kosong -->
+                    <template x-if="!reviews || reviews.length === 0">
+                        <template x-for="t in [{nama:'Budi S.',produk:'Office 365 Family',text:'Aktivasi langsung berhasil! Recommended banget buat yg butuh Office.'},{nama:'Rina A.',produk:'Windows 11 Pro',text:'Harga terjangkau, proses cepat dan CS nya responsif.'},{nama:'Deni P.',produk:'Adobe Creative Cloud',text:'Udah langganan 2 tahun, selalu memuaskan. Original & legal.'},{nama:'Sari W.',produk:'Office 365 Web',text:'Pertama kali beli di sini, ternyata mudah banget prosesnya!'},{nama:'Fajar R.',produk:'Microsoft Project',text:'Aktivasi dalam 5 menit setelah bayar. Sangat direkomendasikan.'},{nama:'Lina M.',produk:'Office 365 Family',text:'Keluarga senang bisa pakai Office di 6 device sekaligus!'}]" :key="t.nama">
+                            <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                                <div class="flex items-center gap-1 mb-3">
+                                    <template x-for="i in 5" :key="i">
+                                        <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    </template>
+                                </div>
+                                <p class="text-sm text-gray-600 leading-relaxed mb-4" x-text="t.text"></p>
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-full gradient-card flex items-center justify-center text-white text-xs font-bold flex-none" x-text="t.nama[0]"></div>
+                                    <div>
+                                        <div class="text-xs font-bold text-gray-800" x-text="t.nama"></div>
+                                        <div class="text-[10px] text-gray-400" x-text="t.produk"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+                <!-- Stats bar -->
+                <div class="mt-10 grid grid-cols-3 gap-4 text-center">
+                    <div><div class="text-2xl md:text-3xl font-black text-brand-600">10K+</div><div class="text-xs text-gray-500 mt-1">Transaksi Sukses</div></div>
+                    <div><div class="text-2xl md:text-3xl font-black text-brand-600">4.9&#9733;</div><div class="text-xs text-gray-500 mt-1">Rating Rata-rata</div></div>
+                    <div><div class="text-2xl md:text-3xl font-black text-brand-600">&lt;5 mnt</div><div class="text-xs text-gray-500 mt-1">Rata-rata Aktivasi</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div id="sec-cta" class="gradient-hero py-14">
+            <div class="max-w-3xl mx-auto px-4 text-center text-white">
+                <h2 class="text-2xl md:text-3xl font-black mb-3 leading-tight">Siap Mulai Berlangganan?</h2>
+                <p class="text-white/75 text-base mb-8 max-w-lg mx-auto">Ribuan pelanggan sudah menikmati produk original kami. Giliran kamu!</p>
+                <div class="flex flex-wrap gap-3 justify-center">
+                    <button @click="setPage('catalog')"
+                            class="bg-white text-brand-600 font-bold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-all shadow-lg active:scale-95">
+                        Lihat Semua Produk
+                    </button>
+                    <button @click="authModal=true; authTab='register'"
+                            x-show="!currentUser"
+                            class="bg-white/15 text-white font-semibold px-8 py-3.5 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95">
+                        Daftar Gratis
+                    </button>
                 </div>
             </div>
         </div>
@@ -6604,6 +6688,8 @@ function serabutStore() {
 
         // Pages
         activePage:   'home',
+        activeSection: 'hero',
+        reviews:       [],
         loading:      true,
         products:     [],
         searchQuery:  '',
@@ -7103,6 +7189,21 @@ function serabutStore() {
             // Live countdown — update `now` tiap 30 detik
             setInterval(() => { this.now = Date.now(); }, 30000);
             this.initPageFromURL();
+
+            // Scroll spy untuk home sections
+            window.addEventListener('scroll', () => {
+                if (this.activePage !== 'home') return;
+                const sections = ['hero','kategori','populer','kenapa','testimoni','cta'];
+                for (const id of sections) {
+                    const el = document.getElementById('sec-' + id);
+                    if (!el) continue;
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top <= 100 && rect.bottom > 100) {
+                        this.activeSection = id;
+                        break;
+                    }
+                }
+            }, { passive: true });
 
             // Escape key — tutup modal aktif (prioritas dari atas ke bawah)
             document.addEventListener('keydown', (e) => {
@@ -8386,6 +8487,14 @@ function serabutStore() {
             if (order?.status === 'Pending' && this.orderMsLeft(order) > 0) return 'Belum Dibayar';
             return order?.status || '';
         },
+        scrollToSection(id) {
+            const el = document.getElementById('sec-' + id);
+            if (!el) return;
+            const navH = 64;
+            const y = el.getBoundingClientRect().top + window.scrollY - navH - 8;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        },
+
         setPage(page) {
             // Simpan scroll position & catalog state halaman sebelumnya
             if (!this._scrollPos) this._scrollPos = {};
