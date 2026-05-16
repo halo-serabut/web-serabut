@@ -993,9 +993,9 @@
                         <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">Layanan</div>
                         <div class="space-y-2.5 text-xs text-gray-400">
                             <div><a href="#" @click.prevent="setPage('catalog')" class="active:text-white">Semua Produk</a></div>
-                            <div><a href="#" @click.prevent="setPage('panduan')" class="active:text-white">Panduan Instalasi</a></div>
-                            <div><a href="#" @click.prevent="setPage('faq')" class="active:text-white">FAQ</a></div>
-                            <div><a href="#" @click.prevent="setPage('download')" class="active:text-white flex items-center gap-1">
+                            <div><a href="#" @click.prevent="activePage==='home' ? scrollToSection('panduan') : setPage('panduan')" class="active:text-white">Panduan Instalasi</a></div>
+                            <div><a href="#" @click.prevent="activePage==='home' ? scrollToSection('faq') : setPage('faq')" class="active:text-white">FAQ</a></div>
+                            <div><a href="#" @click.prevent="activePage==='home' ? scrollToSection('download') : setPage('download')" class="active:text-white flex items-center gap-1">
                                 <svg class="w-3 h-3 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                                 Download
                             </a></div>
@@ -1010,7 +1010,7 @@
                             <div x-show="!currentUser"><a href="#" @click.prevent="authTab='register'; authModal=true" class="active:text-white">Daftar Member</a></div>
                             <div x-show="currentUser"><a href="#" @click.prevent="setPage('profile')" class="active:text-white">Profil Saya</a></div>
                             <div x-show="currentUser"><a href="#" @click.prevent="setPage('profile'); profileTab='pesanan'; loadOrders()" class="active:text-white">Pesanan Saya</a></div>
-                            <div><a href="#" @click.prevent="setPage('status')" class="active:text-white">Cek Status Akun</a></div>
+                            <div><a href="#" @click.prevent="activePage==='home' ? scrollToSection('status') : setPage('status')" class="active:text-white">Cek Status Akun</a></div>
                         </div>
                     </div>
 
