@@ -3755,11 +3755,65 @@
                     </div>
                 </div>
 
-                <!-- Info box -->
-                <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-xs text-blue-700 space-y-1">
-                    <p class="font-bold">ℹ️ Tentang Xendit</p>
-                    <p>Xendit tidak memerlukan IP whitelist — payment gateway bekerja dari IP mana pun. Riwayat transaksi lengkap tersedia langsung di <a href="https://dashboard.xendit.co" target="_blank" class="underline font-semibold">Xendit Dashboard</a>.</p>
-                    <p class="mt-1">Webhook otomatis diproses saat pembayaran berhasil. Jika webhook belum aktif, gunakan tombol Sync di atas untuk update manual.</p>
+                <!-- Saldo & Transaksi -->
+                <!-- Saldo Card -->
+                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="font-bold text-gray-900 text-sm">Saldo Xendit</h2>
+                        <button @click="xenditLoadBalance()" class="text-xs text-brand-600 font-semibold flex items-center gap-1 hover:underline">
+                            <svg class="w-3.5 h-3.5" :class="xenditBalanceLoading?'animate-spin':''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            Refresh
+                        </button>
+                    </div>
+                    <div x-show="xenditBalanceLoading" class="text-xs text-gray-400">Memuat...</div>
+                    <div x-show="xenditBalanceErr && !xenditBalanceLoading" class="text-xs text-red-500" x-text="xenditBalanceErr"></div>
+                    <div x-show="xenditBalance !== null && !xenditBalanceLoading" class="text-2xl font-black text-gray-900">
+                        IDR <span x-text="Number(xenditBalance||0).toLocaleString('id-ID')"></span>
+                    </div>
+                    <div x-show="xenditBalance === null && !xenditBalanceLoading && !xenditBalanceErr" class="text-xs text-gray-400">Klik Refresh untuk lihat saldo</div>
+                </div>
+
+                <!-- Transaksi Card -->
+                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="font-bold text-gray-900 text-sm">Transaksi Terakhir</h2>
+                        <button @click="xenditLoadTrx()" class="text-xs text-brand-600 font-semibold flex items-center gap-1 hover:underline">
+                            <svg class="w-3.5 h-3.5" :class="xenditTrxLoading?'animate-spin':''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            Refresh
+                        </button>
+                    </div>
+                    <div x-show="xenditTrxLoading" class="text-xs text-gray-400 py-2">Memuat transaksi...</div>
+                    <div x-show="xenditTrxErr && !xenditTrxLoading" class="text-xs text-red-500" x-text="xenditTrxErr"></div>
+                    <div x-show="xenditTrx === null && !xenditTrxLoading && !xenditTrxErr" class="text-xs text-gray-400 py-2">Klik Refresh untuk lihat transaksi</div>
+                    <template x-if="xenditTrx && xenditTrx.length > 0">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs min-w-[480px]">
+                                <thead>
+                                    <tr class="text-gray-400 border-b border-gray-100">
+                                        <th class="text-left py-2 pr-3 font-semibold">Referensi</th>
+                                        <th class="text-left py-2 pr-3 font-semibold">Tipe</th>
+                                        <th class="text-left py-2 pr-3 font-semibold">Channel</th>
+                                        <th class="text-right py-2 pr-3 font-semibold">Jumlah</th>
+                                        <th class="text-right py-2 font-semibold">Fee</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="t in xenditTrx" :key="t.id">
+                                        <tr class="border-b border-gray-50 hover:bg-gray-50">
+                                            <td class="py-2 pr-3 font-mono text-gray-700" x-text="t.reference"></td>
+                                            <td class="py-2 pr-3 text-gray-600 capitalize" x-text="t.type"></td>
+                                            <td class="py-2 pr-3 text-gray-600" x-text="t.channel"></td>
+                                            <td class="py-2 pr-3 text-right font-bold" :class="Number(t.amount)>=0?'text-green-600':'text-red-500'" x-text="'IDR '+Number(t.amount||0).toLocaleString('id-ID')"></td>
+                                            <td class="py-2 text-right text-red-400" x-text="t.fee ? '-'+Number(t.fee).toLocaleString('id-ID') : '-'"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </template>
+                    <template x-if="xenditTrx && xenditTrx.length === 0">
+                        <p class="text-xs text-gray-400 py-2">Belum ada transaksi</p>
+                    </template>
                 </div>
 
             </div><!-- end tab xendit -->
@@ -6351,6 +6405,12 @@ function serabutStore() {
         orderDetailPayment:   null, // 'success' | 'cancel' | null
         orderDetailLoading:   false,
         orderDetailData:      null,
+        xenditBalance:        null,
+        xenditBalanceLoading: false,
+        xenditBalanceErr:     '',
+        xenditTrx:            null,
+        xenditTrxLoading:     false,
+        xenditTrxErr:         '',
 
         // Auth
         authTab:      'login',
@@ -7966,6 +8026,26 @@ function serabutStore() {
         scrollCSToBottom() {
             const el = this.$refs.csScrollArea;
             if (el) el.scrollTop = el.scrollHeight;
+        },
+
+        async xenditLoadBalance() {
+            this.xenditBalanceLoading = true; this.xenditBalanceErr = '';
+            try {
+                const res = await this.gasPost({ action: 'xenditGetBalance', adminEmail: this.currentUser?.email, adminToken: this.currentUser?.sessionToken });
+                if (res?.success) this.xenditBalance = res.balance;
+                else this.xenditBalanceErr = res?.error || 'Gagal ambil saldo';
+            } catch { this.xenditBalanceErr = 'Gagal terhubung'; }
+            this.xenditBalanceLoading = false;
+        },
+
+        async xenditLoadTrx() {
+            this.xenditTrxLoading = true; this.xenditTrxErr = '';
+            try {
+                const res = await this.gasPost({ action: 'xenditGetTransactions', adminEmail: this.currentUser?.email, adminToken: this.currentUser?.sessionToken });
+                if (res?.success) this.xenditTrx = res.transactions;
+                else this.xenditTrxErr = res?.error || 'Gagal ambil transaksi';
+            } catch { this.xenditTrxErr = 'Gagal terhubung'; }
+            this.xenditTrxLoading = false;
         },
 
         async loadOrderDetail(orderId) {

@@ -142,6 +142,8 @@ function doPost(e) {
       case 'iPaymuAdminGetHistory':     result = iPaymuAdminGetHistory(params); break;
       case 'iPaymuAdminGetTransaction': result = iPaymuAdminGetTransaction(params); break;
       case 'iPaymuAdminSyncOrders':     result = iPaymuAdminSyncOrders(params); break;
+      case 'xenditGetBalance':          result = xenditGetBalance(params); break;
+      case 'xenditGetTransactions':     result = xenditGetTransactions(params); break;
       // Reviews
       case 'submitReview':              result = submitReview(params); break;
       case 'getBuyerReviews':           result = getBuyerReviews(params); break;
@@ -2960,6 +2962,34 @@ function _xenditRequest(endpoint, body) {
 
 // Buat invoice/payment link Xendit
 // items: [{produk, varian, masaAktif, harga, qty}]
+function xenditGetBalance(params) {
+  const authErr = _requireAdmin(params.adminEmail, params.adminToken);
+  if (authErr) return { success: false, error: authErr };
+  const res = _xenditRequest('/balance', null);
+  if (res && typeof res.balance !== 'undefined') return { success: true, balance: res.balance };
+  return { success: false, error: res.message || 'Gagal ambil saldo' };
+}
+
+function xenditGetTransactions(params) {
+  const authErr = _requireAdmin(params.adminEmail, params.adminToken);
+  if (authErr) return { success: false, error: authErr };
+  const res = _xenditRequest('/transactions?limit=20', null);
+  if (res && Array.isArray(res.data)) {
+    return { success: true, transactions: res.data.map(t => ({
+      id:        t.id,
+      type:      t.type,
+      status:    t.status,
+      channel:   t.channel_code || t.settlement_status || '-',
+      amount:    t.amount,
+      net:       t.net_amount,
+      fee:       t.fee,
+      reference: t.reference_id || t.external_id || '-',
+      created:   t.created,
+    }))};
+  }
+  return { success: false, error: 'Gagal ambil transaksi' };
+}
+
 function createXenditInvoice({ orderId, items, buyerName, buyerEmail, buyerPhone, total }) {
   const xenItems = items.map(it => ({
     name:     it.produk + (it.varian && it.varian!=='-' ? ' - '+it.varian : '') + (it.masaAktif && it.masaAktif!=='-' ? ' ('+it.masaAktif+')' : ''),
