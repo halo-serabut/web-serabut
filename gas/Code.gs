@@ -144,6 +144,7 @@ function doPost(e) {
       case 'iPaymuAdminSyncOrders':     result = iPaymuAdminSyncOrders(params); break;
       case 'xenditGetBalance':          result = xenditGetBalance(params); break;
       case 'xenditGetTransactions':     result = xenditGetTransactions(params); break;
+      case 'getOrderDetail':            result = getOrderDetail(params); break;
       // Reviews
       case 'submitReview':              result = submitReview(params); break;
       case 'getBuyerReviews':           result = getBuyerReviews(params); break;
@@ -1516,6 +1517,68 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
 //  GET ORDERS — filter by email, group by orderId
 //  Return: [{ orderId, tanggal, buyerNama, buyerWa, status, paymentMethod, paymentStatus, total, items:[...] }]
 // ────────────────────────────────────────────────────────
+// Public endpoint — ambil detail order by orderId (no auth required, orderId is unguessable)
+function getOrderDetail({ orderId }) {
+  if (!orderId) return { success: false, error: 'orderId diperlukan' };
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: false, error: 'Sheet tidak ditemukan' };
+
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const idCol   = headers.indexOf('order id');
+  const prodCol = headers.indexOf('produk');
+  const varCol  = headers.indexOf('varian');
+  const masCol  = headers.indexOf('masa aktif');
+  const hrgCol  = headers.indexOf('harga');
+  const stCol   = headers.indexOf('status');
+  const dateCol = headers.indexOf('tanggal') >= 0 ? headers.indexOf('tanggal') : 1;
+  const namaCol = headers.indexOf('nama');
+  const pmCol   = headers.indexOf('payment method');
+  const psCol   = headers.indexOf('payment status');
+  const eaCol   = headers.indexOf('email aktif');
+  const msnCol  = headers.indexOf('nama ms');
+
+  if (idCol < 0 || prodCol < 0) return { success: false, error: 'Kolom tidak ditemukan' };
+
+  const _str = (row, col) => col >= 0 ? String(row[col] || '').trim() : '';
+  const items = [];
+  let orderMeta = null;
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (String(row[idCol] || '').trim() !== orderId.trim()) continue;
+    if (!orderMeta) {
+      orderMeta = {
+        orderId,
+        tanggal:       _str(row, dateCol),
+        nama:          _str(row, namaCol),
+        status:        _str(row, stCol),
+        paymentMethod: _str(row, pmCol),
+        paymentStatus: _str(row, psCol),
+      };
+    }
+    // Update status from latest row (in case updated)
+    orderMeta.status        = _str(row, stCol) || orderMeta.status;
+    orderMeta.paymentMethod = _str(row, pmCol) || orderMeta.paymentMethod;
+    orderMeta.paymentStatus = _str(row, psCol) || orderMeta.paymentStatus;
+
+    const produk = _str(row, prodCol);
+    if (produk) items.push({
+      produk,
+      varian:    _str(row, varCol)  || '-',
+      masaAktif: _str(row, masCol)  || '-',
+      harga:     hrgCol >= 0 ? Number(row[hrgCol]) || 0 : 0,
+      emailAktif: _str(row, eaCol)  || '',
+      msNama:    _str(row, msnCol)  || '',
+    });
+  }
+
+  if (!orderMeta) return { success: false, error: 'Order tidak ditemukan' };
+  const total = items.reduce((s, it) => s + it.harga, 0);
+  return { success: true, order: { ...orderMeta, items, total } };
+}
+
 function getOrders({ email }) {
   if (!email) return { success: false, error: 'Email diperlukan' };
 
