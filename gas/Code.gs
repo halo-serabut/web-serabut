@@ -3152,6 +3152,31 @@ function createXenditInvoice({ orderId, items, buyerName, buyerEmail, buyerPhone
   if (result && result.invoice_url) {
     return { success: true, paymentUrl: result.invoice_url, invoiceId: result.id, expiryDate: result.expiry_date };
   }
+
+  // Handle DUPLICATE_ERROR: ambil invoice yang sudah ada dan masih aktif (PENDING)
+  if (result && (result.error_code === 'DUPLICATE_ERROR' || (result.message && result.message.toLowerCase().includes('duplicate')))) {
+    try {
+      const existing = _xenditRequest('/v2/invoices?external_id=' + encodeURIComponent(body.external_id), null);
+      const invoices = Array.isArray(existing) ? existing : (existing ? [existing] : []);
+      for (const inv of invoices) {
+        if (String(inv.status || '').toUpperCase() === 'PENDING' && inv.invoice_url) {
+          Logger.log('createXenditInvoice: reuse existing PENDING invoice for ' + body.external_id);
+          return { success: true, paymentUrl: inv.invoice_url, invoiceId: inv.id, expiryDate: inv.expiry_date };
+        }
+      }
+      // Semua invoice sudah expired/paid — buat dengan external_id baru (append timestamp)
+      const retryId = body.external_id + '-R' + new Date().getTime().toString().slice(-6);
+      const retryBody = Object.assign({}, body, { external_id: retryId });
+      const retry = _xenditRequest('/v2/invoices', retryBody);
+      if (retry && retry.invoice_url) {
+        return { success: true, paymentUrl: retry.invoice_url, invoiceId: retry.id };
+      }
+      return { success: false, error: retry.message || 'Gagal membuat ulang invoice Xendit' };
+    } catch(e) {
+      Logger.log('createXenditInvoice retry error: ' + e.message);
+    }
+  }
+
   return { success: false, error: result.message || result.error_code || 'Gagal membuat invoice Xendit' };
 }
 

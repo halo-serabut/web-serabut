@@ -10587,9 +10587,9 @@ function serabutStore() {
                     this.orderDetailModal = null;
                     this.openPaymentIframe(order.orderId, data.paymentUrl);
                 } else {
-                    alert(data.error || 'Gagal membuat sesi pembayaran. Coba lagi atau hubungi CS.');
+                    this._showToast(data.error || 'Gagal membuat sesi pembayaran. Coba lagi atau hubungi CS.', 'error');
                 }
-            } catch(e) { alert('Gagal terhubung ke server'); }
+            } catch(e) { this._showToast('Gagal terhubung ke server', 'error'); }
             this.orderDetailSyncing = false;
         },
 
