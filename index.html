@@ -799,7 +799,7 @@
         <!-- Download Section — sidebar kategori style -->
         <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
         <div id="sec-download" class="bg-white py-14">
-            <div x-data="{ dlCat: 'windows' }" class="max-w-3xl mx-auto px-4">
+            <div x-data="{ dlCat: 'office' }" class="max-w-3xl mx-auto px-4">
                 <div class="text-center mb-6">
                     <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Download Software Resmi</h2>
                     <p class="text-sm text-gray-500">Link resmi langsung dari Microsoft — aman & terpercaya</p>
@@ -7862,6 +7862,10 @@ function serabutStore() {
             const winLogo = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iIzAwNzhENCIgZD0iTTIzIDNMMy41IDYuNSAzLjUgMjMgMjMgMjN6TTI1IDMgMjUgMjMgNDQuNSAyMyA0NC41IDYuNXpNMy41IDI1IDMuNSA0MS41IDIzIDQ1IDIzIDI1ek0yNSAyNSAyNSA0NSA0NC41IDQxLjUgNDQuNSAyNXoiLz48L3N2Zz4=`;
             const offLogo = `https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/svg/office_48x1.svg`;
             return [
+                { id: 'office', title: 'Microsoft 365', logo: offLogo, items: [
+                    { name: 'Office Setup (setup.office.com)', url: 'https://setup.office.com' },
+                    { name: 'Office Deployment Tool', url: 'https://www.microsoft.com/en-us/download/details.aspx?id=49117' },
+                ]},
                 { id: 'windows', title: 'Windows', logo: winLogo, items: [
                     { name: 'Windows 10 Pro', url: 'https://www.microsoft.com/en-us/software-download/windows10ISO' },
                     { name: 'Windows 11 Pro', url: 'https://www.microsoft.com/en-us/software-download/windows11' },
@@ -7870,10 +7874,6 @@ function serabutStore() {
                     { name: 'Windows Server 2016', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016' },
                     { name: 'Windows Server 2019', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2019' },
                     { name: 'Windows Server 2022', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022' },
-                ]},
-                { id: 'office', title: 'Microsoft Office 365', logo: offLogo, items: [
-                    { name: 'Office Setup (setup.office.com)', url: 'https://setup.office.com' },
-                    { name: 'Office Deployment Tool', url: 'https://www.microsoft.com/en-us/download/details.aspx?id=49117' },
                 ]},
             ];
         },
