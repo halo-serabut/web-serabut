@@ -164,6 +164,17 @@
         .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(220,38,38,.12); }
         .card-hover:active { transform: translateY(-1px); }
         .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), .75rem); }
+
+        /* Apple-style smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        * { scroll-behavior: smooth; }
+        /* Momentum scrolling for overflow containers */
+        .overflow-y-auto, .overflow-x-auto, [class*="overflow"] {
+            -webkit-overflow-scrolling: touch;
+        }
         @supports (-webkit-touch-callout: none) {
             input, select, textarea { font-size: 16px !important; }
         }
@@ -269,6 +280,7 @@
             to   { stroke-dashoffset: 0; }
         }
     </style>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.8/dist/lottie-player.js" defer></script>
 </head>
 
 <body class="font-sans bg-gray-50 min-h-screen antialiased flex flex-col" x-cloak>
@@ -313,17 +325,17 @@
 ══════════════════════════════════════════════════════ -->
 <nav class="hidden md:block fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100 shadow-sm">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <button @click="setPage('home')" class="flex items-center gap-2.5 group">
+        <button @click="scrollTo('hero')" class="flex items-center gap-2.5 group">
             <img src="/logo.png" alt="Serabut" class="w-9 h-9 rounded-xl shadow-sm">
             <div class="font-black text-gray-900 text-lg tracking-tight">Serabut Store</div>
         </button>
 
         <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1">
-            <template x-for="item in navItems" :key="item.id">
-                <button @click="setPage(item.id)" :class="activePage===item.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" x-text="item.label"></button>
+            <template x-for="item in navItems.filter(i => i.desktop !== false)" :key="item.id">
+                <button @click="scrollTo(item.scrollTarget || item.id)" :class="currentSection===(item.scrollTarget||item.id) ? 'bg-white text-brand-600 shadow-sm font-semibold' : 'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" x-text="item.label"></button>
             </template>
             <template x-if="currentUser?.role?.toLowerCase()==='admin'">
-                <button @click="setPage('admin')" :class="activePage==='admin'?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5">
+                <button @click="adminOverlay=true; document.body.style.overflow='hidden'; adminTab='flashsale'; adminInitTab('flashsale'); _adminPrefetch()" :class="adminOverlay?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     Admin
                 </button>
@@ -331,7 +343,7 @@
         </div>
 
         <!-- Sticky search — muncul saat scroll di catalog -->
-        <div x-show="activePage==='catalog' && scrollY > 140"
+        <div x-show="catalogInView && scrollY > 140"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 -translate-y-1"
              x-transition:enter-end="opacity-100 translate-y-0"
@@ -355,7 +367,7 @@
             </button>
             <template x-if="currentUser">
                 <div class="flex items-center gap-2">
-                    <button @click="setPage('profile')" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    <button @click="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile()" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
                         <div class="w-8 h-8 gradient-card rounded-lg flex items-center justify-center text-white font-black text-sm" x-text="currentUser.nama[0].toUpperCase()"></div>
                         <span class="text-sm font-semibold text-gray-700" x-text="currentUser.nama.split(' ')[0]"></span>
                     </button>
@@ -377,7 +389,7 @@
 ══════════════════════════════════════════════════════ -->
 <header class="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
     <div class="px-4 h-14 flex items-center justify-between">
-        <button @click="setPage('home')" class="flex items-center gap-2">
+        <button @click="scrollTo('hero')" class="flex items-center gap-2">
             <img src="/logo.png" alt="Serabut" class="w-8 h-8 rounded-lg shadow-sm">
             <span class="font-black text-gray-900">Serabut Store</span>
         </button>
@@ -388,7 +400,7 @@
                 <span x-show="cartCount>0" x-text="cartCount>9?'9+':cartCount" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center px-0.5 leading-none"></span>
             </button>
             <template x-if="currentUser">
-                <button @click="setPage('profile')" class="flex items-center gap-1.5">
+                <button @click="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile()" class="flex items-center gap-1.5">
                     <div class="w-7 h-7 gradient-card rounded-lg flex items-center justify-center text-white font-black text-xs" x-text="currentUser.nama[0].toUpperCase()"></div>
                 </button>
             </template>
@@ -398,7 +410,7 @@
         </div>
     </div>
     <!-- Sticky search row mobile -->
-    <div x-show="activePage==='catalog' && scrollY > 100"
+    <div x-show="catalogInView && scrollY > 100"
          x-transition:enter="transition ease-out duration-200"
          x-transition:enter-start="opacity-0 -translate-y-2"
          x-transition:enter-end="opacity-100 translate-y-0"
@@ -422,8 +434,8 @@
 <main class="pt-14 md:pt-16 pb-20 md:pb-0 flex-1 flex flex-col">
 <div class="flex-1">
     <!-- ───────── HOME ───────── -->
-    <section x-show="activePage==='home'" class="page-enter">
-        <div class="gradient-hero text-white">
+    <section>
+        <div id="sec-hero" class="gradient-hero text-white scroll-mt-20">
             <div class="max-w-6xl mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row md:items-center gap-8 md:gap-12">
                 <!-- Left: copy -->
                 <div class="flex-1 max-w-2xl">
@@ -433,8 +445,8 @@
                     </h1>
                     <p class="text-white/75 text-base md:text-lg mb-8 leading-relaxed max-w-xl" x-text="siteSettings.hero.subtext"></p>
                     <div class="flex flex-wrap gap-3">
-                        <button @click="setPage('catalog')" class="bg-white text-brand-600 font-bold px-6 py-3 rounded-xl hover:bg-brand-50 transition-all shadow-lg active:scale-95" x-text="siteSettings.hero.btn1"></button>
-                        <button @click="setPage('status')" class="bg-white/15 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95" x-text="siteSettings.hero.btn2"></button>
+                        <button @click="scrollTo('catalog')" class="bg-white text-brand-600 font-bold px-6 py-3 rounded-xl hover:bg-brand-50 transition-all shadow-lg active:scale-95" x-text="siteSettings.hero.btn1"></button>
+                        <button @click="scrollTo('status')" class="bg-white/15 text-white font-semibold px-6 py-3 rounded-xl hover:bg-white/25 transition-all border border-white/25 active:scale-95" x-text="siteSettings.hero.btn2"></button>
                     </div>
                 </div>
 
@@ -529,20 +541,19 @@
         </div>
 
         <!-- Stats -->
-        <div class="bg-white border-b border-gray-100">
+        <div class="bg-white">
             <div class="max-w-6xl mx-auto px-4"><div class="grid grid-cols-3 divide-x divide-gray-100">
                 <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">40+</div><div class="text-[11px] text-gray-500">Produk</div></div>
                 <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">10K+</div><div class="text-[11px] text-gray-500">Pelanggan</div></div>
                 <div class="text-center py-4"><div class="flex justify-center mb-0.5"><svg class="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><div class="text-[11px] text-gray-500">Proses Cepat</div></div>
             </div></div>
         </div>
-
         <!-- Categories -->
-        <div class="max-w-6xl mx-auto px-4 py-6">
-            <h2 class="text-base font-black text-gray-900 mb-3">Kategori Produk</h2>
+        <div id="sec-kategori" class="max-w-6xl mx-auto px-4 py-6 scroll-mt-20">
+            <h2 class="text-lg font-black text-gray-900 mb-3">Kategori Produk</h2>
             <div class="grid grid-cols-5 md:grid-cols-10 gap-2">
                 <template x-for="cat in categories" :key="cat.name">
-                    <button @click="setPage('catalog'); activeCategory=cat.name" class="bg-white rounded-2xl py-3 px-2 border border-gray-100 hover:border-brand-200 hover:bg-brand-50 active:scale-95 transition-all text-center group flex flex-col items-center gap-1.5">
+                    <button @click="scrollTo('catalog'); activeCategory=cat.name" class="bg-white rounded-2xl py-3 px-2 border border-gray-100 hover:border-brand-200 hover:bg-brand-50 active:scale-95 transition-all text-center group flex flex-col items-center gap-1.5">
                         <div class="w-6 h-6 text-brand-500" x-html="cat.icon"></div>
                         <div class="font-semibold text-gray-700 text-[10px] leading-tight group-hover:text-brand-600 line-clamp-2" x-text="cat.name"></div>
                     </button>
@@ -551,10 +562,10 @@
         </div>
 
         <!-- Featured Products -->
-        <div class="max-w-6xl mx-auto px-4 pb-8">
+        <div id="sec-populer" class="max-w-6xl mx-auto px-4 pb-8 scroll-mt-20">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-lg md:text-xl font-black text-gray-900">Produk Populer</h2>
-                <button @click="setPage('catalog')" class="text-brand-500 text-sm font-semibold hover:text-brand-700">Lihat Semua →</button>
+                <button @click="scrollTo('catalog')" class="text-brand-500 text-sm font-semibold hover:text-brand-700">Lihat Semua →</button>
             </div>
             <div x-show="loading" class="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <template x-for="i in 6"><div class="bg-white rounded-2xl border border-gray-100 flex items-center gap-3 px-3.5 py-3"><div class="skeleton w-12 h-12 rounded-2xl flex-none"></div><div class="flex-1 space-y-1.5"><div class="skeleton h-3 w-16 rounded"></div><div class="skeleton h-4 w-3/4 rounded"></div><div class="skeleton h-3 w-1/2 rounded"></div></div><div class="flex-none space-y-1"><div class="skeleton h-4 w-16 rounded"></div><div class="skeleton h-3 w-10 rounded"></div></div></div></template>
@@ -622,138 +633,8 @@
             </div>
         </div>
 
-        <!-- Why Us -->
-        <div class="bg-white border-t border-gray-100 py-10">
-            <div class="max-w-6xl mx-auto px-4">
-                <h2 class="text-lg md:text-xl font-black text-gray-900 mb-8 text-center">Kenapa Serabut Store?</h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <template x-for="b in benefits" :key="b.title">
-                        <div class="text-center"><div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-brand-500" x-html="b.icon"></div><div class="font-bold text-gray-800 text-sm mb-1" x-text="b.title"></div><div class="text-xs text-gray-500 leading-relaxed" x-text="b.desc"></div></div>
-                    </template>
-                </div>
-            </div>
-        </div>
-
-        <!-- Mobile-only footer -->
-        <div class="md:hidden bg-gray-950 pt-8 pb-6">
-            <div class="h-px bg-gradient-to-r from-transparent via-brand-600 to-transparent mx-5 mb-8 opacity-60"></div>
-
-            <div class="px-5 space-y-6">
-
-                <!-- Brand + Social -->
-                <div class="flex items-start justify-between">
-                    <div>
-                        <div class="flex items-center gap-2.5 mb-2">
-                            <img src="/logo.png" alt="Serabut" class="w-9 h-9 rounded-xl flex-none">
-                            <div class="font-black text-sm text-white tracking-tight">Serabut Store</div>
-                        </div>
-                        <p class="text-[11px] text-gray-500 leading-relaxed max-w-[190px]" x-text="siteSettings.footer.desc"></p>
-                    </div>
-                    <div class="flex gap-2 flex-none">
-                        <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        </a>
-                        <a x-bind:href="'mailto:'+siteSettings.footer.email" class="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center">
-                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Trust badges -->
-                <div class="flex flex-wrap gap-x-4 gap-y-1.5">
-                    <div class="flex items-center gap-1.5 text-[11px] text-gray-500">
-                        <svg class="w-3 h-3 flex-none text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                        100% Original
-                    </div>
-                    <div class="flex items-center gap-1.5 text-[11px] text-gray-500">
-                        <svg class="w-3 h-3 flex-none text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                        Transaksi Aman
-                    </div>
-                    <div class="flex items-center gap-1.5 text-[11px] text-gray-500">
-                        <svg class="w-3 h-3 flex-none text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                        Aktivasi Instan
-                    </div>
-                </div>
-
-                <!-- Divider -->
-                <div class="h-px bg-gray-800/70"></div>
-
-                <!-- Links 2-col -->
-                <div class="grid grid-cols-2 gap-x-6 gap-y-5">
-
-                    <!-- Layanan -->
-                    <div>
-                        <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">Layanan</div>
-                        <div class="space-y-2.5 text-xs text-gray-400">
-                            <div><a href="#" @click.prevent="setPage('catalog')" class="active:text-white">Semua Produk</a></div>
-                            <div><a href="#" @click.prevent="setPage('panduan')" class="active:text-white">Panduan Instalasi</a></div>
-                            <div><a href="#" @click.prevent="setPage('faq')" class="active:text-white">FAQ</a></div>
-                            <div><a href="#" @click.prevent="setPage('download')" class="active:text-white flex items-center gap-1">
-                                <svg class="w-3 h-3 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-                                Download
-                            </a></div>
-                        </div>
-                    </div>
-
-                    <!-- Akun -->
-                    <div>
-                        <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">Akun</div>
-                        <div class="space-y-2.5 text-xs text-gray-400">
-                            <div x-show="!currentUser"><a href="#" @click.prevent="authTab='login'; authModal=true" class="active:text-white">Login</a></div>
-                            <div x-show="!currentUser"><a href="#" @click.prevent="authTab='register'; authModal=true" class="active:text-white">Daftar Member</a></div>
-                            <div x-show="currentUser"><a href="#" @click.prevent="setPage('profile')" class="active:text-white">Profil Saya</a></div>
-                            <div x-show="currentUser"><a href="#" @click.prevent="setPage('profile'); profileTab='pesanan'; loadOrders()" class="active:text-white">Pesanan Saya</a></div>
-                            <div><a href="#" @click.prevent="setPage('status')" class="active:text-white">Cek Status Akun</a></div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Kontak -->
-                <div>
-                    <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">Hubungi Kami</div>
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs text-gray-400">
-                        <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex items-center gap-1.5">
-                            <svg class="w-3 h-3 flex-none text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                            <span x-text="siteSettings.footer.phone"></span>
-                        </a>
-                        <a x-bind:href="'mailto:'+siteSettings.footer.email" class="flex items-center gap-1.5">
-                            <svg class="w-3 h-3 flex-none text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                            <span class="truncate" x-text="siteSettings.footer.email"></span>
-                        </a>
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-3 h-3 flex-none text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            <span x-text="siteSettings.footer.jam"></span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-3 h-3 flex-none text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            <span>Jakarta Selatan, DKI Jakarta</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Divider -->
-                <div class="h-px bg-gray-800/70"></div>
-
-                <!-- Legal + Copyright -->
-                <div class="flex items-center justify-between">
-                    <span class="text-[10px] text-gray-600" x-text="siteSettings.footer.copyright"></span>
-                    <div class="flex items-center gap-2.5 text-[10px] text-gray-500">
-                        <button @click="legalModal='terms'" class="active:text-white">S&amp;K</button>
-                        <span class="text-gray-700">·</span>
-                        <button @click="legalModal='privacy'" class="active:text-white">Privasi</button>
-                        <span class="text-gray-700">·</span>
-                        <button @click="setPage('faq')" class="active:text-white">FAQ</button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-    </section>
-
     <!-- ───────── CATALOG ───────── -->
-    <section x-show="activePage==='catalog'" class="page-enter">
+    <section id="sec-catalog" class="scroll-mt-20">
         <div class="max-w-6xl mx-auto px-4 py-6">
             <div class="mb-5"><h1 class="text-2xl font-black text-gray-900">Semua Produk</h1><p class="text-sm text-gray-500 mt-0.5" x-text="`${filteredProducts.length} produk tersedia`"></p></div>
             <div class="relative mb-4">
@@ -873,8 +754,535 @@
         </div>
     </section>
 
-    <!-- ───────── PRODUCT DETAIL ───────── -->
-    <section x-show="activePage==='product-detail'" class="page-enter">
+        <!-- Cek Status Section -->
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
+        <div id="sec-status" class="bg-white py-14 scroll-mt-20">
+            <div class="max-w-2xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Cek Status Akun Kamu</h2>
+                    <p class="text-sm text-gray-500">Ketik email, username, atau nama yang dipakai saat beli</p>
+                </div>
+                <!-- Search bar -->
+                <div class="flex gap-2 mb-6">
+                    <div class="relative flex-1">
+                        <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </div>
+                        <input x-model="statusQuery" @keyup.enter="checkStatus()" type="text" placeholder="Cari email, username, atau nama..." class="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                    </div>
+                    <button @click="checkStatus()" :disabled="statusChecking" class="bg-brand-600 text-white px-6 py-3.5 rounded-2xl font-semibold text-sm hover:bg-brand-700 transition-all active:scale-95 flex-none disabled:opacity-60 flex items-center gap-2">
+                        <svg x-show="statusChecking" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        <span x-text="statusChecking ? 'Mencari...' : 'Cek'"></span>
+                    </button>
+                </div>
+                <!-- Results — semua tampil -->
+                <div x-show="statusResult !== null" x-transition>
+                    <template x-if="Array.isArray(statusResult) && statusResult.length > 0">
+                        <div>
+                            <p class="text-xs text-gray-400 mb-3 text-center" x-text="statusResult.length + ' akun ditemukan'"></p>
+                            <div class="flex flex-col gap-2">
+                                <template x-for="(r, idx) in statusResult" :key="idx">
+                                    <div class="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-gray-200 bg-white hover:shadow-sm transition-all">
+                                        <img :src="getProductLogo(r.productType==='adobe'?(r.productName||'Adobe'):(r.productType==='office365family'?'Office 365 Family':'Office 365'))"
+                                             class="w-10 h-10 rounded-xl flex-none object-contain" alt="">
+                                        <div class="flex-1 min-w-0">
+                                            <div class="text-sm font-semibold text-gray-900 truncate" x-text="r.buyerName||r.emailPembeli||'—'"></div>
+                                            <div class="text-xs text-gray-400 truncate mt-0.5"
+                                                 x-text="r.productType==='adobe'?(r.productName||'Adobe Creative Cloud'):(r.productType==='office365family'?'Office 365 Family':'Office 365')"></div>
+                                            <div class="text-xs text-gray-400 mt-0.5" x-text="(r.officeAccount||r.adobeAccount||'')"></div>
+                                        </div>
+                                        <div class="text-right flex-none">
+                                            <span class="text-xs font-bold px-2.5 py-1 rounded-full block mb-1.5"
+                                                  :class="getDaysUntilExpiry(r.masaBerlaku) < 0 ? 'bg-red-100 text-red-600' : getDaysUntilExpiry(r.masaBerlaku) <= 7 ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-700'"
+                                                  x-text="getDaysUntilExpiry(r.masaBerlaku) < 0 ? 'Sudah Habis' : getDaysUntilExpiry(r.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Aktif'"></span>
+                                            <div class="text-xs text-gray-500 font-medium" x-text="formatMasaBerlaku(r.masaBerlaku)||'-'"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="Array.isArray(statusResult) && statusResult.length === 0">
+                        <div class="text-center py-10">
+                            <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-700 mb-1">Akun tidak ditemukan</p>
+                            <p class="text-xs text-gray-400">Coba dengan email, nama, atau nomor WhatsApp yang dipakai saat beli</p>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panduan Section -->
+        <!-- Panduan Section — pills di atas -->
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
+        <div id="sec-panduan" class="bg-white py-14 scroll-mt-20">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Panduan Instalasi</h2>
+                    <p class="text-sm text-gray-500">Langkah lengkap aktivasi & install, dari awal sampai selesai</p>
+                </div>
+                <!-- Mobile: horizontal pills -->
+                <div class="flex gap-2 overflow-x-auto pb-3 mb-5 no-scrollbar md:hidden">
+                    <template x-for="tab in guideTabs" :key="tab.id">
+                        <button @click="activeGuide=tab.id"
+                                :class="activeGuide===tab.id ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200'"
+                                class="flex-none flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all outline-none focus:outline-none">
+                            <span x-html="tab.icon" class="flex-none w-4 h-4"></span>
+                            <span x-text="tab.label"></span>
+                        </button>
+                    </template>
+                </div>
+                <!-- Desktop: sidebar + content -->
+                <div class="md:flex md:gap-6 md:items-start">
+                    <!-- Sidebar -->
+                    <nav class="hidden md:flex flex-col gap-0.5 w-48 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-20">
+                        <template x-for="tab in guideTabs" :key="tab.id">
+                            <button @click="activeGuide=tab.id"
+                                    :class="activeGuide===tab.id ? 'bg-brand-50 text-brand-600 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'"
+                                    class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
+                                <span x-html="tab.icon" class="flex-none w-4 h-4"></span>
+                                <span x-text="tab.label"></span>
+                                <div x-show="activeGuide===tab.id" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                            </button>
+                        </template>
+                    </nav>
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                        <template x-for="tab in guideTabs" :key="tab.id">
+                            <div x-show="activeGuide===tab.id" class="flex flex-col gap-3">
+                                <template x-for="(guide,index) in guides[tab.id]" :key="guide.title">
+                                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                        <button @click="guide.open=!guide.open" class="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors">
+                                            <div class="flex items-center gap-3">
+                                                <div class="w-8 h-8 bg-brand-50 text-brand-500 rounded-xl flex items-center justify-center font-bold text-sm flex-none" x-text="index+1"></div>
+                                                <span class="font-semibold text-gray-800 text-sm" x-text="guide.title"></span>
+                                            </div>
+                                            <svg :class="guide.open?'rotate-180':''" class="w-4 h-4 text-gray-400 transition-transform flex-none ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                        </button>
+                                        <div x-show="guide.open" x-transition class="px-5 pb-5 border-t border-gray-50">
+                                            <ol class="space-y-3 mt-4">
+                                                <template x-for="(step,si) in guide.steps" :key="si">
+                                                    <li class="flex gap-3"><div class="w-6 h-6 gradient-card text-white rounded-full flex items-center justify-center text-xs font-bold flex-none mt-0.5" x-text="si+1"></div><p class="text-sm text-gray-600 leading-relaxed" x-html="renderGuideText(step)"></p></li>
+                                                </template>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- FAQ Section — pills di atas, x-html answers -->
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
+        <div id="sec-faq" class="bg-white py-14 scroll-mt-20">
+            <div x-data="{ homeFaqFilter: 'semua', homeFaqOpen: null }" class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Sering Ditanyain</h2>
+                    <p class="text-sm text-gray-500">Hal-hal yang sering ditanyain sebelum beli</p>
+                </div>
+                <!-- Mobile: horizontal pills -->
+                <div class="flex gap-2 overflow-x-auto pb-3 mb-5 no-scrollbar md:hidden">
+                    <template x-for="pill in [{id:'semua',label:'Semua',dot:'bg-gray-500'},{id:'office',label:'Office 365',dot:'bg-blue-500'},{id:'windows',label:'Windows',dot:'bg-sky-500'},{id:'adobe',label:'Adobe',dot:'bg-red-500'},{id:'pembayaran',label:'Pembayaran',dot:'bg-emerald-500'},{id:'akun',label:'Akun & Garansi',dot:'bg-purple-500'}]" :key="pill.id">
+                        <button @click="homeFaqFilter=pill.id; homeFaqOpen=null"
+                                :class="homeFaqFilter===pill.id ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200'"
+                                class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all outline-none focus:outline-none">
+                            <span class="w-2 h-2 rounded-full flex-none" :class="homeFaqFilter===pill.id ? 'bg-white/60' : pill.dot"></span>
+                            <span x-text="pill.label"></span>
+                        </button>
+                    </template>
+                </div>
+                <!-- Desktop: sidebar + content -->
+                <div class="md:flex md:gap-6 md:items-start">
+                    <!-- Sidebar -->
+                    <nav class="hidden md:flex flex-col gap-0.5 w-48 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-20">
+                        <template x-for="pill in [{id:'semua',label:'Semua',dot:'bg-gray-400'},{id:'office',label:'Office 365',dot:'bg-blue-500'},{id:'windows',label:'Windows',dot:'bg-sky-500'},{id:'adobe',label:'Adobe',dot:'bg-red-500'},{id:'pembayaran',label:'Pembayaran',dot:'bg-emerald-500'},{id:'akun',label:'Akun & Garansi',dot:'bg-purple-500'}]" :key="pill.id">
+                            <button @click="homeFaqFilter=pill.id; homeFaqOpen=null"
+                                    :class="homeFaqFilter===pill.id ? 'bg-brand-50 text-brand-600 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'"
+                                    class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
+                                <span class="w-2 h-2 rounded-full flex-none" :class="pill.dot"></span>
+                                <span x-text="pill.label"></span>
+                                <div x-show="homeFaqFilter===pill.id" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                            </button>
+                        </template>
+                    </nav>
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0 flex flex-col gap-3">
+                        <template x-for="(faq, idx) in faqItems.filter(f => homeFaqFilter==='semua' || f.cat===homeFaqFilter)" :key="idx">
+                            <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                <button @click="homeFaqOpen = homeFaqOpen===faq.q ? null : faq.q"
+                                        class="w-full flex items-center justify-between gap-4 px-5 py-4 text-left hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                                        <span class="w-2 h-2 rounded-full flex-none" :class="({office:'bg-blue-500',windows:'bg-sky-500',adobe:'bg-red-500',pembayaran:'bg-emerald-500',akun:'bg-purple-500'})[faq.cat]||'bg-gray-400'"></span>
+                                        <span class="font-semibold text-gray-800 text-sm" x-text="faq.q"></span>
+                                    </div>
+                                    <svg :class="homeFaqOpen===faq.q?'rotate-180':''" class="w-4 h-4 text-gray-400 transition-transform flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                                </button>
+                                <div x-show="homeFaqOpen===faq.q" x-transition class="px-5 pb-5 border-t border-gray-50">
+                                    <p class="text-sm text-gray-600 leading-relaxed mt-4" x-html="faq.a"></p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Download Section — sidebar kategori style -->
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
+        <div id="sec-download" class="bg-white py-14 scroll-mt-20">
+            <div x-data="{ dlCat: 'office' }" class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Download Software Resmi</h2>
+                    <p class="text-sm text-gray-500">Link langsung dari server Microsoft, bukan pihak ketiga</p>
+                </div>
+                <!-- Mobile: horizontal pills -->
+                <div class="flex gap-2 overflow-x-auto pb-3 mb-5 no-scrollbar md:hidden">
+                    <template x-for="group in downloadGroups" :key="group.id">
+                        <button @click="dlCat=group.id"
+                                :class="dlCat===group.id ? 'bg-brand-500 text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-200'"
+                                class="flex-none flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all outline-none focus:outline-none">
+                            <img :src="group.logo" :alt="group.title" class="w-4 h-4 object-contain" :style="dlCat===group.id ? 'filter:brightness(0) invert(1)' : ''">
+                            <span x-text="group.title"></span>
+                        </button>
+                    </template>
+                </div>
+                <!-- Desktop: sidebar + content -->
+                <div class="md:flex md:gap-6 md:items-start">
+                    <!-- Sidebar -->
+                    <nav class="hidden md:flex flex-col gap-0.5 w-48 flex-none bg-white rounded-2xl border border-gray-100 shadow-sm p-2 sticky top-20">
+                        <template x-for="group in downloadGroups" :key="group.id">
+                            <button @click="dlCat=group.id"
+                                    :class="dlCat===group.id ? 'bg-brand-50 text-brand-600 font-semibold' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'"
+                                    class="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-all w-full text-left">
+                                <img :src="group.logo" :alt="group.title" class="w-4 h-4 object-contain flex-none">
+                                <span x-text="group.title"></span>
+                                <div x-show="dlCat===group.id" class="ml-auto w-1.5 h-1.5 rounded-full bg-brand-500 flex-none"></div>
+                            </button>
+                        </template>
+                    </nav>
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0">
+                        <template x-for="group in downloadGroups" :key="group.id">
+                            <div x-show="dlCat===group.id" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                                <div class="px-5 py-3 border-b border-gray-100 flex items-center gap-2 bg-gray-50">
+                                    <img :src="group.logo" :alt="group.title" class="w-5 h-5 object-contain">
+                                    <span class="font-bold text-gray-800 text-sm" x-text="group.title"></span>
+                                </div>
+                                <div class="divide-y divide-gray-50">
+                                    <template x-for="item in group.items" :key="item.name">
+                                        <a :href="item.url" target="_blank" rel="noopener noreferrer"
+                                           class="flex items-center justify-between px-5 py-4 hover:bg-blue-50 transition-colors group">
+                                            <span class="text-sm text-gray-700 group-hover:text-blue-600 transition-colors font-medium" x-text="item.name"></span>
+                                            <svg class="w-4 h-4 text-gray-300 group-hover:text-blue-500 transition-colors flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                        </a>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        <p class="text-xs text-gray-400 mt-4 text-center">Semua link di atas adalah link resmi dari server Microsoft</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Testimoni -->
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
+        <div id="sec-testimoni" class="bg-white py-12 scroll-mt-20">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Apa Kata Pelanggan Kami</h2>
+                    <p class="text-sm text-gray-500">Ribuan pelanggan udah buktiin sendiri</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <template x-for="r in reviews.slice(0,8)" :key="r.nama+r.produk">
+                        <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                            <div class="flex items-center gap-1 mb-3">
+                                <template x-for="i in 5" :key="i">
+                                    <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                </template>
+                            </div>
+                            <p class="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-3" x-text="r.ulasan||r.review||'Produk original, aktivasi cepat dan mudah!'"></p>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-full gradient-card flex items-center justify-center text-white text-xs font-bold flex-none" x-text="(r.nama||'A')[0].toUpperCase()"></div>
+                                <div>
+                                    <div class="text-xs font-bold text-gray-800" x-text="r.nama||'Pelanggan'"></div>
+                                    <div class="text-[10px] text-gray-400" x-text="r.produk||'Serabut Store'"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <!-- Fallback jika reviews kosong -->
+                    <template x-if="!reviews || reviews.length === 0">
+                        <template x-for="t in [{nama:'Budi S.',produk:'Office 365 Family',text:'Aktivasi langsung berhasil! Recommended banget buat yg butuh Office.'},{nama:'Rina A.',produk:'Windows 11 Pro',text:'Harga terjangkau, proses cepat dan CS nya responsif.'},{nama:'Deni P.',produk:'Adobe Creative Cloud',text:'Udah langganan 2 tahun, selalu memuaskan. Original & legal.'},{nama:'Sari W.',produk:'Office 365 Web',text:'Pertama kali beli di sini, ternyata mudah banget prosesnya!'},{nama:'Fajar R.',produk:'Microsoft Project',text:'Aktivasi dalam 5 menit setelah bayar. Sangat direkomendasikan.'},{nama:'Lina M.',produk:'Office 365 Family',text:'Keluarga senang bisa pakai Office di 6 device sekaligus!'},{nama:'Arif T.',produk:'Windows 10 Pro',text:'Harga jauh lebih murah dari toko resmi, tapi produknya sama originalnya!'},{nama:'Dewi K.',produk:'Adobe Creative Cloud',text:'CS sangat helpful, dibantu sampai berhasil install. Puas banget!'},{nama:'Hendra W.',produk:'Windows 11 Pro',text:'Prosesnya cepat banget, lisensinya langsung aktif. Gak perlu ribet sama sekali.'},{nama:'Ayu R.',produk:'Office 365 Web',text:'Sudah 3x beli di sini, selalu aman dan original. Harga juga paling murah!'}]" :key="t.nama">
+                            <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                                <div class="flex items-center gap-1 mb-3">
+                                    <template x-for="i in 5" :key="i">
+                                        <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    </template>
+                                </div>
+                                <p class="text-sm text-gray-600 leading-relaxed mb-4" x-text="t.text"></p>
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-full gradient-card flex items-center justify-center text-white text-xs font-bold flex-none" x-text="t.nama[0]"></div>
+                                    <div>
+                                        <div class="text-xs font-bold text-gray-800" x-text="t.nama"></div>
+                                        <div class="text-[10px] text-gray-400" x-text="t.produk"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </template>
+                </div>
+                <!-- Stats bar -->
+                <div class="mt-10 grid grid-cols-3 gap-4 text-center">
+                    <div><div class="text-2xl md:text-3xl font-black text-brand-600">10K+</div><div class="text-xs text-gray-500 mt-1">Transaksi Sukses</div></div>
+                    <div><div class="text-2xl md:text-3xl font-black text-brand-600">4.9&#9733;</div><div class="text-xs text-gray-500 mt-1">Rating Rata-rata</div></div>
+                    <div><div class="text-2xl md:text-3xl font-black text-brand-600">&lt;5 mnt</div><div class="text-xs text-gray-500 mt-1">Rata-rata Aktivasi</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why Us -->
+        <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
+        <div id="sec-kenapa" class="bg-white py-10 scroll-mt-20">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="text-center mb-8">
+                    <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900">Kenapa Serabut Store?</h2>
+                    <p class="text-sm text-gray-500 mt-2">Bukan sekadar toko, ini alasan kenapa 10K+ orang percaya kami</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <template x-for="b in benefits" :key="b.title">
+                        <div class="text-center"><div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-brand-500" x-html="b.icon"></div><div class="font-bold text-gray-800 text-sm mb-1" x-text="b.title"></div><div class="text-xs text-gray-500 leading-relaxed" x-text="b.desc"></div></div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div id="sec-cta" class="bg-white py-16 scroll-mt-20">
+            <div class="max-w-4xl mx-auto px-4 text-center">
+                <div class="mb-8">
+                    <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                    </div>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Metode Pembayaran</h2>
+                    <p class="text-sm text-gray-500">Bayar pakai metode apapun yang paling nyaman buat kamu</p>
+                </div>
+
+                <!-- Payment logos grid -->
+                <div class="grid grid-cols-4 md:grid-cols-6 gap-3 mb-6">
+                    <!-- Virtual Account -->
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg" alt="BCA" class="h-6 object-contain">
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/id/a/ad/Bank_Mandiri_logo_2016.svg" alt="Mandiri" class="h-6 object-contain">
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/id/thumb/5/5e/BNI_logo.svg/1200px-BNI_logo.svg.png" alt="BNI" class="h-6 object-contain">
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/68/BANK_BRI_logo.svg" alt="BRI" class="h-6 object-contain">
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/id/thumb/3/30/Permata_Bank_logo.svg/1200px-Permata_Bank_logo.svg.png" alt="Permata" class="h-5 object-contain">
+                    </div>
+                    <!-- QRIS -->
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/a2/Logo_QRIS.svg" alt="QRIS" class="h-6 object-contain">
+                    </div>
+                    <!-- E-Wallet -->
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/eb/Logo_ovo_purple.svg" alt="OVO" class="h-6 object-contain">
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg" alt="DANA" class="h-6 object-contain">
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Gopay_logo.svg/1200px-Gopay_logo.svg.png" alt="GoPay" class="h-6 object-contain">
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Shopee_Pay_Logo.svg/1200px-Shopee_Pay_Logo.svg.png" alt="ShopeePay" class="h-6 object-contain">
+                    </div>
+                    <!-- Retail -->
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Alfamart_logo.svg/1200px-Alfamart_logo.svg.png" alt="Alfamart" class="h-5 object-contain">
+                    </div>
+                    <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Indomaret_logo.svg/1200px-Indomaret_logo.svg.png" alt="Indomaret" class="h-5 object-contain">
+                    </div>
+                </div>
+
+                <!-- Category labels -->
+                <div class="flex flex-wrap gap-2 justify-center">
+                    <span class="flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                        <svg class="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z"/><path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd"/></svg>
+                        Virtual Account
+                    </span>
+                    <span class="flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                        <svg class="w-3 h-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        E-Wallet
+                    </span>
+                    <span class="flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                        <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                        QRIS
+                    </span>
+                    <span class="flex items-center gap-1.5 text-xs text-gray-400 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                        <svg class="w-3 h-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        Minimarket
+                    </span>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile-only footer -->
+        <div class="md:hidden bg-gray-900 pt-8 pb-6">
+            <div class="h-px bg-gradient-to-r from-transparent via-brand-600 to-transparent mx-5 mb-8 opacity-60"></div>
+
+            <div class="px-5 space-y-6">
+
+                <!-- Brand + Social -->
+                <div class="flex items-start justify-between">
+                    <div>
+                        <div class="flex items-center gap-2.5 mb-2">
+                            <img src="/logo.png" alt="Serabut" class="w-9 h-9 rounded-xl flex-none">
+                            <div class="font-black text-sm text-white tracking-tight">Serabut Store</div>
+                        </div>
+                        <p class="text-[11px] text-gray-500 leading-relaxed max-w-[190px]" x-text="siteSettings.footer.desc"></p>
+                    </div>
+                    <div class="flex gap-2 flex-none">
+                        <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        </a>
+                        <a x-bind:href="'mailto:'+siteSettings.footer.email" class="w-8 h-8 rounded-xl bg-gray-800 flex items-center justify-center">
+                            <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Trust badges -->
+                <div class="flex flex-wrap gap-x-4 gap-y-1.5">
+                    <div class="flex items-center gap-1.5 text-[11px] text-gray-500">
+                        <svg class="w-3 h-3 flex-none text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        100% Original
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[11px] text-gray-500">
+                        <svg class="w-3 h-3 flex-none text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        Transaksi Aman
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[11px] text-gray-500">
+                        <svg class="w-3 h-3 flex-none text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Aktivasi Instan
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="h-px bg-gray-800/70"></div>
+
+                <!-- Links 2-col -->
+                <div class="grid grid-cols-2 gap-x-6 gap-y-5">
+
+                    <!-- Layanan -->
+                    <div>
+                        <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">Layanan</div>
+                        <div class="space-y-2.5 text-xs text-gray-400">
+                            <div><a href="#" @click.prevent="scrollTo('catalog')" class="active:text-white">Semua Produk</a></div>
+                            <div><a href="#" @click.prevent="scrollTo('panduan')" class="active:text-white">Panduan Instalasi</a></div>
+                            <div><a href="#" @click.prevent="scrollTo('faq')" class="active:text-white">FAQ</a></div>
+                            <div><a href="#" @click.prevent="scrollTo('download')" class="active:text-white flex items-center gap-1">
+                                <svg class="w-3 h-3 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                Download
+                            </a></div>
+                        </div>
+                    </div>
+
+                    <!-- Akun -->
+                    <div>
+                        <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">Akun</div>
+                        <div class="space-y-2.5 text-xs text-gray-400">
+                            <div x-show="!currentUser"><a href="#" @click.prevent="authTab='login'; authModal=true" class="active:text-white">Login</a></div>
+                            <div x-show="!currentUser"><a href="#" @click.prevent="authTab='register'; authModal=true" class="active:text-white">Daftar Member</a></div>
+                            <div x-show="currentUser"><a href="#" @click.prevent="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile()" class="active:text-white">Profil Saya</a></div>
+                            <div x-show="currentUser"><a href="#" @click.prevent="profileOverlay=true; profileTab='pesanan'; loadOrders(); document.body.style.overflow='hidden'" class="active:text-white">Pesanan Saya</a></div>
+                            <div><a href="#" @click.prevent="scrollTo('status')" class="active:text-white">Cek Status Akun</a></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Kontak -->
+                <div>
+                    <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">Hubungi Kami</div>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs text-gray-400">
+                        <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="flex items-center gap-1.5">
+                            <svg class="w-3 h-3 flex-none text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                            <span x-text="siteSettings.footer.phone"></span>
+                        </a>
+                        <a x-bind:href="'mailto:'+siteSettings.footer.email" class="flex items-center gap-1.5">
+                            <svg class="w-3 h-3 flex-none text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <span class="truncate" x-text="siteSettings.footer.email"></span>
+                        </a>
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-3 h-3 flex-none text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span x-text="siteSettings.footer.jam"></span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-3 h-3 flex-none text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            <span>Jakarta Selatan, DKI Jakarta</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Divider -->
+                <div class="h-px bg-gray-800/70"></div>
+
+                <!-- Legal + Copyright -->
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] text-gray-600" x-text="siteSettings.footer.copyright"></span>
+                    <div class="flex items-center gap-2.5 text-[10px] text-gray-500">
+                        <button @click="legalModal='terms'" class="active:text-white">S&amp;K</button>
+                        <span class="text-gray-700">·</span>
+                        <button @click="legalModal='privacy'" class="active:text-white">Privasi</button>
+                        <span class="text-gray-700">·</span>
+                        <button @click="scrollTo('faq')" class="active:text-white">FAQ</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- ───────── PRODUCT DETAIL OVERLAY ───────── -->
+    <div x-show="productDetailOverlay"
+         x-transition:enter="transition ease-out duration-250"
+         x-transition:enter-start="opacity-0 translate-x-full"
+         x-transition:enter-end="opacity-100 translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-x-0"
+         x-transition:leave-end="opacity-0 translate-x-full"
+         class="fixed inset-0 z-[250] bg-white overflow-y-auto" x-cloak>
+    <section>
         <template x-if="selectedProductGroup">
             <div>
                 <!-- ── Hero Banner ── -->
@@ -887,7 +1295,7 @@
                     <div class="max-w-5xl mx-auto px-5 pt-4 pb-0">
                         <!-- Back + Share bar -->
                         <div class="flex items-center justify-between mb-3">
-                            <button @click="setPage('catalog')" class="flex items-center gap-1 text-gray-500 hover:text-gray-800 transition-colors active:opacity-70">
+                            <button @click="productDetailOverlay=false; document.body.style.overflow=''; history.back()" class="flex items-center gap-1 text-gray-500 hover:text-gray-800 transition-colors active:opacity-70">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
                                 <span class="text-[11px] font-medium">Kembali ke Katalog</span>
                             </button>
@@ -1388,9 +1796,10 @@
             </div>
         </template>
     </section>
+    </div><!-- end productDetailOverlay -->
 
-    <!-- ───────── PANDUAN ───────── -->
-    <section x-show="activePage==='panduan'" class="page-enter">
+    <!-- ───────── PANDUAN (standalone — hidden, content embedded in home scroll) ───────── -->
+    <section x-show="false" style="display:none">
         <div class="max-w-5xl mx-auto px-4 py-6">
             <h1 class="text-2xl font-black text-gray-900 mb-1">Panduan</h1>
             <p class="text-sm text-gray-400 mb-5">Tutorial instalasi & penggunaan software</p>
@@ -1437,8 +1846,8 @@
         </div>
     </section>
 
-    <!-- ───────── CEK STATUS ───────── -->
-    <section x-show="activePage==='status'" class="page-enter">
+    <!-- ───────── CEK STATUS (standalone — hidden, content embedded in home scroll) ───────── -->
+    <section x-show="false" style="display:none">
         <div class="max-w-lg mx-auto px-4 py-6">
             <h1 class="text-2xl font-black text-gray-900 mb-1">Cek Status Akun</h1>
             <p class="text-sm text-gray-400 mb-5">Cari menggunakan nama, email, atau nomor WhatsApp</p>
@@ -1583,8 +1992,22 @@
         </div>
     </section>
 
-    <!-- ───────── PROFILE ───────── -->
-    <section x-show="activePage==='profile'" class="page-enter max-w-4xl mx-auto px-4 py-6">
+    <!-- ───────── PROFILE OVERLAY ───────── -->
+    <div x-show="profileOverlay"
+         x-transition:enter="transition duration-200"
+         x-transition:enter-start="opacity-0 translate-x-4"
+         x-transition:enter-end="opacity-100 translate-x-0"
+         x-transition:leave="transition duration-150"
+         x-transition:leave-start="opacity-100 translate-x-0"
+         x-transition:leave-end="opacity-0 translate-x-4"
+         class="fixed inset-0 z-[300] bg-white overflow-y-auto" x-cloak>
+        <div class="sticky top-0 bg-white border-b border-gray-100 px-4 h-14 flex items-center gap-3 z-10">
+            <button @click="profileOverlay=false; document.body.style.overflow=''" class="p-2 rounded-lg hover:bg-gray-100">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <span class="font-bold text-gray-900">Akun Saya</span>
+        </div>
+    <section class="max-w-4xl mx-auto px-4 py-6">
 
         <!-- Header -->
         <div class="flex items-center gap-4 mb-6">
@@ -1767,7 +2190,7 @@
                                         <p class="text-emerald-100 text-xs mt-0.5">Pesanan sedang diproses, estimasi 5–30 menit</p>
                                     </div>
                                 </div>
-                                <button @click="paymentConfirmed=null; setPage('home')" class="w-7 h-7 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center flex-none transition-colors">
+                                <button @click="paymentConfirmed=null; scrollTo('hero')" class="w-7 h-7 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center flex-none transition-colors">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                             </div>
@@ -1808,7 +2231,7 @@
                                         <p class="text-amber-100 text-xs mt-0.5">Pembayaran belum terkonfirmasi, biasanya butuh beberapa menit</p>
                                     </div>
                                 </div>
-                                <button @click="paymentConfirmed=null; setPage('home')" class="w-7 h-7 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center flex-none transition-colors">
+                                <button @click="paymentConfirmed=null; scrollTo('hero')" class="w-7 h-7 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center flex-none transition-colors">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                             </div>
@@ -1861,7 +2284,7 @@
                 </div>
                 <div class="font-bold text-gray-800 text-base mb-1" x-text="ordersFilter==='semua' ? 'Belum ada pesanan' : 'Tidak ada pesanan di kategori ini'"></div>
                 <p class="text-gray-500 text-sm mb-4" x-text="ordersFilter==='semua' ? 'Yuk mulai belanja produk digitalmu!' : 'Coba lihat semua pesanan.'"></p>
-                <button x-show="ordersFilter==='semua'" @click="setPage('catalog')" class="inline-flex items-center gap-1.5 bg-brand-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl active:scale-95 transition-all">
+                <button x-show="ordersFilter==='semua'" @click="scrollTo('catalog')" class="inline-flex items-center gap-1.5 bg-brand-500 text-white text-sm font-bold px-5 py-2.5 rounded-xl active:scale-95 transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                     Lihat Produk
                 </button>
@@ -2364,6 +2787,7 @@
         </div>
 
     </section>
+    </div><!-- end profileOverlay -->
 
     <!-- ───────── LOGOUT CONFIRM MODAL ───────── -->
     <div x-show="logoutConfirm"
@@ -2385,7 +2809,7 @@
                         class="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-700 font-semibold text-sm hover:bg-gray-200 transition-all active:scale-95">
                     Tidak
                 </button>
-                <button @click="logoutConfirm=false; logout(); setPage('home')"
+                <button @click="logoutConfirm=false; logout(); scrollTo('hero')"
                         class="flex-1 py-3 rounded-2xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-all active:scale-95">
                     Ya, Keluar
                 </button>
@@ -2567,8 +2991,8 @@
         </div>
     </div>
 
-    <!-- ───────── FAQ ───────── -->
-    <section x-show="activePage==='faq'" class="page-enter">
+    <!-- ───────── FAQ (standalone — hidden, content embedded in home scroll) ───────── -->
+    <section x-show="false" style="display:none">
         <div x-data="{ faqFilter: 'semua', faqOpen: null }" class="max-w-5xl mx-auto px-4 py-8 pb-28 md:pb-12">
 
             <!-- Hero Header -->
@@ -2633,7 +3057,7 @@
                                 <div class="text-sm text-gray-600 leading-relaxed" x-html="faq.a"></div>
                                 <!-- Action button if any -->
                                 <template x-if="faq.action">
-                                    <button @click="faq.action==='catalog' ? setPage('catalog') : (faq.action==='status' ? setPage('status') : null)"
+                                    <button @click="faq.action==='catalog' ? scrollTo('catalog') : (faq.action==='status' ? scrollTo('status') : null)"
                                             class="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 bg-brand-50 px-3 py-1.5 rounded-lg hover:bg-brand-100 transition-colors"
                                             x-text="faq.actionLabel"></button>
                                 </template>
@@ -2653,7 +3077,7 @@
                         <p class="text-gray-400 text-xs">CS kami online setiap hari 09.00 – 22.00 WIB</p>
                     </div>
                     <div class="flex gap-3 flex-wrap justify-center">
-                        <button @click="setPage('catalog')"
+                        <button @click="scrollTo('catalog')"
                                 class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold rounded-xl transition-all active:scale-95">
                             Lihat Produk
                         </button>
@@ -2668,12 +3092,12 @@
         </div>
     </section>
 
-    <!-- ───────── DOWNLOAD PAGE ───────── -->
-    <section x-show="activePage==='download'" class="page-enter bg-gray-50 min-h-screen">
+    <!-- ───────── DOWNLOAD PAGE (standalone — hidden, content embedded in home scroll) ───────── -->
+    <section x-show="false" style="display:none">
         <div class="max-w-3xl mx-auto px-4 py-10">
 
             <!-- Header -->
-            <button @click="setPage('home')" class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-8 transition-colors">
+            <button @click="scrollTo('hero')" class="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600 mb-8 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                 Kembali
             </button>
@@ -2824,7 +3248,7 @@
             <!-- Info tip -->
             <div class="flex items-start gap-3 text-sm text-gray-500">
                 <svg class="w-4 h-4 flex-none mt-0.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span>Butuh panduan instalasi? Cek halaman <button @click="setPage('panduan')" class="text-brand-500 font-medium hover:underline transition-colors">Panduan Instalasi</button> untuk langkah-langkah lengkap.</span>
+                <span>Butuh panduan instalasi? Cek halaman <button @click="scrollTo('panduan')" class="text-brand-500 font-medium hover:underline transition-colors">Panduan Instalasi</button> untuk langkah-langkah lengkap.</span>
             </div>
 
         </div>
@@ -2836,7 +3260,7 @@
         <!-- ── Mobile top bar (native app style) ── -->
         <div class="md:hidden sticky top-0 z-30 bg-white border-b border-gray-100 flex items-center gap-3 px-4 h-14"
              style="padding-top: env(safe-area-inset-top)">
-            <button @click="setPage('home')" class="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center active:scale-95 transition-transform flex-none">
+            <button @click="scrollTo('hero')" class="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center active:scale-95 transition-transform flex-none">
                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
             </button>
             <p class="text-sm font-bold text-gray-900 flex-1">Detail Pesanan</p>
@@ -3003,13 +3427,13 @@
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                     Hubungi CS via WhatsApp
                 </a>
-                <button @click="setPage('profile'); profileTab='pesanan'"
+                <button @click="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile(); profileTab='pesanan'"
                     target="_blank"
                     class="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1fba5c] active:scale-95 text-white text-sm font-bold py-3.5 rounded-2xl transition-all shadow-sm">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                     Hubungi CS via WhatsApp
                 </a>
-                <button @click="setPage('profile'); profileTab='pesanan'"
+                <button @click="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile(); profileTab='pesanan'"
                     class="w-full text-center text-xs text-gray-400 py-2.5 hover:text-brand-500 transition-colors">
                     Lihat semua pesananku →
                 </button>
@@ -3026,13 +3450,13 @@
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                     Hubungi CS via WhatsApp
                 </a>
-                <button @click="setPage('profile'); profileTab='pesanan'"
+                <button @click="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile(); profileTab='pesanan'"
                     target="_blank"
                     class="w-full flex items-center justify-center gap-2 bg-[#25D366] active:bg-[#1fba5c] active:scale-[.98] text-white text-sm font-bold py-3 rounded-2xl transition-all shadow-lg">
                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.1-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                     Hubungi CS via WhatsApp
                 </a>
-                <button @click="setPage('profile'); profileTab='pesanan'"
+                <button @click="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile(); profileTab='pesanan'"
                     class="w-full text-center text-xs text-gray-400 py-1.5 active:text-brand-500">
                     Lihat semua pesananku →
                 </button>
@@ -3040,8 +3464,22 @@
         </div>
 
     </section>
-    <!-- ───────── ADMIN DASHBOARD ───────── -->
-    <section x-show="activePage==='admin'" class="page-enter bg-white md:bg-transparent">
+    <!-- ───────── ADMIN DASHBOARD OVERLAY ───────── -->
+    <div x-show="adminOverlay"
+         x-transition:enter="transition duration-200"
+         x-transition:enter-start="opacity-0 translate-x-4"
+         x-transition:enter-end="opacity-100 translate-x-0"
+         x-transition:leave="transition duration-150"
+         x-transition:leave-start="opacity-100 translate-x-0"
+         x-transition:leave-end="opacity-0 translate-x-4"
+         class="fixed inset-0 z-[300] bg-white overflow-y-auto" x-cloak>
+        <div class="sticky top-0 bg-white border-b border-gray-100 px-4 h-14 flex items-center gap-3 z-10">
+            <button @click="adminOverlay=false; document.body.style.overflow=''" class="p-2 rounded-lg hover:bg-gray-100">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <span class="font-bold text-gray-900">Admin Dashboard</span>
+        </div>
+    <section class="bg-white md:bg-transparent">
         <template x-if="currentUser?.role!=='admin'">
             <div class="max-w-lg mx-auto px-4 py-20 text-center">
                 <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -4894,14 +5332,18 @@
         </div>
         </template>
     </section>
+    </div><!-- end adminOverlay -->
 
 </div><!-- end flex-1 content -->
 
 <!-- ══════════════════════════════════════════════════════
      FOOTER
 ══════════════════════════════════════════════════════ -->
-<footer class="hidden md:block bg-gray-900 text-white" x-show="activePage !== 'product-detail'" x-cloak>
-    <div class="max-w-6xl mx-auto px-8 py-5 md:py-6">
+<footer class="hidden md:block bg-gray-900 text-white relative overflow-hidden" x-show="!productDetailOverlay" x-cloak>
+    <!-- Red glow accents -->
+    <div class="absolute -left-24 top-1/2 -translate-y-1/2 w-64 h-64 bg-red-700 rounded-full blur-3xl opacity-10 pointer-events-none"></div>
+    <div class="absolute -right-24 top-1/2 -translate-y-1/2 w-64 h-64 bg-red-700 rounded-full blur-3xl opacity-10 pointer-events-none"></div>
+    <div class="max-w-6xl mx-auto px-8 py-5 md:py-6 relative">
 
         <!-- Mobile: full layout -->
         <div class="md:hidden pt-8 pb-4">
@@ -4956,10 +5398,10 @@
                 <div>
                     <div class="text-[10px] font-semibold text-gray-500 uppercase tracking-widest mb-3">Layanan</div>
                     <div class="space-y-2.5 text-xs text-gray-400">
-                        <div><a href="#" @click.prevent="setPage('catalog')" class="active:text-white">Semua Produk</a></div>
-                        <div><a href="#" @click.prevent="setPage('panduan')" class="active:text-white">Panduan Instalasi</a></div>
-                        <div><a href="#" @click.prevent="setPage('faq')" class="active:text-white">FAQ</a></div>
-                        <div><a href="#" @click.prevent="setPage('download')" class="active:text-white flex items-center gap-1">
+                        <div><a href="#" @click.prevent="scrollTo('catalog')" class="active:text-white">Semua Produk</a></div>
+                        <div><a href="#" @click.prevent="scrollTo('panduan')" class="active:text-white">Panduan Instalasi</a></div>
+                        <div><a href="#" @click.prevent="scrollTo('faq')" class="active:text-white">FAQ</a></div>
+                        <div><a href="#" @click.prevent="scrollTo('download')" class="active:text-white flex items-center gap-1">
                             <svg class="w-3 h-3 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Download Software
                         </a></div>
@@ -4972,9 +5414,9 @@
                     <div class="space-y-2.5 text-xs text-gray-400">
                         <div x-show="!currentUser"><a href="#" @click.prevent="authTab='login'; authModal=true" class="active:text-white">Login</a></div>
                         <div x-show="!currentUser"><a href="#" @click.prevent="authTab='register'; authModal=true" class="active:text-white">Daftar Member</a></div>
-                        <div x-show="currentUser"><a href="#" @click.prevent="setPage('profile')" class="active:text-white">Profil Saya</a></div>
-                        <div x-show="currentUser"><a href="#" @click.prevent="setPage('profile'); profileTab='pesanan'; loadOrders()" class="active:text-white">Pesanan Saya</a></div>
-                        <div><a href="#" @click.prevent="setPage('status')" class="active:text-white">Cek Status Akun</a></div>
+                        <div x-show="currentUser"><a href="#" @click.prevent="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile()" class="active:text-white">Profil Saya</a></div>
+                        <div x-show="currentUser"><a href="#" @click.prevent="profileOverlay=true; profileTab='pesanan'; loadOrders(); document.body.style.overflow='hidden'" class="active:text-white">Pesanan Saya</a></div>
+                        <div><a href="#" @click.prevent="scrollTo('status')" class="active:text-white">Cek Status Akun</a></div>
                     </div>
                 </div>
 
@@ -5032,7 +5474,7 @@
                 <div class="flex-none bg-gray-800 rounded-2xl px-8 py-6 flex flex-col items-center gap-3 border border-gray-700 min-w-[220px]">
                     <p class="text-white text-sm font-semibold text-center">Siap mulai berlangganan?</p>
                     <p class="text-gray-400 text-xs text-center">Aktivasi instan, harga terjangkau</p>
-                    <button @click="setPage('catalog')"
+                    <button @click="scrollTo('catalog')"
                             class="flex items-center gap-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all hover:scale-105 w-full justify-center mt-1">
                         Mulai Belanja
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
@@ -5080,10 +5522,10 @@
                 <div>
                     <div class="text-xs font-semibold text-gray-500 mb-5 uppercase tracking-widest">Layanan</div>
                     <div class="space-y-4 text-sm text-gray-400">
-                        <div><a href="#" @click.prevent="setPage('catalog')" class="hover:text-white transition-colors">Semua Produk</a></div>
-                        <div><a href="#" @click.prevent="setPage('panduan')" class="hover:text-white transition-colors">Panduan Instalasi</a></div>
-                        <div><a href="#" @click.prevent="setPage('faq')" class="hover:text-white transition-colors">FAQ</a></div>
-                        <div><a href="#" @click.prevent="setPage('download')" class="hover:text-white transition-colors flex items-center gap-1.5">
+                        <div><a href="#" @click.prevent="scrollTo('catalog')" class="hover:text-white transition-colors">Semua Produk</a></div>
+                        <div><a href="#" @click.prevent="scrollTo('panduan')" class="hover:text-white transition-colors">Panduan Instalasi</a></div>
+                        <div><a href="#" @click.prevent="scrollTo('faq')" class="hover:text-white transition-colors">FAQ</a></div>
+                        <div><a href="#" @click.prevent="scrollTo('download')" class="hover:text-white transition-colors flex items-center gap-1.5">
                             <svg class="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                             Download Software
                         </a></div>
@@ -5096,9 +5538,9 @@
                     <div class="space-y-4 text-sm text-gray-400">
                         <div x-show="!currentUser"><a href="#" @click.prevent="authTab='login'; authModal=true" class="hover:text-white transition-colors">Login</a></div>
                         <div x-show="!currentUser"><a href="#" @click.prevent="authTab='register'; authModal=true" class="hover:text-white transition-colors">Daftar Member</a></div>
-                        <div x-show="currentUser"><a href="#" @click.prevent="setPage('profile')" class="hover:text-white transition-colors">Profil Saya</a></div>
-                        <div x-show="currentUser"><a href="#" @click.prevent="setPage('profile'); profileTab='pesanan'; loadOrders()" class="hover:text-white transition-colors">Pesanan Saya</a></div>
-                        <div><a href="#" @click.prevent="setPage('status')" class="hover:text-white transition-colors">Cek Status Akun</a></div>
+                        <div x-show="currentUser"><a href="#" @click.prevent="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile()" class="hover:text-white transition-colors">Profil Saya</a></div>
+                        <div x-show="currentUser"><a href="#" @click.prevent="profileOverlay=true; profileTab='pesanan'; loadOrders(); document.body.style.overflow='hidden'" class="hover:text-white transition-colors">Pesanan Saya</a></div>
+                        <div><a href="#" @click.prevent="scrollTo('status')" class="hover:text-white transition-colors">Cek Status Akun</a></div>
                     </div>
                 </div>
 
@@ -5287,7 +5729,7 @@
 
 <!-- FAB Button: auto-hide di mobile, tempel ke dinding -->
 <div class="fixed md:bottom-8 right-0 md:right-8 z-[90] transition-all duration-500"
-     :class="[csHidden ? 'cs-peek' : '', activePage==='product-detail' ? 'bottom-40' : 'bottom-20']">
+     :class="[csHidden ? 'cs-peek' : '', productDetailOverlay ? 'bottom-40' : 'bottom-20']">
     <button @click="csHidden ? (csHidden=false) : (csPopup ? (csPopup=false, csHidden=true) : (csPopup=true))"
             :class="!csPopup && !csHidden ? 'cs-fab-float' : ''"
             class="cs-fab w-14 h-14 gradient-card rounded-full shadow-2xl flex items-center justify-center text-white transition-all duration-200 active:scale-90 active:shadow-md relative">
@@ -5346,7 +5788,7 @@
     <div x-show="cart.length===0" class="flex flex-col items-center justify-center gap-3 px-6 py-10 text-center">
         <svg class="w-10 h-10 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
         <div class="text-sm font-semibold text-gray-500">Keranjang masih kosong</div>
-        <button @click="cartOpen=false; setPage('catalog')" class="text-xs font-bold text-brand-500 hover:underline">Lihat Katalog →</button>
+        <button @click="cartOpen=false; scrollTo('catalog')" class="text-xs font-bold text-brand-500 hover:underline">Lihat Katalog →</button>
     </div>
 
     <!-- Items -->
@@ -5440,7 +5882,7 @@
                 <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             </div>
             <div class="font-bold text-gray-700 text-base mb-1">Keranjang masih kosong</div>
-            <button @click="cartOpen=false; setPage('catalog')" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm active:scale-95 transition-all">Lihat Katalog →</button>
+            <button @click="cartOpen=false; scrollTo('catalog')" class="gradient-card text-white font-bold px-6 py-2.5 rounded-xl text-sm active:scale-95 transition-all">Lihat Katalog →</button>
         </div>
 
         <div x-show="cart.length>0" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
@@ -5841,31 +6283,30 @@
 <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
     <div class="h-16 flex">
         <template x-for="item in navItems.filter(i => i.mobile)" :key="item.id">
-            <button @click="setPage(item.id)" :class="activePage===item.id?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
-                <div x-show="activePage===item.id" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
+            <button @click="scrollTo(item.scrollTarget || item.id)" :class="currentSection===(item.scrollTarget||item.id)?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
+                <div x-show="currentSection===(item.scrollTarget||item.id)" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
                 <div x-html="item.icon" class="w-5 h-5"></div>
                 <span class="text-[10px] font-semibold leading-none" x-text="item.label"></span>
             </button>
         </template>
         <!-- Admin tab — hanya muncul jika role=admin -->
         <template x-if="currentUser?.role?.toLowerCase()==='admin'">
-            <button @click="setPage('admin')" :class="activePage==='admin'?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
-                <div x-show="activePage==='admin'" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
+            <button @click="adminOverlay=true; document.body.style.overflow='hidden'; adminTab='flashsale'; adminInitTab('flashsale'); _adminPrefetch()" :class="adminOverlay?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
+                <div x-show="adminOverlay" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                 <span class="text-[10px] font-semibold leading-none">Admin</span>
             </button>
         </template>
         <!-- Akun tab — selalu tampil untuk semua user -->
-        <button @click="currentUser?setPage('profile'):openAuth('login')"
-            :class="activePage==='profile'?'text-brand-500':'text-gray-400'"
+        <button @click="currentUser ? (profileOverlay=true, document.body.style.overflow='hidden', loadProfile()) : openAuth('login')"
+            :class="profileOverlay?'text-brand-500':'text-gray-400'"
             class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
-            <div x-show="activePage==='profile'" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
+            <div x-show="profileOverlay" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             <span class="text-[10px] font-semibold leading-none">Akun</span>
         </button>
     </div>
 </nav>
-
 
 <!-- ══════════════════════════════════════════════════════
      PRODUCT DETAIL MODAL
@@ -6019,7 +6460,6 @@
     </div>
 </div>
 
-
 <!-- ══════════════════════════════════════════════════════
      AUTH MODAL (LOGIN / REGISTER)
 ══════════════════════════════════════════════════════ -->
@@ -6147,7 +6587,6 @@
     </div>
 </div>
 
-
 <!-- ══════════════════════════════════════════════════════
      RESET PASSWORD MODAL
 ══════════════════════════════════════════════════════ -->
@@ -6190,7 +6629,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- ══════════════════════════════════════════════════════
      FORGOT PASSWORD MODAL
@@ -6359,7 +6797,6 @@
         </div>
     </div>
 </div>
-
 
 <!-- ══════════════════════════════════════════════════════
      ORDER CONFIRM MODAL
@@ -6620,7 +7057,6 @@
     </div>
 </div>
 
-
 <!-- ══════════════════════════════════════════════════════
      ORDER SUCCESS MODAL
 ══════════════════════════════════════════════════════ -->
@@ -6681,7 +7117,7 @@
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
             Konfirmasi via WhatsApp
         </button>
-        <button @click="manualPayment=null; setPage('profile'); profileTab='pesanan'; loadOrders()" class="w-full text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors">
+        <button @click="manualPayment=null; profileOverlay=true; profileTab='pesanan'; loadOrders(); document.body.style.overflow='hidden'" class="w-full text-xs text-gray-400 hover:text-gray-600 font-medium transition-colors">
             Lihat Riwayat Pesanan →
         </button>
     </div>
@@ -6807,7 +7243,6 @@
 </div>
 
 <!-- Payment confirmed banner — ditampilkan inline di atas pesanan list, bukan modal popup -->
-
 
 <!-- ══════════════════════════════════════════════════════
      LEGAL MODAL (SYARAT & KETENTUAN / KEBIJAKAN PRIVASI)
@@ -7103,6 +7538,13 @@ function serabutStore() {
 
         // Pages
         activePage:   'home',
+        activeSection: 'hero',
+        currentSection: 'hero',
+        catalogInView: false,
+        profileOverlay: false,
+        adminOverlay: false,
+        productDetailOverlay: false,
+        reviews:       [],
         loading:      true,
         products:     [],
         searchQuery:  '',
@@ -7424,11 +7866,11 @@ function serabutStore() {
 
         // ── Static Data ──────────────────────────────
         navItems: [
-            { id:'home',    label:'Beranda',    mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
-            { id:'catalog', label:'Produk',     mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>` },
-            { id:'status',  label:'Cek Status', mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
-            { id:'panduan', label:'Panduan',    mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>` },
-            { id:'faq',     label:'FAQ',        mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
+            { id:'home',    label:'Home',    scrollTarget:'hero',    mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
+            { id:'catalog', label:'Products',     scrollTarget:'catalog', mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>` },
+            { id:'panduan', label:'Guide',    scrollTarget:'panduan', mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>` },
+            { id:'faq',     label:'FAQ',        scrollTarget:'faq',     mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
+            { id:'status',  label:'Status', scrollTarget:'status',  mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
         ],
         _categoryIconMap: {
             'Office 365':    `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
@@ -7444,10 +7886,10 @@ function serabutStore() {
             'Visio':         `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`,
         },
         benefits: [
-            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>`,title:'Original & Resmi',  desc:'Semua produk bergaransi keaslian dari vendor resmi'},
-            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,title:'Proses Kilat',      desc:'Aktivasi dalam hitungan menit setelah pembayaran'},
-            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>`,title:'Support 24/7',      desc:'Tim siap bantu via WhatsApp kapan saja'},
-            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>`,title:'Harga Terbaik',     desc:'Hemat hingga 70%'},
+            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>`,title:'100% Original',     desc:'Bukan crack, bukan KW — lisensi resmi langsung dari vendor'},
+            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>`,title:'Aktif dalam Menit',  desc:'Bayar sekarang, aktivasi langsung — gak perlu nunggu lama'},
+            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>`,title:'CS Siap Bantu',      desc:'Ada kendala? Chat WA kami, langsung direspon manusia'},
+            {icon:`<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/></svg>`,title:'Harga Hemat',        desc:'Lebih murah dari toko resmi, produknya tetap sama'},
         ],
         faqItems: [
             // Office 365
@@ -7528,6 +7970,25 @@ function serabutStore() {
         get ordersPaginated() {
             const s = (this.ordersCurrentPage - 1) * this.ordersPerPage;
             return this.ordersFiltered.slice(s, s + this.ordersPerPage);
+        },
+        get downloadGroups() {
+            const winLogo = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHBhdGggZmlsbD0iIzAwNzhENCIgZD0iTTIzIDNMMy41IDYuNSAzLjUgMjMgMjMgMjN6TTI1IDMgMjUgMjMgNDQuNSAyMyA0NC41IDYuNXpNMy41IDI1IDMuNSA0MS41IDIzIDQ1IDIzIDI1ek0yNSAyNSAyNSA0NSA0NC41IDQxLjUgNDQuNSAyNXoiLz48L3N2Zz4=`;
+            const offLogo = `https://static2.sharepointonline.com/files/fabric/assets/brand-icons/product/svg/office_48x1.svg`;
+            return [
+                { id: 'office', title: 'Microsoft 365', logo: offLogo, items: [
+                    { name: 'Office Setup (setup.office.com)', url: 'https://setup.office.com' },
+                    { name: 'Office Deployment Tool', url: 'https://www.microsoft.com/en-us/download/details.aspx?id=49117' },
+                ]},
+                { id: 'windows', title: 'Windows', logo: winLogo, items: [
+                    { name: 'Windows 10 Pro', url: 'https://www.microsoft.com/en-us/software-download/windows10ISO' },
+                    { name: 'Windows 11 Pro', url: 'https://www.microsoft.com/en-us/software-download/windows11' },
+                ]},
+                { id: 'server', title: 'Windows Server', logo: winLogo, items: [
+                    { name: 'Windows Server 2016', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2016' },
+                    { name: 'Windows Server 2019', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2019' },
+                    { name: 'Windows Server 2022', url: 'https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022' },
+                ]},
+            ];
         },
         get cartCount() { return this.cart.reduce((s,i) => s + (i.qty||1), 0); },
         get cartTotal() { return this.cart.reduce((s,i) => s + this.cartItemUnitPrice(i) * (i.qty||1), 0); },
@@ -7610,6 +8071,20 @@ function serabutStore() {
             setInterval(() => { this.now = Date.now(); }, 30000);
             this.initPageFromURL();
 
+            // Scroll spy untuk home sections
+            window.addEventListener('scroll', () => {
+                const sections = ['hero','kategori','populer','kenapa','status','panduan','faq','download','testimoni','cta'];
+                for (const id of sections) {
+                    const el = document.getElementById('sec-' + id);
+                    if (!el) continue;
+                    const rect = el.getBoundingClientRect();
+                    if (rect.top <= 100 && rect.bottom > 100) {
+                        this.activeSection = id;
+                        break;
+                    }
+                }
+            }, { passive: true });
+
             // Escape key — tutup modal aktif (prioritas dari atas ke bawah)
             document.addEventListener('keydown', (e) => {
                 if (e.key !== 'Escape') return;
@@ -7623,6 +8098,9 @@ function serabutStore() {
                 if (this.legalModal)      { this.legalModal    = null;  return; }
                 if (this.authModal)       { this.authModal     = false; return; }
                 if (this.csPopup)         { this.csPopup       = false; return; }
+                if (this.productDetailOverlay) { this.productDetailOverlay = false; document.body.style.overflow = ''; return; }
+                if (this.adminOverlay)    { this.adminOverlay  = false; document.body.style.overflow = ''; return; }
+                if (this.profileOverlay)  { this.profileOverlay = false; document.body.style.overflow = ''; return; }
             });
 
             // ── iPaymu return URL ──
@@ -7761,7 +8239,7 @@ function serabutStore() {
                 const targetId = this._pendingOrderHighlight;
                 this._pendingOrderHighlight = null;
                 if (this.currentUser) {
-                    this.setPage('profile');
+                    this.profileOverlay=true; document.body.style.overflow='hidden'; this.loadProfile();
                     this.profileTab = 'pesanan';
                     await this.loadOrders();
                     this.highlightedOrderId = targetId;
@@ -7783,6 +8261,7 @@ function serabutStore() {
                 const s = Math.floor((diff%60000)/1000);
                 this.flashSaleCountdown = [h,m,s].map(v=>String(v).padStart(2,'0')).join(':');
             }, 1000);
+            this.$nextTick(() => this.initScrollSpy());
         },
 
         // ── Refresh role dari GAS (sesi lama) ─────────
@@ -8093,7 +8572,7 @@ function serabutStore() {
             if (product) {
                 this.goToProductDetail(product);
             } else {
-                this.setPage('catalog');
+                this.scrollTo('catalog');
                 this.searchQuery = item.produk;
             }
         },
@@ -8131,12 +8610,13 @@ function serabutStore() {
             const slug = this.productSlug(product);
             history.pushState({ page: 'product-detail', slug }, '', '/produk/' + slug);
             this.activePage = 'product-detail';
+            this.productDetailOverlay = true;
+            document.body.style.overflow = 'hidden';
             this.pdTab = 'deskripsi';
             this.productReviews = [];
             this.reviewsShowAll = false;
             this._loadLikedReviews();
             this._loadProductReviews(product.nama);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         },
         openProductModal(product) {
             const variants = this.products.filter(p=>p.nama===product.nama);
@@ -8277,7 +8757,7 @@ function serabutStore() {
             this.otpResending=false;
         },
         logout() {
-            this.setPage('home');
+            this.scrollTo('hero');
             this.currentUser = null;
             localStorage.removeItem('serabutUser');
             localStorage.removeItem('srb_tok'); // [SEC-02] hapus token terpisah
@@ -8517,7 +8997,7 @@ function serabutStore() {
                 this.paymentConfirmed = { orderId, productName: '', pending: true };
             }
             if (this.currentUser) {
-                this.setPage('profile');
+                this.profileOverlay=true; document.body.style.overflow='hidden'; this.loadProfile();
                 this.profileTab = 'pesanan';
                 this.pendingOrderDetailId = orderId;
                 await this.loadOrders(true); // force reload setelah order baru
@@ -8529,7 +9009,7 @@ function serabutStore() {
             this.paymentConfirmed = null;
             this.productModal = false;
             this.renewalMode  = false;
-            this.setPage('profile');
+            this.profileOverlay=true; document.body.style.overflow='hidden'; this.loadProfile();
             this.profileTab = 'pesanan';
             if (this.currentUser && !this.orders.length) await this.loadOrders();
             const order = this.orders.find(o => o.orderId === orderId);
@@ -8712,14 +9192,14 @@ function serabutStore() {
         reorderProduct(order) {
             const product = this.products.find(p => p.nama === order.produk)
                 || this.products.find(p => order.produk?.startsWith(p.nama));
-            if (!product) { this.setPage('catalog'); this.searchQuery = order.produk; return; }
+            if (!product) { this.scrollTo('catalog'); this.searchQuery = order.produk; return; }
             this.renewalMode = false;
             this.openProductModal(product);
         },
         renewOrder(order) {
             const product = this.products.find(p => p.nama === order.produk)
                 || this.products.find(p => order.produk?.startsWith(p.nama));
-            if (!product) { this.setPage('catalog'); this.searchQuery = order.produk; return; }
+            if (!product) { this.scrollTo('catalog'); this.searchQuery = order.produk; return; }
             this.renewalMode = true;
             this.openProductModal(product);
         },
@@ -8897,7 +9377,35 @@ function serabutStore() {
             if (order?.status === 'Pending' && this.orderMsLeft(order) > 0) return 'Belum Dibayar';
             return order?.status || '';
         },
-        setPage(page) {
+        scrollToSection(id) {
+            this.scrollTo(id);
+        },
+        scrollTo(sectionId) {
+            if (sectionId === 'hero') { window.scrollTo({ top: 0, behavior: 'smooth' }); history.replaceState(null, '', '/'); return; }
+            const el = document.getElementById('sec-' + sectionId);
+            if (!el) return;
+            const offset = 68;
+            const top = el.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: 'smooth' });
+            history.replaceState(null, '', '#' + sectionId);
+        },
+        initScrollSpy() {
+            const sections = ['hero','kategori','populer','kenapa','status','panduan','faq','download','testimoni','cta'];
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                    if (e.isIntersecting) {
+                        this.currentSection = e.target.id.replace('sec-', '');
+                        this.catalogInView = e.target.id === 'sec-catalog';
+                    }
+                });
+            }, { threshold: 0.15, rootMargin: '-64px 0px 0px 0px' });
+            sections.forEach(id => {
+                const el = document.getElementById('sec-' + id);
+                if (el) obs.observe(el);
+            });
+        },
+
+        setPage(page, opts={}) {
             // Simpan scroll position & catalog state halaman sebelumnya
             if (!this._scrollPos) this._scrollPos = {};
             const prevPage = this.activePage;
@@ -8911,8 +9419,11 @@ function serabutStore() {
             history.pushState({ page }, '', routeMap[page] || '/');
 
             // Restore scroll: balik ke halaman yang sudah dikunjungi dari product-detail
-            const restoreScroll = (prevPage === 'product-detail') ? (this._scrollPos[page] || 0) : 0;
-            setTimeout(() => window.scrollTo({ top: restoreScroll, behavior: 'instant' }), 0);
+            // Jika ada pendingScroll (scroll ke section home), skip restore
+            if (!opts.scrollTo) {
+                const restoreScroll = (prevPage === 'product-detail') ? (this._scrollPos[page] || 0) : 0;
+                setTimeout(() => window.scrollTo({ top: restoreScroll, behavior: 'instant' }), 0);
+            }
 
             // Catalog: restore state jika balik dari product-detail, reset jika navigasi baru
             if (page === 'catalog') {
@@ -8928,12 +9439,17 @@ function serabutStore() {
                 this.searchQuery = '';
             }
             if(page!=='status')  this.statusResult=null;
-            if(page==='profile') { this.profileTab='diri'; this.editMode=false; this.loadProfile(); }
+            if(page==='profile') { this.profileTab = opts.tab || 'diri'; this.editMode=false; this.loadProfile(); }
             if(page==='admin')   { this.adminTab='flashsale'; this.adminInitTab('flashsale'); this._adminPrefetch(); }
+
+            // Scroll ke section tertentu setelah halaman home render
+            if (opts.scrollTo) {
+                setTimeout(() => this.scrollToSection(opts.scrollTo), 450);
+            }
         },
         initPageFromURL() {
-            const pathMap = { '/':'home', '/produk':'catalog', '/panduan':'panduan', '/faq':'faq', '/cek-status':'status', '/admin':'admin', '/akun':'profile' };
             const path = window.location.pathname;
+            const hash = window.location.hash.replace('#', '');
             const searchParams = new URLSearchParams(window.location.search);
             // Detect /pesanan/[orderId] — order detail page
             const pesananMatch = path.match(/^\/pesanan\/(.+)$/);
@@ -8949,15 +9465,29 @@ function serabutStore() {
             } else if (path.match(/^\/produk\/(.+)$/)) {
                 const produkMatch = path.match(/^\/produk\/(.+)$/);
                 this.pendingProductSlug = produkMatch[1];
-                this.activePage = 'catalog'; // will redirect after products load
+                this._pendingProductSlug = produkMatch[1];
                 history.replaceState({ page:'product-detail', slug:produkMatch[1] }, '', path);
+            } else if (hash) {
+                // Hash-based deep link (e.g. #panduan, #status)
+                setTimeout(() => this.scrollTo(hash), 500);
             } else {
-                const page = pathMap[path] || 'home';
-                this.activePage = page;
-                history.replaceState({ page }, '', path);
+                // Legacy path-based routing — map to scroll section
+                const pathScrollMap = { '/panduan': 'panduan', '/faq': 'faq', '/cek-status': 'status', '/download': 'download' };
+                const scrollTarget = pathScrollMap[path];
+                if (scrollTarget) {
+                    history.replaceState({}, '', '/');
+                    setTimeout(() => this.scrollTo(scrollTarget), 500);
+                } else if (path === '/akun') {
+                    history.replaceState({}, '', '/');
+                    this.$nextTick(() => { this.profileOverlay = true; document.body.style.overflow = 'hidden'; });
+                } else if (path === '/admin') {
+                    history.replaceState({}, '', '/');
+                    this.$nextTick(() => { this.adminOverlay = true; document.body.style.overflow = 'hidden'; this.adminTab='flashsale'; this.adminInitTab('flashsale'); this._adminPrefetch(); });
+                } else {
+                    history.replaceState({}, '', '/');
+                }
             }
             window.addEventListener('popstate', (e) => {
-                const prevPage = this.activePage;
                 const state = e.state;
                 if(state?.page === 'product-detail' && state?.slug) {
                     const slug = state.slug;
@@ -8966,24 +9496,16 @@ function serabutStore() {
                         const variants = this.products.filter(p => p.nama === product.nama);
                         this.selectedProductGroup = { nama:product.nama, category:product.category, variants };
                         this.selectedVariant = variants[0];
-                        this.activePage = 'product-detail';
+                        this.productDetailOverlay = true;
+                        document.body.style.overflow = 'hidden';
                     } else {
-                        this.activePage = 'catalog';
+                        this.productDetailOverlay = false;
+                        document.body.style.overflow = '';
                     }
                 } else {
-                    const p = state?.page || pathMap[window.location.pathname] || 'home';
-                    // Restore catalog state jika browser-back dari product-detail ke catalog
-                    if (p === 'catalog' && prevPage === 'product-detail' && this._catalogState) {
-                        this.searchQuery    = this._catalogState.searchQuery    || '';
-                        this.activeCategory = this._catalogState.activeCategory || 'Semua';
-                    }
-                    this.activePage = p;
+                    this.productDetailOverlay = false;
+                    document.body.style.overflow = '';
                 }
-                // Restore scroll position untuk halaman yang dituju
-                if (!this._scrollPos) this._scrollPos = {};
-                const targetPage = state?.page || pathMap[window.location.pathname] || 'home';
-                const savedScroll = (prevPage === 'product-detail') ? (this._scrollPos[targetPage] || 0) : 0;
-                setTimeout(() => window.scrollTo({ top: savedScroll, behavior: 'instant' }), 0);
             });
         },
 
@@ -9747,7 +10269,7 @@ function serabutStore() {
                 if(_st3) localStorage.setItem('srb_tok', _st3);
                 this.closeAuthModal();
                 this._greetUser(data.user, 'login');
-                if(data.user.role==='admin') this.setPage('admin');
+                if(data.user.role==='admin') { this.adminOverlay=true; document.body.style.overflow='hidden'; this.adminTab='flashsale'; this.adminInitTab('flashsale'); this._adminPrefetch(); }
             } else {
                 this.authError = data.error || 'Gagal login dengan Google.';
             }
@@ -11308,7 +11830,7 @@ function serabutStore() {
                 ? 'Office 365 Family'
                 : (daysLeft >= 0 && daysLeft <= 7 ? 'Renewal' : 'Office 365');
             this.searchQuery = keyword;
-            this.setPage('catalog');
+            this.scrollTo('catalog');
         },
     };
 }
