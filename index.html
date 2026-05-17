@@ -556,14 +556,14 @@
         <!-- Stats -->
         <div class="bg-white">
             <div class="max-w-6xl mx-auto px-4"><div class="grid grid-cols-3 divide-x divide-gray-100">
-                <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">40+</div><div class="text-[11px] text-gray-500">Produk</div></div>
+                <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500" x-text="products.length ? products.length + '+' : '...'"></div><div class="text-[11px] text-gray-500">Produk</div></div>
                 <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">10K+</div><div class="text-[11px] text-gray-500">Pelanggan</div></div>
                 <div class="text-center py-4"><div class="flex justify-center mb-0.5"><svg class="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><div class="text-[11px] text-gray-500">Proses Cepat</div></div>
             </div></div>
         </div>
         <!-- Categories -->
         <div id="sec-kategori" class="max-w-6xl mx-auto px-4 py-6 scroll-mt-20">
-            <h2 class="text-lg font-black text-gray-900 mb-3">Kategori Produk</h2>
+            <h2 class="text-xl font-black text-gray-900 mb-3">Kategori Produk</h2>
             <div class="grid grid-cols-5 md:grid-cols-10 gap-2">
                 <template x-for="cat in categories" :key="cat.name">
                     <button @click="scrollTo('catalog'); activeCategory=cat.name" class="bg-white rounded-2xl py-3 px-2 border border-gray-100 hover:border-brand-200 hover:bg-brand-50 active:scale-95 transition-all text-center group flex flex-col items-center gap-1.5">
@@ -577,7 +577,7 @@
         <!-- Featured Products -->
         <div id="sec-populer" class="max-w-6xl mx-auto px-4 pb-8 scroll-mt-20">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-lg md:text-xl font-black text-gray-900">Produk Populer</h2>
+                <h2 class="text-xl font-black text-gray-900">Produk Populer</h2>
                 <button @click="scrollTo('catalog')" class="text-brand-500 text-sm font-semibold hover:text-brand-700">Lihat Semua →</button>
             </div>
             <div x-show="loading" class="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -649,7 +649,7 @@
     <!-- ───────── CATALOG ───────── -->
     <section id="sec-catalog" class="scroll-mt-20">
         <div class="max-w-6xl mx-auto px-4 py-6">
-            <div class="mb-5"><h1 class="text-2xl font-black text-gray-900">Semua Produk</h1><p class="text-sm text-gray-500 mt-0.5" x-text="`${filteredProducts.length} produk tersedia`"></p></div>
+            <div class="mb-5"><h1 class="text-xl font-black text-gray-900">Semua Produk</h1><p class="text-sm text-gray-500 mt-0.5" x-text="`${filteredProducts.length} produk tersedia`"></p></div>
             <div class="relative mb-4">
                 <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
                 <input x-model="searchQuery" type="search" placeholder="Cari produk..." class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
@@ -786,9 +786,13 @@
                         </div>
                         <input x-model="statusQuery" @keyup.enter="checkStatus()" type="text" placeholder="Cari email, username, atau nama..." class="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                     </div>
-                    <button @click="checkStatus()" :disabled="statusChecking" class="bg-brand-600 text-white px-6 py-3.5 rounded-2xl font-semibold text-sm hover:bg-brand-700 transition-all active:scale-95 flex-none disabled:opacity-60 flex items-center gap-2">
-                        <svg x-show="statusChecking" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                        <span x-text="statusChecking ? 'Mencari...' : 'Cek'"></span>
+                    <button @click="checkStatus()" :disabled="statusChecking" class="bg-brand-600 text-white px-6 py-3.5 rounded-2xl font-semibold text-sm hover:bg-brand-700 transition-all active:scale-95 flex-none disabled:opacity-60 flex items-center justify-center gap-2 min-w-[64px]">
+                        <template x-if="statusChecking">
+                            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-30" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/><path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                        </template>
+                        <template x-if="!statusChecking">
+                            <span>Cek</span>
+                        </template>
                     </button>
                 </div>
                 <!-- Results — semua tampil -->
@@ -1021,7 +1025,7 @@
                     <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                     </div>
-                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Apa Kata Pelanggan Kami</h2>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Apa Kata Mereka</h2>
                     <p class="text-sm text-gray-500">Ribuan pelanggan udah buktiin sendiri</p>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
