@@ -802,20 +802,24 @@
                             <p class="text-xs text-gray-400 mb-3 text-center" x-text="statusResult.length + ' akun ditemukan'"></p>
                             <div class="flex flex-col gap-2">
                                 <template x-for="(r, idx) in statusResult" :key="idx">
-                                    <div class="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 hover:border-gray-200 bg-white hover:shadow-sm transition-all">
+                                    <div @click="statusSelected=r"
+                                         class="flex items-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white hover:shadow-md hover:border-brand-200 active:scale-[.99] transition-all cursor-pointer">
                                         <img :src="getProductLogo(r.productType==='adobe'?(r.productName||'Adobe'):(r.productType==='office365family'?'Office 365 Family':'Office 365'))"
                                              class="w-10 h-10 rounded-xl flex-none object-contain" alt="">
                                         <div class="flex-1 min-w-0">
                                             <div class="text-sm font-semibold text-gray-900 truncate" x-text="r.buyerName||r.emailPembeli||'—'"></div>
                                             <div class="text-xs text-gray-400 truncate mt-0.5"
                                                  x-text="r.productType==='adobe'?(r.productName||'Adobe Creative Cloud'):(r.productType==='office365family'?'Office 365 Family':'Office 365')"></div>
-                                            <div class="text-xs text-gray-400 mt-0.5" x-text="(r.officeAccount||r.adobeAccount||'')"></div>
+                                            <div class="text-xs text-gray-400 mt-0.5 truncate" x-text="(r.officeAccount||r.adobeAccount||'')"></div>
                                         </div>
-                                        <div class="text-right flex-none">
-                                            <span class="text-xs font-bold px-2.5 py-1 rounded-full block mb-1.5"
-                                                  :class="getDaysUntilExpiry(r.masaBerlaku) < 0 ? 'bg-red-100 text-red-600' : getDaysUntilExpiry(r.masaBerlaku) <= 7 ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-700'"
-                                                  x-text="getDaysUntilExpiry(r.masaBerlaku) < 0 ? 'Sudah Habis' : getDaysUntilExpiry(r.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Aktif'"></span>
-                                            <div class="text-xs text-gray-500 font-medium" x-text="formatMasaBerlaku(r.masaBerlaku)||'-'"></div>
+                                        <div class="flex items-center gap-2 flex-none">
+                                            <div class="text-right">
+                                                <span class="text-xs font-bold px-2.5 py-1 rounded-lg block mb-1"
+                                                      :class="getDaysUntilExpiry(r.masaBerlaku) < 0 ? 'bg-red-50 text-red-700' : getDaysUntilExpiry(r.masaBerlaku) <= 7 ? 'bg-orange-50 text-orange-700' : 'bg-emerald-50 text-emerald-700'"
+                                                      x-text="getDaysUntilExpiry(r.masaBerlaku) < 0 ? 'Sudah Habis' : getDaysUntilExpiry(r.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Aktif'"></span>
+                                                <div class="text-xs text-gray-500 font-medium" x-text="formatMasaBerlaku(r.masaBerlaku)||'-'"></div>
+                                            </div>
+                                            <svg class="w-4 h-4 text-gray-300 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                         </div>
                                     </div>
                                 </template>
@@ -7533,7 +7537,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260517-1',
+        APP_VERSION:      '20260517-2',
 
         // PWA Install
         pwaPopup:            false,
@@ -7734,6 +7738,7 @@ function serabutStore() {
         statusChecking:   false,
         statusResult:     null,
         statusSelected:   null,
+        statusCache:      {},
 
         // Flash Sale
         flashSale: {
@@ -9141,14 +9146,18 @@ function serabutStore() {
 
         // ── Status Check ──────────────────────────────
         async checkStatus() {
-            const q = this.statusQuery.trim();
+            const q = this.statusQuery.trim().toLowerCase();
             if(q.length < 4) { this.statusResult = null; return; }
+            const cached = this.statusCache[q];
+            if(cached && Date.now() - cached.ts < 300000) { this.statusResult = cached.data; return; }
             this.statusChecking=true; this.statusResult=null;
             try {
                 const params = new URLSearchParams({ action:'smartSearch', query:q });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
                 const data = await res.json();
-                this.statusResult = data.data||[];
+                const result = data.data||[];
+                this.statusCache[q] = { data: result, ts: Date.now() };
+                this.statusResult = result;
             } catch { this.statusResult=[]; }
             this.statusChecking=false;
         },
