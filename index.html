@@ -553,14 +553,6 @@
             </div>
         </div>
 
-        <!-- Stats -->
-        <div class="bg-white">
-            <div class="max-w-6xl mx-auto px-4"><div class="grid grid-cols-3 divide-x divide-gray-100">
-                <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500" x-text="products.length ? products.length + '+' : '...'"></div><div class="text-[11px] text-gray-500">Produk</div></div>
-                <div class="text-center py-4"><div class="text-xl md:text-2xl font-black text-brand-500">10K+</div><div class="text-[11px] text-gray-500">Pelanggan</div></div>
-                <div class="text-center py-4"><div class="flex justify-center mb-0.5"><svg class="w-6 h-6 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><div class="text-[11px] text-gray-500">Proses Cepat</div></div>
-            </div></div>
-        </div>
         <!-- Categories -->
         <div id="sec-kategori" class="max-w-6xl mx-auto px-4 py-6 scroll-mt-20">
             <h2 class="text-xl font-black text-gray-900 mb-3">Kategori Produk</h2>
@@ -1067,10 +1059,11 @@
                         </template>
                     </template>
                 </div>
-                <!-- Stats bar -->
-                <div class="mt-10 grid grid-cols-3 gap-4 text-center">
-                    <div><div class="text-2xl md:text-3xl font-black text-brand-600">10K+</div><div class="text-xs text-gray-500 mt-1">Transaksi Sukses</div></div>
-                    <div><div class="text-2xl md:text-3xl font-black text-brand-600">4.9&#9733;</div><div class="text-xs text-gray-500 mt-1">Rating Rata-rata</div></div>
+                <!-- Stats bar — merged -->
+                <div class="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4 text-center border-t border-gray-100 pt-8">
+                    <div><div class="text-2xl md:text-3xl font-black text-brand-600" x-text="products.length ? products.length + '+' : '37+'"></div><div class="text-xs text-gray-500 mt-1">Produk Tersedia</div></div>
+                    <div><div class="text-2xl md:text-3xl font-black text-brand-600">10K+</div><div class="text-xs text-gray-500 mt-1">Pelanggan Puas</div></div>
+                    <div><div class="text-2xl md:text-3xl font-black text-brand-600">4.9★</div><div class="text-xs text-gray-500 mt-1">Rating Rata-rata</div></div>
                     <div><div class="text-2xl md:text-3xl font-black text-brand-600">&lt;5 mnt</div><div class="text-xs text-gray-500 mt-1">Rata-rata Aktivasi</div></div>
                 </div>
             </div>
