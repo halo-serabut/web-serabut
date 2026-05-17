@@ -164,6 +164,17 @@
         .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(220,38,38,.12); }
         .card-hover:active { transform: translateY(-1px); }
         .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), .75rem); }
+
+        /* Apple-style smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        * { scroll-behavior: smooth; }
+        /* Momentum scrolling for overflow containers */
+        .overflow-y-auto, .overflow-x-auto, [class*="overflow"] {
+            -webkit-overflow-scrolling: touch;
+        }
         @supports (-webkit-touch-callout: none) {
             input, select, textarea { font-size: 16px !important; }
         }
