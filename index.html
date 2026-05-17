@@ -616,7 +616,7 @@
             <div class="mb-5"><h1 class="text-xl font-black text-gray-900">Semua Produk</h1><p class="text-sm text-gray-500 mt-0.5" x-text="`${filteredProducts.length} produk tersedia`"></p></div>
             <div class="relative mb-4">
                 <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
-                <input x-model="searchQuery" type="search" placeholder="Cari produk..." class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
+                <input x-model="searchQuery" type="search" placeholder="Cari produk..." class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
             </div>
             <!-- Mobile: horizontal pills -->
             <div class="flex gap-2 overflow-x-auto pb-3 mb-5 no-scrollbar md:hidden">
@@ -748,7 +748,7 @@
                         <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                         </div>
-                        <input x-model="statusQuery" @keyup.enter="checkStatus()" type="text" placeholder="Cari email, username, atau nama..." class="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
+                        <input x-model="statusQuery" @keyup.enter="checkStatus()" type="text" placeholder="Cari email, username, atau nama..." class="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all">
                     </div>
                     <button @click="checkStatus()" :disabled="statusChecking" class="bg-brand-600 text-white px-6 py-3.5 rounded-2xl font-semibold text-sm hover:bg-brand-700 transition-all active:scale-95 flex-none disabled:opacity-60 flex items-center justify-center gap-2 min-w-[64px]">
                         <template x-if="statusChecking">
@@ -3745,8 +3745,8 @@
                     </div>
 
                     <!-- Add / Edit Form -->
-                    <div x-show="adminFlashEditIdx !== -1" class="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3 mb-4">
-                        <h4 class="font-bold text-sm text-blue-700" x-text="adminFlashEditIdx===-2?'+ Tambah Produk Baru':'✎ Edit Produk'"></h4>
+                    <div x-show="adminFlashEditIdx !== -1" class="bg-brand-50 border border-brand-200 rounded-xl p-4 space-y-3 mb-4">
+                        <h4 class="font-bold text-sm text-brand-700" x-text="adminFlashEditIdx===-2?'+ Tambah Produk Baru':'✎ Edit Produk'"></h4>
                         <div>
                             <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 block">Cari Produk</label>
                             <div class="relative" x-show="!adminFlashFormItem.produk">
@@ -8719,7 +8719,7 @@ function serabutStore() {
             this.csEscalate    = false;
             this.cart          = [];
             this.editMode      = false;
-            localStorage.removeItem('srb_cart');
+            localStorage.removeItem('serabutCart');
         },
 
         // ── Order ─────────────────────────────────────
@@ -8810,12 +8810,16 @@ function serabutStore() {
             this.saveCart();
         },
         saveCart() {
-            try { localStorage.setItem('serabutCart', JSON.stringify(this.cart)); } catch {}
+            try { localStorage.setItem('serabutCart', JSON.stringify({ items: this.cart, savedAt: Date.now() })); } catch {}
         },
         loadCart() {
             try {
                 const raw = localStorage.getItem('serabutCart');
-                if (raw) this.cart = JSON.parse(raw);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                // expire cart setelah 24 jam
+                if (parsed.savedAt && Date.now() - parsed.savedAt > 86400000) { localStorage.removeItem('serabutCart'); return; }
+                this.cart = parsed.items || parsed; // backward compat array lama
             } catch {}
         },
         showCartToast(msg) {
@@ -9010,6 +9014,7 @@ function serabutStore() {
             if(!this.isMember && !this.orderExtra.guestWa.trim())    { this.orderExtraError='No. WhatsApp wajib diisi'; return; }
             if(type==='web'     && !this.orderExtra.nama.trim())           { this.orderExtraError='Request Nama untuk akun Microsoft wajib diisi'; return; }
             if(type==='web'     && !this.orderExtra.username.trim())       { this.orderExtraError='Request Username Microsoft wajib diisi'; return; }
+            if(type==='web'     && !this.orderExtra.emailSameAsProfile && !this.orderExtra.emailAktif.trim()) { this.orderExtraError='Email penerima akun wajib diisi'; return; }
             if(type==='family'  && !this.orderExtra.microsoftEmail.trim()) { this.orderExtraError='Email Microsoft wajib diisi'; return; }
             if(type==='renewal' && !this.orderExtra.microsoftEmail.trim()) { this.orderExtraError='Email akun Microsoft wajib diisi'; return; }
             if(type==='adobe'   && !this.orderExtra.adobeEmail.trim())     { this.orderExtraError='Email akun Adobe wajib diisi'; return; }
@@ -11675,10 +11680,10 @@ function serabutStore() {
 
         getStatusIcon(s)    { return {Aktif:'✅',Expired:'⏰',Suspended:'🚫',Pending:'⏳'}[s]||'❓'; },
         getStatusBg(s)      { return {Aktif:'bg-emerald-100',Expired:'bg-orange-100',Suspended:'bg-red-100',Pending:'bg-yellow-100'}[s]||'bg-gray-100'; },
-        getStatusBadge(s)   { return {Aktif:'bg-emerald-100 text-emerald-700',Selesai:'bg-blue-100 text-blue-700',Expired:'bg-orange-100 text-orange-700',Suspended:'bg-red-100 text-red-700',Dibatalkan:'bg-red-100 text-red-600',Pending:'bg-yellow-100 text-yellow-700',Diproses:'bg-indigo-100 text-indigo-700'}[s]||'bg-gray-100 text-gray-600'; },
-        _orderCardBorder(s) { return {Pending:'border-amber-300',Diproses:'border-indigo-300',Aktif:'border-emerald-300',Selesai:'border-blue-300',Dibatalkan:'border-red-200'}[s]||'border-gray-100'; },
-        _orderCardHeader(s) { return {Pending:'bg-amber-50 border-amber-200',Diproses:'bg-indigo-50 border-indigo-200',Aktif:'bg-emerald-50 border-emerald-200',Selesai:'bg-blue-50 border-blue-200',Dibatalkan:'bg-red-50 border-red-100'}[s]||'bg-gray-50 border-gray-100'; },
-        _orderCardFooter(s) { return {Pending:'bg-amber-50/50',Diproses:'bg-indigo-50/50',Aktif:'bg-emerald-50/50',Selesai:'bg-blue-50/50',Dibatalkan:'bg-red-50/50'}[s]||'bg-gray-50/50'; },
+        getStatusBadge(s)   { return {Aktif:'bg-emerald-100 text-emerald-700',Selesai:'bg-gray-100 text-gray-600',Expired:'bg-orange-100 text-orange-700',Suspended:'bg-red-100 text-red-700',Dibatalkan:'bg-red-100 text-red-600',Pending:'bg-yellow-100 text-yellow-700',Diproses:'bg-indigo-100 text-indigo-700'}[s]||'bg-gray-100 text-gray-600'; },
+        _orderCardBorder(s) { return {Pending:'border-amber-300',Diproses:'border-indigo-300',Aktif:'border-emerald-300',Selesai:'border-gray-300',Dibatalkan:'border-red-200'}[s]||'border-gray-100'; },
+        _orderCardHeader(s) { return {Pending:'bg-amber-50 border-amber-200',Diproses:'bg-indigo-50 border-indigo-200',Aktif:'bg-emerald-50 border-emerald-200',Selesai:'bg-gray-50 border-gray-200',Dibatalkan:'bg-red-50 border-red-100'}[s]||'bg-gray-50 border-gray-100'; },
+        _orderCardFooter(s) { return {Pending:'bg-amber-50/50',Diproses:'bg-indigo-50/50',Aktif:'bg-emerald-50/50',Selesai:'bg-gray-50/50',Dibatalkan:'bg-red-50/50'}[s]||'bg-gray-50/50'; },
         _isVal(v) { return v && String(v).trim() !== '' && String(v).trim() !== '-'; },
         _adminOrderHasDetails(item) {
             return this._isVal(item.emailAktif) || this._isVal(item.microsoftEmail) ||
