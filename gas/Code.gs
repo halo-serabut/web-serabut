@@ -121,6 +121,7 @@ function doPost(e) {
       case 'confirmPayment':          result = confirmPayment(params); break;
       case 'checkIPaymuOrderStatus':  result = checkIPaymuOrderStatus(params); break;
       case 'cancelOrder':             result = cancelOrder(params); break;
+      case 'requestDeleteAccount':    result = requestDeleteAccount(params); break;
       // CS
       case 'csChat':            result = handleCSChat(params); break;
       // Admin
@@ -4678,4 +4679,35 @@ function saveQuotation({ adminEmail, adminToken, quoId, nama, email, noHP, total
   sheet.appendRow([quoId, new Date(), nama||'', email||'', noHP||'', Number(total||0), Number(itemCount||0), status||'draft', formDataJson||'']);
   SpreadsheetApp.flush();
   return { success: true, action: 'inserted' };
+}
+
+// ── Permintaan Hapus Data ──────────────────────────────────────────────────
+function requestDeleteAccount({ email, nama }) {
+  if (!email) return { success: false, error: 'Email diperlukan' };
+
+  const waktu  = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'dd MMM yyyy HH:mm z');
+  const subject = `[HAPUS DATA] Permintaan dari ${nama || email}`;
+  const body    = `Permintaan Penghapusan Data Pengguna\n\n` +
+                  `Nama    : ${nama || '—'}\n` +
+                  `Email   : ${email}\n` +
+                  `Waktu   : ${waktu}\n\n` +
+                  `Silakan proses penghapusan data dalam 30 hari kerja sesuai Kebijakan Privasi.\n` +
+                  `Data transaksi tetap disimpan sesuai ketentuan perpajakan (5 tahun).`;
+
+  GmailApp.sendEmail('halo@serabut.id', subject, body, {
+    replyTo: email,
+    name:    'Sistem Serabut Store',
+  });
+
+  // Konfirmasi ke user
+  GmailApp.sendEmail(email, 'Permintaan Hapus Data Diterima — Serabut Store',
+    `Halo ${nama || 'Pelanggan'},\n\n` +
+    `Kami telah menerima permintaan penghapusan data akun Anda pada ${waktu}.\n\n` +
+    `Tim kami akan memproses dalam 30 hari kerja. Data transaksi tetap disimpan sesuai ketentuan perpajakan.\n\n` +
+    `Jika ini bukan permintaan Anda, segera hubungi kami di halo@serabut.id\n\n` +
+    `Serabut Store\nhttps://serabut.id`, {
+    name: 'Serabut Store',
+  });
+
+  return { success: true };
 }
