@@ -288,9 +288,10 @@
         .pay-cats{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:4px}
         .pay-cat{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#6B7280;background:#F9FAFB;border:1px solid #F3F4F6;border-radius:999px;padding:5px 14px;white-space:nowrap}
         @media(max-width:767px){
-          .pay-grid{grid-template-columns:repeat(3,1fr);gap:8px}
-          .pay-logo-box{width:64px;height:28px}
-          .pay-logo{max-width:64px;max-height:28px}
+          .pay-grid{grid-template-columns:repeat(4,1fr);gap:6px}
+          .pay-card{border-radius:10px;padding:6px}
+          .pay-logo-box{width:52px;height:22px}
+          .pay-logo{max-width:52px;max-height:22px}
         }
     </style>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.8/dist/lottie-player.js" defer></script>
@@ -1075,18 +1076,18 @@
 
         <!-- Why Us -->
         <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
-        <div id="sec-kenapa" class="bg-slate-800 py-10 scroll-mt-20">
+        <div id="sec-kenapa" class="bg-violet-50 py-10 scroll-mt-20">
             <div class="max-w-6xl mx-auto px-4">
                 <div class="text-center mb-8">
-                    <div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                     </div>
-                    <h2 class="text-xl md:text-2xl font-black text-white">Kenapa Serabut Store?</h2>
-                    <p class="text-sm text-slate-300 mt-2">Bukan sekadar toko, ini alasan kenapa 10K+ orang percaya kami</p>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900">Kenapa Serabut Store?</h2>
+                    <p class="text-sm text-gray-500 mt-2">Bukan sekadar toko, ini alasan kenapa 10K+ orang percaya kami</p>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                     <template x-for="b in benefits" :key="b.title">
-                        <div class="text-center"><div class="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-3 text-white" x-html="b.icon"></div><div class="font-bold text-white text-sm mb-1" x-text="b.title"></div><div class="text-xs text-slate-400 leading-relaxed" x-text="b.desc"></div></div>
+                        <div class="text-center"><div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-brand-500" x-html="b.icon"></div><div class="font-bold text-gray-800 text-sm mb-1" x-text="b.title"></div><div class="text-xs text-gray-500 leading-relaxed" x-text="b.desc"></div></div>
                     </template>
                 </div>
             </div>
