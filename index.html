@@ -366,8 +366,8 @@
             <template x-if="currentUser">
                 <div class="flex items-center gap-2">
                     <button @click="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile()" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                        <div class="w-8 h-8 gradient-card rounded-lg flex items-center justify-center text-white font-black text-sm" x-text="currentUser.nama[0].toUpperCase()"></div>
-                        <span class="text-sm font-semibold text-gray-700" x-text="currentUser.nama.split(' ')[0]"></span>
+                        <div class="w-8 h-8 gradient-card rounded-lg flex items-center justify-center text-white font-black text-sm" x-text="(currentUser?.nama||'U')[0].toUpperCase()"></div>
+                        <span class="text-sm font-semibold text-gray-700" x-text="(currentUser?.nama||'').split(' ')[0]||'User'"></span>
                     </button>
                     <button @click="logoutConfirm=true" class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1">Logout</button>
                 </div>
@@ -399,7 +399,7 @@
             </button>
             <template x-if="currentUser">
                 <button @click="profileOverlay=true; document.body.style.overflow='hidden'; loadProfile()" class="flex items-center gap-1.5">
-                    <div class="w-7 h-7 gradient-card rounded-lg flex items-center justify-center text-white font-black text-xs" x-text="currentUser.nama[0].toUpperCase()"></div>
+                    <div class="w-7 h-7 gradient-card rounded-lg flex items-center justify-center text-white font-black text-xs" x-text="(currentUser?.nama||'U')[0].toUpperCase()"></div>
                 </button>
             </template>
             <template x-if="!currentUser">
@@ -4838,8 +4838,8 @@
                             <div class="flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50 transition-all cursor-pointer"
                                  @click="quoOpenDraft(q)">
                                 <!-- Icon -->
-                                <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <div class="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 </div>
                                 <!-- Info -->
                                 <div class="flex-1 min-w-0">
@@ -5086,7 +5086,7 @@
                             <!-- Email -->
                             <button @click="quoSendEmail()"
                                     :disabled="!quoForm.nama || quoForm.items.length===0 || quoEmailSending"
-                                    class="py-2.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5">
+                                    class="py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-30 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5">
                                 <svg x-show="quoEmailSending" class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                                 <svg x-show="!quoEmailSending" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                                 <span x-text="quoEmailSending ? '...' : 'Email'"></span>
@@ -6090,7 +6090,7 @@
                         <!-- Member -->
                         <template x-if="isMember">
                             <div class="flex items-center gap-3 bg-white rounded-2xl p-3.5 border border-gray-100">
-                                <div class="w-10 h-10 gradient-card rounded-xl flex items-center justify-center text-white font-black text-base flex-none" x-text="currentUser.nama[0].toUpperCase()"></div>
+                                <div class="w-10 h-10 gradient-card rounded-xl flex items-center justify-center text-white font-black text-base flex-none" x-text="(currentUser?.nama||'U')[0].toUpperCase()"></div>
                                 <div>
                                     <div class="font-bold text-gray-800 text-sm" x-text="currentUser.nama"></div>
                                     <div class="text-xs text-gray-400" x-text="currentUser.email"></div>
@@ -8200,7 +8200,9 @@ function serabutStore() {
             await Promise.all([this.fetchProducts(), this.loadSiteSettings()]);
             setInterval(() => {
                 if(!this.flashSale.aktif) return;
-                const diff = new Date(this.flashSale.deadline) - new Date();
+                const _dl = new Date(this.flashSale.deadline);
+                if(isNaN(_dl.getTime())) return;
+                const diff = _dl - new Date();
                 if(diff <= 0) { this.flashSaleCountdown = '00:00:00'; this.flashSale.aktif = false; return; }
                 const h = Math.floor(diff/3600000);
                 const m = Math.floor((diff%3600000)/60000);
@@ -8715,6 +8717,9 @@ function serabutStore() {
             this.csMessages    = [];
             this.csSessionId   = null;
             this.csEscalate    = false;
+            this.cart          = [];
+            this.editMode      = false;
+            localStorage.removeItem('srb_cart');
         },
 
         // ── Order ─────────────────────────────────────
