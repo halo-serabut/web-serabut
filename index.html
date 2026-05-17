@@ -676,7 +676,7 @@
                                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full block mb-1"
                                                   :class="getDaysUntilExpiry(r.masaBerlaku) < 0 ? 'bg-red-100 text-red-600' : getDaysUntilExpiry(r.masaBerlaku) <= 7 ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-700'"
                                                   x-text="getDaysUntilExpiry(r.masaBerlaku) < 0 ? 'Sudah Habis' : getDaysUntilExpiry(r.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Aktif'"></span>
-                                            <div class="text-[10px] text-gray-400" x-text="r.masaBerlaku||'-'"></div>
+                                            <div class="text-[10px] text-gray-400" x-text="formatMasaBerlaku(r.masaBerlaku)||'-'"></div>
                                         </div>
                                     </div>
                                 </template>
