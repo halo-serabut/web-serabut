@@ -1942,7 +1942,7 @@
          x-transition:leave="transition duration-150"
          x-transition:leave-start="opacity-100 translate-x-0"
          x-transition:leave-end="opacity-0 translate-x-4"
-         class="fixed inset-0 z-[300] bg-white overflow-y-auto" x-cloak>
+         class="fixed inset-0 z-[300] bg-white overflow-y-auto pb-20 md:pb-0" x-cloak>
         <div class="sticky top-0 bg-white border-b border-gray-100 px-4 h-14 flex items-center gap-3 z-10">
             <button @click="profileOverlay=false; document.body.style.overflow=''" class="p-2 rounded-lg hover:bg-gray-100">
                 <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -3414,7 +3414,7 @@
          x-transition:leave="transition duration-150"
          x-transition:leave-start="opacity-100 translate-x-0"
          x-transition:leave-end="opacity-0 translate-x-4"
-         class="fixed inset-0 z-[300] bg-white overflow-y-auto" x-cloak>
+         class="fixed inset-0 z-[300] bg-white overflow-y-auto pb-20 md:pb-0" x-cloak>
         <div class="sticky top-0 bg-white border-b border-gray-100 px-4 h-14 flex items-center gap-3 z-10">
             <button @click="adminOverlay=false; document.body.style.overflow=''" class="p-2 rounded-lg hover:bg-gray-100">
                 <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -6222,7 +6222,7 @@
     <span class="text-sm font-semibold leading-snug" x-text="globalToast.msg"></span>
 </div>
 
-<nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-[350] bg-white border-t border-gray-100 pb-safe">
     <div class="h-16 flex">
         <template x-for="item in navItems.filter(i => i.mobile)" :key="item.id">
             <button @click="scrollTo(item.scrollTarget || item.id)" :class="currentSection===(item.scrollTarget||item.id)?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
