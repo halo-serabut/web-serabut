@@ -9368,15 +9368,22 @@ function serabutStore() {
             history.replaceState(null, '', '#' + sectionId);
         },
         initScrollSpy() {
-            const sections = ['hero','kategori','populer','kenapa','status','panduan','faq','download','testimoni','cta'];
+            const sections = ['hero','kategori','populer','catalog','status','panduan','faq','download','testimoni','kenapa','cta'];
+            const visible = new Set();
             const obs = new IntersectionObserver((entries) => {
                 entries.forEach(e => {
-                    if (e.isIntersecting) {
-                        this.currentSection = e.target.id.replace('sec-', '');
-                        this.catalogInView = e.target.id === 'sec-catalog';
-                    }
+                    if (e.isIntersecting) visible.add(e.target.id);
+                    else visible.delete(e.target.id);
                 });
-            }, { threshold: 0.15, rootMargin: '-64px 0px 0px 0px' });
+                // Pick topmost visible section
+                for (const id of sections) {
+                    if (visible.has('sec-' + id)) {
+                        this.currentSection = id;
+                        this.catalogInView = id === 'catalog';
+                        break;
+                    }
+                }
+            }, { threshold: 0.2, rootMargin: '-64px 0px -30% 0px' });
             sections.forEach(id => {
                 const el = document.getElementById('sec-' + id);
                 if (el) obs.observe(el);
