@@ -321,7 +321,7 @@
 
         <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1">
             <template x-for="item in navItems.filter(i => i.desktop !== false)" :key="item.id">
-                <button @click="item.id==='home' ? (activePage==='home' ? scrollToSection('hero') : setPage('home')) : (activePage==='home' && ['status','panduan','faq','download'].includes(item.id) ? scrollToSection(item.id) : setPage(item.id))" :class="activePage===item.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" x-text="item.label"></button>
+                <button @click="item.id==='home' ? (activePage==='home' ? scrollToSection('hero') : setPage('home')) : (['panduan','faq','status','download'].includes(item.id) ? setPage('home', {scrollTo: item.id}) : setPage(item.id))" :class="['panduan','faq','status','download'].includes(item.id) ? (activePage==='home'?'text-gray-500 hover:text-gray-800':'text-gray-500 hover:text-gray-800') : (activePage===item.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800')" class="px-4 py-2 rounded-lg text-sm font-medium transition-all" x-text="item.label"></button>
             </template>
             <template x-if="currentUser?.role?.toLowerCase()==='admin'">
                 <button @click="setPage('admin')" :class="activePage==='admin'?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5">
