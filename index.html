@@ -371,13 +371,13 @@
                         <div class="w-8 h-8 gradient-card rounded-lg flex items-center justify-center text-white font-black text-sm" x-text="currentUser.nama[0].toUpperCase()"></div>
                         <span class="text-sm font-semibold text-gray-700" x-text="currentUser.nama.split(' ')[0]"></span>
                     </button>
-                    <button @click="logoutConfirm=true" class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1">Keluar</button>
+                    <button @click="logoutConfirm=true" class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1">Logout</button>
                 </div>
             </template>
             <template x-if="!currentUser">
                 <div class="flex items-center gap-2">
-                    <button @click="openAuth('login')" class="text-sm font-semibold text-gray-600 hover:text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all">Masuk</button>
-                    <button @click="openAuth('register')" class="gradient-card text-white text-sm font-bold px-4 py-2 rounded-xl shadow-sm hover:shadow transition-all">Daftar</button>
+                    <button @click="openAuth('login')" class="text-sm font-semibold text-gray-600 hover:text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all">Login</button>
+                    <button @click="openAuth('register')" class="gradient-card text-white text-sm font-bold px-4 py-2 rounded-xl shadow-sm hover:shadow transition-all">Register</button>
                 </div>
             </template>
         </div>
@@ -405,7 +405,7 @@
                 </button>
             </template>
             <template x-if="!currentUser">
-                <button @click="openAuth('login')" class="text-xs font-bold text-brand-500 bg-brand-50 px-3 py-1.5 rounded-full">Masuk</button>
+                <button @click="openAuth('login')" class="text-xs font-bold text-brand-500 bg-brand-50 px-3 py-1.5 rounded-full">Login</button>
             </template>
         </div>
     </div>
@@ -1096,16 +1096,16 @@
                         <img src="https://upload.wikimedia.org/wikipedia/commons/5/5c/Bank_Central_Asia.svg" alt="BCA" class="h-6 object-contain">
                     </div>
                     <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
-                        <img src="https://upload.wikimedia.org/wikipedia/id/a/ad/Bank_Mandiri_logo_2016.svg" alt="Mandiri" class="h-6 object-contain">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/a/ad/Bank_Mandiri_logo_2016.svg" alt="Mandiri" class="h-6 object-contain">
                     </div>
                     <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
-                        <img src="https://upload.wikimedia.org/wikipedia/id/thumb/5/5e/BNI_logo.svg/1200px-BNI_logo.svg.png" alt="BNI" class="h-6 object-contain">
+                        <img src="https://upload.wikimedia.org/wikipedia/id/5/5e/BNI_logo.svg" alt="BNI" class="h-6 object-contain">
                     </div>
                     <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/6/68/BANK_BRI_logo.svg" alt="BRI" class="h-6 object-contain">
                     </div>
                     <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
-                        <img src="https://upload.wikimedia.org/wikipedia/id/thumb/3/30/Permata_Bank_logo.svg/1200px-Permata_Bank_logo.svg.png" alt="Permata" class="h-5 object-contain">
+                        <img src="https://upload.wikimedia.org/wikipedia/id/3/30/Permata_Bank_logo.svg" alt="Permata" class="h-5 object-contain">
                     </div>
                     <!-- QRIS -->
                     <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
@@ -1119,17 +1119,17 @@
                         <img src="https://upload.wikimedia.org/wikipedia/commons/7/72/Logo_dana_blue.svg" alt="DANA" class="h-6 object-contain">
                     </div>
                     <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Gopay_logo.svg/1200px-Gopay_logo.svg.png" alt="GoPay" class="h-6 object-contain">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Gopay_logo.svg" alt="GoPay" class="h-6 object-contain">
                     </div>
                     <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Shopee_Pay_Logo.svg/1200px-Shopee_Pay_Logo.svg.png" alt="ShopeePay" class="h-6 object-contain">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/cd/Shopee_Pay_Logo.svg" alt="ShopeePay" class="h-6 object-contain">
                     </div>
                     <!-- Retail -->
                     <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Alfamart_logo.svg/1200px-Alfamart_logo.svg.png" alt="Alfamart" class="h-5 object-contain">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Alfamart_logo.svg" alt="Alfamart" class="h-5 object-contain">
                     </div>
                     <div class="bg-white border border-gray-100 rounded-2xl p-3 flex items-center justify-center shadow-sm hover:shadow-md transition-all h-14">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Indomaret_logo.svg/1200px-Indomaret_logo.svg.png" alt="Indomaret" class="h-5 object-contain">
+                        <img src="https://upload.wikimedia.org/wikipedia/id/d/d3/Indomaret_logo.svg" alt="Indomaret" class="h-5 object-contain">
                     </div>
                 </div>
 
