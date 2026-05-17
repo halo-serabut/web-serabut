@@ -554,7 +554,8 @@
         </div>
 
         <!-- Categories -->
-        <div id="sec-kategori" class="max-w-6xl mx-auto px-4 py-6 scroll-mt-20">
+        <div id="sec-kategori" class="bg-white py-8 scroll-mt-20">
+          <div class="max-w-6xl mx-auto px-4">
             <h2 class="text-xl font-black text-gray-900 mb-3">Kategori Produk</h2>
             <div class="grid grid-cols-5 md:grid-cols-10 gap-2">
                 <template x-for="cat in categories" :key="cat.name">
@@ -564,10 +565,12 @@
                     </button>
                 </template>
             </div>
+          </div>
         </div>
 
         <!-- Featured Products -->
-        <div id="sec-populer" class="max-w-6xl mx-auto px-4 pb-8 scroll-mt-20">
+        <div id="sec-populer" class="bg-gray-50 py-8 scroll-mt-20">
+          <div class="max-w-6xl mx-auto px-4">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-black text-gray-900">Produk Populer</h2>
                 <button @click="scrollTo('catalog')" class="text-brand-500 text-sm font-semibold hover:text-brand-700">Lihat Semua →</button>
@@ -636,10 +639,11 @@
                     </div>
                 </template>
             </div>
+          </div>
         </div>
 
     <!-- ───────── CATALOG ───────── -->
-    <section id="sec-catalog" class="scroll-mt-20">
+    <section id="sec-catalog" class="bg-white scroll-mt-20">
         <div class="max-w-6xl mx-auto px-4 py-6">
             <div class="mb-5"><h1 class="text-xl font-black text-gray-900">Semua Produk</h1><p class="text-sm text-gray-500 mt-0.5" x-text="`${filteredProducts.length} produk tersedia`"></p></div>
             <div class="relative mb-4">
@@ -761,7 +765,7 @@
 
         <!-- Cek Status Section -->
         <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
-        <div id="sec-status" class="bg-white py-14 scroll-mt-20">
+        <div id="sec-status" class="bg-gray-50 py-14 scroll-mt-20">
             <div class="max-w-2xl mx-auto px-4">
                 <div class="text-center mb-8">
                     <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -894,7 +898,7 @@
         </div>
         <!-- FAQ Section — pills di atas, x-html answers -->
         <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
-        <div id="sec-faq" class="bg-white py-14 scroll-mt-20">
+        <div id="sec-faq" class="bg-gray-50 py-14 scroll-mt-20">
             <div x-data="{ homeFaqFilter: 'semua', homeFaqOpen: null }" class="max-w-6xl mx-auto px-4">
                 <div class="text-center mb-8">
                     <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -1011,7 +1015,7 @@
         </div>
         <!-- Testimoni -->
         <div class="max-w-5xl mx-auto px-4"><div class="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent"></div></div>
-        <div id="sec-testimoni" class="bg-white py-12 scroll-mt-20">
+        <div id="sec-testimoni" class="bg-gray-50 py-12 scroll-mt-20">
             <div class="max-w-6xl mx-auto px-4">
                 <div class="text-center mb-8">
                     <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -1089,7 +1093,7 @@
         </div>
 
         <!-- CTA Section -->
-        <div id="sec-cta" class="bg-white py-16 scroll-mt-20">
+        <div id="sec-cta" class="bg-gray-50 py-16 scroll-mt-20">
             <div class="max-w-4xl mx-auto px-4 text-center">
                 <div class="mb-8">
                     <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
