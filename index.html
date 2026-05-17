@@ -1864,111 +1864,144 @@
 
                 <!-- Result cards -->
                 <template x-for="(account,idx) in statusResult" :key="idx">
-                    <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3 shadow-sm">
-                        <!-- Header -->
-                        <div class="px-5 pt-5 pb-3 flex items-center gap-3">
-                            <!-- Product icon: Adobe vs Microsoft -->
-                            <div class="w-11 h-11 rounded-xl flex items-center justify-center flex-none overflow-hidden"
+                    <!-- Compact clickable card -->
+                    <div @click="statusSelected=account"
+                         class="bg-white rounded-2xl border border-gray-100 overflow-hidden mb-3 shadow-sm cursor-pointer hover:shadow-md hover:border-brand-200 active:scale-[.99] transition-all">
+                        <div class="px-4 py-3.5 flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none overflow-hidden"
                                  :class="account.productType==='adobe' ? 'bg-red-50' : 'bg-blue-50'">
                                 <template x-if="account.productType==='adobe'">
-                                    <img src="https://www.google.com/s2/favicons?domain=adobe.com&sz=64" alt="Adobe" class="w-8 h-8 object-contain">
+                                    <img src="https://www.google.com/s2/favicons?domain=adobe.com&sz=64" alt="Adobe" class="w-7 h-7 object-contain">
                                 </template>
                                 <template x-if="account.productType!=='adobe'">
-                                    <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" alt="Microsoft" class="w-8 h-8 object-contain">
+                                    <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" alt="Microsoft" class="w-7 h-7 object-contain">
                                 </template>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="font-bold text-gray-900 truncate" x-text="account.nama||'Pelanggan'"></div>
-                                <div class="text-[11px] text-gray-500 font-semibold mt-0.5"
-                                     x-text="account.productType==='adobe' ? (account.productName||'Adobe Creative Cloud') : (account.productType==='office365family' ? 'Microsoft Office 365 Family' : 'Microsoft Office 365')"></div>
+                                <div class="font-bold text-gray-900 text-sm truncate" x-text="account.nama||'Pelanggan'"></div>
+                                <div class="text-[11px] text-gray-500 mt-0.5 truncate"
+                                     x-text="account.productType==='adobe' ? (account.productName||'Adobe Creative Cloud') : (account.productType==='office365family' ? 'Office 365 Family' : 'Office 365')"></div>
+                                <div x-show="account.officeAccount||account.adobeAccount" class="text-[11px] text-gray-400 mt-0.5 truncate"
+                                     x-text="account.officeAccount||account.adobeAccount"></div>
                             </div>
-                            <span class="text-xs font-bold px-3 py-1.5 rounded-xl flex-none"
-                                :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'bg-red-50 text-red-700' : getDaysUntilExpiry(account.masaBerlaku) <= 7 ? 'bg-orange-50 text-orange-700' : 'bg-emerald-50 text-emerald-700'"
-                                x-text="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'Sudah Dihapus' : getDaysUntilExpiry(account.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Active'"></span>
-                        </div>
-
-                        <div class="border-t border-gray-50 mx-5"></div>
-
-                        <!-- Detail -->
-                        <div class="px-5 py-4 space-y-2.5">
-                            <!-- Adobe account field -->
-                            <template x-if="account.productType==='adobe' && account.adobeAccount">
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-xs text-gray-400 shrink-0">Akun Adobe</span>
-                                    <span class="text-xs font-semibold text-gray-800 break-all text-right" x-text="account.adobeAccount"></span>
-                                </div>
-                            </template>
-                            <!-- Office account field -->
-                            <template x-if="account.productType!=='adobe' && account.officeAccount">
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-xs text-gray-400 shrink-0">Akun Office</span>
-                                    <span class="text-xs font-semibold text-gray-800 break-all text-right" x-text="account.officeAccount"></span>
-                                </div>
-                            </template>
-                            <template x-if="account.emailPembeli">
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-xs text-gray-400 shrink-0">Email Aktif</span>
-                                    <span class="text-xs font-semibold text-gray-800 break-all text-right" x-text="account.emailPembeli"></span>
-                                </div>
-                            </template>
-                            <template x-if="account.masaBerlaku">
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-xs text-gray-400 shrink-0">Masa Berlaku</span>
-                                    <span class="text-xs font-semibold text-gray-800" x-text="formatMasaBerlaku(account.masaBerlaku)"></span>
-                                </div>
-                            </template>
-                            <template x-if="account.durasi">
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-xs text-gray-400 shrink-0">Durasi</span>
-                                    <span class="text-xs font-semibold text-gray-800" x-text="account.durasi + ' bulan'"></span>
-                                </div>
-                            </template>
-                            <template x-if="account.pembelianDari">
-                                <div class="flex justify-between gap-2">
-                                    <span class="text-xs text-gray-400 shrink-0">Pembelian dari</span>
-                                    <span class="text-xs font-semibold text-gray-800" x-text="account.pembelianDari"></span>
-                                </div>
-                            </template>
-                        </div>
-
-                        <!-- Renewal / Rebuy suggestion — muncul jika H-7 atau sudah habis -->
-                        <template x-if="getDaysUntilExpiry(account.masaBerlaku) <= 7">
-                            <div class="mx-5 mb-4 rounded-xl overflow-hidden border"
-                                 :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'bg-red-50 border-red-100' : 'bg-orange-50 border-orange-100'">
-                                <div class="px-4 py-3">
-                                    <div class="flex items-start gap-2.5">
-                                        <div class="mt-0.5 flex-none">
-                                            <svg class="w-4 h-4" :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'text-red-500' : 'text-orange-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                        </div>
-                                        <div class="flex-1">
-                                            <p class="text-xs font-bold mb-0.5"
-                                               :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'text-red-700' : 'text-orange-700'"
-                                               x-text="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'Akun sudah tidak aktif' : 'Masa berlaku hampir habis!'"></p>
-                                            <p class="text-[11px] leading-snug"
-                                               :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'text-red-600' : 'text-orange-600'"
-                                               x-text="account.productType==='office365' && getDaysUntilExpiry(account.masaBerlaku) >= 0 ? 'Perpanjang sekarang agar tidak terputus.' : 'Segera beli ulang untuk melanjutkan akses.'"></p>
-                                        </div>
-                                    </div>
-                                    <button @click="statusSuggestRebuy(account)"
-                                            class="mt-2.5 w-full text-xs font-bold py-2 rounded-lg transition-all active:scale-95 text-white flex items-center justify-center gap-1.5"
-                                            :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'">
-                                        <span x-show="account.productType==='office365' && getDaysUntilExpiry(account.masaBerlaku) >= 0 && getDaysUntilExpiry(account.masaBerlaku) <= 7" class="flex items-center gap-1.5">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                                            Lihat Produk Renewal
-                                        </span>
-                                        <span x-show="!(account.productType==='office365' && getDaysUntilExpiry(account.masaBerlaku) >= 0 && getDaysUntilExpiry(account.masaBerlaku) <= 7)" class="flex items-center gap-1.5">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                                            Lihat Produk untuk Beli Ulang
-                                        </span>
-                                    </button>
-                                </div>
+                            <div class="flex items-center gap-2 flex-none">
+                                <span class="text-xs font-bold px-2.5 py-1 rounded-lg"
+                                    :class="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'bg-red-50 text-red-700' : getDaysUntilExpiry(account.masaBerlaku) <= 7 ? 'bg-orange-50 text-orange-700' : 'bg-emerald-50 text-emerald-700'"
+                                    x-text="getDaysUntilExpiry(account.masaBerlaku) < 0 ? 'Sudah Habis' : getDaysUntilExpiry(account.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Aktif'"></span>
+                                <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             </div>
-                        </template>
+                        </div>
                     </div>
                 </template>
             </div>
         </div>
     </section>
+
+    <!-- ── STATUS DETAIL BOTTOM SHEET ── -->
+    <div x-show="statusSelected" x-cloak
+         class="fixed inset-0 z-[200] flex items-end md:items-center justify-center"
+         x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="statusSelected=null"></div>
+        <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl max-h-[88vh] overflow-y-auto z-10"
+             x-transition:enter="transition duration-300" x-transition:enter-start="translate-y-8 md:translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100">
+            <!-- Handle -->
+            <div class="md:hidden flex justify-center pt-3 pb-1"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+            <!-- Header -->
+            <div class="px-5 pt-4 pb-4 flex items-center gap-3 border-b border-gray-100">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-none overflow-hidden"
+                     :class="statusSelected?.productType==='adobe' ? 'bg-red-50' : 'bg-blue-50'">
+                    <template x-if="statusSelected?.productType==='adobe'">
+                        <img src="https://www.google.com/s2/favicons?domain=adobe.com&sz=64" class="w-8 h-8 object-contain">
+                    </template>
+                    <template x-if="statusSelected?.productType!=='adobe'">
+                        <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" class="w-8 h-8 object-contain">
+                    </template>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="font-black text-gray-900" x-text="statusSelected?.nama||'Pelanggan'"></div>
+                    <div class="text-xs text-gray-500 mt-0.5"
+                         x-text="statusSelected?.productType==='adobe' ? (statusSelected?.productName||'Adobe Creative Cloud') : (statusSelected?.productType==='office365family' ? 'Microsoft Office 365 Family' : 'Microsoft Office 365')"></div>
+                </div>
+                <span class="text-xs font-bold px-3 py-1.5 rounded-xl flex-none"
+                    :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'bg-red-50 text-red-700' : getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7 ? 'bg-orange-50 text-orange-700' : 'bg-emerald-50 text-emerald-700'"
+                    x-text="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'Sudah Habis' : getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Aktif'"></span>
+            </div>
+            <!-- Info rows -->
+            <div class="px-5 py-4 space-y-3">
+                <template x-if="statusSelected?.officeAccount">
+                    <div class="flex justify-between gap-3 py-2.5 border-b border-gray-50">
+                        <span class="text-xs text-gray-400 shrink-0 font-medium">Akun Office</span>
+                        <span class="text-xs font-bold text-gray-800 break-all text-right" x-text="statusSelected?.officeAccount"></span>
+                    </div>
+                </template>
+                <template x-if="statusSelected?.adobeAccount">
+                    <div class="flex justify-between gap-3 py-2.5 border-b border-gray-50">
+                        <span class="text-xs text-gray-400 shrink-0 font-medium">Akun Adobe</span>
+                        <span class="text-xs font-bold text-gray-800 break-all text-right" x-text="statusSelected?.adobeAccount"></span>
+                    </div>
+                </template>
+                <template x-if="statusSelected?.emailPembeli">
+                    <div class="flex justify-between gap-3 py-2.5 border-b border-gray-50">
+                        <span class="text-xs text-gray-400 shrink-0 font-medium">Email Pembeli</span>
+                        <span class="text-xs font-bold text-gray-800 break-all text-right" x-text="statusSelected?.emailPembeli"></span>
+                    </div>
+                </template>
+                <template x-if="statusSelected?.masaBerlaku">
+                    <div class="flex justify-between gap-3 py-2.5 border-b border-gray-50">
+                        <span class="text-xs text-gray-400 shrink-0 font-medium">Masa Berlaku</span>
+                        <span class="text-xs font-bold text-gray-800" x-text="formatMasaBerlaku(statusSelected?.masaBerlaku)"></span>
+                    </div>
+                </template>
+                <template x-if="statusSelected?.masaBerlaku && getDaysUntilExpiry(statusSelected?.masaBerlaku) >= 0">
+                    <div class="flex justify-between gap-3 py-2.5 border-b border-gray-50">
+                        <span class="text-xs text-gray-400 shrink-0 font-medium">Sisa Waktu</span>
+                        <span class="text-xs font-bold"
+                              :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7 ? 'text-orange-600' : 'text-emerald-600'"
+                              x-text="getDaysUntilExpiry(statusSelected?.masaBerlaku) + ' hari'"></span>
+                    </div>
+                </template>
+                <template x-if="statusSelected?.durasi">
+                    <div class="flex justify-between gap-3 py-2.5 border-b border-gray-50">
+                        <span class="text-xs text-gray-400 shrink-0 font-medium">Durasi Paket</span>
+                        <span class="text-xs font-bold text-gray-800" x-text="statusSelected?.durasi + ' bulan'"></span>
+                    </div>
+                </template>
+                <template x-if="statusSelected?.pembelianDari">
+                    <div class="flex justify-between gap-3 py-2.5 border-b border-gray-50">
+                        <span class="text-xs text-gray-400 shrink-0 font-medium">Pembelian dari</span>
+                        <span class="text-xs font-bold text-gray-800" x-text="statusSelected?.pembelianDari"></span>
+                    </div>
+                </template>
+            </div>
+            <!-- Renewal / rebuy banner -->
+            <template x-if="statusSelected && getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7">
+                <div class="mx-5 mb-2 rounded-2xl overflow-hidden border"
+                     :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'bg-red-50 border-red-100' : 'bg-orange-50 border-orange-100'">
+                    <div class="px-4 py-3.5">
+                        <p class="text-xs font-bold mb-1"
+                           :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'text-red-700' : 'text-orange-700'"
+                           x-text="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? '⚠️ Akun sudah tidak aktif' : '⏰ Masa berlaku hampir habis!'"></p>
+                        <p class="text-[11px] leading-snug mb-3"
+                           :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'text-red-600' : 'text-orange-600'"
+                           x-text="statusSelected?.productType==='office365' && getDaysUntilExpiry(statusSelected?.masaBerlaku) >= 0 ? 'Perpanjang sekarang agar tidak terputus.' : 'Segera beli ulang untuk melanjutkan akses.'"></p>
+                        <button @click="statusSuggestRebuy(statusSelected); statusSelected=null"
+                                class="w-full text-xs font-bold py-2.5 rounded-xl transition-all active:scale-95 text-white flex items-center justify-center gap-1.5"
+                                :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            <span x-text="statusSelected?.productType==='office365' && getDaysUntilExpiry(statusSelected?.masaBerlaku) >= 0 ? 'Lihat Produk Renewal' : 'Lihat Produk untuk Beli Ulang'"></span>
+                        </button>
+                    </div>
+                </div>
+            </template>
+            <!-- Close button -->
+            <div class="px-5 pb-6 pt-2">
+                <button @click="statusSelected=null" class="w-full py-3 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-all">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ───────── PROFILE OVERLAY ───────── -->
     <div x-show="profileOverlay"
@@ -7700,6 +7733,7 @@ function serabutStore() {
         statusQuery:      '',
         statusChecking:   false,
         statusResult:     null,
+        statusSelected:   null,
 
         // Flash Sale
         flashSale: {
