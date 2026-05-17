@@ -655,30 +655,46 @@
                         </button>
                     </div>
                     <!-- Result -->
-                    <div x-show="statusResult !== null" x-transition class="border-t border-gray-100 pt-4 mt-2">
+                    <div x-show="statusResult !== null" x-transition class="border-t border-gray-100 pt-4 mt-2 space-y-2">
                         <!-- Ada hasil -->
                         <template x-if="Array.isArray(statusResult) && statusResult.length > 0">
-                            <div class="space-y-3">
-                                <template x-for="(r, idx) in statusResult.slice(0,2)" :key="idx">
-                                    <div class="bg-gray-50 rounded-xl p-3">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <div class="font-bold text-gray-900 text-sm" x-text="r.productName||r.produk||'Akun'"></div>
-                                            <span class="text-xs font-bold px-2 py-0.5 rounded-full"
-                                                  :class="r.status==='Active'?'bg-green-100 text-green-700':'bg-red-100 text-red-600'"
-                                                  x-text="r.status==='Active'?'Aktif':'Tidak Aktif'"></span>
+                            <div class="space-y-2">
+                                <template x-for="(r, idx) in statusResult.slice(0,3)" :key="idx">
+                                    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-gray-200 bg-white transition-all">
+                                        <!-- Icon produk -->
+                                        <img :src="getProductLogo(r.productType==='adobe'?(r.productName||'Adobe'):(r.productType==='office365family'?'Office 365 Family':'Office 365'))"
+                                             class="w-8 h-8 rounded-lg flex-none object-contain" alt="">
+                                        <!-- Info -->
+                                        <div class="flex-1 min-w-0">
+                                            <div class="text-xs font-semibold text-gray-900 truncate"
+                                                 x-text="r.buyerName||r.emailPembeli||'—'"></div>
+                                            <div class="text-[11px] text-gray-400 truncate"
+                                                 x-text="r.productType==='adobe'?(r.productName||'Adobe Creative Cloud'):(r.productType==='office365family'?'Office 365 Family':'Office 365')"></div>
                                         </div>
-                                        <div class="space-y-1 text-xs text-gray-500">
-                                            <div class="flex justify-between"><span>Akun</span><span class="font-medium text-gray-700 truncate max-w-[160px]" x-text="r.username||r.email||'-'"></span></div>
-                                            <div class="flex justify-between"><span>Masa Berlaku</span><span class="font-medium text-gray-700" x-text="r.expiry||r.masaBerlaku||'-'"></span></div>
+                                        <!-- Status + expiry -->
+                                        <div class="text-right flex-none">
+                                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full block mb-1"
+                                                  :class="getDaysUntilExpiry(r.masaBerlaku) < 0 ? 'bg-red-100 text-red-600' : getDaysUntilExpiry(r.masaBerlaku) <= 7 ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-700'"
+                                                  x-text="getDaysUntilExpiry(r.masaBerlaku) < 0 ? 'Sudah Habis' : getDaysUntilExpiry(r.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Aktif'"></span>
+                                            <div class="text-[10px] text-gray-400" x-text="r.masaBerlaku||'-'"></div>
                                         </div>
                                     </div>
                                 </template>
-                                <button @click="setPage('status')" class="w-full text-center text-brand-600 text-xs font-semibold hover:underline pt-1">Lihat detail lengkap →</button>
+                                <!-- Load more jika > 3 -->
+                                <template x-if="statusResult.length > 3">
+                                    <button @click="setPage('status')"
+                                            class="w-full text-center text-brand-600 text-xs font-semibold py-2 rounded-xl bg-brand-50 hover:bg-brand-100 transition-all">
+                                        Lihat semua <span x-text="statusResult.length"></span> hasil →
+                                    </button>
+                                </template>
+                                <template x-if="statusResult.length <= 3">
+                                    <button @click="setPage('status')" class="w-full text-center text-gray-400 text-xs hover:text-brand-600 transition-colors py-1">Lihat detail lengkap →</button>
+                                </template>
                             </div>
                         </template>
                         <!-- Tidak ditemukan -->
                         <template x-if="Array.isArray(statusResult) && statusResult.length === 0">
-                            <div class="text-center py-3">
+                            <div class="text-center py-4">
                                 <p class="text-sm text-gray-500 mb-2">Akun tidak ditemukan</p>
                                 <button @click="setPage('status')" class="text-brand-600 text-xs font-semibold hover:underline">Coba cek di halaman lengkap →</button>
                             </div>
