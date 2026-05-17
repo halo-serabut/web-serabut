@@ -344,7 +344,22 @@
             <div class="font-black text-gray-900 text-lg tracking-tight">Serabut Store</div>
         </button>
 
-        <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1">
+        <!-- Nav center: search saat di catalog, pills saat di halaman lain -->
+        <div class="flex-1 mx-6 max-w-md" x-show="catalogInView"
+             x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="transition duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+                <input x-model="searchQuery" x-ref="navSearch" type="search" placeholder="Cari produk..." autocomplete="off"
+                       class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
+                <button x-show="searchQuery" @click="searchQuery=''" class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1" x-show="!catalogInView"
+             x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+             x-transition:leave="transition duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
             <template x-for="item in navItems.filter(i => i.desktop !== false)" :key="item.id">
                 <button @click="scrollTo(item.scrollTarget || item.id)" :class="currentSection===(item.scrollTarget||item.id) ? 'bg-brand-50 text-brand-600 font-bold border border-brand-200' : 'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm transition-all" x-text="item.label"></button>
             </template>
@@ -388,6 +403,21 @@
 <!-- ══════════════════════════════════════════════════════
      MOBILE HEADER
 ══════════════════════════════════════════════════════ -->
+<!-- Sticky search mobile — muncul saat di catalog section -->
+<div x-show="catalogInView" x-cloak
+     x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
+     x-transition:leave="transition duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2"
+     class="md:hidden fixed top-14 left-0 right-0 z-[49] bg-white border-b border-gray-100 px-4 py-2 shadow-sm">
+    <div class="relative">
+        <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
+        <input x-model="searchQuery" type="search" placeholder="Cari produk..." autocomplete="off"
+               class="w-full pl-10 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
+        <button x-show="searchQuery" @click="searchQuery=''" class="absolute inset-y-0 right-3 flex items-center text-gray-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    </div>
+</div>
+
 <header class="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100">
     <div class="px-4 h-14 flex items-center justify-between">
         <button @click="scrollTo('hero')" class="flex items-center gap-2">
