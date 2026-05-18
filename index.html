@@ -8409,6 +8409,7 @@ function serabutStore() {
             }
 
             await Promise.all([this.fetchProducts(), this.loadSiteSettings()]);
+            this.loadHomeReviews();
             setInterval(() => {
                 if(!this.flashSale.aktif) return;
                 const _dl = new Date(this.flashSale.deadline);
@@ -8620,6 +8621,15 @@ function serabutStore() {
             _resolvePendingSlug();
             // Preload reviews parallel setelah produk ready
             setTimeout(() => this._preloadAllReviews(), 300);
+        },
+        async loadHomeReviews() {
+            try {
+                const res  = await fetch(`${this.GAS_URL}?action=getReviews`);
+                const data = await res.json();
+                if (data.success && data.data && data.data.length > 0) {
+                    this.reviews = data.data;
+                }
+            } catch (_) {}
         },
         demoProducts() {
             return [
