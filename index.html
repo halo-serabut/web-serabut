@@ -2083,9 +2083,9 @@
         <div class="flex-1 min-w-0">
 
         <!-- Mobile Tabs (mobile only) -->
-        <div class="flex gap-1 bg-gray-100 rounded-2xl p-1 mb-5 md:hidden">
-            <button @click="profileTab='diri'" :class="profileTab==='diri'?'bg-white shadow-sm text-gray-900 font-bold border-2 border-brand-500':'text-gray-500 font-medium border-2 border-transparent'" class="flex-1 py-2.5 rounded-xl text-sm transition-all">Data Diri</button>
-            <button @click="profileTab='pesanan'; loadOrders()" :class="profileTab==='pesanan'?'bg-white shadow-sm text-gray-900 font-bold border-2 border-brand-500':'text-gray-500 font-medium border-2 border-transparent'" class="flex-1 py-2.5 rounded-xl text-sm transition-all">Pesanan</button>
+        <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5 md:hidden">
+            <button @click="profileTab='diri'" :class="profileTab==='diri'?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'" class="flex-1 py-2 rounded-lg text-sm font-medium transition-all">Data Diri</button>
+            <button @click="profileTab='pesanan'; loadOrders()" :class="profileTab==='pesanan'?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'" class="flex-1 py-2 rounded-lg text-sm font-medium transition-all">Pesanan</button>
         </div>
 
         <!-- Tab: Data Diri — VIEW MODE -->
