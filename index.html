@@ -9567,7 +9567,7 @@ function serabutStore() {
             this.catalogInView     = sectionId === 'catalog';
             this._scrollLocked     = true;
             clearTimeout(this._scrollLockTimer);
-            this._scrollLockTimer  = setTimeout(() => { this._scrollLocked = false; }, 800);
+            this._scrollLockTimer  = setTimeout(() => { this._scrollLocked = false; }, 1500);
             if (sectionId === 'hero') { window.scrollTo({ top: 0, behavior: 'smooth' }); history.replaceState(null, '', '/'); return; }
             const el = document.getElementById('sec-' + sectionId);
             if (!el) return;
