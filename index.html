@@ -9562,14 +9562,16 @@ function serabutStore() {
         scrollTo(sectionId) {
             if (this.adminOverlay)   { this.adminOverlay   = false; document.body.style.overflow = ''; }
             if (this.profileOverlay) { this.profileOverlay = false; document.body.style.overflow = ''; }
-            // Set active nav state immediately on click (don't wait for IntersectionObserver)
-            this.currentSection = sectionId;
-            this.catalogInView  = sectionId === 'catalog';
-            if (sectionId === 'hero') { this.currentSection = 'hero'; this.catalogInView = false; window.scrollTo({ top: 0, behavior: 'smooth' }); history.replaceState(null, '', '/'); return; }
+            // Set active immediately; lock observer for 800ms so smooth-scroll doesn't revert it
+            this.currentSection    = sectionId;
+            this.catalogInView     = sectionId === 'catalog';
+            this._scrollLocked     = true;
+            clearTimeout(this._scrollLockTimer);
+            this._scrollLockTimer  = setTimeout(() => { this._scrollLocked = false; }, 800);
+            if (sectionId === 'hero') { window.scrollTo({ top: 0, behavior: 'smooth' }); history.replaceState(null, '', '/'); return; }
             const el = document.getElementById('sec-' + sectionId);
             if (!el) return;
-            const offset = 68;
-            const top = el.getBoundingClientRect().top + window.scrollY - offset;
+            const top = el.getBoundingClientRect().top + window.scrollY - 68;
             window.scrollTo({ top, behavior: 'smooth' });
             history.replaceState(null, '', '#' + sectionId);
         },
@@ -9581,7 +9583,7 @@ function serabutStore() {
                     if (e.isIntersecting) visible.add(e.target.id);
                     else visible.delete(e.target.id);
                 });
-                // Pick topmost visible section
+                if (this._scrollLocked) return; // nav click in progress — don't override
                 for (const id of sections) {
                     if (visible.has('sec-' + id)) {
                         this.currentSection = id;
