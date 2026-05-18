@@ -169,7 +169,9 @@
             .main-top-offset { padding-top: calc(3.5rem + env(safe-area-inset-top)); }
             .sticky-search-top { top: calc(3.5rem + env(safe-area-inset-top)); }
             .toast-top { top: calc(1rem + env(safe-area-inset-top)); }
+            .overlay-top { top: calc(3.5rem + env(safe-area-inset-top)); }
         }
+        @media (min-width: 768px) { .overlay-top { top: 68px; } }
 
         /* Apple-style smooth scrolling */
         html {
@@ -2018,7 +2020,7 @@
          x-transition:leave="transition duration-150"
          x-transition:leave-start="opacity-100 translate-x-0"
          x-transition:leave-end="opacity-0 translate-x-4"
-         class="fixed inset-0 md:top-[68px] z-[49] bg-white overflow-y-auto pb-20 md:pb-0" x-cloak>
+         class="fixed left-0 right-0 bottom-0 overlay-top z-[49] bg-white overflow-y-auto pb-20 md:pb-0" x-cloak>
         <div class="md:hidden sticky top-0 bg-white border-b border-gray-100 px-4 h-14 flex items-center gap-3 z-10">
             <button @click="profileOverlay=false; document.body.style.overflow=''" class="p-2 rounded-lg hover:bg-gray-100">
                 <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
@@ -3556,7 +3558,7 @@
          x-transition:leave="transition duration-150"
          x-transition:leave-start="opacity-100 translate-x-0"
          x-transition:leave-end="opacity-0 translate-x-4"
-         class="fixed inset-0 md:top-[68px] z-[49] bg-white overflow-y-auto pb-20 md:pb-0" x-cloak>
+         class="fixed left-0 right-0 bottom-0 overlay-top z-[49] bg-white overflow-y-auto pb-20 md:pb-0" x-cloak>
         <div class="md:hidden sticky top-0 bg-white border-b border-gray-100 px-4 h-14 flex items-center gap-3 z-10">
             <span class="font-bold text-gray-900">Admin Dashboard</span>
         </div>
