@@ -9565,9 +9565,7 @@ function serabutStore() {
             // Set active immediately; lock observer for 800ms so smooth-scroll doesn't revert it
             this.currentSection    = sectionId;
             this.catalogInView     = sectionId === 'catalog';
-            this._scrollLocked     = true;
-            clearTimeout(this._scrollLockTimer);
-            this._scrollLockTimer  = setTimeout(() => { this._scrollLocked = false; }, 1500);
+            this._scrollTarget     = sectionId; // observer will unlock when this section becomes visible
             if (sectionId === 'hero') { window.scrollTo({ top: 0, behavior: 'smooth' }); history.replaceState(null, '', '/'); return; }
             const el = document.getElementById('sec-' + sectionId);
             if (!el) return;
@@ -9583,9 +9581,11 @@ function serabutStore() {
                     if (e.isIntersecting) visible.add(e.target.id);
                     else visible.delete(e.target.id);
                 });
-                if (this._scrollLocked) return; // nav click in progress — don't override
                 for (const id of sections) {
                     if (visible.has('sec-' + id)) {
+                        // If waiting for a nav-click target, only update once that target is visible
+                        if (this._scrollTarget && id !== this._scrollTarget) break;
+                        this._scrollTarget = null;
                         this.currentSection = id;
                         this.catalogInView = id === 'catalog';
                         break;
