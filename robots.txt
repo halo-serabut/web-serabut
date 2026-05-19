@@ -2,3 +2,7 @@ User-agent: *
 Allow: /
 
 Sitemap: https://serabut.id/sitemap.xml
+
+# Block admin paths from crawling
+Disallow: /admin
+Disallow: /?action=

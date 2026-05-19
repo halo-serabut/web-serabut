@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Serabut Store — Platform Produk Digital Terpercaya</title>
-    <meta name="description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat.">
+    <title>Serabut Store — Software Original Microsoft Office 365, Adobe, Windows</title>
+    <meta name="description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat 5–30 menit, 10.000+ pelanggan puas. Serabut.id">
     <meta name="theme-color" content="#DC2626">
-    <meta name="keywords" content="serabut store, serabut, beli software original, microsoft office 365 murah, adobe creative cloud murah, windows original, software original indonesia, lisensi software murah, office 365 personal, office 365 family, serabut.id">
-    <meta name="robots" content="index, follow">
+    <meta name="msapplication-TileColor" content="#DC2626">
+    <meta name="keywords" content="serabut store, microsoft office 365 murah, adobe creative cloud murah, windows original, software original indonesia, office 365 personal, office 365 family, lisensi software murah, serabut.id">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="author" content="Serabut Store">
+    <meta name="application-name" content="Serabut Store">
     <!-- [SEC-18] Security headers via meta tags — HSTS & X-Frame-Options wajib via Cloudflare HTTP headers -->
     <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self'; frame-src 'self' https://payment.xendit.co https://checkout.xendit.co https://payment.ipaymu.com https://my.ipaymu.com https://accounts.google.com https://*.google.com;">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -34,16 +36,20 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://serabut.id/">
     <meta property="og:site_name" content="Serabut Store">
-    <meta property="og:title" content="Serabut Store — Software Original Terpercaya">
-    <meta property="og:description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat, terpercaya.">
-    <meta property="og:image" content="https://serabut.id/logo.png">
+    <meta property="og:title" content="Serabut Store — Software Original Microsoft Office 365, Adobe, Windows">
+    <meta property="og:description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses 5–30 menit.">
+    <meta property="og:image" content="https://serabut.id/icon-512.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:image:alt" content="Serabut Store — Software Original Terpercaya">
     <meta property="og:locale" content="id_ID">
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@serabutstore">
     <meta name="twitter:title" content="Serabut Store — Software Original Terpercaya">
-    <meta name="twitter:description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat.">
-    <meta name="twitter:image" content="https://serabut.id/logo.png">
+    <meta name="twitter:description" content="Microsoft Office 365, Adobe Creative Cloud, Windows original dengan harga terjangkau. Garansi resmi, proses cepat.">
+    <meta name="twitter:image" content="https://serabut.id/icon-512.png">
 
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
@@ -55,11 +61,14 @@
           "@id": "https://serabut.id/#website",
           "url": "https://serabut.id/",
           "name": "Serabut Store",
-          "description": "Platform jual beli software original terpercaya di Indonesia — Microsoft Office 365, Adobe Creative Cloud, Windows dan lainnya.",
+          "description": "Platform jual beli software original terpercaya di Indonesia — Microsoft Office 365, Adobe Creative Cloud, Windows.",
           "inLanguage": "id",
           "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://serabut.id/?q={search_term_string}",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://serabut.id/?q={search_term_string}"
+            },
             "query-input": "required name=search_term_string"
           }
         },
@@ -67,47 +76,77 @@
           "@type": "Organization",
           "@id": "https://serabut.id/#organization",
           "name": "Serabut Store",
-          "alternateName": ["Serabut", "serabut.id"],
+          "alternateName": ["Serabut", "serabut.id", "Serabut Store Official"],
           "url": "https://serabut.id/",
           "logo": {
             "@type": "ImageObject",
-            "url": "https://serabut.id/logo.png"
+            "@id": "https://serabut.id/#logo",
+            "url": "https://serabut.id/icon-512.png",
+            "contentUrl": "https://serabut.id/icon-512.png",
+            "width": 512,
+            "height": 512,
+            "caption": "Serabut Store"
+          },
+          "image": "https://serabut.id/icon-512.png",
+          "description": "Platform penyedia software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau dan garansi resmi.",
+          "foundingDate": "2019",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Jakarta Selatan",
+            "addressRegion": "DKI Jakarta",
+            "addressCountry": "ID"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+62-888-1500-555",
+            "contactType": "customer service",
+            "availableLanguage": "Indonesian",
+            "hoursAvailable": {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": [
+                "Monday","Tuesday","Wednesday","Thursday",
+                "Friday","Saturday","Sunday"
+              ],
+              "opens": "09:00",
+              "closes": "22:00"
+            }
           },
           "sameAs": [
             "https://linktr.ee/serabutstore",
             "https://shopee.co.id/serabutstore",
             "https://www.tokopedia.com/serabut-store"
-          ],
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "customer service",
-            "availableLanguage": "Indonesian",
-            "hoursAvailable": {
-              "@type": "OpeningHoursSpecification",
-              "opens": "09:00",
-              "closes": "22:00"
-            }
-          }
+          ]
         },
         {
           "@type": "Store",
           "@id": "https://serabut.id/#store",
           "name": "Serabut Store",
-          "description": "Toko software original terpercaya — Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau dan garansi resmi.",
+          "description": "Toko software original — Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau dan garansi resmi.",
           "url": "https://serabut.id/",
-          "image": "https://serabut.id/logo.png",
+          "logo": "https://serabut.id/icon-512.png",
+          "image": "https://serabut.id/icon-512.png",
           "priceRange": "Rp 50.000 - Rp 500.000",
           "currenciesAccepted": "IDR",
-          "paymentAccepted": "Transfer Bank, QRIS",
-          "openingHours": "Mo-Su 09:00-22:00"
+          "paymentAccepted": "Transfer Bank, QRIS, Virtual Account, E-Wallet",
+          "openingHours": "Mo-Su 09:00-22:00",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Jakarta Selatan",
+            "addressRegion": "DKI Jakarta",
+            "addressCountry": "ID"
+          }
         }
       ]
     }
     </script>
 
-    <link rel="preload" href="https://serabut.id/logo.png" as="image" fetchpriority="high">
-    <link rel="icon" type="image/png" href="https://serabut.id/logo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="preload" href="https://serabut.id/logo.png" as="image" fetchpriority="high" type="image/png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://serabut.id/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://serabut.id/favicon-16x16.png">
+    <link rel="shortcut icon" href="https://serabut.id/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://serabut.id/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://serabut.id/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="https://serabut.id/icon-512.png">
     <link rel="manifest" href="manifest.json">
     <!-- iOS PWA Splash Screens -->
     <meta name="apple-mobile-web-app-capable" content="yes">
