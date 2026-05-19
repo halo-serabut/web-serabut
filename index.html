@@ -6035,14 +6035,14 @@
 <!-- ══════════════════════════════════════════════════════
      CART ADD MODAL (product-specific fields)
 ══════════════════════════════════════════════════════ -->
-<div x-show="cartAddModal" class="fixed inset-0 z-[135] flex items-end md:items-center justify-center"
+<div x-show="cartAddModal" class="fixed inset-0 z-[400] flex items-end md:items-center justify-center"
      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
      x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="cartAddModal=false"></div>
-    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl shadow-2xl modal-enter">
-        <div class="md:hidden flex justify-center pt-3 pb-1"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl shadow-2xl modal-enter max-h-[92vh] flex flex-col">
+        <div class="md:hidden flex justify-center pt-3 pb-1 flex-none"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
         <!-- Header -->
-        <div class="px-5 pt-4 pb-4 flex items-center justify-between border-b border-gray-100">
+        <div class="px-5 pt-4 pb-4 flex items-center justify-between border-b border-gray-100 flex-none">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none" :class="getCategoryBg(cartAddPending?.product?.category)">
                     <img :src="getProductLogo(cartAddPending?.product?.category)" class="w-7 h-7 object-contain" onerror="this.style.display='none'">
@@ -6057,7 +6057,7 @@
             </button>
         </div>
         <!-- Fields -->
-        <div class="px-5 py-5 space-y-3">
+        <div class="px-5 py-5 space-y-3 overflow-y-auto flex-1">
             <p class="text-xs text-gray-400">Isi data berikut sebelum menambahkan ke keranjang.</p>
 
             <!-- Web: Nama Akun Microsoft + Username -->
@@ -6884,7 +6884,7 @@
 <!-- ══════════════════════════════════════════════════════
      ORDER CONFIRM MODAL
 ══════════════════════════════════════════════════════ -->
-<div x-show="orderModal" class="fixed inset-0 z-[200] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+<div x-show="orderModal" class="fixed inset-0 z-[400] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="orderModal=false"></div>
     <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter flex flex-col max-h-[92vh] md:max-h-[90vh]">
         <div class="px-5 pt-5 flex-none">
