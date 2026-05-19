@@ -9575,8 +9575,9 @@ function serabutStore() {
             this.scrollTo(id);
         },
         scrollTo(sectionId) {
-            if (this.adminOverlay)   { this.adminOverlay   = false; document.body.style.overflow = ''; }
-            if (this.profileOverlay) { this.profileOverlay = false; document.body.style.overflow = ''; }
+            if (this.adminOverlay)         { this.adminOverlay         = false; document.body.style.overflow = ''; }
+            if (this.profileOverlay)       { this.profileOverlay       = false; document.body.style.overflow = ''; }
+            if (this.productDetailOverlay) { this.productDetailOverlay = false; document.body.style.overflow = ''; history.replaceState(null, '', '/'); }
             // Set active immediately; lock observer for 800ms so smooth-scroll doesn't revert it
             this.currentSection    = sectionId;
             this.catalogInView     = sectionId === 'catalog';
