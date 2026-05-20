@@ -11819,7 +11819,7 @@ function serabutStore() {
         openEditMode() {
             this.editForm = {
                 nama:         this.profileExtra.nama  || this.currentUser?.nama || '',
-                wa:           (this.currentUser?.wa||'').replace(/^62/, ''),
+                wa:           String(this.currentUser?.wa||'').replace(/^62/, ''),
                 tanggalLahir: this.profileExtra.tanggalLahir || '',
                 jenisKelamin: this.profileExtra.jenisKelamin || '',
                 alamat:       this.profileExtra.alamat || '',
