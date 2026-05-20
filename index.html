@@ -2192,6 +2192,29 @@
         <!-- Tab: Pesanan -->
         <div x-show="profileTab==='pesanan'">
 
+            <!-- ── Login Gate — tampil jika belum login ── -->
+            <template x-if="!currentUser">
+                <div class="flex flex-col items-center text-center py-14 px-6">
+                    <div class="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    </div>
+                    <div class="font-black text-gray-800 text-base mb-1">Belum Login</div>
+                    <p class="text-sm text-gray-400 mb-6 leading-relaxed">Login dulu untuk melihat riwayat pesananmu dan mengecek status pembayaran.</p>
+                    <button @click="profileOverlay=false; document.body.style.overflow=''; authModal=true; authTab='login'"
+                        class="bg-brand-500 hover:bg-brand-600 active:scale-95 text-white font-bold px-8 py-3 rounded-2xl text-sm transition-all shadow-sm">
+                        Login Sekarang
+                    </button>
+                    <button @click="profileOverlay=false; document.body.style.overflow=''; authModal=true; authTab='register'"
+                        class="mt-2 text-xs text-gray-400 py-2 hover:text-brand-500 transition-colors">
+                        Belum punya akun? Daftar gratis →
+                    </button>
+                </div>
+            </template>
+
+            <!-- ── Content jika sudah login ── -->
+            <template x-if="currentUser">
+            <div>
+
             <!-- ── Payment Success Banner ── -->
             <template x-if="paymentConfirmed">
                 <div class="mb-4 rounded-2xl overflow-hidden shadow-md"
@@ -2465,6 +2488,8 @@
                 <p x-show="ordersTotalPages > 1" class="text-center text-[11px] text-gray-400 mt-2">Halaman <span x-text="ordersCurrentPage"></span> dari <span x-text="ordersTotalPages"></span></p>
             </div>
         </div>
+        </div><!-- end logged-in orders content -->
+        </template><!-- end x-if currentUser -->
         </div><!-- end content area -->
         </div><!-- end layout wrapper -->
 
