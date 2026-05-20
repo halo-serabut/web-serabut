@@ -1891,7 +1891,7 @@
 
     <!-- ── STATUS DETAIL BOTTOM SHEET ── -->
     <div x-show="statusSelected" x-cloak
-         class="fixed inset-0 z-[200] flex items-end md:items-center justify-center"
+         class="fixed inset-0 z-[200] flex items-end md:items-center justify-center pb-16 md:pb-0"
          x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
          x-transition:leave="transition duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="statusSelected=null"></div>
@@ -2495,7 +2495,7 @@
 
         <!-- ── Order Detail Bottom Sheet ── -->
         <div x-show="orderDetailModal" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-             class="fixed inset-0 z-[480] bg-black/50 flex items-end md:items-center justify-center" @click.self="orderDetailModal=null" style="display:none">
+             class="fixed inset-0 z-[480] bg-black/50 flex items-end md:items-center justify-center pb-16 md:pb-0" @click.self="orderDetailModal=null" style="display:none">
             <div x-show="orderDetailModal" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100"
                  class="bg-white w-full max-w-lg rounded-t-3xl md:rounded-2xl max-h-[85vh] overflow-y-auto">
 
@@ -2916,7 +2916,7 @@
     <div x-show="adminOrderDetail"
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
          x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-         class="fixed inset-0 z-[480] flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm"
+         class="fixed inset-0 z-[480] flex items-end md:items-center justify-center pb-16 md:pb-0 bg-black/50 backdrop-blur-sm"
          @click.self="adminOrderDetail=null" style="display:none">
         <div x-show="adminOrderDetail"
              x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-y-full md:translate-y-0 md:scale-95 opacity-0" x-transition:enter-end="translate-y-0 md:scale-100 opacity-100"
@@ -4694,7 +4694,7 @@
             <div x-show="adminDeleteUserTarget"
                  x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
                  x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 z-[510] flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm"
+                 class="fixed inset-0 z-[510] flex items-end md:items-center justify-center pb-16 md:pb-0 bg-black/50 backdrop-blur-sm"
                  @click.self="adminDeleteUserTarget=null" style="display:none">
                 <div class="bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl p-6 shadow-xl">
                     <div class="md:hidden flex justify-center -mt-2 mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
@@ -4729,7 +4729,7 @@
             <!-- ══ Modal Edit User ══ -->
             <div x-show="adminEditUserModal"
                  x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-                 class="fixed inset-0 z-[500] flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm"
+                 class="fixed inset-0 z-[500] flex items-end md:items-center justify-center pb-16 md:pb-0 bg-black/50 backdrop-blur-sm"
                  @click.self="adminTryCloseEditUser()" style="display:none">
                 <div class="bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl p-6 shadow-xl"
                      x-data="{swipeY:0,swipeStart:0}"
@@ -6035,7 +6035,7 @@
 <!-- ══════════════════════════════════════════════════════
      CART ADD MODAL (product-specific fields)
 ══════════════════════════════════════════════════════ -->
-<div x-show="cartAddModal" class="fixed inset-0 z-[400] flex items-end md:items-center justify-center"
+<div x-show="cartAddModal" class="fixed inset-0 z-[400] flex items-end md:items-center justify-center pb-16 md:pb-0"
      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
      x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="cartAddModal=false"></div>
@@ -6138,7 +6138,7 @@
 <!-- ══════════════════════════════════════════════════════
      CART CHECKOUT MODAL
 ══════════════════════════════════════════════════════ -->
-<div x-show="cartCheckoutModal" class="fixed inset-0 z-[130] flex items-end md:items-center justify-center"
+<div x-show="cartCheckoutModal" class="fixed inset-0 z-[130] flex items-end md:items-center justify-center pb-16 md:pb-0"
      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
      x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="!cartCheckoutLoading && (cartCheckoutModal=false)"></div>
@@ -6400,7 +6400,7 @@
 <!-- ══════════════════════════════════════════════════════
      PRODUCT DETAIL MODAL
 ══════════════════════════════════════════════════════ -->
-<div x-show="productModal" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+<div x-show="productModal" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center pb-16 md:pb-0" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeProductModal()"></div>
     <div class="relative bg-white w-full md:max-w-lg md:rounded-3xl rounded-t-3xl max-h-[calc(100vh-4rem)] md:max-h-[92vh] overflow-y-auto modal-enter">
         <!-- Handle -->
@@ -6552,7 +6552,7 @@
 <!-- ══════════════════════════════════════════════════════
      AUTH MODAL (LOGIN / REGISTER)
 ══════════════════════════════════════════════════════ -->
-<div x-show="authModal" class="fixed inset-0 z-[400] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+<div x-show="authModal" class="fixed inset-0 z-[400] flex items-end md:items-center justify-center pb-16 md:pb-0" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeAuthModal()"></div>
     <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter max-h-[calc(100vh-4rem)] md:max-h-[92vh] overflow-y-auto"
          x-data="{swipeY:0,swipeStart:0}"
@@ -6679,7 +6679,7 @@
 <!-- ══════════════════════════════════════════════════════
      RESET PASSWORD MODAL
 ══════════════════════════════════════════════════════ -->
-<div x-show="resetPwModal" class="fixed inset-0 z-[220] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+<div x-show="resetPwModal" class="fixed inset-0 z-[220] flex items-end md:items-center justify-center pb-16 md:pb-0" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="resetPwModal=false"></div>
     <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 py-6 modal-enter">
         <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
@@ -6722,7 +6722,7 @@
 <!-- ══════════════════════════════════════════════════════
      FORGOT PASSWORD MODAL
 ══════════════════════════════════════════════════════ -->
-<div x-show="forgotPwModal" class="fixed inset-0 z-[225] flex items-end md:items-center justify-center"
+<div x-show="forgotPwModal" class="fixed inset-0 z-[225] flex items-end md:items-center justify-center pb-16 md:pb-0"
      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="forgotPwModal=false"></div>
     <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 py-6 modal-enter">
@@ -6832,7 +6832,7 @@
 <!-- ══════════════════════════════════════════════════════
      OTP VERIFICATION MODAL
 ══════════════════════════════════════════════════════ -->
-<div x-show="otpModal" class="fixed inset-0 z-[210] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+<div x-show="otpModal" class="fixed inset-0 z-[210] flex items-end md:items-center justify-center pb-16 md:pb-0" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
     <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 py-6 modal-enter">
         <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
@@ -6890,7 +6890,7 @@
 <!-- ══════════════════════════════════════════════════════
      ORDER CONFIRM MODAL
 ══════════════════════════════════════════════════════ -->
-<div x-show="orderModal" class="fixed inset-0 z-[400] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+<div x-show="orderModal" class="fixed inset-0 z-[400] flex items-end md:items-center justify-center pb-16 md:pb-0" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="orderModal=false"></div>
     <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter flex flex-col max-h-[calc(100vh-4rem)] md:max-h-[90vh]">
         <div class="px-5 pt-5 flex-none">
@@ -7221,7 +7221,7 @@
 <!-- redirect: direct karena Xendit support redirect -->
 
 <!-- ══ Review Modal ══════════════════════════════════════════ -->
-<div x-show="reviewModal" class="fixed inset-0 z-[350] flex items-end md:items-center justify-center" style="display:none"
+<div x-show="reviewModal" class="fixed inset-0 z-[350] flex items-end md:items-center justify-center pb-16 md:pb-0" style="display:none"
      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
      x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="reviewModal=false; document.body.style.overflow=''"></div>
@@ -7342,7 +7342,7 @@
 <!-- ══════════════════════════════════════════════════════
      LEGAL MODAL (SYARAT & KETENTUAN / KEBIJAKAN PRIVASI)
 ══════════════════════════════════════════════════════ -->
-<div x-show="legalModal" class="fixed inset-0 z-[350] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" style="display:none">
+<div x-show="legalModal" class="fixed inset-0 z-[350] flex items-end md:items-center justify-center pb-16 md:pb-0" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" style="display:none">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="legalModal=null"></div>
     <div class="relative bg-white w-full md:max-w-2xl md:rounded-3xl rounded-t-3xl max-h-[calc(100vh-4rem)] md:max-h-[90vh] flex flex-col modal-enter">
         <!-- Header -->
