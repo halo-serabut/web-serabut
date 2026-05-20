@@ -1058,26 +1058,6 @@
                             </div>
                         </div>
                     </template>
-                    <!-- Fallback jika reviews kosong -->
-                    <template x-if="!reviews || reviews.length === 0">
-                        <template x-for="t in [{nama:'Budi S.',produk:'Office 365 Family',text:'Aktivasi langsung berhasil! Recommended banget buat yg butuh Office.'},{nama:'Rina A.',produk:'Windows 11 Pro',text:'Harga terjangkau, proses cepat dan CS nya responsif.'},{nama:'Deni P.',produk:'Adobe Creative Cloud',text:'Udah langganan 2 tahun, selalu memuaskan. Original & legal.'},{nama:'Sari W.',produk:'Office 365 Web',text:'Pertama kali beli di sini, ternyata mudah banget prosesnya!'},{nama:'Fajar R.',produk:'Microsoft Project',text:'Aktivasi dalam 5 menit setelah bayar. Sangat direkomendasikan.'},{nama:'Lina M.',produk:'Office 365 Family',text:'Keluarga senang bisa pakai Office di 6 device sekaligus!'},{nama:'Arif T.',produk:'Windows 10 Pro',text:'Harga jauh lebih murah dari toko resmi, tapi produknya sama originalnya!'},{nama:'Dewi K.',produk:'Adobe Creative Cloud',text:'CS sangat helpful, dibantu sampai berhasil install. Puas banget!'},{nama:'Hendra W.',produk:'Windows 11 Pro',text:'Prosesnya cepat banget, lisensinya langsung aktif. Gak perlu ribet sama sekali.'},{nama:'Ayu R.',produk:'Office 365 Web',text:'Sudah 3x beli di sini, selalu aman dan original. Harga juga paling murah!'}]" :key="t.nama">
-                            <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default">
-                                <div class="flex items-center gap-1 mb-3">
-                                    <template x-for="i in 5" :key="i">
-                                        <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                    </template>
-                                </div>
-                                <p class="text-sm text-gray-600 leading-relaxed mb-4" x-text="t.text"></p>
-                                <div class="flex items-center gap-2.5">
-                                    <div class="w-8 h-8 rounded-full gradient-card flex items-center justify-center text-white text-xs font-bold flex-none" x-text="t.nama[0]"></div>
-                                    <div>
-                                        <div class="text-xs font-bold text-gray-800" x-text="t.nama"></div>
-                                        <div class="text-[10px] text-gray-400" x-text="t.produk"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                    </template>
                 </div>
                 <!-- Stats bar — merged -->
                 <div class="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4 text-center border-t border-gray-100 pt-8">
