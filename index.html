@@ -9593,6 +9593,8 @@ function serabutStore() {
             if (this.adminOverlay)         { this.adminOverlay         = false; document.body.style.overflow = ''; }
             if (this.profileOverlay)       { this.profileOverlay       = false; document.body.style.overflow = ''; }
             if (this.productDetailOverlay) { this.productDetailOverlay = false; document.body.style.overflow = ''; history.replaceState(null, '', '/'); }
+            // Pastikan home page aktif saat scroll ke section home
+            if (this.activePage !== 'home') this.activePage = 'home';
             // Set active immediately; lock observer for 800ms so smooth-scroll doesn't revert it
             this.currentSection    = sectionId;
             this.catalogInView     = sectionId === 'catalog';
@@ -9729,6 +9731,7 @@ function serabutStore() {
                 } else {
                     this.productDetailOverlay = false;
                     document.body.style.overflow = '';
+                    this.activePage = 'home';
                 }
             });
         },
