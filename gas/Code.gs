@@ -1530,16 +1530,23 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
     msNama || '-', username || '-', microsoftEmail || '-', emailAktif || '-', emailReminder || '-'
   ]);
 
-  const varLower    = (varian || '').toLowerCase();
-  const isFamily    = varLower.includes('family');
-  const isWeb       = varLower.includes('web');
+  const varLower     = (varian || '').toLowerCase();
+  const produkLower  = (produk || '').toLowerCase();
+  const isFamily     = varLower.includes('family');
+  const isRenewal    = produkLower.includes('renewal');
+  const isWeb        = varLower.includes('web') && !isRenewal;
+  const isAdobe      = produkLower.includes('adobe');
   const reminderLine = emailReminder ? `\nEmail Reminder: ${emailReminder}` : '';
 
   let groupMsg;
   if (isFamily) {
     groupMsg = `*ORDER 365 FAMILY: ${produk}*\nOrder ID: *${orderId}*\nEmail Microsoft (invite): *${microsoftEmail || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNama Pembeli: ${userNama}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
+  } else if (isRenewal) {
+    groupMsg = `*ORDER RENEWAL: ${produk}*\nOrder ID: *${orderId}*\nEmail MS (akun lama): *${microsoftEmail || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNama Pembeli: ${userNama}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
   } else if (isWeb) {
     groupMsg = `*ORDER WEB: ${produk}*\nOrder ID: *${orderId}*\nNama MS: ${msNama || '-'}\nUsername Request: *${username || '-'}*\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nDurasi: ${masaAktif || '-'}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
+  } else if (isAdobe) {
+    groupMsg = `*ORDER ADOBE: ${produk}*\nOrder ID: *${orderId}*\nEmail Adobe: *${emailAktif || '-'}*\nDurasi: ${masaAktif || '-'}\nNama Pembeli: ${userNama}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
   } else {
     groupMsg = `*ORDER BARU: ${produk}*\nOrder ID: *${orderId}*\nVarian: ${varian || '-'}\nDurasi: ${masaAktif || '-'}\nNama: ${userNama}\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
   }
@@ -1999,16 +2006,18 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
       it.msNama||'-', it.username||'-', it.microsoftEmail||'-', it.emailAktif||'-', '-'
     ]);
 
-    const varLower  = (it.varian || '').toLowerCase();
-    const isFamily  = varLower.includes('family');
-    const isWeb     = varLower.includes('web');
-    const produkCat = (it.produk || '').toLowerCase();
-    const isAdobe   = produkCat.includes('adobe');
+    const varLower   = (it.varian || '').toLowerCase();
+    const produkCat  = (it.produk || '').toLowerCase();
+    const isFamily   = varLower.includes('family');
+    const isRenewal  = produkCat.includes('renewal');
+    const isWeb      = varLower.includes('web') && !isRenewal;
+    const isAdobe    = produkCat.includes('adobe');
     let line = `*[${idx+1}] ${it.produk}${it.varian && it.varian!=='-' ? ' - '+it.varian : ''}${it.masaAktif && it.masaAktif!=='-' ? ' ('+it.masaAktif+')' : ''}*`;
-    if (isFamily  && it.microsoftEmail) line += `\n   > MS Email: ${it.microsoftEmail}`;
+    if (isFamily  && it.microsoftEmail) line += `\n   > MS Email (invite): ${it.microsoftEmail}`;
+    if (isRenewal && it.microsoftEmail) line += `\n   > Email MS (akun lama): ${it.microsoftEmail}`;
     if (isWeb && it.msNama)             line += `\n   > Nama MS: ${it.msNama}`;
     if (isWeb && it.username)           line += `\n   > Username: ${it.username}`;
-    if (isAdobe && it.adobeEmail)       line += `\n   > Adobe: ${it.adobeEmail}`;
+    if (isAdobe && it.adobeEmail)       line += `\n   > Email Adobe: ${it.adobeEmail}`;
     if (it.emailAktif)                  line += `\n   > Email Aktif: ${it.emailAktif}`;
     line += `\n   > No WA: ${userWa || '-'}`;
     line += `\n   > Harga: Rp ${hargaNum.toLocaleString('id-ID')}`;
@@ -2399,22 +2408,31 @@ function confirmPayment({ orderId }) {
     const username  = String(first[usrCol]  || '');
     const msEmail   = String(first[msEmCol] || '');
     const emailAktif= String(first[eaCol]   || '');
-    const varLower  = varian.toLowerCase();
-    const isFamily  = varLower.includes('family');
-    const isWeb     = varLower.includes('web');
+    const varLower   = varian.toLowerCase();
+    const produkLow  = produk.toLowerCase();
+    const isFamily   = varLower.includes('family');
+    const isRenewal  = produkLow.includes('renewal');
+    const isWeb      = varLower.includes('web') && !isRenewal;
+    const isAdobe    = produkLow.includes('adobe');
 
     productName = produk + (varian !== '-' ? ' ' + varian : '');
     const hargaFmt = harga.toLocaleString('id-ID');
 
     if (isFamily) {
       productName = produk;
-      groupMsg = `ORDER: *${produk}*\nOrder ID: ${orderId}\nEmail Microsoft (invite): ${msEmail || '-'}\nEmail Aktif: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNama Pembeli: ${userNama}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
+      groupMsg = `ORDER 365 FAMILY: *${produk}*\nOrder ID: ${orderId}\nEmail Microsoft (invite): ${msEmail || '-'}\nEmail Aktif: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNama Pembeli: ${userNama}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
+    } else if (isRenewal) {
+      productName = produk;
+      groupMsg = `ORDER RENEWAL: *${produk}*\nOrder ID: ${orderId}\nEmail MS (akun lama): ${msEmail || '-'}\nEmail Aktif: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNama Pembeli: ${userNama}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
     } else if (isWeb) {
       productName = produk;
-      groupMsg = `ORDER: *${produk}*\nOrder ID: ${orderId}\nNama MS: ${msNama || '-'}\nUsername Request: ${username || '-'}\nEmail Aktif: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
+      groupMsg = `ORDER WEB: *${produk}*\nOrder ID: ${orderId}\nNama MS: ${msNama || '-'}\nUsername Request: ${username || '-'}\nEmail Aktif: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
+    } else if (isAdobe) {
+      productName = produk;
+      groupMsg = `ORDER ADOBE: *${produk}*\nOrder ID: ${orderId}\nEmail Adobe: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNama Pembeli: ${userNama}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
     } else {
       productName = produk + (varian !== '-' ? ' ' + varian : '');
-      groupMsg = `ORDER: *${produk}*\nOrder ID: ${orderId}\nProduk: ${produk}${varian !== '-' ? ' - '+varian : ''}\nEmail Aktif: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNama: ${userNama}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
+      groupMsg = `ORDER BARU: *${produk}*\nOrder ID: ${orderId}\nProduk: ${produk}${varian !== '-' ? ' - '+varian : ''}\nEmail Aktif: ${emailAktif || '-'}\nDurasi: ${masaAktif}\nNama: ${userNama}\nNo WA: ${userWa}\nStatus: *Paid*\nNext: Please proceed!`;
     }
   } else {
     // Cart order — multiple items
@@ -2428,22 +2446,27 @@ function confirmPayment({ orderId }) {
       const varian    = String(row[varCol]  || '-');
       const masaAktif = String(row[masCol]  || '-');
       const harga     = Number(row[hrgCol]  || 0);
-      const varLower  = varian.toLowerCase();
-      const isFamily  = varLower.includes('family');
-      const isWeb     = varLower.includes('web');
-      const msEmail   = String(row[msEmCol] || '');
-      const username  = String(row[usrCol]  || '');
-      const msNama    = String(row[nmMSCol] || '');
-      const emailAktif= String(row[eaCol]   || '');
+      const varLower   = varian.toLowerCase();
+      const produkLow  = produk.toLowerCase();
+      const isFamily   = varLower.includes('family');
+      const isRenewal  = produkLow.includes('renewal');
+      const isWeb      = varLower.includes('web') && !isRenewal;
+      const isAdobe    = produkLow.includes('adobe');
+      const msEmail    = String(row[msEmCol] || '');
+      const username   = String(row[usrCol]  || '');
+      const msNama     = String(row[nmMSCol] || '');
+      const emailAktif = String(row[eaCol]   || '');
 
       totalHarga += harga;
       produkNames.push(produk);
 
       let line = `[${idx+1}] *${produk}${varian !== '-' ? ' - '+varian : ''}${masaAktif !== '-' ? ' ('+masaAktif+')' : ''}*`;
-      if (isFamily && msEmail && msEmail !== '-')  line += `\n   Email MS: ${msEmail}`;
-      if (isWeb && msNama && msNama !== '-')        line += `\n   Nama MS: ${msNama}`;
-      if (isWeb && username && username !== '-')    line += `\n   Username: ${username}`;
-      if (emailAktif && emailAktif !== '-')         line += `\n   Email Aktif: ${emailAktif}`;
+      if (isFamily  && msEmail && msEmail !== '-')    line += `\n   Email MS (invite): ${msEmail}`;
+      if (isRenewal && msEmail && msEmail !== '-')    line += `\n   Email MS (akun lama): ${msEmail}`;
+      if (isWeb     && msNama && msNama !== '-')      line += `\n   Nama MS: ${msNama}`;
+      if (isWeb     && username && username !== '-')  line += `\n   Username: ${username}`;
+      if (isAdobe   && emailAktif && emailAktif !== '-') line += `\n   Email Adobe: ${emailAktif}`;
+      else if (emailAktif && emailAktif !== '-')      line += `\n   Email Aktif: ${emailAktif}`;
       waLines.push(line);
     });
 
@@ -3512,13 +3535,21 @@ function iPaymuAdminSyncOrders(params) {
           const emailAkt  = eaCol    >= 0 ? String(row[eaCol]    || '') : '';
           const emailRem  = erCol    >= 0 ? String(row[erCol]    || '') : '';
 
-          const hargaFmt = 'Rp ' + harga.toLocaleString('id-ID');
+          const hargaFmt  = 'Rp ' + harga.toLocaleString('id-ID');
+          const varL      = varian.toLowerCase();
+          const prodL     = produk.toLowerCase();
+          const _isFamily  = varL.includes('family');
+          const _isRenewal = prodL.includes('renewal');
+          const _isWeb     = varL.includes('web') && !_isRenewal;
+          const _isAdobe   = prodL.includes('adobe');
           let detailLines = '';
-          if (msNama)   detailLines += `\nNama MS: ${msNama}`;
-          if (username) detailLines += `\nUsername: ${username}`;
-          if (msEmail)  detailLines += `\nEmail MS: ${msEmail}`;
-          if (emailAkt) detailLines += `\nEmail Aktif: ${emailAkt}`;
-          if (emailRem) detailLines += `\nEmail Reminder: ${emailRem}`;
+          if (_isFamily)                        detailLines += `\nEmail MS (invite): ${msEmail || '-'}`;
+          else if (_isRenewal)                  detailLines += `\nEmail MS (akun lama): ${msEmail || '-'}`;
+          else if (_isWeb && msNama)            detailLines += `\nNama MS: ${msNama}`;
+          if (_isWeb && username)               detailLines += `\nUsername: ${username}`;
+          if (_isAdobe && emailAkt)             detailLines += `\nEmail Adobe: ${emailAkt}`;
+          else if (!_isAdobe && emailAkt)       detailLines += `\nEmail Aktif: ${emailAkt}`;
+          if (emailRem)                         detailLines += `\nEmail Reminder: ${emailRem}`;
 
           const msg = `✅ *PEMBAYARAN BERHASIL*\n` +
             `Order ID: *${orderId}*\n` +
