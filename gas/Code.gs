@@ -447,6 +447,14 @@ function _colIndex(headers, ...names) {
 //  GET CATALOG (public)
 // ────────────────────────────────────────────────────────
 function getCatalog() {
+  // Cache 5 menit di GAS — drastis kurangi latency untuk request berulang
+  const cache    = CacheService.getScriptCache();
+  const cacheKey = 'getCatalog_v1';
+  const cached   = cache.get(cacheKey);
+  if (cached) {
+    try { return JSON.parse(cached); } catch (_) {}
+  }
+
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
   if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
 
@@ -485,7 +493,9 @@ function getCatalog() {
     });
   }
 
-  return { success: true, data: products };
+  const result = { success: true, data: products };
+  try { cache.put(cacheKey, JSON.stringify(result), 300); } catch (_) {}
+  return result;
 }
 
 // ────────────────────────────────────────────────────────
@@ -579,6 +589,7 @@ function addProduct({ adminEmail, adminToken, nama, varian, masaAktif, harga, li
     sheet.getRange(sheet.getLastRow(), 15).setValue(String(benefits).trim());
   }
 
+  CacheService.getScriptCache().remove('getCatalog_v1');
   _logAdminAction(adminEmail, 'addProduct', { nama, varian, masaAktif, harga, kategori });
   return { success: true };
 }
@@ -620,6 +631,7 @@ function updateProduct({ adminEmail, adminToken, rowIndex, nama, varian, masaAkt
     sheet.getRange(row, cBen >= 0 ? cBen + 1 : 15).setValue(String(benefits).trim());
   }
 
+  CacheService.getScriptCache().remove('getCatalog_v1');
   _logAdminAction(adminEmail, 'updateProduct', { rowIndex, nama, varian, masaAktif, harga, aktif, kategori });
   return { success: true };
 }
@@ -638,6 +650,7 @@ function updateProductStock({ adminEmail, adminToken, rowIndex, stok }) {
   sheet.getRange(Number(rowIndex), 7).setValue(
     (stok === '' || stok === null || stok === undefined) ? '' : Number(stok)
   );
+  CacheService.getScriptCache().remove('getCatalog_v1');
   return { success: true };
 }
 
@@ -653,6 +666,7 @@ function updateProductAktif({ adminEmail, adminToken, rowIndex, aktif }) {
   if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
 
   sheet.getRange(Number(rowIndex), 6).setValue(aktif === 'true' || aktif === true);
+  CacheService.getScriptCache().remove('getCatalog_v1');
   return { success: true };
 }
 
@@ -668,6 +682,7 @@ function saveProductBenefits({ adminEmail, adminToken, rowIndex, benefits }) {
   if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
 
   sheet.getRange(Number(rowIndex), 15).setValue(String(benefits || '[]').trim());
+  CacheService.getScriptCache().remove('getCatalog_v1');
   return { success: true };
 }
 
@@ -683,6 +698,7 @@ function deleteProduct({ adminEmail, adminToken, rowIndex }) {
   if (!sheet) return { success: false, error: 'Tab Catalog tidak ditemukan' };
 
   sheet.deleteRow(Number(rowIndex));
+  CacheService.getScriptCache().remove('getCatalog_v1');
   _logAdminAction(adminEmail, 'deleteProduct', { rowIndex });
   return { success: true };
 }
@@ -1329,11 +1345,10 @@ function login({ email, password, passwordLegacy }) {
   const sheet = ss.getSheetByName(TAB_USERS);
   if (!sheet) return { success: false, error: 'Belum ada user terdaftar' };
 
-  ensureUserSheetHeaders(sheet); // pastikan kolom Session Token & Expiry ada
-
   const data    = sheet.getDataRange().getValues();
   const headers = data[0].map(h => String(h).toLowerCase().trim());
   const tokCol  = _colIndex(headers, 'session token', 'sessiontoken');
+  const expCol  = _colIndex(headers, 'session token expiry', 'sessiontokenexpiry');
   const saltCol = _colIndex(headers, 'salt');
   const emailNorm = email.toLowerCase().trim();
 
@@ -1376,14 +1391,18 @@ function login({ email, password, passwordLegacy }) {
 
     if (!matched) return { success: false, error: 'Password salah' };
 
-    // Generate session token
-    const sessionToken = _generateSessionToken();
-    const tokenExpiry  = new Date(Date.now() + SESSION_EXPIRY_DAYS * 86400000).toISOString();
-    if (tokCol >= 0) sheet.getRange(i + 1, tokCol + 1).setValue(sessionToken);
-    // [SEC] Tulis expiry token
-    const expHeaders2 = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 17)).getValues()[0];
-    const expCol2     = _colIndex(expHeaders2.map(h => String(h).toLowerCase().trim()), 'session token expiry', 'sessiontokenexpiry');
-    sheet.getRange(i + 1, expCol2 >= 0 ? expCol2 + 1 : 17).setValue(tokenExpiry);
+    // Generate session token — tulis token+expiry sekaligus dalam 1 operasi
+    const sessionToken  = _generateSessionToken();
+    const tokenExpiry   = new Date(Date.now() + SESSION_EXPIRY_DAYS * 86400000).toISOString();
+    const tokColFinal   = tokCol >= 0 ? tokCol + 1 : 15; // col O default
+    const expColFinal   = expCol >= 0 ? expCol + 1 : 17; // col Q default
+    // Tulis token & expiry dalam satu batch jika kolom bersebelahan, singl otherwise
+    if (expColFinal === tokColFinal + 1) {
+      sheet.getRange(i + 1, tokColFinal, 1, 2).setValues([[sessionToken, tokenExpiry]]);
+    } else {
+      sheet.getRange(i + 1, tokColFinal).setValue(sessionToken);
+      sheet.getRange(i + 1, expColFinal).setValue(tokenExpiry);
+    }
 
     const role = _getUserRole(data, i);
     return {
@@ -4710,4 +4729,70 @@ function requestDeleteAccount({ email, nama }) {
   });
 
   return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  AUTO-CANCEL EXPIRED PENDING ORDERS (>24 jam)
+//  Dijalankan via time-driven trigger setiap 1 jam.
+//  Install trigger: jalankan setupAutoCancelTrigger() SATU KALI dari GAS editor.
+// ────────────────────────────────────────────────────────
+function autoCancelExpiredOrders() {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
+  if (!sheet) return;
+
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const dateCol = (function() {
+    var idx = headers.indexOf('tanggal'); if (idx >= 0) return idx;
+    idx = headers.indexOf('date'); if (idx >= 0) return idx;
+    return 1; // fallback kolom B
+  })();
+  const stCol   = 9; // kolom J = Status (0-indexed)
+  const pmCol   = (function() {
+    var idx = headers.indexOf('payment method'); if (idx >= 0) return idx;
+    idx = headers.indexOf('payment_method'); if (idx >= 0) return idx;
+    return -1;
+  })();
+
+  const now      = new Date();
+  const LIMIT_MS = 24 * 60 * 60 * 1000; // 24 jam
+  let   cancelled = 0;
+
+  for (var i = 1; i < data.length; i++) {
+    const row    = data[i];
+    if (!row[0]) continue;                          // baris kosong
+    const status = String(row[stCol] || '').trim();
+    if (status !== 'Pending') continue;
+
+    // Jika sudah ada paymentMethod (iPaymu/Xendit sudah dibayar tapi belum di-update) → skip
+    if (pmCol >= 0 && String(row[pmCol] || '').trim()) continue;
+
+    const rawDate = row[dateCol];
+    if (!rawDate) continue;
+    const orderDate = rawDate instanceof Date ? rawDate : new Date(rawDate);
+    if (isNaN(orderDate)) continue;
+
+    if ((now - orderDate) >= LIMIT_MS) {
+      sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan');
+      cancelled++;
+      Logger.log('Auto-cancel: ' + row[0] + ' (order: ' + orderDate + ')');
+    }
+  }
+
+  if (cancelled > 0) SpreadsheetApp.flush();
+  Logger.log('autoCancelExpiredOrders selesai — ' + cancelled + ' order dibatalkan');
+  return cancelled;
+}
+
+// Jalankan SATU KALI dari GAS editor untuk install time-driven trigger setiap 1 jam
+function setupAutoCancelTrigger() {
+  // Hapus trigger lama jika ada
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (t.getHandlerFunction() === 'autoCancelExpiredOrders') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('autoCancelExpiredOrders')
+    .timeBased()
+    .everyHours(1)
+    .create();
+  Logger.log('Trigger autoCancelExpiredOrders setiap 1 jam berhasil dipasang.');
 }

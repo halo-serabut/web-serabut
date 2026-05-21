@@ -3064,28 +3064,23 @@
                 <!-- Ubah Status -->
                 <div>
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 px-1">Ubah Status</p>
-                    <template x-if="adminOrderDetail && adminStatusConfirm && adminStatusConfirm.orderId===adminOrderDetail.orderId">
-                        <div class="flex items-center gap-2">
-                            <select x-model="adminStatusConfirm.payMethod" class="flex-1 text-sm border border-brand-300 rounded-xl px-3 py-2.5 focus:outline-none bg-white text-gray-700">
-                                <option value="">Metode Bayar...</option>
-                                <template x-for="pm in (adminPaymentList.filter(p=>p.active).length?adminPaymentList.filter(p=>p.active).map(p=>p.label):['Transfer Bank','QRIS','Cash','iPaymu','COD','Lainnya'])" :key="pm">
-                                    <option :value="pm" x-text="pm"></option>
-                                </template>
-                            </select>
-                            <button @click="if(adminStatusConfirm.payMethod){adminUpdateGroupStatus(adminOrderDetail,'Selesai',adminStatusConfirm.payMethod);adminStatusConfirm=null;adminOrderDetail=null}else{_adminShowMsg('Pilih metode pembayaran dulu')}"
-                                    class="px-4 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold">OK</button>
-                            <button @click="adminStatusConfirm=null" class="px-3 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-bold">Batal</button>
-                        </div>
-                    </template>
-                    <template x-if="!adminStatusConfirm || !adminOrderDetail || adminStatusConfirm.orderId!==adminOrderDetail.orderId">
-                        <select @change="if($event.target.value==='Selesai'){adminStatusConfirm={orderId:adminOrderDetail.orderId,g:adminOrderDetail,payMethod:''}}else{adminUpdateGroupStatus(adminOrderDetail,$event.target.value);adminOrderDetail=null}; $event.target.value=''"
-                                class="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700">
+                    <div class="flex items-center gap-2">
+                        <select x-model="adminStatusPick"
+                                :disabled="adminStatusSaving"
+                                class="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2.5 focus:outline-none focus:border-brand-400 bg-white text-gray-700 disabled:opacity-50">
                             <option value="">Pilih status baru...</option>
                             <template x-for="st in ['Pending','Diproses','Aktif','Selesai','Dibatalkan']" :key="st">
                                 <option :value="st" x-text="st"></option>
                             </template>
                         </select>
-                    </template>
+                        <button x-show="adminStatusPick"
+                                :disabled="adminStatusSaving"
+                                @click="adminStatusSaving=true; adminUpdateGroupStatus(adminOrderDetail,adminStatusPick,adminOrderDetail?.items[0]?.paymentMethod||'').finally(()=>{adminStatusSaving=false;adminStatusPick='';adminOrderDetail=null})"
+                                class="flex items-center gap-1.5 px-4 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold disabled:opacity-60 transition-all active:scale-95 flex-shrink-0">
+                            <svg x-show="adminStatusSaving" class="w-4 h-4 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                            <span x-text="adminStatusSaving ? 'Menyimpan...' : 'Simpan'"></span>
+                        </button>
+                    </div>
                 </div>
 
             </div>
@@ -7947,6 +7942,8 @@ function serabutStore() {
         adminPayMethodEdit:   null,
         adminPayMethodVal:    '',
         adminPayMethodSaving: null,
+        adminStatusPick:      '',
+        adminStatusSaving:    false,
         adminOrderSearch:   '',
         adminOrdersPerPage: 10,
         adminEditProduct: null,
