@@ -6126,7 +6126,9 @@
 
             <!-- Error -->
             <div x-show="cartAddError" class="text-xs text-red-500 font-semibold bg-red-50 px-3 py-2 rounded-xl" x-text="cartAddError"></div>
-
+        </div>
+        <!-- Footer — fixed di bawah modal -->
+        <div class="px-5 pb-5 pt-3 flex-none border-t border-gray-100">
             <button @click="confirmAddToCart()" class="w-full gradient-card text-white font-black py-3.5 rounded-2xl text-sm active:scale-95 transition-all flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 Tambahkan ke Keranjang
@@ -7133,22 +7135,22 @@
             </template>
 
             <div x-show="orderExtraError" class="text-red-500 text-xs px-1 font-medium" x-text="orderExtraError"></div>
-        </div>
-
-        <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-4 flex gap-2">
-            <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <p class="text-xs text-amber-700">Setelah pesan, tim kami akan menghubungi kamu via WhatsApp untuk proses pesanan.</p>
-        </div>
-
-        <div x-show="orderError" class="bg-red-50 text-red-600 text-xs px-3 py-2.5 rounded-xl mb-3" x-text="orderError"></div>
-
-        <button @click="!orderLoading && submitOrder()" :class="orderLoading?'opacity-75 cursor-not-allowed':'active:scale-95'" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all flex items-center justify-center gap-2 shadow-md mb-2">
-            <svg x-show="orderLoading" class="animate-spin w-4 h-4 flex-none" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-            <svg x-show="!orderLoading" class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-            <span x-text="orderLoading?'Memproses...':'Konfirmasi Pesanan'"></span>
-        </button>
-        <button @click="orderModal=false" class="w-full text-center text-gray-400 text-sm py-2.5 hover:text-gray-600 transition-colors">Batal</button>
         </div><!-- end scrollable -->
+
+        <!-- Footer — always visible -->
+        <div class="px-5 pb-5 pt-3 flex-none border-t border-gray-100 space-y-2">
+            <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2">
+                <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <p class="text-xs text-amber-700">Setelah pesan, tim kami akan menghubungi kamu via WhatsApp untuk proses pesanan.</p>
+            </div>
+            <div x-show="orderError" class="bg-red-50 text-red-600 text-xs px-3 py-2.5 rounded-xl" x-text="orderError"></div>
+            <button @click="!orderLoading && submitOrder()" :class="orderLoading?'opacity-75 cursor-not-allowed':'active:scale-95'" class="w-full gradient-card text-white font-black py-4 rounded-2xl text-base transition-all flex items-center justify-center gap-2 shadow-md">
+                <svg x-show="orderLoading" class="animate-spin w-4 h-4 flex-none" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <svg x-show="!orderLoading" class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                <span x-text="orderLoading?'Memproses...':'Konfirmasi Pesanan'"></span>
+            </button>
+            <button @click="orderModal=false" class="w-full text-center text-gray-400 text-sm py-2 hover:text-gray-600 transition-colors">Batal</button>
+        </div>
     </div>
 </div>
 
