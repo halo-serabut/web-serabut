@@ -5957,7 +5957,7 @@
             </button>
         </div>
 
-        <div x-show="cart.length===0" class="flex-1 flex flex-col items-center justify-center gap-4 px-8 pb-16 text-center">
+        <div x-show="cart.length===0" class="flex-1 flex flex-col items-center justify-center gap-4 px-8 pb-8 text-center">
             <div class="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center">
                 <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             </div>
@@ -6014,7 +6014,7 @@
             </template>
         </div>
 
-        <div x-show="cart.length>0" class="flex-none border-t border-gray-100 px-5 pt-4 pb-20 md:pb-4 bg-white space-y-3">
+        <div x-show="cart.length>0" class="flex-none border-t border-gray-100 px-5 pt-4 pb-6 md:pb-4 bg-white space-y-3">
             <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-500">Total (<span x-text="cartCount"></span> item)</span>
                 <span class="font-black text-gray-900 text-lg" x-text="formatPrice(cartTotal)"></span>
@@ -6128,7 +6128,7 @@
             <div x-show="cartAddError" class="text-xs text-red-500 font-semibold bg-red-50 px-3 py-2 rounded-xl" x-text="cartAddError"></div>
         </div>
         <!-- Footer — fixed di bawah modal -->
-        <div class="px-5 pt-3 pb-20 md:pb-5 flex-none border-t border-gray-100">
+        <div class="px-5 pt-3 pb-8 md:pb-5 flex-none border-t border-gray-100">
             <button @click="confirmAddToCart()" class="w-full gradient-card text-white font-black py-3.5 rounded-2xl text-sm active:scale-95 transition-all flex items-center justify-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 Tambahkan ke Keranjang
@@ -6306,7 +6306,7 @@
                                 <span>Konfirmasi Pesanan</span>
                             </template>
                         </button>
-                        <p class="text-[11px] text-gray-400 text-center pb-16 md:pb-0">Tim kami akan menghubungi kamu via WhatsApp</p>
+                        <p class="text-[11px] text-gray-400 text-center pb-8 md:pb-0">Tim kami akan menghubungi kamu via WhatsApp</p>
                     </div>
                 </div>
             </template>
@@ -6404,7 +6404,7 @@
 ══════════════════════════════════════════════════════ -->
 <div x-show="productModal" class="fixed inset-0 z-[100] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="closeProductModal()"></div>
-    <div class="relative bg-white w-full md:max-w-lg md:rounded-3xl rounded-t-3xl max-h-[calc(100vh-4rem)] md:max-h-[92vh] overflow-y-auto modal-enter pb-16 md:pb-0">
+    <div class="relative bg-white w-full md:max-w-lg md:rounded-3xl rounded-t-3xl max-h-[calc(100vh-4rem)] md:max-h-[92vh] overflow-y-auto modal-enter pb-8 md:pb-0">
         <!-- Handle -->
         <div class="md:hidden flex justify-center pt-3 pb-1 sticky top-0 bg-white z-10"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
 
@@ -6556,7 +6556,7 @@
 ══════════════════════════════════════════════════════ -->
 <div x-show="authModal" class="fixed inset-0 z-[400] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeAuthModal()"></div>
-    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter max-h-[calc(100vh-4rem)] md:max-h-[92vh] overflow-y-auto pb-16 md:pb-0"
+    <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl modal-enter max-h-[calc(100vh-4rem)] md:max-h-[92vh] overflow-y-auto pb-8 md:pb-0"
          x-data="{swipeY:0,swipeStart:0}"
          @touchstart.passive="swipeStart=$event.touches[0].clientY;swipeY=0"
          @touchmove.passive="swipeY=Math.max(0,$event.touches[0].clientY-swipeStart);$el.style.transform=swipeY>0?'translateY('+swipeY+'px)':''"
@@ -6683,7 +6683,7 @@
 ══════════════════════════════════════════════════════ -->
 <div x-show="resetPwModal" class="fixed inset-0 z-[220] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="resetPwModal=false"></div>
-    <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 pt-6 pb-20 md:pb-6 modal-enter">
+    <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 pt-6 pb-8 md:pb-6 modal-enter">
         <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
 
         <h3 class="font-black text-gray-900 text-lg mb-1">Reset Password</h3>
@@ -6727,7 +6727,7 @@
 <div x-show="forgotPwModal" class="fixed inset-0 z-[225] flex items-end md:items-center justify-center"
      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="forgotPwModal=false"></div>
-    <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 pt-6 pb-20 md:pb-6 modal-enter">
+    <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 pt-6 pb-8 md:pb-6 modal-enter">
         <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
 
         <!-- Header -->
@@ -6836,7 +6836,7 @@
 ══════════════════════════════════════════════════════ -->
 <div x-show="otpModal" class="fixed inset-0 z-[210] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-    <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 pt-6 pb-20 md:pb-6 modal-enter">
+    <div class="relative bg-white w-full md:max-w-sm md:rounded-3xl rounded-t-3xl px-5 pt-6 pb-8 md:pb-6 modal-enter">
         <div class="md:hidden flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
 
         <!-- Icon -->
@@ -7138,7 +7138,7 @@
         </div><!-- end scrollable -->
 
         <!-- Footer — always visible -->
-        <div class="px-5 pt-3 pb-20 md:pb-5 flex-none border-t border-gray-100 space-y-2">
+        <div class="px-5 pt-3 pb-8 md:pb-5 flex-none border-t border-gray-100 space-y-2">
             <div class="bg-amber-50 border border-amber-100 rounded-xl p-3 flex gap-2">
                 <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <p class="text-xs text-amber-700">Setelah pesan, tim kami akan menghubungi kamu via WhatsApp untuk proses pesanan.</p>
