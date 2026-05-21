@@ -158,6 +158,16 @@
 
     <style>
         [x-cloak] { display: none !important; }
+        /* Remove tap delay everywhere */
+        * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        /* Prevent bounce on main page */
+        html, body { overscroll-behavior-y: none; }
+        /* Prevent long-press context menu on images */
+        img { -webkit-touch-callout: none; }
+        /* Overscroll contain on bottom sheets */
+        .overflow-y-auto[class*="max-h"] { overscroll-behavior: contain; }
+        /* User-select none on nav and buttons */
+        nav, button, .bottom-nav { user-select: none; -webkit-user-select: none; }
         .gradient-hero  { background: linear-gradient(135deg, #7F1D1D 0%, #DC2626 60%, #EF4444 100%); }
         .gradient-card  { background: linear-gradient(135deg, #DC2626, #EF4444); }
         .card-hover     { transition: transform .18s ease, box-shadow .18s ease; }
@@ -6374,7 +6384,7 @@
 <nav class="md:hidden fixed bottom-0 left-0 right-0 z-[350] bg-white border-t border-gray-100 pb-safe">
     <div class="h-16 flex">
         <template x-for="item in navItems.filter(i => i.mobile)" :key="item.id">
-            <button @click="scrollTo(item.scrollTarget || item.id)" :class="currentSection===(item.scrollTarget||item.id)?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
+            <button @click="if(navigator.vibrate) navigator.vibrate(8); scrollTo(item.scrollTarget || item.id)" :class="currentSection===(item.scrollTarget||item.id)?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors active:scale-95">
                 <div x-show="currentSection===(item.scrollTarget||item.id)" class="w-1.5 h-1.5 bg-brand-500 rounded-full -mt-0.5 mb-0.5"></div>
                 <div x-html="item.icon" class="w-5 h-5"></div>
                 <span class="text-[10px] font-semibold leading-none" x-text="item.label"></span>
@@ -9027,6 +9037,7 @@ function serabutStore() {
             if (type === 'family'  && !this.cartAddExtra.microsoftEmail.trim()) { this.cartAddError = 'Email Microsoft wajib diisi'; return; }
             if (type === 'adobe'   && !this.cartAddExtra.adobeEmail.trim())     { this.cartAddError = 'Email akun Adobe wajib diisi'; return; }
             if (type === 'license' && !this.cartAddExtra.emailAktif.trim())     { this.cartAddError = 'Email penerima wajib diisi'; return; }
+            if (navigator.vibrate) navigator.vibrate(8);
             this._pushToCart(product, variant, { ...this.cartAddExtra });
             this.cartAddModal = false;
         },
@@ -9253,6 +9264,7 @@ function serabutStore() {
         },
         async submitOrder() {
             if(!this.selectedVariant) return;
+            if (navigator.vibrate) navigator.vibrate(8);
             this.orderExtraError='';
             const type = this.orderExtraType;
             const qty  = this.orderExtra.qty || 1;
