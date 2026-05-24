@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Serabut Store — Platform Produk Digital Terpercaya</title>
-    <meta name="description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat.">
+    <title>Serabut Store — Software Original Microsoft Office 365, Adobe, Windows</title>
+    <meta name="description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat 5–30 menit, 10.000+ pelanggan puas. Serabut.id">
     <meta name="theme-color" content="#DC2626">
-    <meta name="keywords" content="serabut store, serabut, beli software original, microsoft office 365 murah, adobe creative cloud murah, windows original, software original indonesia, lisensi software murah, office 365 personal, office 365 family, serabut.id">
-    <meta name="robots" content="index, follow">
+    <meta name="msapplication-TileColor" content="#DC2626">
+    <meta name="keywords" content="serabut store, microsoft office 365 murah, adobe creative cloud murah, windows original, software original indonesia, office 365 personal, office 365 family, lisensi software murah, serabut.id">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="author" content="Serabut Store">
+    <meta name="application-name" content="Serabut Store">
     <!-- [SEC-18] Security headers via meta tags — HSTS & X-Frame-Options wajib via Cloudflare HTTP headers -->
     <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self'; frame-src 'self' https://payment.xendit.co https://checkout.xendit.co https://payment.ipaymu.com https://my.ipaymu.com https://accounts.google.com https://*.google.com;">
     <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -34,16 +36,20 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://serabut.id/">
     <meta property="og:site_name" content="Serabut Store">
-    <meta property="og:title" content="Serabut Store — Software Original Terpercaya">
-    <meta property="og:description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat, terpercaya.">
-    <meta property="og:image" content="https://serabut.id/logo.png">
+    <meta property="og:title" content="Serabut Store — Software Original Microsoft Office 365, Adobe, Windows">
+    <meta property="og:description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses 5–30 menit.">
+    <meta property="og:image" content="https://serabut.id/icon-512.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:image:alt" content="Serabut Store — Software Original Terpercaya">
     <meta property="og:locale" content="id_ID">
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:site" content="@serabutstore">
     <meta name="twitter:title" content="Serabut Store — Software Original Terpercaya">
-    <meta name="twitter:description" content="Beli software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau. Garansi resmi, proses cepat.">
-    <meta name="twitter:image" content="https://serabut.id/logo.png">
+    <meta name="twitter:description" content="Microsoft Office 365, Adobe Creative Cloud, Windows original dengan harga terjangkau. Garansi resmi, proses cepat.">
+    <meta name="twitter:image" content="https://serabut.id/icon-512.png">
 
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
@@ -55,11 +61,14 @@
           "@id": "https://serabut.id/#website",
           "url": "https://serabut.id/",
           "name": "Serabut Store",
-          "description": "Platform jual beli software original terpercaya di Indonesia — Microsoft Office 365, Adobe Creative Cloud, Windows dan lainnya.",
+          "description": "Platform jual beli software original terpercaya di Indonesia — Microsoft Office 365, Adobe Creative Cloud, Windows.",
           "inLanguage": "id",
           "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://serabut.id/?q={search_term_string}",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://serabut.id/?q={search_term_string}"
+            },
             "query-input": "required name=search_term_string"
           }
         },
@@ -67,47 +76,253 @@
           "@type": "Organization",
           "@id": "https://serabut.id/#organization",
           "name": "Serabut Store",
-          "alternateName": ["Serabut", "serabut.id"],
+          "alternateName": ["Serabut", "serabut.id", "Serabut Store Official"],
           "url": "https://serabut.id/",
           "logo": {
             "@type": "ImageObject",
-            "url": "https://serabut.id/logo.png"
+            "@id": "https://serabut.id/#logo",
+            "url": "https://serabut.id/icon-512.png",
+            "contentUrl": "https://serabut.id/icon-512.png",
+            "width": 512,
+            "height": 512,
+            "caption": "Serabut Store"
+          },
+          "image": "https://serabut.id/icon-512.png",
+          "description": "Platform penyedia software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau dan garansi resmi.",
+          "foundingDate": "2019",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Jakarta Selatan",
+            "addressRegion": "DKI Jakarta",
+            "addressCountry": "ID"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+62-888-1500-555",
+            "contactType": "customer service",
+            "availableLanguage": "Indonesian",
+            "hoursAvailable": {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": [
+                "Monday","Tuesday","Wednesday","Thursday",
+                "Friday","Saturday","Sunday"
+              ],
+              "opens": "09:00",
+              "closes": "22:00"
+            }
           },
           "sameAs": [
             "https://linktr.ee/serabutstore",
             "https://shopee.co.id/serabutstore",
             "https://www.tokopedia.com/serabut-store"
-          ],
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "customer service",
-            "availableLanguage": "Indonesian",
-            "hoursAvailable": {
-              "@type": "OpeningHoursSpecification",
-              "opens": "09:00",
-              "closes": "22:00"
-            }
-          }
+          ]
         },
         {
           "@type": "Store",
           "@id": "https://serabut.id/#store",
           "name": "Serabut Store",
-          "description": "Toko software original terpercaya — Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau dan garansi resmi.",
+          "description": "Toko software original — Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau dan garansi resmi.",
           "url": "https://serabut.id/",
-          "image": "https://serabut.id/logo.png",
+          "logo": "https://serabut.id/icon-512.png",
+          "image": "https://serabut.id/icon-512.png",
           "priceRange": "Rp 50.000 - Rp 500.000",
           "currenciesAccepted": "IDR",
-          "paymentAccepted": "Transfer Bank, QRIS",
-          "openingHours": "Mo-Su 09:00-22:00"
+          "paymentAccepted": "Transfer Bank, QRIS, Virtual Account, E-Wallet",
+          "openingHours": "Mo-Su 09:00-22:00",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Jakarta Selatan",
+            "addressRegion": "DKI Jakarta",
+            "addressCountry": "ID"
+          }
         }
       ]
     }
     </script>
 
-    <link rel="preload" href="https://serabut.id/logo.png" as="image" fetchpriority="high">
-    <link rel="icon" type="image/png" href="https://serabut.id/logo.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <!-- FAQPage + ItemList Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Apa perbedaan Office 365 Biasa (Web) dengan Family plan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Office 365 Biasa (Web): Akun Microsoft baru yang kami buatkan khusus untuk kamu, mendukung full Office apps (Word, Excel, PowerPoint, dll) + 100GB OneDrive, bisa dipakai di hingga 5 perangkat. Office 365 Family: Akun existing kamu akan join sebagai member di host kami, full Office apps + 1TB OneDrive pribadi, juga bisa dipakai di hingga 5 perangkat."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Berapa lama proses aktivasi setelah pembayaran?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Pesanan diproses dalam 5–30 menit setelah pembayaran dikonfirmasi, setiap hari 09.00–22.00 WIB. Notifikasi dikirim via WhatsApp & Email."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Apakah lisensi Windows yang dijual berlaku seumur hidup?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ya! Lisensi Windows yang kami jual adalah lisensi digital resmi yang berlaku seumur hidup untuk 1 perangkat. Aktivasi dilakukan via Settings → Activation menggunakan product key yang diberikan."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Apa yang termasuk dalam paket Adobe Creative Cloud?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Paket Adobe CC mencakup akses ke 20+ aplikasi Adobe sesuai paket yang dibeli: Photoshop, Illustrator, Premiere Pro, After Effects, InDesign, Lightroom, XD, dan lainnya. Storage cloud 100GB juga termasuk."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Metode pembayaran apa saja yang tersedia?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Transfer bank (BCA, BNI, BRI, Mandiri), QRIS (GoPay, OVO, Dana, ShopeePay), Virtual Account (instan, 24 jam), Kartu Kredit/Debit Visa & Mastercard, Minimarket (Alfamart & Indomaret)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Apakah produk yang dijual legal dan resmi?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ya. Semua produk adalah lisensi resmi dari vendor (Microsoft, Adobe, dll). Kami beroperasi sebagai reseller software berlisensi. Produk 100% legal untuk keperluan pribadi maupun profesional."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Apa perbedaan Windows 10 dan Windows 11?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Windows 11: Tampilan lebih modern, performa gaming lebih baik (DirectStorage, Auto HDR), keamanan ketat (butuh TPM 2.0). Windows 10: Kompatibel dengan perangkat lama, didukung Microsoft hingga Oktober 2025. Rekomendasi: pilih Windows 11 untuk PC/laptop baru, Windows 10 untuk perangkat lama."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Apakah ada garansi untuk produk yang dibeli?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ya! Semua produk bergaransi sesuai masa aktif. Jika bermasalah karena kesalahan kami (akun tidak aktif, lisensi tidak valid), kami wajib perbaiki atau ganti tanpa biaya tambahan."
+          }
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Produk Software Original Serabut Store",
+      "description": "Daftar software original Microsoft Office 365, Adobe Creative Cloud, Windows dengan harga terjangkau",
+      "url": "https://serabut.id/",
+      "numberOfItems": 8,
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "item": {
+            "@type": "Product",
+            "name": "Microsoft Office 365 Personal (Web)",
+            "description": "Akun Office 365 Personal dengan full akses Word, Excel, PowerPoint, Outlook + 100GB OneDrive. Bisa dipakai di 5 perangkat.",
+            "brand": { "@type": "Brand", "name": "Microsoft" },
+            "url": "https://serabut.id/produk/microsoft-office-365-personal-web",
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "IDR",
+              "price": "80000",
+              "availability": "https://schema.org/InStock",
+              "seller": { "@type": "Organization", "name": "Serabut Store" }
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "item": {
+            "@type": "Product",
+            "name": "Microsoft Office 365 Family",
+            "description": "Office 365 Family dengan 1TB OneDrive pribadi. Join ke akun Family host kami, full Office apps di 5 perangkat.",
+            "brand": { "@type": "Brand", "name": "Microsoft" },
+            "url": "https://serabut.id/produk/microsoft-office-365-family",
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "IDR",
+              "price": "100000",
+              "availability": "https://schema.org/InStock",
+              "seller": { "@type": "Organization", "name": "Serabut Store" }
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "item": {
+            "@type": "Product",
+            "name": "Windows 11 Pro Original",
+            "description": "Lisensi Windows 11 Pro digital resmi, berlaku seumur hidup untuk 1 perangkat. Aktivasi via product key.",
+            "brand": { "@type": "Brand", "name": "Microsoft" },
+            "url": "https://serabut.id/produk/windows-11-pro",
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "IDR",
+              "price": "150000",
+              "availability": "https://schema.org/InStock",
+              "seller": { "@type": "Organization", "name": "Serabut Store" }
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "item": {
+            "@type": "Product",
+            "name": "Windows 10 Pro Original",
+            "description": "Lisensi Windows 10 Pro digital resmi, berlaku seumur hidup untuk 1 perangkat.",
+            "brand": { "@type": "Brand", "name": "Microsoft" },
+            "url": "https://serabut.id/produk/windows-10-pro",
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "IDR",
+              "price": "120000",
+              "availability": "https://schema.org/InStock",
+              "seller": { "@type": "Organization", "name": "Serabut Store" }
+            }
+          }
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "item": {
+            "@type": "Product",
+            "name": "Adobe Creative Cloud All Apps",
+            "description": "Adobe Creative Cloud lengkap: Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom, XD, dan 20+ aplikasi Adobe lainnya.",
+            "brand": { "@type": "Brand", "name": "Adobe" },
+            "url": "https://serabut.id/produk/adobe-creative-cloud",
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "IDR",
+              "price": "200000",
+              "availability": "https://schema.org/InStock",
+              "seller": { "@type": "Organization", "name": "Serabut Store" }
+            }
+          }
+        }
+      ]
+    }
+    </script>
+
+    <link rel="preload" href="https://serabut.id/logo.png" as="image" fetchpriority="high" type="image/png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://serabut.id/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://serabut.id/favicon-16x16.png">
+    <link rel="shortcut icon" href="https://serabut.id/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://serabut.id/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://serabut.id/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="https://serabut.id/icon-512.png">
     <link rel="manifest" href="manifest.json">
     <!-- iOS PWA Splash Screens -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -321,6 +536,57 @@
 
 <body class="font-sans bg-gray-50 min-h-screen antialiased flex flex-col" x-cloak>
 
+    <!-- Static SEO content — visible to search crawlers, hidden from users -->
+    <noscript>
+      <div style="display:none">
+        <h1>Serabut Store — Beli Software Original Microsoft Office 365, Adobe Creative Cloud, Windows Murah</h1>
+        <p>Platform penyedia software license original terpercaya di Indonesia. Microsoft Office 365, Adobe Creative Cloud, Windows 10, Windows 11, CorelDRAW, dan banyak lagi. Harga terjangkau mulai Rp 50.000, garansi resmi, proses aktivasi 5–30 menit.</p>
+        <h2>Produk Unggulan</h2>
+        <ul>
+          <li><strong>Microsoft Office 365 Personal (Web)</strong> — Full Word, Excel, PowerPoint, Outlook + 100GB OneDrive. 5 perangkat. Mulai Rp 80.000/bulan.</li>
+          <li><strong>Microsoft Office 365 Family</strong> — 1TB OneDrive pribadi + full Office apps. 5 perangkat. Mulai Rp 100.000/bulan.</li>
+          <li><strong>Microsoft 365</strong> — Versi terbaru Microsoft Office dengan fitur AI Copilot.</li>
+          <li><strong>Windows 11 Pro Original</strong> — Lisensi digital resmi, seumur hidup, 1 perangkat. Mulai Rp 150.000.</li>
+          <li><strong>Windows 10 Pro Original</strong> — Lisensi digital resmi, seumur hidup. Mulai Rp 120.000.</li>
+          <li><strong>Adobe Creative Cloud All Apps</strong> — Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom, XD + 20 apps. Mulai Rp 200.000/bulan.</li>
+          <li><strong>CorelDRAW Graphics Suite</strong> — Lisensi original seumur hidup.</li>
+          <li><strong>Microsoft Visio</strong> — Diagram dan flowchart profesional.</li>
+          <li><strong>Microsoft Project</strong> — Manajemen proyek profesional.</li>
+        </ul>
+        <h2>Mengapa Serabut Store?</h2>
+        <ul>
+          <li>10.000+ pelanggan puas di seluruh Indonesia</li>
+          <li>Proses aktivasi cepat 5–30 menit setelah pembayaran</li>
+          <li>Garansi resmi selama masa aktif</li>
+          <li>Layanan CS 09.00–22.00 WIB setiap hari</li>
+          <li>Pembayaran aman: Transfer Bank, QRIS, Virtual Account, Kartu Kredit</li>
+          <li>Software 100% legal dan resmi dari Microsoft & Adobe</li>
+        </ul>
+        <h2>FAQ — Pertanyaan Sering Ditanya</h2>
+        <dl>
+          <dt>Apa perbedaan Office 365 Personal dan Family?</dt>
+          <dd>Office 365 Personal: akun baru khusus untuk kamu, 100GB OneDrive, 5 perangkat. Office 365 Family: join ke host kami, 1TB OneDrive pribadi, 5 perangkat.</dd>
+          <dt>Apakah lisensi Windows berlaku seumur hidup?</dt>
+          <dd>Ya, lisensi Windows 10 dan Windows 11 yang kami jual adalah lisensi digital resmi yang berlaku seumur hidup untuk 1 perangkat.</dd>
+          <dt>Berapa lama proses aktivasi?</dt>
+          <dd>5–30 menit setelah pembayaran dikonfirmasi, setiap hari 09.00–22.00 WIB.</dd>
+          <dt>Apakah produk legal dan resmi?</dt>
+          <dd>Ya. Semua produk adalah lisensi resmi dari Microsoft, Adobe, dan vendor lainnya. 100% legal.</dd>
+          <dt>Metode pembayaran apa yang tersedia?</dt>
+          <dd>Transfer bank (BCA, BNI, BRI, Mandiri), QRIS (GoPay, OVO, Dana), Virtual Account, Kartu Kredit/Debit, Alfamart & Indomaret.</dd>
+        </dl>
+        <h2>Cara Beli Software Original di Serabut Store</h2>
+        <ol>
+          <li>Pilih produk dari katalog (Office 365, Windows, Adobe CC, dll)</li>
+          <li>Klik "Pesan Sekarang" dan isi data pembelian</li>
+          <li>Bayar via metode yang tersedia</li>
+          <li>Aktivasi dikirim via WhatsApp & Email dalam 5–30 menit</li>
+        </ol>
+        <p>Hubungi CS: <a href="https://wa.me/628881500555">WhatsApp Serabut Store</a> | Email: support@serabut.id</p>
+        <p>Alamat: Jakarta Selatan, DKI Jakarta | Jam operasional: 09.00–22.00 WIB setiap hari</p>
+      </div>
+    </noscript>
+
 <!-- PWA Splash Screen — muncul saat launch dari Home Screen (Android & iOS standalone) -->
 <script>
 // Jalankan SEAWAL MUNGKIN — sebelum body render — agar menutupi Android native splash
@@ -479,8 +745,8 @@
                 <!-- Left: copy -->
                 <div class="flex-1 max-w-2xl">
                     <h1 class="text-3xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
-                        <span x-text="siteSettings.hero.tagline1"></span><br>
-                        <span class="text-yellow-300" x-text="siteSettings.hero.tagline2"></span>
+                        <span x-text="siteSettings.hero.tagline1">Software Original Microsoft Office 365</span><br>
+                        <span class="text-yellow-300" x-text="siteSettings.hero.tagline2">Harga Terjangkau, Garansi Resmi</span>
                     </h1>
                     <p class="text-white/75 text-base md:text-lg mb-8 leading-relaxed max-w-xl" x-text="siteSettings.hero.subtext"></p>
                     <div class="flex flex-wrap gap-3">
