@@ -397,7 +397,6 @@
         @supports (padding-top: env(safe-area-inset-top)) {
             .main-top-offset { padding-top: calc(3.5rem + env(safe-area-inset-top)); }
             .sticky-search-top { top: calc(3.5rem + env(safe-area-inset-top)); }
-            .toast-top { top: calc(1rem + env(safe-area-inset-top)); }
             .overlay-top { top: calc(3.5rem + env(safe-area-inset-top)); }
         }
         @media (min-width: 768px) { .overlay-top { top: 68px; } }
@@ -530,6 +529,8 @@
           .pay-logo-box{width:100%;height:30px}
           .pay-logo{width:100%;height:100%;max-height:30px;object-fit:contain}
         }
+        .toast-bottom { bottom: 5rem; }
+        @media (min-width: 768px) { .toast-bottom { bottom: 1.5rem; } }
     </style>
     <script src="https://unpkg.com/@lottiefiles/lottie-player@2.0.8/dist/lottie-player.js" defer></script>
 </head>
@@ -6619,17 +6620,17 @@
 </div>
 
 <!-- Cart toast notification -->
-<div x-show="cartToast" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-     class="fixed left-1/2 -translate-x-1/2 z-[140] bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 pointer-events-none whitespace-nowrap toast-top" style="margin-top:4rem">
+<div x-show="cartToast" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 translate-y-4"
+     class="fixed left-1/2 -translate-x-1/2 z-[140] bg-gray-900 text-white text-sm font-semibold px-5 py-2.5 rounded-2xl shadow-xl flex items-center gap-2 pointer-events-none whitespace-nowrap toast-bottom">
     <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
     <span x-text="cartToast"></span>
 </div>
 
 <!-- Global Toast -->
 <div x-show="globalToast.show"
-     x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0"
-     x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 -translate-y-2"
-     class="fixed left-1/2 -translate-x-1/2 z-[999] max-w-xs w-[90vw] shadow-xl rounded-2xl px-4 py-3 flex items-center gap-3 toast-top"
+     x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+     x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 translate-y-4"
+     class="fixed left-1/2 -translate-x-1/2 z-[999] max-w-xs w-[90vw] shadow-xl rounded-2xl px-4 py-3 flex items-center gap-3 toast-bottom"
      :class="{
          'bg-gray-900 text-white': globalToast.type==='default',
          'bg-red-600 text-white':  globalToast.type==='error',
@@ -7953,7 +7954,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260517-2',
+        APP_VERSION:      '20260527-1',
 
         // PWA Install
         pwaPopup:            false,
