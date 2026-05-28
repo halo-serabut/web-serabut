@@ -6085,17 +6085,13 @@
 
 <!-- FAB Button: auto-hide di mobile, tempel ke dinding -->
 <div class="fixed md:bottom-8 right-0 md:right-8 z-[90] transition-all duration-500"
-     :class="[csHidden ? 'cs-peek' : '', productDetailOverlay ? 'bottom-40' : 'bottom-20']">
+     :class="[csHidden ? 'cs-peek' : '', productDetailOverlay ? 'bottom-44' : 'bottom-24']">
     <button @click="csHidden ? (csHidden=false) : (csPopup ? (csPopup=false, csHidden=true) : (csPopup=true))"
             :class="!csPopup && !csHidden ? 'cs-fab-float' : ''"
             class="cs-fab w-14 h-14 gradient-card rounded-full shadow-2xl flex items-center justify-center text-white transition-all duration-200 active:scale-90 active:shadow-md relative">
 
-        <!-- AI Sparkle icon -->
-        <svg x-show="!csPopup" class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5Z" fill="currentColor" stroke="none" opacity="0.9"/>
-            <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8Z" fill="currentColor" stroke="none" opacity="0.7"/>
-            <path d="M5 3l.6 1.4L7 5l-1.4.6L5 7l-.6-1.4L3 5l1.4-.6Z" fill="currentColor" stroke="none" opacity="0.6"/>
-        </svg>
+        <!-- Sera avatar icon -->
+        <img x-show="!csPopup" src="/sera.png" alt="Sera" class="w-11 h-11 rounded-full object-cover object-top" draggable="false">
 
         <!-- X close icon -->
         <svg x-show="csPopup" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
