@@ -317,6 +317,7 @@
     </script>
 
     <link rel="preload" href="https://serabut.id/logo.png" as="image" fetchpriority="high" type="image/png">
+    <link rel="preload" href="/sera.png" as="image" fetchpriority="high" type="image/png">
     <link rel="icon" type="image/png" sizes="32x32" href="https://serabut.id/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://serabut.id/favicon-16x16.png">
     <link rel="shortcut icon" href="https://serabut.id/favicon.ico">
@@ -1202,7 +1203,7 @@
                     <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                         <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
-                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">Sering Ditanyain</h2>
+                    <h2 class="text-xl md:text-2xl font-black text-gray-900 mb-2">FAQ</h2>
                     <p class="text-sm text-gray-500">Hal-hal yang sering ditanyain sebelum beli</p>
                 </div>
                 <!-- Mobile: horizontal pills -->
@@ -6076,14 +6077,14 @@
 </div>
 
 <!-- Back to Top button -->
+<!-- Back to Top -->
 <button x-show="showBackToTop && !productDetailOverlay"
-        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
-        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0 translate-y-4"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-75" x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-75"
         @click="window.scrollTo({top:0,behavior:'smooth'})"
-        class="fixed left-4 z-[89] bg-white border border-gray-200 text-gray-600 shadow-lg rounded-full px-3.5 py-2 text-xs font-semibold flex items-center gap-1.5 hover:shadow-xl hover:border-gray-300 active:scale-95 transition-all toast-bottom"
-        style="display:none">
-    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-    Atas
+        class="fixed z-[89] bg-white border border-gray-200 text-gray-600 shadow-lg rounded-full w-10 h-10 flex items-center justify-center hover:shadow-xl hover:border-gray-300 hover:text-brand-500 active:scale-90 transition-all"
+        style="display:none; bottom: calc(5.5rem + env(safe-area-inset-bottom)); left: 1rem">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
 </button>
 
 <!-- FAB Button: auto-hide di mobile, tempel ke dinding -->
