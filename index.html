@@ -1547,7 +1547,7 @@
                     <div class="max-w-5xl mx-auto px-5 pt-4 pb-0">
                         <!-- Back + Share bar -->
                         <div class="flex items-center justify-between mb-3">
-                            <button @click="productDetailOverlay=false; document.body.style.overflow=''; $nextTick(() => scrollTo('catalog'))" class="flex items-center gap-1 text-gray-500 hover:text-gray-800 transition-colors active:opacity-70">
+                            <button @click="productDetailOverlay=false; document.body.style.overflow=''; history.replaceState(null,'','/'); $nextTick(() => { if(_prevScrollY > 0){ window.scrollTo({top:_prevScrollY,behavior:'smooth'}) } else { scrollTo('catalog') } })" class="flex items-center gap-1 text-gray-500 hover:text-gray-800 transition-colors active:opacity-70">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
                                 <span class="text-[11px] font-medium">Kembali ke Katalog</span>
                             </button>
@@ -9074,6 +9074,7 @@ function serabutStore() {
         },
         goToProductDetail(product) {
             if(!product || product.stok === 0) return;
+            this._prevScrollY = window.scrollY; // simpan posisi scroll sebelum buka
             const variants = this.products.filter(p => p.nama === product.nama);
             this.selectedProductGroup = { nama: product.nama, category: product.category, variants };
             this.selectedVariant = variants.find(v => v.varian === product.varian && v.masaAktif === product.masaAktif) || variants[0];
@@ -10021,6 +10022,12 @@ function serabutStore() {
                     this.productDetailOverlay = false;
                     document.body.style.overflow = '';
                     this.activePage = 'home';
+                    // restore posisi scroll sebelum buka product detail
+                    this.$nextTick(() => {
+                        if (this._prevScrollY > 0) {
+                            window.scrollTo({ top: this._prevScrollY, behavior: 'smooth' });
+                        }
+                    });
                 }
             });
         },
