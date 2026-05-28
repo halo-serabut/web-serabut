@@ -6088,15 +6088,17 @@
      :class="[csHidden ? 'cs-peek' : '', productDetailOverlay ? 'bottom-44' : 'bottom-24']">
     <button @click="csHidden ? (csHidden=false) : (csPopup ? (csPopup=false, csHidden=true) : (csPopup=true))"
             :class="!csPopup && !csHidden ? 'cs-fab-float' : ''"
-            class="cs-fab w-14 h-14 gradient-card rounded-full shadow-2xl flex items-center justify-center text-white transition-all duration-200 active:scale-90 active:shadow-md relative">
+            class="cs-fab w-14 h-14 rounded-full shadow-2xl transition-all duration-200 active:scale-90 active:shadow-md relative overflow-hidden bg-transparent p-0">
 
-        <!-- Sera avatar icon -->
-        <img x-show="!csPopup" src="/sera.png" alt="Sera" class="w-11 h-11 rounded-full object-cover object-top" draggable="false">
+        <!-- Sera avatar — full button -->
+        <img x-show="!csPopup" src="/sera.png" alt="Sera" class="w-full h-full object-cover object-top rounded-full" draggable="false">
 
-        <!-- X close icon -->
-        <svg x-show="csPopup" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
+        <!-- X close icon — merah saat popup -->
+        <div x-show="csPopup" class="w-full h-full rounded-full gradient-card flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </div>
 
         <!-- Online dot dengan ping -->
         <span x-show="!csPopup" class="cs-ping absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-white relative"></span>
