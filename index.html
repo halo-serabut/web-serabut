@@ -9102,8 +9102,12 @@ function serabutStore() {
             this.activePage = 'home';
             document.body.style.overflow = '';
             history.replaceState(null, '', '/');
-            // Scroll instant sebelum overlay selesai animasi — tidak ada flash hero
-            window.scrollTo({ top: savedY, behavior: 'instant' });
+            // double rAF: tunggu Alpine re-render + browser paint, lalu scroll tanpa animasi
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    window.scrollTo(0, savedY);
+                });
+            });
         },
         goToProductDetail(product) {
             if(!product || product.stok === 0) return;
