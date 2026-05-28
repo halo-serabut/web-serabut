@@ -6083,7 +6083,7 @@
         x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-75"
         @click="window.scrollTo({top:0,behavior:'smooth'})"
         class="fixed z-[89] bg-white border border-gray-200 text-gray-700 shadow-xl rounded-2xl w-11 h-11 flex flex-col items-center justify-center gap-0.5 hover:bg-brand-50 hover:border-brand-300 hover:text-brand-600 active:scale-90 transition-all"
-        style="bottom: calc(8.5rem + env(safe-area-inset-bottom)); right: 1rem">
+        :style="'right:1rem; bottom: calc(' + (window.innerWidth < 768 ? '11' : '8.5') + 'rem + env(safe-area-inset-bottom))'">
     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
     <span class="text-[9px] font-bold leading-none">TOP</span>
 </button>
