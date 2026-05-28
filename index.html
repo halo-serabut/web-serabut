@@ -9102,10 +9102,8 @@ function serabutStore() {
             this.activePage = 'home';
             document.body.style.overflow = '';
             history.replaceState(null, '', '/');
-            // Tunggu animasi slide-out selesai (250ms) baru restore scroll
-            setTimeout(() => {
-                window.scrollTo({ top: savedY, behavior: 'smooth' });
-            }, 300);
+            // Scroll instant sebelum overlay selesai animasi — tidak ada flash hero
+            window.scrollTo({ top: savedY, behavior: 'instant' });
         },
         goToProductDetail(product) {
             if(!product || product.stok === 0) return;
