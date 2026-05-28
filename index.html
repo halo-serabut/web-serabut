@@ -9097,14 +9097,15 @@ function serabutStore() {
             }
         },
         closeProductDetail() {
-            const savedY = this._prevScrollY;
+            const savedY = this._prevScrollY || 0;
             this.productDetailOverlay = false;
+            this.activePage = 'home';
             document.body.style.overflow = '';
             history.replaceState(null, '', '/');
             // Tunggu animasi slide-out selesai (250ms) baru restore scroll
             setTimeout(() => {
-                window.scrollTo({ top: savedY > 0 ? savedY : 0, behavior: savedY > 0 ? 'smooth' : 'instant' });
-            }, 280);
+                window.scrollTo({ top: savedY, behavior: 'smooth' });
+            }, 300);
         },
         goToProductDetail(product) {
             if(!product || product.stok === 0) return;
