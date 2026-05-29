@@ -8919,6 +8919,8 @@ function serabutStore() {
                     this.selectedProductGroup = { nama:product.nama, category:product.category, variants };
                     this.selectedVariant = variants[0];
                     this.activePage = 'product-detail';
+                    this.productDetailOverlay = true;
+                    document.body.style.overflow = 'hidden';
                 } else {
                     this.activePage = 'catalog';
                 }
