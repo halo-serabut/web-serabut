@@ -10023,6 +10023,10 @@ function serabutStore() {
                 const produkMatch = path.match(/^\/produk\/(.+)$/);
                 this.pendingProductSlug = produkMatch[1];
                 this._pendingProductSlug = produkMatch[1];
+                // Langsung sembunyikan home & tampilkan overlay loading — jangan tunggu produk selesai fetch
+                this.activePage = 'product-detail';
+                this.productDetailOverlay = true;
+                document.body.style.overflow = 'hidden';
                 history.replaceState({ page:'product-detail', slug:produkMatch[1] }, '', path);
             } else if (hash) {
                 // Hash-based deep link (e.g. #panduan, #status)
