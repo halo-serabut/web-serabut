@@ -177,6 +177,8 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Helper: `testWAGroupNotif()` dan `testSyncOrders()` di GAS untuk debug tanpa bayar
   - GAS deployment: @90
 
+- [2026-06-01] Selesai: Reset Password Office 365 dari Cek Status — tombol "Reset Password Office" di detail modal (hanya office365 personal); step konfirmasi; GAS `resetOfficePassword` generate password 10 karakter, update sheet, notif WA buyer + grup; rate limit 3x/jam; tampil password baru + tombol salin di UI
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
