@@ -2180,7 +2180,7 @@
          x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
          x-transition:leave="transition duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="statusSelected=null"></div>
-        <div class="relative bg-white w-full md:max-w-sm md:rounded-2xl rounded-t-2xl max-h-[80vh] overflow-y-auto z-10"
+        <div class="relative bg-white w-full md:max-w-sm md:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto z-10"
              x-transition:enter="transition duration-300" x-transition:enter-start="translate-y-8 md:translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100">
             <!-- Handle -->
             <div class="md:hidden flex justify-center pt-2.5 pb-0"><div class="w-8 h-1 bg-gray-200 rounded-full"></div></div>
@@ -12402,17 +12402,12 @@ function serabutStore() {
         async doResetOfficePassword() {
             if (!this.statusSelected?.officeAccount) return;
             this.statusResetState = 'loading';
-            try {
-                const res = await gasPost({ action: 'resetOfficePassword', officeEmail: this.statusSelected.officeAccount });
-                if (res.success) {
-                    this.statusResetNewPassword = res.newPassword;
-                    this.statusResetState = 'done';
-                } else {
-                    this.statusResetError = res.error || 'Gagal mereset password';
-                    this.statusResetState = 'error';
-                }
-            } catch(e) {
-                this.statusResetError = 'Gagal terhubung ke server';
+            const res = await this.gasPost({ action: 'resetOfficePassword', officeEmail: this.statusSelected.officeAccount });
+            if (res.success) {
+                this.statusResetNewPassword = res.newPassword;
+                this.statusResetState = 'done';
+            } else {
+                this.statusResetError = res.error || 'Gagal mereset password';
                 this.statusResetState = 'error';
             }
         },
