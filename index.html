@@ -2177,215 +2177,238 @@
     <!-- ── STATUS DETAIL BOTTOM SHEET ── -->
     <div x-show="statusSelected" x-cloak
          class="fixed inset-0 z-[200] flex items-end md:items-center justify-center"
-         x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-         x-transition:leave="transition duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="statusSelected=null"></div>
-        <div class="relative bg-white w-full md:max-w-sm md:rounded-2xl rounded-t-2xl max-h-[85vh] overflow-y-auto z-10"
-             x-transition:enter="transition duration-300" x-transition:enter-start="translate-y-8 md:translate-y-4 opacity-0" x-transition:enter-end="translate-y-0 opacity-100">
-            <!-- Handle -->
-            <div class="md:hidden flex justify-center pt-2.5 pb-0"><div class="w-8 h-1 bg-gray-200 rounded-full"></div></div>
-            <!-- Header -->
-            <div class="px-4 pt-3 pb-3 flex items-center gap-2.5">
-                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none overflow-hidden"
-                     :class="statusSelected?.productType==='adobe' ? 'bg-red-50' : 'bg-blue-50'">
-                    <template x-if="statusSelected?.productType==='adobe'">
-                        <img src="https://www.google.com/s2/favicons?domain=adobe.com&sz=64" class="w-6 h-6 object-contain">
-                    </template>
-                    <template x-if="statusSelected?.productType!=='adobe'">
-                        <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" class="w-6 h-6 object-contain">
-                    </template>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="text-sm font-black text-gray-900 leading-tight" x-text="statusSelected?.nama||'Pelanggan'"></div>
-                    <div class="text-[11px] text-gray-400 mt-0.5"
-                         x-text="statusSelected?.productType==='adobe' ? (statusSelected?.productName||'Adobe Creative Cloud') : (statusSelected?.productType==='office365family' ? 'Office 365 Family' : 'Microsoft Office 365')"></div>
-                </div>
-                <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg flex-none"
-                    :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'bg-red-50 text-red-700' : getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7 ? 'bg-orange-50 text-orange-700' : 'bg-emerald-50 text-emerald-700'"
-                    x-text="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'Sudah Habis' : getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Aktif'"></span>
-            </div>
-            <!-- Info rows -->
-            <div class="mx-4 mb-3 bg-gray-50 rounded-xl overflow-hidden divide-y divide-gray-100">
-                <template x-if="statusSelected?.officeAccount">
-                    <div class="flex justify-between items-center gap-3 px-3 py-2">
-                        <span class="text-[11px] text-gray-400 shrink-0">Akun Office</span>
-                        <span class="text-[11px] font-semibold text-gray-800 break-all text-right" x-text="statusSelected?.officeAccount"></span>
-                    </div>
-                </template>
-                <template x-if="statusSelected?.adobeAccount">
-                    <div class="flex justify-between items-center gap-3 px-3 py-2">
-                        <span class="text-[11px] text-gray-400 shrink-0">Akun Adobe</span>
-                        <span class="text-[11px] font-semibold text-gray-800 break-all text-right" x-text="statusSelected?.adobeAccount"></span>
-                    </div>
-                </template>
-                <template x-if="statusSelected?.emailPembeli">
-                    <div class="flex justify-between items-center gap-3 px-3 py-2">
-                        <span class="text-[11px] text-gray-400 shrink-0">Email Pembeli</span>
-                        <span class="text-[11px] font-semibold text-gray-800 break-all text-right" x-text="statusSelected?.emailPembeli"></span>
-                    </div>
-                </template>
-                <template x-if="statusSelected?.masaBerlaku">
-                    <div class="flex justify-between items-center gap-3 px-3 py-2">
-                        <span class="text-[11px] text-gray-400 shrink-0">Masa Berlaku</span>
-                        <span class="text-[11px] font-semibold text-gray-800" x-text="formatMasaBerlaku(statusSelected?.masaBerlaku)"></span>
-                    </div>
-                </template>
-                <template x-if="statusSelected?.masaBerlaku && getDaysUntilExpiry(statusSelected?.masaBerlaku) >= 0">
-                    <div class="flex justify-between items-center gap-3 px-3 py-2">
-                        <span class="text-[11px] text-gray-400 shrink-0">Sisa Waktu</span>
-                        <span class="text-[11px] font-bold"
-                              :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7 ? 'text-orange-600' : 'text-emerald-600'"
-                              x-text="getDaysUntilExpiry(statusSelected?.masaBerlaku) + ' hari'"></span>
-                    </div>
-                </template>
-                <template x-if="statusSelected?.durasi">
-                    <div class="flex justify-between items-center gap-3 px-3 py-2">
-                        <span class="text-[11px] text-gray-400 shrink-0">Durasi Paket</span>
-                        <span class="text-[11px] font-semibold text-gray-800" x-text="statusSelected?.durasi + ' bulan'"></span>
-                    </div>
-                </template>
-                <template x-if="statusSelected?.pembelianDari">
-                    <div class="flex justify-between items-center gap-3 px-3 py-2">
-                        <span class="text-[11px] text-gray-400 shrink-0">Pembelian dari</span>
-                        <span class="text-[11px] font-semibold text-gray-800" x-text="statusSelected?.pembelianDari"></span>
-                    </div>
-                </template>
-            </div>
-            <!-- Renewal / rebuy banner -->
-            <template x-if="statusSelected && getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7">
-                <div class="mx-4 mb-3 rounded-xl overflow-hidden border px-3 py-2.5"
-                     :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'bg-red-50 border-red-100' : 'bg-orange-50 border-orange-100'">
-                    <p class="text-[11px] font-bold mb-0.5"
-                       :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'text-red-700' : 'text-orange-700'"
-                       x-text="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? '⚠️ Akun sudah tidak aktif' : '⏰ Masa berlaku hampir habis!'"></p>
-                    <p class="text-[10px] leading-snug mb-2"
-                       :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'text-red-600' : 'text-orange-600'"
-                       x-text="statusSelected?.productType==='office365' && getDaysUntilExpiry(statusSelected?.masaBerlaku) >= 0 ? 'Perpanjang sekarang agar tidak terputus.' : 'Segera beli ulang untuk melanjutkan akses.'"></p>
-                    <button @click="statusSuggestRebuy(statusSelected); statusSelected=null"
-                            class="w-full text-[11px] font-bold py-2 rounded-lg transition-all active:scale-95 text-white flex items-center justify-center gap-1.5"
-                            :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'bg-red-500 hover:bg-red-600' : 'bg-orange-500 hover:bg-orange-600'">
-                        <span x-text="statusSelected?.productType==='office365' && getDaysUntilExpiry(statusSelected?.masaBerlaku) >= 0 ? 'Lihat Produk Renewal' : 'Lihat Produk untuk Beli Ulang'"></span>
-                    </button>
-                </div>
-            </template>
-            <!-- Reset Password (hanya Office 365 personal) -->
-            <template x-if="statusSelected?.productType === 'office365' && statusSelected?.officeAccount">
-                <div class="mx-4 mb-3">
+         x-transition:enter="transition duration-250 ease-out" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition duration-200 ease-in" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]" @click="statusSelected=null; statusResetState=null; statusResetError=''; statusResetNewPassword=''"></div>
+        <!-- Sheet -->
+        <div class="relative bg-white w-full md:max-w-sm md:rounded-2xl rounded-t-3xl overflow-hidden z-10 flex flex-col"
+             style="max-height:88vh; padding-bottom: env(safe-area-inset-bottom, 0px);"
+             x-transition:enter="transition duration-350 ease-out" x-transition:enter-start="translate-y-full md:translate-y-6 opacity-0" x-transition:enter-end="translate-y-0 opacity-100"
+             x-transition:leave="transition duration-250 ease-in" x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-full md:translate-y-6 opacity-0">
 
-                    <!-- State: default — tombol reset -->
-                    <template x-if="!statusResetState">
-                        <button @click="statusResetState='confirm'"
-                                class="w-full py-3 rounded-2xl border-2 border-dashed border-gray-200 text-xs font-semibold text-gray-400 hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/50 active:scale-[.98] transition-all flex items-center justify-center gap-2">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                            Lupa / Reset Password Office
+            <!-- Handle + sticky top area (non-scrollable) -->
+            <div class="md:hidden flex justify-center pt-3 pb-1 flex-none">
+                <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
+            </div>
+
+            <!-- Scrollable body -->
+            <div class="overflow-y-auto overscroll-contain flex-1">
+
+                <!-- Header produk -->
+                <div class="px-5 pt-2 pb-4 flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-none overflow-hidden shadow-sm"
+                         :class="statusSelected?.productType==='adobe' ? 'bg-red-50' : 'bg-[#EFF6FF]'">
+                        <template x-if="statusSelected?.productType==='adobe'">
+                            <img src="https://www.google.com/s2/favicons?domain=adobe.com&sz=64" class="w-7 h-7 object-contain">
+                        </template>
+                        <template x-if="statusSelected?.productType!=='adobe'">
+                            <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" class="w-7 h-7 object-contain">
+                        </template>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-[15px] font-black text-gray-900 leading-tight" x-text="statusSelected?.nama||'Pelanggan'"></div>
+                        <div class="text-xs text-gray-400 mt-0.5"
+                             x-text="statusSelected?.productType==='adobe' ? (statusSelected?.productName||'Adobe Creative Cloud') : (statusSelected?.productType==='office365family' ? 'Office 365 Family' : 'Microsoft Office 365')"></div>
+                    </div>
+                    <span class="text-xs font-bold px-3 py-1.5 rounded-xl flex-none"
+                        :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'bg-red-50 text-red-600' : getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7 ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'"
+                        x-text="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'Sudah Habis' : getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7 ? 'Hampir Habis' : 'Aktif'"></span>
+                </div>
+
+                <!-- Info rows -->
+                <div class="mx-4 mb-4 rounded-2xl overflow-hidden border border-gray-100 divide-y divide-gray-100">
+                    <template x-if="statusSelected?.officeAccount">
+                        <div class="flex justify-between items-center gap-4 px-4 py-3">
+                            <span class="text-xs text-gray-400 shrink-0">Akun Office</span>
+                            <span class="text-xs font-semibold text-gray-800 break-all text-right" x-text="statusSelected?.officeAccount"></span>
+                        </div>
+                    </template>
+                    <template x-if="statusSelected?.adobeAccount">
+                        <div class="flex justify-between items-center gap-4 px-4 py-3">
+                            <span class="text-xs text-gray-400 shrink-0">Akun Adobe</span>
+                            <span class="text-xs font-semibold text-gray-800 break-all text-right" x-text="statusSelected?.adobeAccount"></span>
+                        </div>
+                    </template>
+                    <template x-if="statusSelected?.emailPembeli">
+                        <div class="flex justify-between items-center gap-4 px-4 py-3">
+                            <span class="text-xs text-gray-400 shrink-0">Email Pembeli</span>
+                            <span class="text-xs font-semibold text-gray-800 break-all text-right" x-text="statusSelected?.emailPembeli"></span>
+                        </div>
+                    </template>
+                    <template x-if="statusSelected?.masaBerlaku">
+                        <div class="flex justify-between items-center gap-4 px-4 py-3">
+                            <span class="text-xs text-gray-400 shrink-0">Masa Berlaku</span>
+                            <span class="text-xs font-semibold text-gray-800" x-text="formatMasaBerlaku(statusSelected?.masaBerlaku)"></span>
+                        </div>
+                    </template>
+                    <template x-if="statusSelected?.masaBerlaku && getDaysUntilExpiry(statusSelected?.masaBerlaku) >= 0">
+                        <div class="flex justify-between items-center gap-4 px-4 py-3">
+                            <span class="text-xs text-gray-400 shrink-0">Sisa Waktu</span>
+                            <span class="text-xs font-bold"
+                                  :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7 ? 'text-orange-600' : 'text-emerald-600'"
+                                  x-text="getDaysUntilExpiry(statusSelected?.masaBerlaku) + ' hari'"></span>
+                        </div>
+                    </template>
+                    <template x-if="statusSelected?.durasi">
+                        <div class="flex justify-between items-center gap-4 px-4 py-3">
+                            <span class="text-xs text-gray-400 shrink-0">Durasi Paket</span>
+                            <span class="text-xs font-semibold text-gray-800" x-text="statusSelected?.durasi + ' bulan'"></span>
+                        </div>
+                    </template>
+                    <template x-if="statusSelected?.pembelianDari">
+                        <div class="flex justify-between items-center gap-4 px-4 py-3">
+                            <span class="text-xs text-gray-400 shrink-0">Pembelian dari</span>
+                            <span class="text-xs font-semibold text-gray-800" x-text="statusSelected?.pembelianDari"></span>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Renewal / rebuy banner -->
+                <template x-if="statusSelected && getDaysUntilExpiry(statusSelected?.masaBerlaku) <= 7">
+                    <div class="mx-4 mb-4 rounded-2xl overflow-hidden border px-4 py-3.5"
+                         :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'bg-red-50 border-red-100' : 'bg-orange-50 border-orange-100'">
+                        <p class="text-sm font-bold mb-1"
+                           :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'text-red-700' : 'text-orange-700'"
+                           x-text="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? '⚠️ Akun sudah tidak aktif' : '⏰ Masa berlaku hampir habis!'"></p>
+                        <p class="text-xs leading-relaxed mb-3"
+                           :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'text-red-500' : 'text-orange-500'"
+                           x-text="statusSelected?.productType==='office365' && getDaysUntilExpiry(statusSelected?.masaBerlaku) >= 0 ? 'Perpanjang sekarang agar tidak terputus.' : 'Segera beli ulang untuk melanjutkan akses.'"></p>
+                        <button @click="statusSuggestRebuy(statusSelected); statusSelected=null"
+                                class="w-full text-sm font-bold h-11 rounded-xl transition-all active:scale-[.97] text-white"
+                                :class="getDaysUntilExpiry(statusSelected?.masaBerlaku) < 0 ? 'bg-red-500' : 'bg-orange-500'">
+                            <span x-text="statusSelected?.productType==='office365' && getDaysUntilExpiry(statusSelected?.masaBerlaku) >= 0 ? 'Lihat Produk Renewal' : 'Lihat Produk untuk Beli Ulang'"></span>
                         </button>
-                    </template>
+                    </div>
+                </template>
 
-                    <!-- State: confirm -->
-                    <template x-if="statusResetState === 'confirm'">
-                        <div class="rounded-2xl border border-amber-200 bg-amber-50 overflow-hidden">
-                            <div class="px-4 pt-4 pb-3">
-                                <div class="flex items-start gap-3 mb-3">
-                                    <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center flex-none mt-0.5">
-                                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                <!-- ── Reset Password (hanya Office 365 personal) ── -->
+                <template x-if="statusSelected?.productType === 'office365' && statusSelected?.officeAccount">
+                    <div class="mx-4 mb-4">
+
+                        <!-- State: idle -->
+                        <template x-if="!statusResetState">
+                            <button @click="statusResetState='confirm'"
+                                    class="w-full h-12 rounded-2xl border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-500 active:bg-gray-100 active:scale-[.98] transition-all flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                Lupa / Reset Password
+                            </button>
+                        </template>
+
+                        <!-- State: confirm -->
+                        <template x-if="statusResetState === 'confirm'">
+                            <div class="rounded-2xl border border-amber-200 overflow-hidden" style="background:#FFFBEB">
+                                <div class="px-4 py-4">
+                                    <div class="flex items-start gap-3 mb-3">
+                                        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-none" style="background:#FEF3C7">
+                                            <svg class="w-4.5 h-4.5 w-[18px] h-[18px] text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-bold text-gray-900">Reset password akun ini?</p>
+                                            <p class="text-xs text-gray-500 mt-0.5 font-mono truncate" x-text="statusSelected?.officeAccount"></p>
+                                        </div>
+                                    </div>
+                                    <div class="rounded-xl px-3.5 py-2.5 mb-4 text-xs text-amber-700 leading-relaxed" style="background:#FEF3C7">
+                                        Password lama <strong>tidak bisa dipakai lagi</strong> setelah ini. Password baru akan ditampilkan di layar dan dikirim via WhatsApp.
+                                    </div>
+                                    <div class="flex gap-2.5">
+                                        <button @click="statusResetState=null"
+                                                class="flex-1 h-11 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 bg-white active:bg-gray-50 active:scale-[.97] transition-all">
+                                            Batal
+                                        </button>
+                                        <button @click="doResetOfficePassword()"
+                                                class="flex-1 h-11 rounded-xl text-sm font-bold text-white active:scale-[.97] transition-all"
+                                                style="background:#F59E0B">
+                                            Ya, Reset Sekarang
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- State: loading -->
+                        <template x-if="statusResetState === 'loading'">
+                            <div class="rounded-2xl border border-gray-100 bg-gray-50 flex flex-col items-center justify-center gap-3 py-8">
+                                <svg class="w-7 h-7 text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                                </svg>
+                                <p class="text-sm text-gray-400 font-medium">Mereset password...</p>
+                            </div>
+                        </template>
+
+                        <!-- State: done -->
+                        <template x-if="statusResetState === 'done'">
+                            <div class="rounded-2xl overflow-hidden" style="border:1.5px solid #6EE7B7; background: linear-gradient(160deg,#ECFDF5 0%,#fff 60%)">
+                                <div class="px-4 pt-4 pb-4">
+                                    <!-- Badge sukses -->
+                                    <div class="flex items-center gap-2.5 mb-4">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center flex-none" style="background:#D1FAE5">
+                                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-black text-emerald-800">Password berhasil direset!</p>
+                                            <p class="text-xs text-emerald-600 mt-0.5 font-mono truncate" x-text="statusSelected?.officeAccount"></p>
+                                        </div>
+                                    </div>
+                                    <!-- Label -->
+                                    <p class="text-xs text-gray-400 font-medium mb-2">Password baru kamu:</p>
+                                    <!-- Password box -->
+                                    <div class="flex items-center gap-2 rounded-2xl border-2 border-emerald-200 bg-white px-4 py-3.5 mb-3">
+                                        <span class="flex-1 font-mono font-black text-xl text-gray-900 tracking-[0.15em] select-all" x-text="statusResetNewPassword"></span>
+                                        <button @click="copyNewPassword()"
+                                                x-text="pwCopied ? 'Tersalin ✓' : 'Salin'"
+                                                :class="pwCopied ? 'bg-emerald-600' : 'bg-emerald-500'"
+                                                class="shrink-0 h-9 px-4 rounded-xl text-xs font-bold text-white active:scale-95 transition-all">
+                                        </button>
+                                    </div>
+                                    <!-- Tip -->
+                                    <div class="flex items-start gap-2 rounded-xl px-3 py-2.5 bg-gray-50">
+                                        <svg class="w-4 h-4 text-gray-300 mt-0.5 flex-none" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                                        <p class="text-xs text-gray-400 leading-relaxed">Login ke <span class="font-semibold text-gray-500">office.com</span> menggunakan password ini. Notifikasi juga dikirim ke WA kamu.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- State: error -->
+                        <template x-if="statusResetState === 'error'">
+                            <div class="rounded-2xl border border-red-100 bg-red-50 px-4 py-4">
+                                <div class="flex items-center gap-3 mb-3.5">
+                                    <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-none">
+                                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </div>
                                     <div>
-                                        <p class="text-sm font-bold text-amber-900 leading-tight">Reset password akun ini?</p>
-                                        <p class="text-xs text-amber-700 mt-0.5 font-mono font-medium" x-text="statusSelected?.officeAccount"></p>
+                                        <p class="text-sm font-bold text-red-700">Gagal mereset password</p>
+                                        <p class="text-xs text-red-400 mt-0.5" x-text="statusResetError"></p>
                                     </div>
                                 </div>
-                                <p class="text-[11px] text-amber-700 leading-relaxed bg-amber-100 rounded-xl px-3 py-2 mb-3">Password lama <strong>langsung tidak bisa</strong> dipakai. Password baru ditampilkan di sini dan dikirim ke WA kamu.</p>
-                                <div class="flex gap-2">
-                                    <button @click="statusResetState=null"
-                                            class="flex-1 py-2.5 rounded-xl bg-white border border-amber-200 text-xs font-semibold text-amber-600 hover:bg-amber-50 active:scale-95 transition-all">
-                                        Batal
-                                    </button>
-                                    <button @click="doResetOfficePassword()"
-                                            class="flex-1 py-2.5 rounded-xl bg-amber-500 text-xs font-bold text-white hover:bg-amber-600 active:scale-95 transition-all shadow-sm shadow-amber-200">
-                                        Ya, Reset Sekarang
-                                    </button>
-                                </div>
+                                <button @click="statusResetState=null; statusResetError=''"
+                                        class="w-full h-11 rounded-xl bg-white border border-red-200 text-sm font-semibold text-red-500 active:bg-red-50 active:scale-[.97] transition-all">
+                                    Coba Lagi
+                                </button>
                             </div>
-                        </div>
-                    </template>
+                        </template>
 
-                    <!-- State: loading -->
-                    <template x-if="statusResetState === 'loading'">
-                        <div class="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-5 flex flex-col items-center gap-2.5">
-                            <svg class="w-6 h-6 text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                            </svg>
-                            <p class="text-xs text-gray-400 font-medium">Sedang mereset password...</p>
-                        </div>
-                    </template>
+                    </div>
+                </template>
 
-                    <!-- State: sukses -->
-                    <template x-if="statusResetState === 'done'">
-                        <div class="rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white overflow-hidden">
-                            <div class="px-4 pt-4 pb-4">
-                                <!-- Header sukses -->
-                                <div class="flex items-center gap-2 mb-3">
-                                    <div class="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center flex-none">
-                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                    </div>
-                                    <p class="text-sm font-bold text-emerald-800">Password berhasil direset!</p>
-                                </div>
-                                <!-- Label akun -->
-                                <p class="text-[11px] text-gray-400 mb-1.5">Password baru untuk akun:</p>
-                                <p class="text-[11px] font-semibold text-gray-600 font-mono mb-3 truncate" x-text="statusSelected?.officeAccount"></p>
-                                <!-- Password box -->
-                                <div class="bg-white border-2 border-emerald-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3 mb-3 shadow-sm">
-                                    <span class="font-mono font-black text-base text-gray-900 tracking-widest select-all" x-text="statusResetNewPassword"></span>
-                                    <button @click="navigator.clipboard.writeText(statusResetNewPassword).then(()=>{$el.innerHTML='<svg class=\'w-3.5 h-3.5\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2.5\' d=\'M5 13l4 4L19 7\'/></svg> Disalin!'; setTimeout(()=>{$el.innerHTML='Salin'},1800)})"
-                                            class="shrink-0 px-3 py-1.5 rounded-lg bg-emerald-500 text-[11px] font-bold text-white hover:bg-emerald-600 active:scale-95 transition-all flex items-center gap-1">
-                                        Salin
-                                    </button>
-                                </div>
-                                <!-- Info -->
-                                <div class="flex items-start gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
-                                    <svg class="w-3.5 h-3.5 text-gray-400 mt-0.5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <p class="text-[10px] text-gray-400 leading-relaxed">Login di <strong class="text-gray-600">office.com</strong> dengan password ini. Notifikasi sudah dikirim ke WhatsApp kamu.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </template>
+            </div><!-- end scrollable body -->
 
-                    <!-- State: error -->
-                    <template x-if="statusResetState === 'error'">
-                        <div class="rounded-2xl border border-red-100 bg-red-50 px-4 py-3.5">
-                            <div class="flex items-start gap-2.5 mb-3">
-                                <div class="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center flex-none mt-0.5">
-                                    <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-bold text-red-700">Gagal mereset password</p>
-                                    <p class="text-[11px] text-red-500 mt-0.5" x-text="statusResetError"></p>
-                                </div>
-                            </div>
-                            <button @click="statusResetState=null; statusResetError=''"
-                                    class="w-full py-2 rounded-xl bg-white border border-red-200 text-xs font-semibold text-red-500 hover:bg-red-50 active:scale-95 transition-all">
-                                Coba Lagi
-                            </button>
-                        </div>
-                    </template>
-
-                </div>
-            </template>
-
-            <!-- Close / action buttons -->
-            <div class="px-4 pb-6 pt-1 flex flex-col gap-2">
+            <!-- ── Bottom action bar (sticky) ── -->
+            <div class="flex-none px-4 pt-2 pb-4 border-t border-gray-100 bg-white">
                 <template x-if="statusResetState === 'done'">
-                    <button @click="statusSelected=null; statusResetState=null; statusResetNewPassword=''"
-                            class="w-full py-3 rounded-2xl bg-brand-600 text-sm font-bold text-white hover:bg-brand-700 active:scale-[.98] transition-all shadow-sm shadow-brand-200">
+                    <button @click="statusSelected=null; statusResetState=null; statusResetNewPassword=''; pwCopied=false"
+                            class="w-full h-13 h-[52px] rounded-2xl bg-brand-600 text-sm font-bold text-white active:bg-brand-700 active:scale-[.98] transition-all mb-2">
                         Selesai
                     </button>
                 </template>
-                <button @click="statusSelected=null; statusResetState=null; statusResetError=''; statusResetNewPassword=''"
-                        class="w-full py-2.5 rounded-2xl border border-gray-200 text-xs font-semibold text-gray-400 hover:bg-gray-50 active:scale-[.98] transition-all">
+                <button @click="statusSelected=null; statusResetState=null; statusResetError=''; statusResetNewPassword=''; pwCopied=false"
+                        class="w-full h-[48px] rounded-2xl border border-gray-200 text-sm font-semibold text-gray-500 bg-white active:bg-gray-50 active:scale-[.98] transition-all">
                     Tutup
                 </button>
             </div>
+
         </div>
     </div>
 
@@ -8279,6 +8302,7 @@ function serabutStore() {
         statusResetState: null,
         statusResetNewPassword: '',
         statusResetError: '',
+        pwCopied: false,
         statusCache:      {},
 
         // Flash Sale
@@ -12458,6 +12482,13 @@ function serabutStore() {
             if (iso) return `${parseInt(iso[3])} ${bulan[parseInt(iso[2])]||''} ${iso[1]}`;
             return str;
         },
+        copyNewPassword() {
+            navigator.clipboard.writeText(this.statusResetNewPassword).then(() => {
+                this.pwCopied = true;
+                setTimeout(() => { this.pwCopied = false; }, 2000);
+            });
+        },
+
         async doResetOfficePassword() {
             if (!this.statusSelected?.officeAccount) return;
             this.statusResetState = 'loading';
