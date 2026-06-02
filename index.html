@@ -1644,57 +1644,59 @@
         <template x-if="selectedProductGroup">
             <div>
                 <!-- ── Hero Banner ── -->
-                <!-- ── Hero Banner ── -->
                 <div class="relative overflow-hidden" :class="getCategoryHeroBg(selectedProductGroup.category)">
-                    <!-- decorative blobs -->
-                    <div class="absolute -top-8 -right-8 w-40 h-40 rounded-full opacity-20 blur-2xl" :class="getCategoryBg(selectedProductGroup.category)" style="background:currentColor"></div>
-                    <div class="absolute bottom-0 -left-6 w-28 h-28 rounded-full opacity-10 blur-2xl bg-black"></div>
+                    <!-- Decorative blobs -->
+                    <div class="absolute -top-12 -right-12 w-56 h-56 rounded-full opacity-25 blur-3xl" :class="getCategoryBg(selectedProductGroup.category)"></div>
+                    <div class="absolute -bottom-8 -left-8 w-40 h-40 rounded-full opacity-15 blur-2xl bg-black"></div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full opacity-10 blur-3xl bg-white"></div>
 
-                    <div class="max-w-5xl mx-auto px-5 pt-5 pb-0">
-                        <!-- Back + Share bar -->
-                        <div class="flex items-center justify-between mb-4">
-                            <button @click="closeProductDetail()" class="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 transition-colors active:opacity-70 py-1 -ml-1 px-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-                                <span class="text-xs font-semibold">Kembali ke Katalog</span>
-                            </button>
-                            <div></div>
-                        </div>
-                    </div>
+                    <div class="max-w-5xl mx-auto px-4 md:px-6 pt-4 pb-5">
+                        <!-- Back button — full tap target -->
+                        <button @click="closeProductDetail()"
+                                class="inline-flex items-center gap-2 mb-4 text-gray-500 hover:text-gray-800 transition-colors active:opacity-60 -ml-1 px-2 py-2 rounded-xl hover:bg-black/5">
+                            <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                            <span class="text-sm font-semibold">Kembali ke Katalog</span>
+                        </button>
 
-                    <div class="max-w-5xl mx-auto px-5 pt-2 pb-6">
-                        <!-- Logo + nama horizontal -->
-                        <div class="flex items-center gap-4 mb-4">
-                            <!-- Logo: circle with shadow + subtle border -->
-                            <div class="w-[72px] h-[72px] rounded-2xl bg-white shadow-lg border border-white/80 flex items-center justify-center flex-none" style="box-shadow: 0 8px 24px rgba(0,0,0,0.12)">
-                                <img :src="getProductLogo(selectedProductGroup.category)" :alt="selectedProductGroup.category" fetchpriority="high" class="w-12 h-12 object-contain" onerror="this.style.display='none'">
+                        <!-- Product identity: logo + info -->
+                        <div class="flex items-start gap-4 md:gap-5">
+                            <!-- Logo pill — glassmorphism -->
+                            <div class="flex-none w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-xl ring-1 ring-white/60" style="box-shadow:0 8px 32px rgba(0,0,0,0.14)">
+                                <img :src="getProductLogo(selectedProductGroup.category)" :alt="selectedProductGroup.category" fetchpriority="high" class="w-14 h-14 md:w-16 md:h-16 object-contain" onerror="this.style.display='none'">
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md mb-1.5 tracking-wide" :class="getCategoryColor(selectedProductGroup.category)" x-text="selectedProductGroup.category"></span>
-                                <h2 class="font-black text-gray-900 text-lg md:text-xl leading-tight" x-text="selectedProductGroup.nama"></h2>
-                            </div>
-                        </div>
-                        <!-- Rating + stats row — compact chip style -->
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <div class="flex items-center gap-1 bg-white/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/60">
-                                <svg class="w-3 h-3 fill-yellow-400" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                <span class="text-xs font-bold text-gray-800" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></span>
-                                <span x-show="productReviews.length > 0" class="text-[10px] text-gray-500" x-text="'('+productReviews.length+')'"></span>
-                            </div>
-                            <template x-if="selectedProductGroup.variants?.some(v=>v.terjual>0) || selectedProductGroup.variants?.[0]?.terjual > 0">
-                                <div class="flex items-center gap-1 bg-white/70 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/60">
-                                    <svg class="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                                    <span class="text-[10px] font-semibold text-gray-700" x-text="formatTerjual(selectedProductGroup.variants?.reduce((s,v)=>s+(v.terjual||0),0)||0)"></span>
+                            <div class="flex-1 min-w-0 pt-1">
+                                <!-- Category badge -->
+                                <span class="inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-lg mb-2 tracking-wide" :class="getCategoryColor(selectedProductGroup.category)" x-text="selectedProductGroup.category"></span>
+                                <!-- Title -->
+                                <h2 class="font-black text-gray-900 text-xl md:text-2xl leading-tight mb-3" x-text="selectedProductGroup.nama"></h2>
+                                <!-- Chips row -->
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <!-- Rating -->
+                                    <div class="inline-flex items-center gap-1 bg-white/75 backdrop-blur-sm px-2.5 py-1.5 rounded-full shadow-sm border border-white/50">
+                                        <svg class="w-3.5 h-3.5 fill-yellow-400 flex-none" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                        <span class="text-xs font-bold text-gray-800" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></span>
+                                        <span x-show="productReviews.length > 0" class="text-[11px] text-gray-500" x-text="'('+productReviews.length+')'"></span>
+                                    </div>
+                                    <!-- Terjual -->
+                                    <template x-if="selectedProductGroup.variants?.some(v=>v.terjual>0)">
+                                        <div class="inline-flex items-center gap-1 bg-white/75 backdrop-blur-sm px-2.5 py-1.5 rounded-full shadow-sm border border-white/50">
+                                            <svg class="w-3.5 h-3.5 text-gray-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                            <span class="text-xs font-semibold text-gray-700" x-text="formatTerjual(selectedProductGroup.variants?.reduce((s,v)=>s+(v.terjual||0),0)||0)+' Terjual'"></span>
+                                        </div>
+                                    </template>
+                                    <!-- Stok -->
+                                    <div class="inline-flex items-center gap-1.5 bg-green-500/20 backdrop-blur-sm px-2.5 py-1.5 rounded-full border border-green-400/30">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-none"></div>
+                                        <span class="text-xs font-semibold text-green-700">Stok tersedia</span>
+                                    </div>
+                                    <!-- Share -->
+                                    <button @click="shareCurrentProduct($el)"
+                                            class="inline-flex items-center gap-1.5 bg-white/70 backdrop-blur-sm px-2.5 py-1.5 rounded-full border border-white/50 text-gray-500 hover:text-gray-700 transition-all active:scale-95 shadow-sm">
+                                        <svg class="w-3 h-3 flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                        <span class="text-xs font-semibold">Bagikan</span>
+                                    </button>
                                 </div>
-                            </template>
-                            <div class="flex items-center gap-1 bg-green-500/15 backdrop-blur-sm px-2.5 py-1 rounded-full border border-green-400/30">
-                                <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-none"></div>
-                                <span class="text-[10px] font-semibold text-green-700">Stok tersedia</span>
                             </div>
-                            <!-- Share — sejajar badge -->
-                            <button @click="shareCurrentProduct($el)" class="flex items-center gap-1 bg-white/70 backdrop-blur-sm px-2.5 rounded-full border border-white/60 text-gray-500 hover:text-gray-700 transition-colors active:scale-95" style="padding-top:4px;padding-bottom:4px;line-height:1;min-height:0">
-                                <svg class="w-2.5 h-2.5 flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                                <span style="font-size:10px;font-weight:600;line-height:1">Bagikan</span>
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -1791,23 +1793,31 @@
                                         </template>
                                     </div>
                                 </div>
-                                <!-- Trust signals -->
-                                <div class="border-t border-gray-100 pt-4 grid grid-cols-2 gap-3">
-                                    <div class="flex items-start gap-2">
-                                        <svg class="w-4 h-4 text-green-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                        <div><div class="text-xs font-bold text-gray-700">5–30 Menit</div><div class="text-[11px] text-gray-400">Pengiriman cepat</div></div>
+                                <!-- Trust signals — colorful mini cards -->
+                                <div class="border-t border-gray-100 pt-4 grid grid-cols-2 gap-2">
+                                    <div class="flex items-center gap-2.5 bg-green-50 rounded-xl px-3 py-2.5">
+                                        <div class="w-7 h-7 bg-green-500/15 rounded-lg flex items-center justify-center flex-none">
+                                            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        </div>
+                                        <div><div class="text-xs font-bold text-gray-800">5–30 Menit</div><div class="text-[10px] text-gray-500">Aktivasi cepat</div></div>
                                     </div>
-                                    <div class="flex items-start gap-2">
-                                        <svg class="w-4 h-4 text-blue-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                        <div><div class="text-xs font-bold text-gray-700">Bergaransi</div><div class="text-[11px] text-gray-400">Sesuai masa aktif</div></div>
+                                    <div class="flex items-center gap-2.5 bg-blue-50 rounded-xl px-3 py-2.5">
+                                        <div class="w-7 h-7 bg-blue-500/15 rounded-lg flex items-center justify-center flex-none">
+                                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                        </div>
+                                        <div><div class="text-xs font-bold text-gray-800">Bergaransi</div><div class="text-[10px] text-gray-500">Masa aktif penuh</div></div>
                                     </div>
-                                    <div class="flex items-start gap-2">
-                                        <svg class="w-4 h-4 text-purple-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-                                        <div><div class="text-xs font-bold text-gray-700">Multi Pembayaran</div><div class="text-[11px] text-gray-400" x-text="paymentMethods.length ? paymentMethods.slice(0,3).join(', ')+(paymentMethods.length>3?' +'+( paymentMethods.length-3):'') : 'Transfer, QRIS, VA'"></div></div>
+                                    <div class="flex items-center gap-2.5 bg-purple-50 rounded-xl px-3 py-2.5">
+                                        <div class="w-7 h-7 bg-purple-500/15 rounded-lg flex items-center justify-center flex-none">
+                                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                        </div>
+                                        <div><div class="text-xs font-bold text-gray-800">Multi Bayar</div><div class="text-[10px] text-gray-500">QRIS, VA, E-Wallet</div></div>
                                     </div>
-                                    <div class="flex items-start gap-2">
-                                        <svg class="w-4 h-4 text-amber-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                                        <div><div class="text-xs font-bold text-gray-700">24/7 Support</div><div class="text-[11px] text-gray-400">Via chat & WA</div></div>
+                                    <div class="flex items-center gap-2.5 bg-amber-50 rounded-xl px-3 py-2.5">
+                                        <div class="w-7 h-7 bg-amber-500/15 rounded-lg flex items-center justify-center flex-none">
+                                            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                        </div>
+                                        <div><div class="text-xs font-bold text-gray-800">24/7 Support</div><div class="text-[10px] text-gray-500">Chat & WhatsApp</div></div>
                                     </div>
                                 </div>
                                 <!-- Nota khusus Adobe -->
@@ -2011,29 +2021,29 @@
                     <!-- end LEFT -->
 
                     <!-- RIGHT: Sticky price panel (desktop) -->
-                    <div class="hidden md:block w-72 flex-none sticky top-16">
-                        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div class="hidden md:block w-80 flex-none sticky top-20">
+                        <div class="bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden">
                             <!-- Price area -->
-                            <div class="px-5 pt-5 pb-4 border-b border-gray-100">
-                                <div class="text-xs text-gray-400 mb-1">Harga</div>
+                            <div class="px-5 pt-5 pb-4 border-b border-gray-100 bg-gradient-to-br from-gray-50 to-white">
+                                <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Harga</div>
                                 <!-- Member + flash sale -->
                                 <template x-if="isMember && flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
                                     <div>
-                                        <div class="text-sm text-gray-400 line-through leading-none mb-1" x-text="formatPrice(selectedVariant?.harga)"></div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="bg-red-500 text-white text-xs font-black px-2 py-0.5 rounded-full" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
-                                            <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></div>
+                                        <div class="text-sm text-gray-400 line-through leading-none mb-1.5" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                        <div class="flex items-center gap-2.5 flex-wrap">
+                                            <span class="bg-red-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow-sm" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
+                                            <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></div>
                                         </div>
                                     </div>
                                 </template>
                                 <!-- Member tanpa flash sale -->
                                 <template x-if="isMember && !flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                    <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                    <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
                                 </template>
                                 <!-- Tamu -->
                                 <template x-if="!isMember">
                                     <div>
-                                        <div class="font-black text-brand-500 text-2xl" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                        <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
                                         <!-- Flash sale tersedia tapi belum login -->
                                         <template x-if="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
                                             <button @click="openAuth('login')" class="mt-2 w-full flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-left hover:bg-red-100 active:scale-[0.98] transition-all">
@@ -2109,11 +2119,11 @@
                 <!-- ── Sticky bottom bar (mobile only) ── -->
                 <div class="md:hidden fixed left-0 right-0 z-40" style="bottom: calc(64px + env(safe-area-inset-bottom, 0px));">
                     <!-- Frosted glass container -->
-                    <div class="mx-3 mb-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.10)] border border-gray-100/80 overflow-hidden">
+                    <div class="mx-3 mb-2 bg-white/96 backdrop-blur-2xl rounded-2xl shadow-[0_-2px_20px_rgba(0,0,0,0.12),0_8px_32px_rgba(0,0,0,0.08)] border border-white/80 overflow-hidden">
                         <!-- Price row -->
-                        <div class="px-4 pt-3 pb-2 flex items-center justify-between">
+                        <div class="px-4 pt-3.5 pb-2.5 flex items-center justify-between">
                             <div>
-                                <div class="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Total Harga</div>
+                                <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Total Harga</div>
                                 <!-- Member + flash sale -->
                                 <template x-if="isMember && flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
                                     <div class="flex items-center gap-2 mt-0.5">
@@ -2147,10 +2157,10 @@
                             </div>
                         </div>
                         <!-- CTA buttons row -->
-                        <div class="px-3 pb-3 flex gap-2">
-                            <!-- Keranjang -->
+                        <div class="px-3 pb-3 flex gap-2.5">
+                            <!-- Keranjang icon button -->
                             <button @click="addToCart(selectedProductGroup, selectedVariant)"
-                                class="w-12 h-12 flex-none rounded-xl border-2 border-brand-400 bg-white text-brand-500 flex items-center justify-center transition-all active:scale-95 hover:bg-brand-50">
+                                    class="w-12 h-12 flex-none rounded-xl border-2 border-brand-400 bg-white text-brand-500 flex items-center justify-center transition-all active:scale-90 hover:bg-brand-50 shadow-sm">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                             </button>
                             <!-- Pesan / Stok Habis -->
@@ -2159,8 +2169,9 @@
                             </template>
                             <template x-if="selectedVariant?.stok!==0">
                                 <button @click="handlePesan()"
-                                    class="flex-1 h-12 gradient-card text-white font-black rounded-xl text-sm transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
-                                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
+                                        class="flex-1 h-12 gradient-card text-white font-black rounded-xl text-sm transition-all active:scale-[0.97] shadow-lg flex items-center justify-center gap-2"
+                                        style="box-shadow: 0 4px 16px rgba(220,38,38,0.35)">
+                                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
                                     Pesan Sekarang
                                 </button>
                             </template>
