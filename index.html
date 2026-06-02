@@ -7813,7 +7813,8 @@
 <!-- ══════════════════════════════════════════════════════
      LEGAL MODAL (SYARAT & KETENTUAN / KEBIJAKAN PRIVASI)
 ══════════════════════════════════════════════════════ -->
-<div x-show="legalModal" class="fixed inset-0 z-[700] flex items-end md:items-center justify-center" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" style="display:none">
+<template x-if="legalModal">
+<div class="fixed inset-0 z-[700] flex items-end md:items-center justify-center">
     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="legalModal=null"></div>
     <div class="relative bg-white w-full md:max-w-2xl md:rounded-3xl rounded-t-3xl max-h-[calc(100vh-4rem)] md:max-h-[90vh] flex flex-col modal-enter">
         <!-- Header -->
@@ -8130,6 +8131,7 @@
         </div>
     </div>
 </div>
+</template>
 
 <!-- ══════════════════════════════════════════════════════
      ALPINE.JS APP
