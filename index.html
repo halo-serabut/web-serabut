@@ -6142,11 +6142,24 @@
      style="transform-origin: bottom right">
     <!-- Mobile backdrop -->
     <div class="fixed inset-0 bg-black/40 md:hidden -z-10" @click="csPopup=false"></div>
-    <div class="relative bg-white rounded-3xl md:rounded-2xl shadow-2xl border border-gray-100 w-full md:w-96 flex flex-col overflow-hidden" :style="csKeyboardOffset ? 'max-height:calc(100dvh - '+csKeyboardOffset+'px - 1rem)' : 'min-height:58dvh;max-height:85dvh'" style="min-height:58dvh;max-height:85dvh">
-        <!-- Drag handle mobile — tap area jelas untuk close -->
-        <div class="md:hidden flex flex-col items-center pt-3 pb-2 flex-none cursor-pointer" @click="csPopup=false; csHidden=true">
+    <div class="relative bg-white rounded-3xl md:rounded-2xl shadow-2xl border border-gray-100 w-full md:w-96 flex flex-col overflow-hidden"
+         :style="csKeyboardOffset ? 'max-height:calc(100dvh - '+csKeyboardOffset+'px - 1rem)' : 'min-height:58dvh;max-height:85dvh'"
+         style="min-height:58dvh;max-height:85dvh"
+         x-data="{_swipeY:0, _swipeStart:0, _swipeDelta:0}"
+         @touchstart.passive="_swipeStart=$event.touches[0].clientY; _swipeDelta=0"
+         @touchmove.passive="
+           _swipeDelta = $event.touches[0].clientY - _swipeStart;
+           if(_swipeDelta > 0) $el.style.transform = 'translateY('+Math.min(_swipeDelta*0.6,120)+'px)';
+         "
+         @touchend="
+           if(_swipeDelta > 80) { $el.style.transform=''; csPopup=false; csHidden=true; }
+           else { $el.style.transition='transform 0.3s'; $el.style.transform=''; setTimeout(()=>$el.style.transition='',300); }
+           _swipeDelta=0;
+         ">
+        <!-- Drag handle mobile only — clean pill, no text -->
+        <div class="md:hidden flex justify-center pt-3 pb-2 flex-none cursor-grab active:cursor-grabbing select-none"
+             @click="csPopup=false; csHidden=true">
             <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
-            <span class="text-[10px] text-gray-400 mt-1">Geser atau tap untuk tutup</span>
         </div>
         <!-- Header -->
         <div class="bg-gray-900 px-4 py-3 flex items-center justify-between flex-none">
