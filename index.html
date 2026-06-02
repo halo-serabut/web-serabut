@@ -8035,44 +8035,45 @@
 <!-- ── Footer Canvas Particle Network ── -->
 <script>
 (function(){
-  var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-  if(mq.matches) return;
-
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   var canvas = document.getElementById('footerCanvas');
-  if(!canvas) return;
+  var footerEl = document.getElementById('sec-footer');
+  if(!canvas || !footerEl) return;
   var ctx = canvas.getContext('2d');
-  var W, H, particles, mouse = {x:-999,y:-999};
-  var N = 40, LINK = 120, RAF;
-
-  // Particle colors: mix of white + red accent
-  var COLORS = [
-    [255,255,255], // white
-    [255,255,255], // white (more common)
-    [255,255,255], // white
-    [220,38,38],   // brand red
-    [239,68,68],   // lighter red
-  ];
+  var W, H, particles, RAF;
+  var mouse = {x:-9999, y:-9999};
+  var N = 45, LINK = 130;
+  var COLORS = ['255,255,255','255,255,255','255,255,255','220,38,38','239,68,68'];
 
   function resize(){
-    var rect = canvas.parentElement.getBoundingClientRect();
-    W = canvas.width  = rect.width;
-    H = canvas.height = rect.height;
+    var r = footerEl.getBoundingClientRect();
+    W = canvas.width  = footerEl.offsetWidth;
+    H = canvas.height = footerEl.offsetHeight;
   }
 
   function Particle(){
     this.x  = Math.random()*W;
     this.y  = Math.random()*H;
-    this.vx = (Math.random()-.5)*0.45;
-    this.vy = (Math.random()-.5)*0.45;
-    this.r  = Math.random()*1.8+0.6;
-    this.a  = Math.random()*0.45+0.2;
-    var c = COLORS[Math.floor(Math.random()*COLORS.length)];
-    this.color = c[0]+','+c[1]+','+c[2];
+    this.vx = (Math.random()-.5)*0.5;
+    this.vy = (Math.random()-.5)*0.5;
+    this.r  = Math.random()*2+0.7;
+    this.a  = Math.random()*0.5+0.25;
+    this.color = COLORS[Math.floor(Math.random()*COLORS.length)];
   }
   Particle.prototype.update = function(){
+    // Mouse repel — same as hero
+    var dx = this.x - mouse.x, dy = this.y - mouse.y;
+    var d = Math.sqrt(dx*dx + dy*dy);
+    if(d < 120 && d > 0){
+      this.vx += (dx/d) * 0.1;
+      this.vy += (dy/d) * 0.1;
+    }
+    // Speed clamp
+    var sp = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+    if(sp > 1.6){ this.vx = this.vx/sp*1.6; this.vy = this.vy/sp*1.6; }
     this.x += this.vx; this.y += this.vy;
-    if(this.x<0||this.x>W) this.vx*=-1;
-    if(this.y<0||this.y>H) this.vy*=-1;
+    if(this.x < 0 || this.x > W) this.vx *= -1;
+    if(this.y < 0 || this.y > H) this.vy *= -1;
   };
 
   function init(){ resize(); particles=[]; for(var i=0;i<N;i++) particles.push(new Particle()); }
@@ -8080,35 +8081,39 @@
   function draw(){
     ctx.clearRect(0,0,W,H);
     for(var i=0;i<particles.length;i++){
-      var p=particles[i]; p.update();
+      var p = particles[i]; p.update();
+      // Draw dot
       ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle='rgba('+p.color+','+p.a+')'; ctx.fill();
+      ctx.fillStyle = 'rgba('+p.color+','+p.a+')'; ctx.fill();
+      // Draw connection lines
       for(var j=i+1;j<particles.length;j++){
-        var q=particles[j], dx=p.x-q.x, dy=p.y-q.y, d=Math.sqrt(dx*dx+dy*dy);
-        if(d<LINK){
-          var op=(1-d/LINK)*0.18;
+        var q=particles[j], ddx=p.x-q.x, ddy=p.y-q.y, dd=Math.sqrt(ddx*ddx+ddy*ddy);
+        if(dd < LINK){
           ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
-          ctx.strokeStyle='rgba('+p.color+','+op+')'; ctx.lineWidth=0.7; ctx.stroke();
+          ctx.strokeStyle='rgba('+p.color+','+(1-dd/LINK)*0.2+')';
+          ctx.lineWidth=0.8; ctx.stroke();
         }
       }
-      // mouse attract subtle
-      var mx=p.x-mouse.x, my=p.y-mouse.y, md=Math.sqrt(mx*mx+my*my);
-      if(md<120){ var op2=(1-md/120)*0.15; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(mouse.x,mouse.y); ctx.strokeStyle='rgba('+p.color+','+op2+')'; ctx.lineWidth=0.6; ctx.stroke(); }
     }
-    RAF=requestAnimationFrame(draw);
+    RAF = requestAnimationFrame(draw);
   }
 
-  var footerEl=document.getElementById('sec-footer');
-  if(!footerEl) return;
-  var obs=new IntersectionObserver(function(entries){
-    if(entries[0].isIntersecting){
-      if(!RAF){init();draw();}
-      footerEl.addEventListener('mousemove',function(e){var r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;});
-      footerEl.addEventListener('mouseleave',function(){mouse.x=mouse.y=-999;});
-    } else { cancelAnimationFrame(RAF);RAF=null; }
-  },{threshold:0.05});
+  // Mouse tracking — on footer element, translate to canvas coords
+  footerEl.addEventListener('mousemove', function(e){
+    var r = footerEl.getBoundingClientRect();
+    mouse.x = e.clientX - r.left;
+    mouse.y = e.clientY - r.top;
+  });
+  footerEl.addEventListener('mouseleave', function(){ mouse.x = mouse.y = -9999; });
+
+  // Start/stop with visibility
+  var obs = new IntersectionObserver(function(entries){
+    if(entries[0].isIntersecting){ if(!RAF){ init(); draw(); } }
+    else { cancelAnimationFrame(RAF); RAF = null; }
+  }, {threshold:0.05});
   obs.observe(footerEl);
-  window.addEventListener('resize',function(){resize();});
+
+  window.addEventListener('resize', function(){ resize(); if(particles){ particles=null; init(); } });
 })();
 </script>
 
