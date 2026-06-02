@@ -799,7 +799,7 @@
     <section x-show="activePage==='home'">
         <div id="sec-hero" class="gradient-hero text-white scroll-mt-20 relative overflow-hidden">
             <!-- Canvas particle network + aurora orbs -->
-            <canvas id="heroCanvas" class="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true" style="opacity:0.85"></canvas>
+            <canvas id="heroCanvas" class="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true" style="opacity:1"></canvas>
             <div class="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
                 <!-- Aurora orbs — blur glow behind canvas -->
                 <div class="hero-orb absolute -top-40 -right-40 w-[600px] h-[600px] bg-red-300/20 rounded-full blur-[120px]" style="animation:orb1 8s ease-in-out infinite;"></div>
@@ -5956,10 +5956,13 @@
 <!-- ══════════════════════════════════════════════════════
      FOOTER
 ══════════════════════════════════════════════════════ -->
-<footer class="hidden md:block bg-gray-900 text-white relative overflow-hidden" x-show="!productDetailOverlay" x-cloak>
+<footer id="sec-footer" class="hidden md:block bg-gray-900 text-white relative overflow-hidden" x-show="!productDetailOverlay" x-cloak>
+    <!-- Canvas particle network -->
+    <canvas id="footerCanvas" class="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true" style="opacity:0.7"></canvas>
     <!-- Red glow accents -->
-    <div class="absolute -left-24 top-1/2 -translate-y-1/2 w-64 h-64 bg-red-700 rounded-full blur-3xl opacity-10 pointer-events-none"></div>
-    <div class="absolute -right-24 top-1/2 -translate-y-1/2 w-64 h-64 bg-red-700 rounded-full blur-3xl opacity-10 pointer-events-none"></div>
+    <div class="absolute -left-24 top-1/2 -translate-y-1/2 w-72 h-72 bg-red-600 rounded-full blur-3xl opacity-15 pointer-events-none"></div>
+    <div class="absolute -right-24 top-1/2 -translate-y-1/2 w-72 h-72 bg-red-600 rounded-full blur-3xl opacity-15 pointer-events-none"></div>
+    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-32 bg-red-800/10 blur-2xl pointer-events-none"></div>
     <div class="max-w-6xl mx-auto px-8 py-5 md:py-6 relative">
 
         <!-- Mobile: full layout -->
@@ -7927,8 +7930,8 @@
   var ctx = canvas.getContext('2d');
   var W, H, particles, mouse = {x:-999,y:-999};
   var isMob = window.innerWidth < 768;
-  var N = isMob ? 28 : 55;
-  var LINK = isMob ? 90 : 130;
+  var N = isMob ? 32 : 65;
+  var LINK = isMob ? 100 : 140;
   var RAF;
 
   function resize(){
@@ -7936,16 +7939,16 @@
     W = canvas.width  = rect.width;
     H = canvas.height = rect.height;
     isMob = W < 768;
-    N = isMob ? 28 : 55;
+    N = isMob ? 32 : 65;
   }
 
   function Particle(){
     this.x  = Math.random()*W;
     this.y  = Math.random()*H;
-    this.vx = (Math.random()-.5)*0.55;
-    this.vy = (Math.random()-.5)*0.55;
-    this.r  = Math.random()*1.6+0.6;
-    this.a  = Math.random()*0.5+0.3;
+    this.vx = (Math.random()-.5)*0.6;
+    this.vy = (Math.random()-.5)*0.6;
+    this.r  = Math.random()*2+0.8;
+    this.a  = Math.random()*0.55+0.35;
   }
   Particle.prototype.update = function(){
     this.x += this.vx;
@@ -7976,7 +7979,7 @@
         var dx=p.x-q.x, dy=p.y-q.y;
         var d=Math.sqrt(dx*dx+dy*dy);
         if(d<LINK){
-          var op = (1-d/LINK)*0.22;
+          var op = (1-d/LINK)*0.32;
           ctx.beginPath();
           ctx.moveTo(p.x,p.y);
           ctx.lineTo(q.x,q.y);
@@ -8026,6 +8029,86 @@
   window.addEventListener('resize',function(){ resize(); if(!particles) return; particles=null; init(); });
   // init immediately if visible
   if(heroEl.getBoundingClientRect().top < window.innerHeight){ init(); draw(); }
+})();
+</script>
+
+<!-- ── Footer Canvas Particle Network ── -->
+<script>
+(function(){
+  var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if(mq.matches) return;
+
+  var canvas = document.getElementById('footerCanvas');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W, H, particles, mouse = {x:-999,y:-999};
+  var N = 40, LINK = 120, RAF;
+
+  // Particle colors: mix of white + red accent
+  var COLORS = [
+    [255,255,255], // white
+    [255,255,255], // white (more common)
+    [255,255,255], // white
+    [220,38,38],   // brand red
+    [239,68,68],   // lighter red
+  ];
+
+  function resize(){
+    var rect = canvas.parentElement.getBoundingClientRect();
+    W = canvas.width  = rect.width;
+    H = canvas.height = rect.height;
+  }
+
+  function Particle(){
+    this.x  = Math.random()*W;
+    this.y  = Math.random()*H;
+    this.vx = (Math.random()-.5)*0.45;
+    this.vy = (Math.random()-.5)*0.45;
+    this.r  = Math.random()*1.8+0.6;
+    this.a  = Math.random()*0.45+0.2;
+    var c = COLORS[Math.floor(Math.random()*COLORS.length)];
+    this.color = c[0]+','+c[1]+','+c[2];
+  }
+  Particle.prototype.update = function(){
+    this.x += this.vx; this.y += this.vy;
+    if(this.x<0||this.x>W) this.vx*=-1;
+    if(this.y<0||this.y>H) this.vy*=-1;
+  };
+
+  function init(){ resize(); particles=[]; for(var i=0;i<N;i++) particles.push(new Particle()); }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<particles.length;i++){
+      var p=particles[i]; p.update();
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba('+p.color+','+p.a+')'; ctx.fill();
+      for(var j=i+1;j<particles.length;j++){
+        var q=particles[j], dx=p.x-q.x, dy=p.y-q.y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<LINK){
+          var op=(1-d/LINK)*0.18;
+          ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
+          ctx.strokeStyle='rgba('+p.color+','+op+')'; ctx.lineWidth=0.7; ctx.stroke();
+        }
+      }
+      // mouse attract subtle
+      var mx=p.x-mouse.x, my=p.y-mouse.y, md=Math.sqrt(mx*mx+my*my);
+      if(md<120){ var op2=(1-md/120)*0.15; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(mouse.x,mouse.y); ctx.strokeStyle='rgba('+p.color+','+op2+')'; ctx.lineWidth=0.6; ctx.stroke(); }
+    }
+    RAF=requestAnimationFrame(draw);
+  }
+
+  var footerEl=document.getElementById('sec-footer');
+  if(!footerEl) return;
+  var obs=new IntersectionObserver(function(entries){
+    if(entries[0].isIntersecting){
+      if(!RAF){init();draw();}
+      footerEl.addEventListener('mousemove',function(e){var r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;});
+      footerEl.addEventListener('mouseleave',function(){mouse.x=mouse.y=-999;});
+    } else { cancelAnimationFrame(RAF);RAF=null; }
+  },{threshold:0.05});
+  obs.observe(footerEl);
+  window.addEventListener('resize',function(){resize();});
 })();
 </script>
 
@@ -10081,11 +10164,11 @@ function serabutStore() {
                         if (this._scrollTarget && id !== this._scrollTarget) break;
                         this._scrollTarget = null;
                         this.currentSection = id;
-                        this.catalogInView = id === 'catalog';
+                        this.catalogInView = (id === 'catalog') && window.scrollY > 150;
                         break;
                     }
                 }
-            }, { threshold: [0, 0.05, 0.1], rootMargin: '-64px 0px -20% 0px' });
+            }, { threshold: [0, 0.05, 0.1], rootMargin: '-64px 0px -35% 0px' });
             sections.forEach(id => {
                 const el = document.getElementById('sec-' + id);
                 if (el) obs.observe(el);
