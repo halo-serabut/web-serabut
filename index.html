@@ -392,6 +392,48 @@
         /* Cart icon & small icon buttons di navbar */
         button.w-9.rounded-xl { min-width: 44px; min-height: 44px; }
         .gradient-hero  { background: linear-gradient(135deg, #7F1D1D 0%, #DC2626 60%, #EF4444 100%); }
+
+        /* ── Hero animated background ── */
+        @keyframes orb1 {
+            0%,100% { transform: translate(0px,0px) scale(1); }
+            25%  { transform: translate(50px,-60px) scale(1.1); }
+            50%  { transform: translate(-30px,40px) scale(0.92); }
+            75%  { transform: translate(70px,25px) scale(1.05); }
+        }
+        @keyframes orb2 {
+            0%,100% { transform: translate(0px,0px) scale(1.05); }
+            33%  { transform: translate(-80px,50px) scale(0.88); }
+            66%  { transform: translate(55px,-35px) scale(1.12); }
+        }
+        @keyframes orb3 {
+            0%,100% { transform: translate(0px,0px); }
+            20%  { transform: translate(-40px,-70px); }
+            50%  { transform: translate(90px,15px); }
+            80%  { transform: translate(15px,55px); }
+        }
+        @keyframes orb4 {
+            0%,100% { transform: translate(0px,0px) scale(1); }
+            50%  { transform: translate(-60px,-40px) scale(1.18); }
+        }
+        @keyframes hero-streak {
+            0%   { transform: translateX(-150%) skewX(-12deg); opacity:0; }
+            8%   { opacity:1; }
+            92%  { opacity:1; }
+            100% { transform: translateX(500%) skewX(-12deg); opacity:0; }
+        }
+        @keyframes hero-dot-pulse {
+            0%,100% { opacity:0.05; }
+            50%     { opacity:0.09; }
+        }
+        @keyframes hero-ptcl {
+            0%   { transform: translateY(0px) translateX(0px); opacity:0.7; }
+            50%  { opacity:1; }
+            100% { transform: translateY(-90px) translateX(15px); opacity:0; }
+        }
+        .hero-orb { will-change: transform; }
+        @media (prefers-reduced-motion: reduce) {
+            .hero-orb, .hero-streak, .hero-ptcl { animation: none !important; }
+        }
         .gradient-card  { background: linear-gradient(135deg, #DC2626, #EF4444); }
         .card-hover     { transition: transform .18s ease, box-shadow .18s ease; }
         .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(220,38,38,.12); }
@@ -756,11 +798,35 @@
     <!-- ───────── HOME ───────── -->
     <section x-show="activePage==='home'">
         <div id="sec-hero" class="gradient-hero text-white scroll-mt-20 relative overflow-hidden">
-            <!-- Subtle background decor -->
-            <div class="absolute inset-0 pointer-events-none select-none" aria-hidden="true">
-                <div class="absolute -top-24 -right-24 w-96 h-96 bg-white/5 rounded-full blur-3xl"></div>
-                <div class="absolute -bottom-16 -left-16 w-72 h-72 bg-white/5 rounded-full blur-3xl"></div>
-                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-red-900/20 rounded-full blur-3xl"></div>
+            <!-- Animated background layer -->
+            <div class="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+
+                <!-- Gradient orbs — GPU composited, transform only -->
+                <div class="hero-orb absolute -top-40 -right-40 w-[560px] h-[560px] bg-red-400/25 rounded-full blur-[100px]"
+                     style="animation: orb1 7s ease-in-out infinite;"></div>
+                <div class="hero-orb absolute -bottom-32 -left-32 w-[440px] h-[440px] bg-rose-300/20 rounded-full blur-[80px]"
+                     style="animation: orb2 5.5s ease-in-out infinite;"></div>
+                <div class="hero-orb absolute top-1/2 left-[38%] w-[320px] h-[320px] bg-yellow-400/10 rounded-full blur-[70px]"
+                     style="animation: orb3 9s ease-in-out infinite; animation-delay: -3s;"></div>
+                <div class="hero-orb absolute top-1/4 right-[30%] w-[220px] h-[220px] bg-white/8 rounded-full blur-[50px]"
+                     style="animation: orb4 6.5s ease-in-out infinite; animation-delay: -5s;"></div>
+
+                <!-- Dot grid texture -->
+                <div class="absolute inset-0" style="background-image: radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1px); background-size: 28px 28px; animation: hero-dot-pulse 4s ease-in-out infinite;"></div>
+
+                <!-- Light streak — sweeps every 9s -->
+                <div class="hero-streak absolute inset-y-0 w-24 md:w-40 pointer-events-none"
+                     style="background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent); animation: hero-streak 9s linear infinite; animation-delay: 3s;"></div>
+
+                <!-- Floating particles — staggered ascent -->
+                <div class="hero-ptcl absolute w-1 h-1 bg-white/70 rounded-full" style="left:12%;bottom:25%;animation:hero-ptcl 4s ease-in infinite;"></div>
+                <div class="hero-ptcl absolute w-1.5 h-1.5 bg-white/50 rounded-full" style="left:30%;bottom:18%;animation:hero-ptcl 5.5s ease-in infinite;animation-delay:1.2s;"></div>
+                <div class="hero-ptcl absolute w-1 h-1 bg-yellow-300/80 rounded-full" style="left:55%;bottom:35%;animation:hero-ptcl 4.8s ease-in infinite;animation-delay:0.6s;"></div>
+                <div class="hero-ptcl absolute w-2 h-2 bg-white/30 rounded-full" style="left:72%;bottom:28%;animation:hero-ptcl 6s ease-in infinite;animation-delay:2.5s;"></div>
+                <div class="hero-ptcl absolute w-1 h-1 bg-white/60 rounded-full" style="left:22%;bottom:55%;animation:hero-ptcl 5s ease-in infinite;animation-delay:3.2s;"></div>
+                <div class="hero-ptcl absolute w-1.5 h-1.5 bg-yellow-200/50 rounded-full" style="left:85%;bottom:45%;animation:hero-ptcl 7s ease-in infinite;animation-delay:1.8s;"></div>
+                <div class="hero-ptcl absolute w-1 h-1 bg-white/40 rounded-full" style="left:45%;bottom:65%;animation:hero-ptcl 4.2s ease-in infinite;animation-delay:4s;"></div>
+
             </div>
 
             <div class="max-w-6xl mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row md:items-center gap-8 md:gap-12 relative">
