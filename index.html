@@ -798,46 +798,20 @@
     <!-- ───────── HOME ───────── -->
     <section x-show="activePage==='home'">
         <div id="sec-hero" class="gradient-hero text-white scroll-mt-20 relative overflow-hidden">
-            <!-- Animated background layer -->
+            <!-- Canvas particle network + aurora orbs -->
+            <canvas id="heroCanvas" class="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true" style="opacity:0.85"></canvas>
             <div class="absolute inset-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
-
-                <!-- Gradient orbs — GPU composited, transform only -->
-                <div class="hero-orb absolute -top-40 -right-40 w-[560px] h-[560px] bg-red-400/25 rounded-full blur-[100px]"
-                     style="animation: orb1 7s ease-in-out infinite;"></div>
-                <div class="hero-orb absolute -bottom-32 -left-32 w-[440px] h-[440px] bg-rose-300/20 rounded-full blur-[80px]"
-                     style="animation: orb2 5.5s ease-in-out infinite;"></div>
-                <div class="hero-orb absolute top-1/2 left-[38%] w-[320px] h-[320px] bg-yellow-400/10 rounded-full blur-[70px]"
-                     style="animation: orb3 9s ease-in-out infinite; animation-delay: -3s;"></div>
-                <div class="hero-orb absolute top-1/4 right-[30%] w-[220px] h-[220px] bg-white/8 rounded-full blur-[50px]"
-                     style="animation: orb4 6.5s ease-in-out infinite; animation-delay: -5s;"></div>
-
-                <!-- Dot grid texture -->
-                <div class="absolute inset-0" style="background-image: radial-gradient(circle, rgba(255,255,255,0.55) 1px, transparent 1px); background-size: 28px 28px; animation: hero-dot-pulse 4s ease-in-out infinite;"></div>
-
-                <!-- Light streak — sweeps every 9s -->
-                <div class="hero-streak absolute inset-y-0 w-24 md:w-40 pointer-events-none"
-                     style="background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent); animation: hero-streak 9s linear infinite; animation-delay: 3s;"></div>
-
-                <!-- Floating particles — staggered ascent -->
-                <div class="hero-ptcl absolute w-1 h-1 bg-white/70 rounded-full" style="left:12%;bottom:25%;animation:hero-ptcl 4s ease-in infinite;"></div>
-                <div class="hero-ptcl absolute w-1.5 h-1.5 bg-white/50 rounded-full" style="left:30%;bottom:18%;animation:hero-ptcl 5.5s ease-in infinite;animation-delay:1.2s;"></div>
-                <div class="hero-ptcl absolute w-1 h-1 bg-yellow-300/80 rounded-full" style="left:55%;bottom:35%;animation:hero-ptcl 4.8s ease-in infinite;animation-delay:0.6s;"></div>
-                <div class="hero-ptcl absolute w-2 h-2 bg-white/30 rounded-full" style="left:72%;bottom:28%;animation:hero-ptcl 6s ease-in infinite;animation-delay:2.5s;"></div>
-                <div class="hero-ptcl absolute w-1 h-1 bg-white/60 rounded-full" style="left:22%;bottom:55%;animation:hero-ptcl 5s ease-in infinite;animation-delay:3.2s;"></div>
-                <div class="hero-ptcl absolute w-1.5 h-1.5 bg-yellow-200/50 rounded-full" style="left:85%;bottom:45%;animation:hero-ptcl 7s ease-in infinite;animation-delay:1.8s;"></div>
-                <div class="hero-ptcl absolute w-1 h-1 bg-white/40 rounded-full" style="left:45%;bottom:65%;animation:hero-ptcl 4.2s ease-in infinite;animation-delay:4s;"></div>
-
+                <!-- Aurora orbs — blur glow behind canvas -->
+                <div class="hero-orb absolute -top-40 -right-40 w-[600px] h-[600px] bg-red-300/20 rounded-full blur-[120px]" style="animation:orb1 8s ease-in-out infinite;"></div>
+                <div class="hero-orb absolute -bottom-32 -left-24 w-[480px] h-[480px] bg-rose-400/15 rounded-full blur-[100px]" style="animation:orb2 6s ease-in-out infinite;"></div>
+                <div class="hero-orb absolute top-[30%] left-[40%] w-[360px] h-[360px] bg-amber-400/8 rounded-full blur-[80px]" style="animation:orb3 10s ease-in-out infinite;animation-delay:-4s;"></div>
+                <!-- Light streak -->
+                <div class="hero-streak absolute inset-y-0 w-32 md:w-52" style="background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent);animation:hero-streak 11s linear infinite;animation-delay:4s;"></div>
             </div>
 
             <div class="max-w-6xl mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row md:items-center gap-8 md:gap-12 relative">
                 <!-- Left: copy -->
                 <div class="flex-1 max-w-2xl">
-                    <!-- Trust pill -->
-                    <div class="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full mb-5">
-                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse flex-none"></span>
-                        <span class="text-white/90 text-xs font-semibold">✓ Lisensi Resmi · 10.000+ Pelanggan · Garansi Aktif</span>
-                    </div>
-
                     <h1 class="text-3xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
                         <span x-text="siteSettings.hero.tagline1">Platform Produk Digital</span><br>
                         <span class="text-yellow-300" x-text="siteSettings.hero.tagline2">Harga Terjangkau</span>
@@ -859,21 +833,19 @@
                         </button>
                     </div>
 
-                    <!-- Trust metrics row — desktop only -->
-                    <div class="hidden md:flex items-center gap-5 text-white/60 text-xs">
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                            <span>100% Original</span>
+                    <!-- Stat cards — glassmorphism -->
+                    <div class="grid grid-cols-3 gap-2 md:gap-3">
+                        <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3 py-3 md:px-4 md:py-3.5 text-center">
+                            <div class="text-xl md:text-2xl font-black text-white leading-none">10K+</div>
+                            <div class="text-white/60 text-[10px] md:text-xs font-medium mt-1">Pelanggan</div>
                         </div>
-                        <div class="w-px h-3 bg-white/20"></div>
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                            <span>Aktivasi Instan</span>
+                        <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3 py-3 md:px-4 md:py-3.5 text-center">
+                            <div class="text-xl md:text-2xl font-black text-yellow-300 leading-none">&lt;30m</div>
+                            <div class="text-white/60 text-[10px] md:text-xs font-medium mt-1">Aktivasi</div>
                         </div>
-                        <div class="w-px h-3 bg-white/20"></div>
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                            <span>CS Responsif 09–22 WIB</span>
+                        <div class="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-3 py-3 md:px-4 md:py-3.5 text-center">
+                            <div class="text-xl md:text-2xl font-black text-white leading-none">4.9★</div>
+                            <div class="text-white/60 text-[10px] md:text-xs font-medium mt-1">Rating</div>
                         </div>
                     </div>
                 </div>
@@ -7943,6 +7915,119 @@
 <!-- Payment confirmed banner — ditampilkan inline di atas pesanan list, bukan modal popup -->
 
 </div>
+
+<!-- ── Hero Canvas Particle Network ── -->
+<script>
+(function(){
+  var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  if(mq.matches) return;
+
+  var canvas = document.getElementById('heroCanvas');
+  if(!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W, H, particles, mouse = {x:-999,y:-999};
+  var isMob = window.innerWidth < 768;
+  var N = isMob ? 28 : 55;
+  var LINK = isMob ? 90 : 130;
+  var RAF;
+
+  function resize(){
+    var rect = canvas.parentElement.getBoundingClientRect();
+    W = canvas.width  = rect.width;
+    H = canvas.height = rect.height;
+    isMob = W < 768;
+    N = isMob ? 28 : 55;
+  }
+
+  function Particle(){
+    this.x  = Math.random()*W;
+    this.y  = Math.random()*H;
+    this.vx = (Math.random()-.5)*0.55;
+    this.vy = (Math.random()-.5)*0.55;
+    this.r  = Math.random()*1.6+0.6;
+    this.a  = Math.random()*0.5+0.3;
+  }
+  Particle.prototype.update = function(){
+    this.x += this.vx;
+    this.y += this.vy;
+    if(this.x<0||this.x>W) this.vx*=-1;
+    if(this.y<0||this.y>H) this.vy*=-1;
+  };
+
+  function init(){
+    resize();
+    particles = [];
+    for(var i=0;i<N;i++) particles.push(new Particle());
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<particles.length;i++){
+      var p = particles[i];
+      p.update();
+      // dot
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle = 'rgba(255,255,255,'+p.a+')';
+      ctx.fill();
+      // lines to nearby
+      for(var j=i+1;j<particles.length;j++){
+        var q = particles[j];
+        var dx=p.x-q.x, dy=p.y-q.y;
+        var d=Math.sqrt(dx*dx+dy*dy);
+        if(d<LINK){
+          var op = (1-d/LINK)*0.22;
+          ctx.beginPath();
+          ctx.moveTo(p.x,p.y);
+          ctx.lineTo(q.x,q.y);
+          ctx.strokeStyle='rgba(255,255,255,'+op+')';
+          ctx.lineWidth=0.8;
+          ctx.stroke();
+        }
+      }
+      // mouse repel on desktop
+      if(!isMob){
+        var mx=p.x-mouse.x, my=p.y-mouse.y;
+        var md=Math.sqrt(mx*mx+my*my);
+        if(md<110){
+          p.vx += mx/md*0.08;
+          p.vy += my/md*0.08;
+          // clamp speed
+          var sp=Math.sqrt(p.vx*p.vx+p.vy*p.vy);
+          if(sp>1.4){p.vx=p.vx/sp*1.4;p.vy=p.vy/sp*1.4;}
+        }
+      }
+    }
+    RAF = requestAnimationFrame(draw);
+  }
+
+  function onMouse(e){
+    var rect=canvas.getBoundingClientRect();
+    mouse.x=e.clientX-rect.left;
+    mouse.y=e.clientY-rect.top;
+  }
+  function onLeave(){ mouse.x=mouse.y=-999; }
+
+  // Start when hero is visible
+  var heroEl = document.getElementById('sec-hero');
+  var obs = new IntersectionObserver(function(entries){
+    if(entries[0].isIntersecting){
+      if(!RAF){ init(); draw(); }
+      heroEl.addEventListener('mousemove',onMouse);
+      heroEl.addEventListener('mouseleave',onLeave);
+    } else {
+      cancelAnimationFrame(RAF); RAF=null;
+      heroEl.removeEventListener('mousemove',onMouse);
+      heroEl.removeEventListener('mouseleave',onLeave);
+    }
+  },{threshold:0.1});
+  obs.observe(heroEl);
+
+  window.addEventListener('resize',function(){ resize(); if(!particles) return; particles=null; init(); });
+  // init immediately if visible
+  if(heroEl.getBoundingClientRect().top < window.innerHeight){ init(); draw(); }
+})();
+</script>
 
 <script>
 function openLegalModal(type) {
