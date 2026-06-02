@@ -7818,17 +7818,23 @@ function openLegalModal(type) {
     var terms = document.getElementById('legalTermsContent');
     var privacy = document.getElementById('legalPrivacyContent');
     var title = document.getElementById('legalModalTitle');
+    var date = document.getElementById('legalModalDate');
     if (!wrap) return;
     wrap.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    // Reset scroll
+    var scroller = wrap.querySelector('.overflow-y-auto');
+    if (scroller) scroller.scrollTop = 0;
     if (type === 'terms') {
         if(terms) terms.style.display = 'block';
         if(privacy) privacy.style.display = 'none';
         if(title) title.textContent = 'Syarat & Ketentuan';
+        if(date) date.textContent = 'Terakhir diperbarui: 17 Mei 2026';
     } else {
         if(terms) terms.style.display = 'none';
         if(privacy) privacy.style.display = 'block';
         if(title) title.textContent = 'Kebijakan Privasi';
+        if(date) date.textContent = 'Terakhir diperbarui: 17 Mei 2026 · Sesuai UU PDP';
     }
 }
 function closeLegalModal() {
@@ -12497,24 +12503,40 @@ function serabutStore() {
      LEGAL MODAL (SYARAT & KETENTUAN / KEBIJAKAN PRIVASI)
 ══════════════════════════════════════════════════════ -->
 <div id="legalModalWrap" style="display:none" class="fixed inset-0 z-[700] flex items-end md:items-center justify-center">
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeLegalModal()"></div>
-    <div class="relative bg-white w-full md:max-w-2xl md:rounded-3xl rounded-t-3xl max-h-[calc(100vh-4rem)] md:max-h-[90vh] flex flex-col modal-enter">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeLegalModal()"></div>
+
+    <!-- Sheet / Dialog -->
+    <div class="relative bg-white w-full md:max-w-xl md:rounded-2xl rounded-t-2xl flex flex-col shadow-2xl"
+         style="max-height: min(92dvh, 92vh); max-height: 92dvh;">
+
+        <!-- Drag handle (mobile only) -->
+        <div class="md:hidden flex justify-center pt-3 pb-1 flex-shrink-0">
+            <div class="w-9 h-1 bg-gray-300 rounded-full"></div>
+        </div>
+
         <!-- Header -->
-        <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100 flex-shrink-0">
-            <div class="md:hidden w-10 h-1 bg-gray-200 rounded-full absolute top-3 left-1/2 -translate-x-1/2"></div>
-            <h2 id="legalModalTitle" class="text-lg font-bold text-gray-900 mt-2 md:mt-0">Syarat &amp; Ketentuan</h2>
-            <button onclick="closeLegalModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors mt-2 md:mt-0">
-                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <div class="flex items-start justify-between px-5 pt-4 pb-3 md:pt-5 md:pb-4 border-b border-gray-100 flex-shrink-0">
+            <div>
+                <h2 id="legalModalTitle" class="text-base md:text-lg font-bold text-gray-900 leading-tight">Syarat &amp; Ketentuan</h2>
+                <p id="legalModalDate" class="text-xs text-gray-400 mt-0.5">Terakhir diperbarui: 17 Mei 2026</p>
+            </div>
+            <button onclick="closeLegalModal()"
+                    class="flex-shrink-0 ml-3 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors"
+                    aria-label="Tutup">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
             </button>
         </div>
-        <!-- Content -->
-        <div class="overflow-y-auto px-6 py-5 text-sm text-gray-700 leading-relaxed">
 
-            <!-- SYARAT & KETENTUAN -->
-            <div id="legalTermsContent" style="display:none">
-                <div class="space-y-4">
-                    <p class="text-xs text-gray-400">Terakhir diperbarui: 17 Mei 2026</p>
+        <!-- Scrollable content -->
+        <div class="overflow-y-auto flex-1 overscroll-contain" style="-webkit-overflow-scrolling: touch;">
+            <div class="px-5 py-4 md:px-6 md:py-5 space-y-3 text-sm text-gray-700 leading-relaxed">
 
+                <!-- SYARAT & KETENTUAN -->
+                <div id="legalTermsContent" style="display:none" class="space-y-3">
+                    
                     <!-- Section helper classes: header pill + content card -->
                     <div class="rounded-2xl bg-gray-50 border border-gray-100 p-4 space-y-3">
                         <div class="flex items-center gap-2.5">
@@ -12628,14 +12650,10 @@ function serabutStore() {
                         <p class="text-gray-600 text-center">Ada pertanyaan? Hubungi kami di <strong class="text-gray-800">halo@serabut.id</strong> atau <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="text-brand-500 hover:underline">WhatsApp kami</a></p>
                     </div>
                 </div>
-            </div>
-            </div><!-- end legalTermsContent -->
 
-            <!-- KEBIJAKAN PRIVASI -->
-            <div id="legalPrivacyContent" style="display:none">
-                <div class="space-y-4">
-                    <p class="text-xs text-gray-400">Terakhir diperbarui: 17 Mei 2026 · Sesuai UU Pelindungan Data Pribadi (UU PDP)</p>
-
+                <!-- KEBIJAKAN PRIVASI -->
+                <div id="legalPrivacyContent" style="display:none" class="space-y-3">
+                    
                     <div class="rounded-2xl bg-gray-50 border border-gray-100 p-4 space-y-3">
                         <div class="flex items-center gap-2.5">
                             <span class="w-6 h-6 rounded-lg bg-brand-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
@@ -12805,16 +12823,19 @@ function serabutStore() {
                         <p class="text-gray-600 text-center">Pertanyaan soal privasi? Hubungi kami di <strong class="text-gray-800">halo@serabut.id</strong> atau <a :href="'https://wa.me/62'+WA_NUMBER" target="_blank" class="text-brand-500 hover:underline">WhatsApp kami</a></p>
                     </div>
                 </div>
-            </div><!-- end legalPrivacyContent -->
 
+            </div>
         </div>
+
         <!-- Footer -->
-        <div class="px-6 py-4 border-t border-gray-100 flex-shrink-0">
+        <div class="px-5 py-3 md:px-6 md:py-4 border-t border-gray-100 flex-shrink-0 bg-white rounded-b-2xl">
             <button onclick="closeLegalModal()"
-                    class="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-gray-700 transition-colors">Tutup</button>
+                    class="w-full py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 active:bg-gray-300 text-sm font-semibold text-gray-700 transition-colors">
+                Tutup
+            </button>
         </div>
     </div>
-
+</div>
 </body>
 </html>
 <!-- build: 20260602T135133Z -->
