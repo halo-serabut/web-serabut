@@ -455,6 +455,15 @@
             70%, 100% { transform: scale(2.2); opacity: 0; }
         }
         .cs-fab-float { animation: cs-float 3s ease-in-out infinite; }
+        @keyframes cs-popup-in {
+            0%   { opacity:0; transform: scale(.92) translateY(16px); }
+            60%  { opacity:1; transform: scale(1.02) translateY(-3px); }
+            100% { opacity:1; transform: scale(1) translateY(0); }
+        }
+        @keyframes cs-popup-out {
+            0%   { opacity:1; transform: scale(1) translateY(0); }
+            100% { opacity:0; transform: scale(.94) translateY(12px); }
+        }
         .cs-ping::before {
             content: '';
             position: absolute;
@@ -6124,12 +6133,13 @@
 <div class="fixed inset-x-0 px-3 pb-3 z-[91] md:inset-auto md:bottom-28 md:right-8 md:px-0 md:pb-0"
      :style="csKeyboardOffset ? 'bottom:'+csKeyboardOffset+'px' : 'bottom:calc(4rem + env(safe-area-inset-bottom))'"
      x-show="csPopup"
-     x-transition:enter="transition ease-out duration-200"
-     x-transition:enter-start="opacity-0 translate-y-4"
-     x-transition:enter-end="opacity-100 translate-y-0"
-     x-transition:leave="transition ease-in duration-150"
-     x-transition:leave-start="opacity-100"
-     x-transition:leave-end="opacity-0 translate-y-4">
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0 scale-95 translate-y-5"
+     x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+     x-transition:leave-end="opacity-0 scale-95 translate-y-5"
+     style="transform-origin: bottom right">
     <!-- Mobile backdrop -->
     <div class="fixed inset-0 bg-black/40 md:hidden -z-10" @click="csPopup=false"></div>
     <div class="relative bg-white rounded-3xl md:rounded-2xl shadow-2xl border border-gray-100 w-full md:w-96 flex flex-col overflow-hidden" :style="csKeyboardOffset ? 'max-height:calc(100dvh - '+csKeyboardOffset+'px - 1rem)' : 'min-height:58dvh;max-height:85dvh'" style="min-height:58dvh;max-height:85dvh">
@@ -6270,23 +6280,22 @@
 
 <!-- FAB Button: auto-hide di mobile, tempel ke dinding -->
 <div class="fixed md:bottom-8 right-0 md:right-8 z-[90] transition-all duration-500"
-     :class="[csHidden ? 'cs-peek' : '', productDetailOverlay ? 'bottom-44' : 'bottom-24']">
-    <button @click="csHidden ? (csHidden=false) : (csPopup ? (csPopup=false, csHidden=true) : (csPopup=true))"
-            :class="!csPopup ? 'cs-fab-float' : ''"
-            class="cs-fab w-16 h-16 rounded-full shadow-2xl transition-all duration-200 active:scale-90 active:shadow-md relative overflow-hidden bg-transparent p-0">
+     :class="[csHidden && !csPopup ? 'cs-peek' : '', productDetailOverlay ? 'bottom-44' : 'bottom-24']"
+     x-show="!csPopup"
+     x-transition:enter="transition ease-out duration-200"
+     x-transition:enter-start="opacity-0 scale-75"
+     x-transition:enter-end="opacity-100 scale-100"
+     x-transition:leave="transition ease-in duration-150"
+     x-transition:leave-start="opacity-100 scale-100"
+     x-transition:leave-end="opacity-0 scale-75">
+    <button @click="csHidden=false; csPopup=true"
+            class="cs-fab cs-fab-float w-16 h-16 rounded-full shadow-2xl transition-all duration-200 active:scale-90 active:shadow-md relative overflow-hidden bg-transparent p-0">
 
         <!-- Sera avatar — full button -->
-        <img x-show="!csPopup" src="/sera.png" alt="Sera" class="w-full h-full object-cover rounded-full" style="object-position:center 20%;mix-blend-mode:multiply" draggable="false">
-
-        <!-- X close icon — merah saat popup -->
-        <div x-show="csPopup" class="w-full h-full rounded-full gradient-card flex items-center justify-center">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-        </div>
+        <img src="/sera.png" alt="Sera" class="w-full h-full object-cover rounded-full" style="object-position:center 20%;mix-blend-mode:multiply" draggable="false">
 
         <!-- Online dot dengan ping -->
-        <span x-show="!csPopup" class="cs-ping absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-white relative"></span>
+        <span class="cs-ping absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-white relative"></span>
     </button>
 
     <!-- Label hint "Tanya Sera" — mobile only, saat tidak hidden & tidak popup -->
