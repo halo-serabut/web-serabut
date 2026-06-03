@@ -1,9 +1,8 @@
 name = "serabut-og"
 main = "og-worker.js"
 compatibility_date = "2024-01-01"
+account_id = "cc6c53f049c60e646b9ce4c3a4a9decd"
 
-[vars]
-# No secrets needed — GAS URL is public
-
-# Route: semua traffic serabut.id lewat worker ini
-# (set di CF dashboard: Workers Routes → serabut.id/produk/* → serabut-og)
+[[routes]]
+pattern = "serabut.id/produk/*"
+zone_name = "serabut.id"
