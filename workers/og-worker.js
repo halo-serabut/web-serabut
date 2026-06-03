@@ -9,8 +9,8 @@ const BOT_PATTERNS = [
 
 // Keys = category lowercase dari GAS (sesuai hasil getCatalog)
 const CAT_IMAGE = {
-  'microsoft 365': `${SITE}/assets/og-products/og-microsoft-365.jpg`,
-  'office':        `${SITE}/assets/og-products/og-office.jpg`,
+  'microsoft 365': `${SITE}/assets/og-products/og-microsoft-365-v2.jpg`,
+  'office':        `${SITE}/assets/og-products/og-office-v2.jpg`,
   'windows':       `${SITE}/assets/og-products/og-windows.jpg`,
   'windows server':`${SITE}/assets/og-products/og-windows-server.jpg`,
   'adobe':         `${SITE}/assets/og-products/og-adobe.jpg`,
