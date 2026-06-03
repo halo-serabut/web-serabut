@@ -6238,8 +6238,8 @@
      x-transition:leave-start="opacity-100 translate-y-0"
      x-transition:leave-end="opacity-0 translate-y-8"
      style="transform-origin: bottom center">
-    <!-- Mobile backdrop -->
-    <div class="fixed inset-0 bg-black/50 md:hidden -z-10" @click="csPopup=false"></div>
+    <!-- Backdrop: klik di luar untuk menutup (mobile gelap, desktop transparan) -->
+    <div class="fixed inset-0 bg-black/50 md:bg-transparent -z-10" @click="csPopup=false; csHidden=true"></div>
     <div class="relative bg-white rounded-t-3xl md:rounded-2xl shadow-2xl border border-gray-100 w-full md:w-96 flex flex-col overflow-hidden"
          :style="csKeyboardOffset ? 'max-height:calc(100dvh - '+csKeyboardOffset+'px)' : 'min-height:60dvh;max-height:88dvh'"
          style="min-height:60dvh;max-height:88dvh"
@@ -6399,7 +6399,7 @@
      x-transition:leave="transition ease-in duration-150"
      x-transition:leave-start="opacity-100 scale-100"
      x-transition:leave-end="opacity-0 scale-75">
-    <button @click="csHidden=false; csPopup=true"
+    <button @click="openSera()"
             class="cs-fab cs-fab-float w-16 h-16 rounded-full shadow-2xl transition-all duration-200 active:scale-90 active:shadow-md relative overflow-hidden bg-transparent p-0">
 
         <!-- Sera avatar — full button -->
@@ -6620,7 +6620,7 @@
 <div x-show="cartAddModal" class="fixed inset-0 z-[400] flex items-end md:items-center justify-center"
      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
      x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="cartAddModal=false"></div>
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="cartAddModal=false; _fabGuardUntil=Date.now()+800"></div>
     <div class="relative bg-white w-full md:max-w-md md:rounded-3xl rounded-t-3xl shadow-2xl modal-enter max-h-[calc(100vh-4rem)] md:max-h-[92vh] flex flex-col">
         <div class="md:hidden flex justify-center pt-3 pb-1 flex-none"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
         <!-- Header -->
@@ -6634,7 +6634,7 @@
                     <div class="text-xs text-gray-400" x-text="cartAddPending?.variant?.varian + (cartAddPending?.variant?.masaAktif&&cartAddPending?.variant?.masaAktif!=='-'?' · '+cartAddPending?.variant?.masaAktif:'')"></div>
                 </div>
             </div>
-            <button @click="cartAddModal=false" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex-none">
+            <button @click="cartAddModal=false; _fabGuardUntil=Date.now()+800" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex-none">
                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
@@ -8377,6 +8377,7 @@ function serabutStore() {
         cartAddPending: null,
         cartAddExtra: { nama:'', username:'', microsoftEmail:'', adobeEmail:'', adobePass:'', emailAktif:'' },
         cartAddError: '',
+        _fabGuardUntil: 0,   // cegah ghost-click buka Sera setelah modal tertutup
 
         // Status check
         statusSearchType: 'email',
@@ -9589,6 +9590,7 @@ function serabutStore() {
             if (navigator.vibrate) navigator.vibrate(8);
             this._pushToCart(product, variant, { ...this.cartAddExtra });
             this.cartAddModal = false;
+            this._fabGuardUntil = Date.now() + 800;
         },
         _pushToCart(product, v, extra) {
             const existing = this.cart.find(i =>
@@ -9979,6 +9981,12 @@ function serabutStore() {
             return Math.min(Math.round(harga * pct / 100), max);
         },
 
+        openSera() {
+            // Abaikan klik jika baru saja ada modal tertutup (cegah ghost-click di mobile)
+            if (Date.now() < this._fabGuardUntil) return;
+            this.csHidden = false;
+            this.csPopup = true;
+        },
         openCSChat(guestName) {
             const nama = this.currentUser ? this.currentUser.nama : (guestName || '').trim();
             if (!nama) return;
