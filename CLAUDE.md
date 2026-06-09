@@ -179,6 +179,15 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 
 - [2026-06-01] Selesai: Reset Password Office 365 dari Cek Status — tombol "Reset Password Office" di detail modal (hanya office365 personal); step konfirmasi; GAS `resetOfficePassword` generate password 10 karakter, update sheet, notif WA buyer + grup; rate limit 3x/jam; tampil password baru + tombol salin di UI
 
+- [2026-06-09] Selesai: Hero 3D + Sera tour guide hidup (index.html only):
+  - Hero 3D sungguhan: perspective 1300px, kartu Flash Sale & teks tilt mengikuti kursor (lerp halus via satu loop rAF) + idle "breathing" + glare dinamis; area tracking = seluruh lebar `#sec-hero` (bukan kontainer max-w-6xl)
+  - Maskot robot SVG (eye-tracking) sempat dibuat lalu DIGANTI: FAB Sera (`/sera.png`) yang sudah `fixed`/ikut scroll dijadikan tour guide
+  - Sera tour guide: gelembung teks per section (`_guideTexts`), trigger via setPage + scroll-spy (deteksi `rect.top<=120 && bottom>120` agar section pendek seperti Kategori tetap kena), `force:true` → menjelaskan ulang tiap masuk section termasuk scroll up; auto-hide 7s; sapaan awal saat load
+  - Sera "hidup": cs-float (bob+rotate), cs-breathe (shadow), cs-blink (kedip ganda), cs-look (lirik kiri-kanan via object-position), sera-wave saat menyapa
+  - Teks guide ditulis natural/manusiawi (bukan gaya AI) untuk semua section
+  - Count-up statistik (10K+/<30m/4.9★) saat reveal via IntersectionObserver; hover-lift kartu kategori & produk populer
+  - Semua hormati `prefers-reduced-motion`
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
