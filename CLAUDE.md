@@ -188,6 +188,13 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Count-up statistik (10K+/<30m/4.9★) saat reveal via IntersectionObserver; hover-lift kartu kategori & produk populer
   - Semua hormati `prefers-reduced-motion`
 
+- [2026-06-09 sesi 2] Selesai: Gamifikasi & interaksi hero (index.html only):
+  - Kartu Flash Sale bisa di-drag/putar manual (pointer): geser kiri-kanan→rotateY, atas-bawah→rotateX, pegas balik saat lepas; klik "Beli" tetap jalan (suppress klik jika dMoved); hint chip "↕ Tarik untuk putar" auto-hilang setelah dicoba; desktop-only
+  - Mini-game "Sera Run" saat loading Cek Status: engine `window.SeraRunner` (canvas), pseudo-3D — lantai perspektif (rel konvergen + garis melaju), obstacle kubus isometrik, player squash/stretch + bayangan dinamis, parallax langit/bukit/awan, partikel debu, screen shake; lompat Spasi/klik; auto start/stop via checkStatus()
+  - Audio Web Audio API (disintesis, tanpa file): sfx jump/point/crash + tombol mute (state `gameMuted`); AudioContext resume saat interaksi pertama
+  - Ilustrasi SVG 3D animasi untuk state "Akun tidak ditemukan": kaca pembesar ring merah + "?" lensa, kartu miring, float/scan/glint/partikel/bayangan dinamis
+  - checkStatus() logic TIDAK diubah (hanya tambah start/stopMiniGame)
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif

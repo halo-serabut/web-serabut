@@ -437,6 +437,27 @@
         .hero-3d        { perspective: 1300px; perspective-origin: 50% 35%; }
         .hero-layer     { transform-style: preserve-3d; will-change: transform; transition: transform .25s cubic-bezier(.2,.7,.2,1); }
         .hero-card-3d   { transform-style: preserve-3d; will-change: transform; transition: transform .25s cubic-bezier(.2,.7,.2,1); }
+        @media (min-width: 768px) { .hero-card-3d { cursor: grab; } .hero-card-3d.is-dragging { cursor: grabbing; } }
+        @keyframes drag-hint-bob { 0%,100%{ transform: translate(-50%,0); } 50%{ transform: translate(-50%,-4px); } }
+        #heroDragHint { animation: drag-hint-bob 1.6s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) { #heroDragHint { animation: none !important; } }
+
+        /* ── Ilustrasi 3D "Akun tidak ditemukan" ── */
+        .nf-svg *{ transform-box: fill-box; }
+        .nf-float  { transform-origin: center; animation: nf-float 3.2s ease-in-out infinite; }
+        .nf-shadow { transform-origin: center; animation: nf-shadow 3.2s ease-in-out infinite; }
+        .nf-glass  { transform-origin: 60px 58px; animation: nf-scan 3.6s ease-in-out infinite; }
+        .nf-glint  { animation: nf-glint 3.6s ease-in-out infinite; }
+        .nf-dot    { transform-origin: center; opacity:0; }
+        .nf-dot.d1 { animation: nf-dot 2.6s ease-in-out infinite; }
+        .nf-dot.d2 { animation: nf-dot 2.6s ease-in-out .8s infinite; }
+        .nf-dot.d3 { animation: nf-dot 2.6s ease-in-out 1.6s infinite; }
+        @keyframes nf-float  { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-6px); } }
+        @keyframes nf-shadow { 0%,100%{ transform: scaleX(1); opacity:.45; } 50%{ transform: scaleX(.8); opacity:.28; } }
+        @keyframes nf-scan   { 0%,100%{ transform: translate(0,0) rotate(0deg); } 50%{ transform: translate(16px,5px) rotate(-9deg); } }
+        @keyframes nf-glint  { 0%,40%,60%,100%{ opacity:0; } 50%{ opacity:.9; } }
+        @keyframes nf-dot    { 0%{ transform: translateY(2px) scale(.6); opacity:0; } 30%{ opacity:.85; } 100%{ transform: translateY(-22px) scale(1); opacity:0; } }
+        @media (prefers-reduced-motion: reduce){ .nf-float,.nf-shadow,.nf-glass,.nf-glint,.nf-dot{ animation:none !important; } }
         .hero-depth-1   { transform: translateZ(30px); }
         .hero-depth-2   { transform: translateZ(55px); }
         .hero-depth-3   { transform: translateZ(85px); }
@@ -915,7 +936,13 @@
 
                 <!-- Right: Flash Sale card -->
                 <template x-if="flashSale.aktif">
-                    <div id="heroFlashCard" class="hero-card-3d flex-none w-full md:w-[340px]">
+                    <div id="heroFlashCard" class="hero-card-3d flex-none w-full md:w-[340px] relative">
+
+                        <!-- Hint: kartu bisa ditarik/putar (desktop) -->
+                        <div id="heroDragHint" class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 z-30 items-center gap-1.5 bg-gray-900/85 text-white text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-lg pointer-events-none whitespace-nowrap backdrop-blur-sm">
+                            <svg class="w-3.5 h-3.5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                            Tarik untuk putar
+                        </div>
 
                         <!-- ── Mobile banner (solid white) ── -->
                         <div class="md:hidden bg-white rounded-2xl p-3 shadow-md">
@@ -1251,6 +1278,29 @@
                         </template>
                     </button>
                 </div>
+
+                <!-- Mini-game "Sera Run" sambil nunggu loading -->
+                <div x-show="statusChecking" x-transition class="mb-6">
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                        <div class="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-gray-100">
+                            <div class="flex items-center gap-2 text-xs font-semibold text-gray-600">
+                                <svg class="w-4 h-4 animate-spin text-brand-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                                <span>Lagi nyari akunmu… main dulu yuk!</span>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <span class="hidden sm:inline text-[11px] text-gray-400">Tekan <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-200 rounded text-gray-600 font-mono text-[10px]">Spasi</kbd> atau klik buat lompat</span>
+                                <button type="button" @click="gameMuted=!gameMuted; window.SeraRunner && window.SeraRunner.setMuted(gameMuted)"
+                                        :title="gameMuted ? 'Bunyikan suara' : 'Matikan suara'"
+                                        class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-brand-500 hover:bg-gray-100 transition-colors flex-none">
+                                    <svg x-show="!gameMuted" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M19 5a9 9 0 010 14M5 9v6h4l5 4V5L9 9H5z"/></svg>
+                                    <svg x-show="gameMuted" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 9v6h4l5 4V5L9 9H5z M17 9l4 4m0-4l-4 4"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <canvas id="seraRunner" class="w-full block bg-gradient-to-b from-sky-50 to-white" style="height:160px;touch-action:manipulation;cursor:pointer"></canvas>
+                    </div>
+                </div>
+
                 <!-- Results — semua tampil -->
                 <div x-show="statusResult !== null" x-transition>
                     <template x-if="Array.isArray(statusResult) && statusResult.length > 0">
@@ -1283,10 +1333,53 @@
                         </div>
                     </template>
                     <template x-if="Array.isArray(statusResult) && statusResult.length === 0">
-                        <div class="text-center py-10">
-                            <div class="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                <svg class="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                            </div>
+                        <div class="text-center py-8">
+                            <svg class="nf-svg mx-auto mb-3" width="150" height="138" viewBox="0 0 150 138" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <defs>
+                                    <linearGradient id="nfCard" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eef2f7"/>
+                                    </linearGradient>
+                                    <linearGradient id="nfRing" x1="0" y1="0" x2="1" y2="1">
+                                        <stop offset="0" stop-color="#f87171"/><stop offset="1" stop-color="#b91c1c"/>
+                                    </linearGradient>
+                                    <radialGradient id="nfLens" cx="0.4" cy="0.35" r="0.8">
+                                        <stop offset="0" stop-color="#ffffff" stop-opacity=".85"/>
+                                        <stop offset="0.6" stop-color="#dbeafe" stop-opacity=".35"/>
+                                        <stop offset="1" stop-color="#93c5fd" stop-opacity=".25"/>
+                                    </radialGradient>
+                                </defs>
+
+                                <!-- bayangan dinamis -->
+                                <ellipse class="nf-shadow" cx="75" cy="126" rx="46" ry="7" fill="#94a3b8"/>
+
+                                <!-- partikel mengambang -->
+                                <circle class="nf-dot d1" cx="34" cy="40" r="2.4" fill="#c7d2fe"/>
+                                <circle class="nf-dot d2" cx="116" cy="34" r="2" fill="#fecaca"/>
+                                <circle class="nf-dot d3" cx="120" cy="74" r="2.6" fill="#bfdbfe"/>
+
+                                <g class="nf-float">
+                                    <!-- kartu kosong (3D) -->
+                                    <g transform="rotate(-7 78 70)">
+                                        <rect x="48" y="44" width="74" height="54" rx="11" fill="#e2e8f0"/>
+                                        <rect x="44" y="40" width="74" height="54" rx="11" fill="url(#nfCard)" stroke="#e2e8f0" stroke-width="1.5"/>
+                                        <rect x="55" y="55" width="40" height="6" rx="3" fill="#e5e7eb"/>
+                                        <rect x="55" y="68" width="52" height="6" rx="3" fill="#eef2f7"/>
+                                        <rect x="55" y="81" width="30" height="6" rx="3" fill="#eef2f7"/>
+                                    </g>
+
+                                    <!-- kaca pembesar 3D yang menyapu -->
+                                    <g class="nf-glass">
+                                        <line x1="74" y1="72" x2="92" y2="92" stroke="#9ca3af" stroke-width="8" stroke-linecap="round"/>
+                                        <line x1="74" y1="72" x2="92" y2="92" stroke="#d1d5db" stroke-width="3.5" stroke-linecap="round"/>
+                                        <circle cx="60" cy="58" r="24" fill="url(#nfLens)" stroke="url(#nfRing)" stroke-width="6"/>
+                                        <circle cx="60" cy="58" r="24" fill="none" stroke="#fca5a5" stroke-width="1.5" opacity=".5"/>
+                                        <!-- glint kaca -->
+                                        <path class="nf-glint" d="M49 50 q8 -8 18 -4" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
+                                        <!-- tanda tanya samar di lensa -->
+                                        <text x="60" y="65" text-anchor="middle" font-size="22" font-weight="800" fill="#94a3b8" opacity=".6" font-family="ui-sans-serif,system-ui">?</text>
+                                    </g>
+                                </g>
+                            </svg>
                             <p class="text-sm font-semibold text-gray-700 mb-1">Akun tidak ditemukan</p>
                             <p class="text-xs text-gray-400">Coba dengan email, nama, atau nomor WhatsApp yang dipakai saat beli</p>
                         </div>
@@ -8040,6 +8133,8 @@
 
     // tX/tY = target tilt (-1..1), cX/cY = current (lerped) tilt. gT/gC = glare presence.
     var tX = 0, tY = 0, cX = 0, cY = 0, gT = 0, gC = 0, inside = false;
+    // drag-to-spin: uY/uX = rotasi tambahan dari drag, uYt/uXt = targetnya
+    var uY = 0, uX = 0, uYt = 0, uXt = 0, dragging = false, dsx = 0, dsy = 0, dMoved = false;
     // CSS transition would fight the rAF loop — drive everything from JS instead.
     if(card) card.style.transition = 'none';
     if(copy) copy.style.transition = 'none';
@@ -8055,6 +8150,44 @@
     heroSec.addEventListener('mousemove', onMove);
     heroSec.addEventListener('mouseleave', onLeave);
 
+    // ── Drag-to-spin: putar kartu Flash Sale manual pakai kursor ──
+    heroSec.addEventListener('pointerdown', function(e){
+      if(e.pointerType === 'touch') return;                 // biar scroll mobile aman
+      var cardEl = document.getElementById('heroFlashCard');
+      if(!cardEl || !cardEl.contains(e.target)) return;
+      dragging = true; dMoved = false; dsx = e.clientX; dsy = e.clientY;
+      cardEl.classList.add('is-dragging');
+      document.body.style.userSelect = 'none';
+    });
+    window.addEventListener('pointermove', function(e){
+      if(!dragging) return;
+      var dx = e.clientX - dsx, dy = e.clientY - dsy;
+      if(Math.abs(dx) + Math.abs(dy) > 5){
+        dMoved = true;
+        var hint = document.getElementById('heroDragHint');
+        if(hint) hint.style.display = 'none';     // sembunyikan hint setelah dicoba
+      }
+      uYt = dx * 0.55;            // geser kiri-kanan → muter (rotateY)
+      uXt = -dy * 0.45;           // geser atas-bawah → jungkir (rotateX)
+    });
+    function endDrag(){
+      if(!dragging) return;
+      dragging = false;
+      uYt = 0; uXt = 0;           // pegas balik ke posisi semula
+      var cardEl = document.getElementById('heroFlashCard');
+      if(cardEl) cardEl.classList.remove('is-dragging');
+      document.body.style.userSelect = '';
+    }
+    window.addEventListener('pointerup', endDrag);
+    window.addEventListener('pointercancel', endDrag);
+    // cegah klik "Beli" tak sengaja setelah men-drag
+    heroSec.addEventListener('click', function(e){
+      var cardEl = document.getElementById('heroFlashCard');
+      if(dMoved && cardEl && cardEl.contains(e.target)){
+        e.preventDefault(); e.stopPropagation(); dMoved = false;
+      }
+    }, true);
+
 
     // ── Continuous render loop: smooth lerp + always-alive idle breathing ──
     var t0 = performance.now();
@@ -8069,14 +8202,18 @@
       cY += (tY - cY) * 0.07;
       gC += (gT - gC) * 0.08;
 
+      // drag-to-spin: tarik cepat saat di-drag, pegas balik halus saat dilepas
+      uY += (uYt - uY) * (dragging ? 0.30 : 0.12);
+      uX += (uXt - uX) * (dragging ? 0.30 : 0.12);
+
       // idle "breathing": gentle multi-sine drift, fades out while pointer active
-      var idle = inside ? 0.18 : 1;
+      var idle = (inside || dragging || Math.abs(uY) > 0.5) ? 0.18 : 1;
       var bRotY = Math.sin(t * 0.55) * 2.4 * idle;
       var bRotX = Math.cos(t * 0.43) * 1.8 * idle;
       var bZ    = Math.sin(t * 0.7)  * 10  * idle;
 
       if(card) card.style.transform =
-        'rotateY('+(cX*9 + bRotY)+'deg) rotateX('+(-cY*9 + bRotX)+'deg) translateZ('+(20 + bZ)+'px)';
+        'rotateY('+(cX*9 + bRotY + uY)+'deg) rotateX('+(-cY*9 + bRotX + uX)+'deg) translateZ('+(20 + bZ)+'px)';
       if(copy) copy.style.transform =
         'rotateY('+(cX*3 + bRotY*0.4)+'deg) rotateX('+(-cY*3 + bRotX*0.4)+'deg) translateZ('+(bZ*0.3)+'px)';
       if(glare){
@@ -8439,6 +8576,9 @@ function serabutStore() {
         authLoading:  false,
         authError:    '',
         currentUser:  null,
+
+        // Mini-game
+        gameMuted:    false,
 
         // Sera tour guide
         guideShow:    false,
@@ -10091,6 +10231,7 @@ function serabutStore() {
             const cached = this.statusCache[q];
             if(cached && Date.now() - cached.ts < 300000) { this.statusResult = cached.data; return; }
             this.statusChecking=true; this.statusResult=null;
+            this.startMiniGame();
             try {
                 const params = new URLSearchParams({ action:'smartSearch', query:q });
                 const res  = await fetch(`${this.GAS_URL}?${params}`);
@@ -10100,6 +10241,18 @@ function serabutStore() {
                 this.statusResult = result;
             } catch { this.statusResult=[]; }
             this.statusChecking=false;
+            this.stopMiniGame();
+        },
+        startMiniGame() {
+            if (!window.SeraRunner) return;
+            // tunggu canvas tampil (x-show) baru mulai
+            this.$nextTick(() => requestAnimationFrame(() => {
+                const cv = document.getElementById('seraRunner');
+                if (cv && cv.clientWidth > 0) { window.SeraRunner.mount(cv); window.SeraRunner.start(); }
+            }));
+        },
+        stopMiniGame() {
+            if (window.SeraRunner) window.SeraRunner.stop();
         },
 
         // ── Helpers ───────────────────────────────────
@@ -13423,6 +13576,245 @@ function serabutStore() {
         </div>
     </div>
 </div>
+
+<!-- ── Mini-game "Sera Run" — distraksi sambil loading Cek Status ── -->
+<script>
+window.SeraRunner = (function(){
+  var cvs, ctx, raf=null, running=false, bound=false;
+  var W, H, ground, dpr, horizon;
+  var player, obs, speed, score, best=0, gameOver, spawnGap, frame;
+  var particles, clouds, scroll, shake, skyGrad, floorGrad;
+  var actx=null, muted=false;
+
+  // ── Audio (Web Audio API — disintesis, tanpa file) ──
+  function audioCtx(){
+    if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+    if(actx && actx.state==='suspended') actx.resume();
+    return actx;
+  }
+  function tone(freq, dur, type, vol, slideTo){
+    var a = audioCtx(); if(!a) return;
+    var o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+    o.type = type||'square'; o.frequency.setValueAtTime(freq, t);
+    if(slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(slideTo,1), t+dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol||0.12, t+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t+dur+0.02);
+  }
+  function noiseBurst(dur, vol){
+    var a = audioCtx(); if(!a) return;
+    var n = Math.floor(a.sampleRate*dur), buf = a.createBuffer(1,n,a.sampleRate), ch = buf.getChannelData(0);
+    for(var i=0;i<n;i++) ch[i] = (Math.random()*2-1)*(1-i/n);
+    var src = a.createBufferSource(), g = a.createGain();
+    src.buffer = buf; g.gain.value = vol||0.18;
+    src.connect(g); g.connect(a.destination); src.start();
+  }
+  function sfx(name){
+    if(muted) return;
+    if(name==='jump')  tone(420, 0.14, 'square', 0.10, 720);
+    else if(name==='point') tone(900, 0.07, 'sine', 0.09);
+    else if(name==='crash'){ tone(320, 0.35, 'sawtooth', 0.16, 60); noiseBurst(0.25, 0.14); }
+  }
+
+  function reset(){
+    player = { x:54, y:0, vy:0, s:26, onGround:true, sx:1, sy:1 };
+    obs = []; particles = []; speed = 4.6; score = 0; gameOver = false;
+    spawnGap = 78; frame = 0; scroll = 0; shake = 0;
+    clouds = [];
+    for(var i=0;i<4;i++) clouds.push({ x: Math.random()*W, y: 14+Math.random()*40, s: 18+Math.random()*22, sp: .3+Math.random()*.4 });
+  }
+  function sizeCanvas(){
+    dpr = window.devicePixelRatio || 1;
+    var cw = cvs.clientWidth, ch = cvs.clientHeight;
+    cvs.width = cw*dpr; cvs.height = ch*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    W = cw; H = ch; ground = Math.round(H*0.70); horizon = ground;
+    skyGrad = ctx.createLinearGradient(0,0,0,horizon);
+    skyGrad.addColorStop(0,'#dbeafe'); skyGrad.addColorStop(1,'#eff6ff');
+    floorGrad = ctx.createLinearGradient(0,horizon,0,H);
+    floorGrad.addColorStop(0,'#c7d2fe'); floorGrad.addColorStop(1,'#eef2ff');
+  }
+  function jump(){
+    if(!running) return;
+    if(gameOver){ reset(); return; }
+    if(player.onGround){ player.vy = -10.8; player.onGround = false; player.sx = .8; player.sy = 1.25; sfx('jump'); }
+  }
+  function rr(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  function shadow(cx, baseY, w, alpha){
+    ctx.save(); ctx.fillStyle = 'rgba(30,27,75,'+alpha+')';
+    ctx.beginPath(); ctx.ellipse(cx, baseY, w, w*0.32, 0, 0, 7); ctx.fill(); ctx.restore();
+  }
+
+  function drawCube(x, topY, w, h, hue){
+    var d = 7;                                  // kedalaman isometrik
+    // sisi kanan (gelap)
+    ctx.fillStyle = hue.dark;
+    ctx.beginPath(); ctx.moveTo(x+w,topY); ctx.lineTo(x+w+d,topY-d); ctx.lineTo(x+w+d,topY+h-d); ctx.lineTo(x+w,topY+h); ctx.closePath(); ctx.fill();
+    // sisi atas (terang)
+    ctx.fillStyle = hue.light;
+    ctx.beginPath(); ctx.moveTo(x,topY); ctx.lineTo(x+d,topY-d); ctx.lineTo(x+w+d,topY-d); ctx.lineTo(x+w,topY); ctx.closePath(); ctx.fill();
+    // muka depan (gradient)
+    var g = ctx.createLinearGradient(x,topY,x,topY+h);
+    g.addColorStop(0,hue.mid); g.addColorStop(1,hue.dark);
+    ctx.fillStyle = g; rr(x,topY,w,h,3); ctx.fill();
+    // highlight tepi
+    ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.lineWidth=1; rr(x+.5,topY+.5,w-1,h-1,3); ctx.stroke();
+  }
+
+  function step(){
+    frame++;
+    ctx.clearRect(0,0,W,H);
+    ctx.save();
+    if(shake>0){ ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake); shake*=.85; if(shake<.4)shake=0; }
+
+    // ── langit ──
+    ctx.fillStyle = skyGrad; ctx.fillRect(-10,-10,W+20,horizon+10);
+    // bukit jauh (parallax lambat)
+    var hillOff = scroll*0.15;
+    ctx.fillStyle = '#bfdbfe';
+    ctx.beginPath(); ctx.moveTo(0,horizon);
+    for(var hx=0; hx<=W; hx+=20){ ctx.lineTo(hx, horizon - 18 - Math.sin((hx+hillOff)*0.015)*10); }
+    ctx.lineTo(W,horizon); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#a5b4fc';
+    ctx.beginPath(); ctx.moveTo(0,horizon);
+    for(var hx2=0; hx2<=W; hx2+=20){ ctx.lineTo(hx2, horizon - 8 - Math.sin((hx2+hillOff*1.6+40)*0.02)*7); }
+    ctx.lineTo(W,horizon); ctx.closePath(); ctx.fill();
+    // awan
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    for(var c=0;c<clouds.length;c++){ var cl=clouds[c];
+      if(!gameOver){ cl.x -= cl.sp; if(cl.x < -cl.s*2){ cl.x = W+cl.s; cl.y = 14+Math.random()*40; } }
+      ctx.beginPath(); ctx.arc(cl.x,cl.y,cl.s*.5,0,7); ctx.arc(cl.x+cl.s*.5,cl.y+3,cl.s*.4,0,7); ctx.arc(cl.x-cl.s*.5,cl.y+3,cl.s*.38,0,7); ctx.fill();
+    }
+
+    // ── lantai perspektif ──
+    ctx.fillStyle = floorGrad; ctx.fillRect(-10,horizon,W+20,H-horizon+10);
+    var vx = W*0.5;
+    // rel (garis konvergen ke titik hilang)
+    ctx.strokeStyle = 'rgba(99,102,241,.18)'; ctx.lineWidth=1;
+    for(var r=-6;r<=6;r++){ ctx.beginPath(); ctx.moveTo(vx, horizon); ctx.lineTo(vx + r*(W*0.13), H); ctx.stroke(); }
+    // garis horizontal bergerak (akselerasi → kesan ngebut)
+    ctx.strokeStyle = 'rgba(99,102,241,.28)';
+    for(var p=0;p<8;p++){
+      var ph = ((scroll*0.02 + p/8) % 1);
+      var yy = horizon + (H-horizon) * (ph*ph);
+      ctx.globalAlpha = ph; ctx.beginPath(); ctx.moveTo(0,yy); ctx.lineTo(W,yy); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // garis horizon
+    ctx.strokeStyle = 'rgba(79,70,229,.35)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(0,horizon); ctx.lineTo(W,horizon); ctx.stroke();
+
+    if(!gameOver){
+      player.vy += 0.62; player.y += player.vy;
+      if(player.y >= 0){
+        if(!player.onGround){ player.sx=1.3; player.sy=.72; for(var d=0;d<6;d++) particles.push({x:player.x,y:ground,vx:-(1+Math.random()*2),vy:-(Math.random()*2),life:1,r:2+Math.random()*2}); }
+        player.y=0; player.vy=0; player.onGround=true;
+      }
+      // debu lari
+      if(player.onGround && frame%6===0) particles.push({x:player.x-6,y:ground,vx:-(speed*.4+Math.random()),vy:-(Math.random()*1.2),life:1,r:1.5+Math.random()*1.5});
+      // spawn obstacle
+      if(frame % Math.round(spawnGap) === 0){
+        obs.push({ x:W+14, w:14+Math.random()*10, h:18+Math.random()*22 });
+        spawnGap = Math.max(48, 88 - score*0.5);
+      }
+      for(var i=obs.length-1;i>=0;i--){ obs[i].x -= speed; if(obs[i].x + obs[i].w < -10){ obs.splice(i,1); score++; sfx('point'); } }
+      speed += 0.0018; scroll += speed;
+    }
+    // recover squash
+    player.sx += (1-player.sx)*0.2; player.sy += (1-player.sy)*0.2;
+
+    // ── obstacle (kubus 3D) ──
+    var hue = { light:'#a5b4fc', mid:'#6366f1', dark:'#4338ca' };
+    for(var j=0;j<obs.length;j++){ var o=obs[j];
+      shadow(o.x+o.w/2, ground+3, o.w*0.8, .14);
+      drawCube(o.x, ground-o.h, o.w, o.h, hue);
+    }
+
+    // ── player (Sera 3D + squash/stretch + bayangan dinamis) ──
+    var py = ground - player.s + player.y;
+    var hgt = -player.y;                          // 0..tinggi lompat
+    shadow(player.x+player.s/2, ground+3, player.s*0.55*(1-hgt/220), .22*(1-hgt/260));
+    ctx.save();
+    var cxp = player.x+player.s/2, cyp = py+player.s/2;
+    ctx.translate(cxp, cyp);
+    ctx.rotate((player.onGround?0:Math.min(player.vy*0.02,.25)));   // condong saat melayang
+    ctx.scale(player.sx, player.sy);
+    var pg = ctx.createLinearGradient(0,-player.s/2,0,player.s/2);
+    pg.addColorStop(0,'#f87171'); pg.addColorStop(1,'#b91c1c');
+    ctx.fillStyle = pg; rr(-player.s/2,-player.s/2,player.s,player.s,8); ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1.5; rr(-player.s/2+1,-player.s/2+1,player.s-2,player.s-2,7); ctx.stroke();
+    // mata
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(player.s*0.18,-player.s*0.12,4,0,7); ctx.fill();
+    ctx.fillStyle='#111827'; ctx.beginPath(); ctx.arc(player.s*0.24,-player.s*0.12,2,0,7); ctx.fill();
+    ctx.restore();
+
+    // ── partikel ──
+    for(var pp=particles.length-1;pp>=0;pp--){ var pt=particles[pp];
+      pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=0.12; pt.life-=0.04;
+      if(pt.life<=0){ particles.splice(pp,1); continue; }
+      ctx.fillStyle='rgba(165,180,252,'+(pt.life*.7)+')';
+      ctx.beginPath(); ctx.arc(pt.x,pt.y,pt.r*pt.life,0,7); ctx.fill();
+    }
+
+    // collision
+    if(!gameOver){
+      var pl = { x:player.x+4, y:py+4, w:player.s-8, h:player.s-8 };
+      for(var k=0;k<obs.length;k++){ var o2=obs[k];
+        if(pl.x < o2.x+o2.w && pl.x+pl.w > o2.x && pl.y+pl.h > ground-o2.h){
+          gameOver = true; best = Math.max(best,score); shake = 9; sfx('crash');
+          for(var b=0;b<16;b++) particles.push({x:player.x+player.s/2,y:py+player.s/2,vx:(Math.random()-.5)*6,vy:(Math.random()-.6)*6,life:1,r:2+Math.random()*2.5});
+          break;
+        }
+      }
+    }
+
+    // ── skor (pill) ──
+    ctx.textAlign='left'; ctx.font='800 13px ui-sans-serif,system-ui';
+    var sTxt = 'Skor '+score, sw = ctx.measureText(sTxt).width;
+    ctx.fillStyle='rgba(255,255,255,.75)'; rr(W-sw-30,10,sw+20,24,12); ctx.fill();
+    ctx.fillStyle='#4f46e5'; ctx.fillText(sTxt, W-sw-20, 26);
+
+    // overlay game over
+    if(gameOver){
+      ctx.fillStyle='rgba(238,242,255,.78)'; ctx.fillRect(0,0,W,H);
+      ctx.textAlign='center';
+      ctx.fillStyle='#DC2626'; ctx.font='800 22px ui-sans-serif,system-ui';
+      ctx.fillText('Yah, nabrak! 💥', W/2, H/2-8);
+      ctx.fillStyle='#4b5563'; ctx.font='600 12px ui-sans-serif,system-ui';
+      ctx.fillText('Skor '+score+'  ·  Terbaik '+best+'  —  tekan Spasi / klik buat ulang', W/2, H/2+16);
+    } else if(frame < 100 && score === 0){
+      ctx.fillStyle='rgba(79,70,229,.55)'; ctx.font='700 12px ui-sans-serif,system-ui';
+      ctx.textAlign='center'; ctx.fillText('Lompat pakai Spasi / klik!', W/2, 28);
+    }
+
+    ctx.restore();
+    raf = requestAnimationFrame(step);
+  }
+
+  function onKey(e){ if((e.code==='Space'||e.key===' ') && running){ e.preventDefault(); jump(); } }
+
+  function mount(canvas){
+    cvs = canvas; ctx = cvs.getContext('2d');
+    if(!bound){
+      cvs.addEventListener('pointerdown', function(e){ e.preventDefault(); jump(); });
+      window.addEventListener('keydown', onKey);
+      window.addEventListener('resize', function(){ if(running) sizeCanvas(); });
+      bound = true;
+    }
+  }
+  function start(){
+    if(running || !cvs) return;
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    running = true; reset(); sizeCanvas(); raf = requestAnimationFrame(step);
+  }
+  function stop(){
+    running = false; if(raf) cancelAnimationFrame(raf); raf = null;
+  }
+  return { mount:mount, start:start, stop:stop, jump:jump,
+           setMuted:function(m){ muted=!!m; }, isMuted:function(){ return muted; } };
+})();
+</script>
 </body>
 </html>
 <!-- build: 20260602T135133Z -->
