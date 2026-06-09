@@ -195,6 +195,14 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Ilustrasi SVG 3D animasi untuk state "Akun tidak ditemukan": kaca pembesar ring merah + "?" lensa, kartu miring, float/scan/glint/partikel/bayangan dinamis
   - checkStatus() logic TIDAK diubah (hanya tambah start/stopMiniGame)
 
+- [2026-06-10] Selesai: Efek 3D & animasi modern bagian bawah (index.html only):
+  - Tilt 3D mengikuti kursor (`.js-tilt`) di kartu Testimoni & logo Metode Pembayaran: rotateX/rotateY (max 20°), perspective 520px, translateZ 26px + scale, glare radial + bayangan terangkat; reset halus saat pointerleave; di-skip untuk pointer coarse
+  - Reveal-on-scroll (`.reveal-up`) fade-up + zoom + stagger via IntersectionObserver; jaring pengaman MutationObserver di #sec-testimoni + fallback agar konten async (Alpine x-for) tidak tersembunyi permanen
+  - Count-up statistik testimoni (Produk Tersedia/Pelanggan/Rating/Aktivasi) pakai `.countup` + data-to/prefix/suffix (Produk Tersedia `:data-to="products.length||37"`)
+  - Footer CTA "Mulai Belanja": animasi berdegup `cta-beat` + glow pulse `cta-glow`; hover ambil alih ke scale-105 + panah translate-x
+  - Footer links (`.flink`, 13 link): underline gradient merah→amber slide-in dari kiri + geser halus + warna putih; varian `.flink-dim` untuk legal
+  - Semua hormati prefers-reduced-motion
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
