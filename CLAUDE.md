@@ -221,6 +221,12 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Gerak kartu Flash Sale mobile lebih natural: ganti CSS keyframe `hero-autofloat` (kaku) → loop rAF "breathing" multi-sinus organik + drag putar di-lerp + pegas balik; hanya jalan di pointer coarse (HP asli), skip saat kartu offscreen
   - Catatan: cabang touch tak bisa diuji di preview (emulator lapor pointer fine); diverifikasi parse tanpa error + logika mirror breathing desktop
 
+- [2026-06-11 sesi 2] Selesai: Mobile UX fix final (index.html only):
+  - Hapus TOTAL animasi putar/float kartu Flash Sale di mobile (berat) → cabang isTouch kini hanya remove hero-autofloat + clear transform lalu return (kartu statis); hint "Tarik untuk putar" balik desktop-only
+  - Bug chatbot saat klik search akun (masih muncul) → matikan Sera guide SEPENUHNYA di mobile: `showGuide` early-return jika `window.innerWidth < 768` (kill greeting + nav + scroll sekaligus)
+  - Cegah ghost-tap FAB: focusout input set `_fabGuardUntil = now+700` + delay inputFocused→false jadi 400ms (FAB baru muncul setelah keyboard benar2 turun); openSera sudah cek `_fabGuardUntil`
+  - QC: mobile greeting=false & showGuide no-op, ghost-tap diblok lalu normal setelah guard; desktop guide tetap jalan; console bersih
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif

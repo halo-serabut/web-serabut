@@ -987,7 +987,7 @@
                     <div id="heroFlashCard" class="hero-card-3d flex-none w-full md:w-[340px] relative">
 
                         <!-- Hint: kartu bisa ditarik/putar (desktop) -->
-                        <div id="heroDragHint" class="flex absolute -top-3 left-1/2 -translate-x-1/2 z-30 items-center gap-1.5 bg-gray-900/85 text-white text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-lg pointer-events-none whitespace-nowrap backdrop-blur-sm">
+                        <div id="heroDragHint" class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 z-30 items-center gap-1.5 bg-gray-900/85 text-white text-[11px] font-semibold px-3 py-1.5 rounded-full shadow-lg pointer-events-none whitespace-nowrap backdrop-blur-sm">
                             <svg class="w-3.5 h-3.5 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
                             Tarik untuk putar
                         </div>
@@ -8174,54 +8174,13 @@
     if(!scene) return;
 
     var isTouch = window.matchMedia('(pointer: coarse)').matches;
-    // Touch: idle "bernapas" organik (rAF, bukan keyframe kaku) + drag putar halus.
+    // Mobile/touch: kartu Flash Sale STATIS — tanpa animasi putar/float (UX & performa).
     if(isTouch){
-      var tcard = null, tsx=0, tsy=0, tdrag=false, tmoved=false;
-      var uY=0, uX=0, uYt=0, uXt=0;      // rotasi drag: current vs target (di-lerp)
-      var t0 = performance.now();
-      // pastikan tak ada keyframe kaku
-      var rmFloat = function(){ var c=document.getElementById('heroFlashCard'); if(c) c.classList.remove('hero-autofloat'); };
+      var rmFloat = function(){
+        var c=document.getElementById('heroFlashCard'); if(c){ c.classList.remove('hero-autofloat'); c.style.transform=''; }
+        var hint=document.getElementById('heroDragHint'); if(hint) hint.style.display='none';
+      };
       rmFloat(); setTimeout(rmFloat, 900);
-
-      function tframe(now){
-        if(!tcard) tcard = document.getElementById('heroFlashCard');
-        if(tcard){
-          var r = tcard.getBoundingClientRect();
-          if(r.bottom > -40 && r.top < window.innerHeight + 40){   // hanya saat terlihat
-            var t = (now - t0) / 1000;
-            uY += (uYt - uY) * (tdrag ? 0.32 : 0.10);              // lerp → halus
-            uX += (uXt - uX) * (tdrag ? 0.32 : 0.10);
-            var idle = tdrag ? 0.15 : 1;                            // idle meredup saat di-drag
-            var bY = Math.sin(t * 0.50) * 3.0 * idle;
-            var bX = Math.cos(t * 0.38) * 2.2 * idle;
-            var bZ = Math.sin(t * 0.66) * 9   * idle;
-            tcard.style.transform = 'rotateY('+(bY+uY)+'deg) rotateX('+(bX+uX)+'deg) translateZ('+(12+bZ)+'px)';
-          }
-        }
-        requestAnimationFrame(tframe);
-      }
-      requestAnimationFrame(tframe);
-
-      // ── Putar kartu Flash Sale pakai jari ──
-      scene.addEventListener('touchstart', function(e){
-        tcard = document.getElementById('heroFlashCard');
-        if(!tcard || !tcard.contains(e.target)) { tdrag=false; return; }
-        var t=e.touches[0]; tsx=t.clientX; tsy=t.clientY; tdrag=true; tmoved=false;
-      }, {passive:true});
-      scene.addEventListener('touchmove', function(e){
-        if(!tdrag) return;
-        var t=e.touches[0], dx=t.clientX-tsx, dy=t.clientY-tsy;
-        if(Math.abs(dx)+Math.abs(dy) > 6) tmoved=true;
-        // ambil alih hanya jika gerak horizontal dominan → scroll vertikal tetap jalan
-        if(tmoved && Math.abs(dx) > Math.abs(dy)*1.2){
-          e.preventDefault();
-          uYt = dx * 0.6; uXt = -dy * 0.5;
-          var hint=document.getElementById('heroDragHint'); if(hint) hint.style.display='none';
-        }
-      }, {passive:false});
-      var tEnd = function(){ if(!tdrag) return; tdrag=false; uYt=0; uXt=0; };  // pegas balik via lerp
-      scene.addEventListener('touchend', tEnd);
-      scene.addEventListener('touchcancel', tEnd);
       return;
     }
 
@@ -9425,7 +9384,9 @@ function serabutStore() {
             });
             document.addEventListener('focusout', (e) => {
                 if (e.target.matches && e.target.matches('input, textarea')) {
-                    setTimeout(() => { this.inputFocused = false; }, 250);  // jeda kecil cegah ghost-tap saat blur
+                    // guard ghost-tap: cegah FAB buka chat tepat setelah keyboard menutup
+                    this._fabGuardUntil = Date.now() + 700;
+                    setTimeout(() => { this.inputFocused = false; }, 400);  // FAB baru muncul setelah keyboard benar2 turun
                 }
             });
 
@@ -10701,6 +10662,8 @@ function serabutStore() {
             'sec:footer':   'Kalau butuh sesuatu, kontak sama jam buka kami ada di sini. Info cara bayarnya juga ada.',
         },
         showGuide(page, opts={}) {
+            // Mobile: Sera guide dimatikan total (UX — bubble dianggap mengganggu di HP)
+            if (window.innerWidth < 768) return;
             // jangan ganggu saat user mengetik, atau setelah user menutup guide
             if (this._guideStopped || this.inputFocused) return;
             const text = this._guideTexts[page];
