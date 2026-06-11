@@ -1328,7 +1328,7 @@
                 </div>
 
                 <!-- Mini-game "Sera Run" sambil nunggu loading -->
-                <div x-show="statusChecking" x-transition class="mb-6">
+                <div x-show="statusChecking && !gameDismissed" x-transition class="mb-6">
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                         <div class="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-gray-100">
                             <div class="flex items-center gap-2 text-xs font-semibold text-gray-600">
@@ -1342,6 +1342,10 @@
                                         class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-brand-500 hover:bg-gray-100 transition-colors flex-none">
                                     <svg x-show="!gameMuted" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M19 5a9 9 0 010 14M5 9v6h4l5 4V5L9 9H5z"/></svg>
                                     <svg x-show="gameMuted" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 9v6h4l5 4V5L9 9H5z M17 9l4 4m0-4l-4 4"/></svg>
+                                </button>
+                                <button type="button" @click="gameDismissed=true; stopMiniGame()" title="Tutup game"
+                                        class="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-brand-500 hover:bg-gray-100 transition-colors flex-none">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                             </div>
                         </div>
@@ -6596,7 +6600,7 @@
 <!-- FAB Button: auto-hide di mobile, tempel ke dinding -->
 <div class="fixed md:bottom-8 right-0 md:right-8 z-[90] transition-all duration-500"
      :class="[csHidden && !csPopup ? 'cs-peek' : '', productDetailOverlay ? 'bottom-44' : 'bottom-24']"
-     x-show="!csPopup && !csKeyboardOffset"
+     x-show="!csPopup && !csKeyboardOffset && !inputFocused"
      x-transition:enter="transition ease-out duration-200"
      x-transition:enter-start="opacity-0 scale-75"
      x-transition:enter-end="opacity-100 scale-100"
@@ -8594,6 +8598,7 @@ function serabutStore() {
         csPopup:    false,
         csHidden:   true,
         csKeyboardOffset: 0,
+        inputFocused: false,
         csGuestName: '',
         csMessages:  [],
         csInput:     '',
@@ -8657,6 +8662,7 @@ function serabutStore() {
 
         // Mini-game
         gameMuted:    false,
+        gameDismissed: false,
 
         // Sera tour guide
         guideShow:    false,
@@ -9396,6 +9402,16 @@ function serabutStore() {
                 }
             }, 1000);
             this.$nextTick(() => this.initScrollSpy());
+
+            // ── Sembunyikan FAB Sera saat user mengetik di input apa pun (cegah ter-tap nyasar) ──
+            document.addEventListener('focusin', (e) => {
+                if (e.target.matches && e.target.matches('input, textarea')) this.inputFocused = true;
+            });
+            document.addEventListener('focusout', (e) => {
+                if (e.target.matches && e.target.matches('input, textarea')) {
+                    setTimeout(() => { this.inputFocused = false; }, 250);  // jeda kecil cegah ghost-tap saat blur
+                }
+            });
 
             // ── Keyboard height tracking untuk mobile chat popup ──
             if (window.visualViewport) {
@@ -10308,11 +10324,15 @@ function serabutStore() {
             if(q.length < 4) { this.statusResult = null; return; }
             const cached = this.statusCache[q];
             if(cached && Date.now() - cached.ts < 300000) { this.statusResult = cached.data; return; }
-            this.statusChecking=true; this.statusResult=null;
+            this.statusChecking=true; this.statusResult=null; this.gameDismissed=false;
             this.startMiniGame();
             try {
                 const params = new URLSearchParams({ action:'smartSearch', query:q });
-                const res  = await fetch(`${this.GAS_URL}?${params}`);
+                // timeout aman 20 dtk biar tidak menggantung selamanya
+                const ctrl = new AbortController();
+                const to = setTimeout(() => ctrl.abort(), 20000);
+                const res  = await fetch(`${this.GAS_URL}?${params}`, { signal: ctrl.signal });
+                clearTimeout(to);
                 const data = await res.json();
                 const result = data.data||[];
                 this.statusCache[q] = { data: result, ts: Date.now() };

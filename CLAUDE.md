@@ -208,6 +208,13 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Drag-to-spin kartu Flash Sale kini jalan di mobile (touch): cabang isTouch di init hero tilt — touchstart/move/end di `scene`, geser horizontal dominan → rotateY/rotateX + preventDefault, geser vertikal tetap scroll; pegas balik + autofloat di-pause saat drag
   - Hint "Tarik untuk putar" kini tampil di mobile juga (hapus `hidden md:flex` → `flex`)
 
+- [2026-06-10 sesi 3] Selesai: Fix "chatbot/mini-game nyangkut" saat search di mobile (index.html only):
+  - Akar masalah: search GAS lambat (~7,5s cold-start) → statusChecking lama true → mini-game muncul tanpa tombol close; + FAB Sera bisa ke-tap nyasar saat keyboard
+  - FAB Sera sembunyi saat input difokus: state `inputFocused` (focusin/focusout listener, blur delay 250ms) + ditambah ke `x-show="!csPopup && !csKeyboardOffset && !inputFocused"`
+  - Mini-game dapat tombol Tutup (✕) → `gameDismissed`; x-show jadi `statusChecking && !gameDismissed`; reset gameDismissed tiap search baru
+  - checkStatus: timeout aman 20s via AbortController (cegah hang selamanya)
+  - QC lengkap: FAB buka/tutup chat OK, fokus/blur tidak nyangkut, search resolve + ada hasil, tombol close game OK, console bersih
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
