@@ -215,6 +215,12 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - checkStatus: timeout aman 20s via AbortController (cegah hang selamanya)
   - QC lengkap: FAB buka/tutup chat OK, fokus/blur tidak nyangkut, search resolve + ada hasil, tombol close game OK, console bersih
 
+- [2026-06-11] Selesai: Audit & fix mobile (index.html only):
+  - Bug "chatbot tak bisa close" = ternyata GUIDE BUBBLE Sera (csPopup selalu false). Pemicu: klik field status → keyboard → auto-scroll → scroll-spy `showGuide(force:true)` berulang tiap scroll → terasa tak bisa ditutup
+  - Fix: guide section-scroll dimatikan di mobile (`window.innerWidth < 768`); `showGuide` early-return saat `inputFocused` atau setelah `_guideStopped`; `hideGuide()` set `_guideStopped=true` (tutup × = stop sesi)
+  - Gerak kartu Flash Sale mobile lebih natural: ganti CSS keyframe `hero-autofloat` (kaku) → loop rAF "breathing" multi-sinus organik + drag putar di-lerp + pegas balik; hanya jalan di pointer coarse (HP asli), skip saat kartu offscreen
+  - Catatan: cabang touch tak bisa diuji di preview (emulator lapor pointer fine); diverifikasi parse tanpa error + logika mirror breathing desktop
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif

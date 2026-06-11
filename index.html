@@ -8174,38 +8174,52 @@
     if(!scene) return;
 
     var isTouch = window.matchMedia('(pointer: coarse)').matches;
-    // Touch: gentle auto-float + drag-to-spin pakai sentuhan.
+    // Touch: idle "bernapas" organik (rAF, bukan keyframe kaku) + drag putar halus.
     if(isTouch){
-      var addFloat = function(){ var c=document.getElementById('heroFlashCard'); if(c) c.classList.add('hero-autofloat'); };
-      addFloat(); setTimeout(addFloat, 800);
+      var tcard = null, tsx=0, tsy=0, tdrag=false, tmoved=false;
+      var uY=0, uX=0, uYt=0, uXt=0;      // rotasi drag: current vs target (di-lerp)
+      var t0 = performance.now();
+      // pastikan tak ada keyframe kaku
+      var rmFloat = function(){ var c=document.getElementById('heroFlashCard'); if(c) c.classList.remove('hero-autofloat'); };
+      rmFloat(); setTimeout(rmFloat, 900);
+
+      function tframe(now){
+        if(!tcard) tcard = document.getElementById('heroFlashCard');
+        if(tcard){
+          var r = tcard.getBoundingClientRect();
+          if(r.bottom > -40 && r.top < window.innerHeight + 40){   // hanya saat terlihat
+            var t = (now - t0) / 1000;
+            uY += (uYt - uY) * (tdrag ? 0.32 : 0.10);              // lerp → halus
+            uX += (uXt - uX) * (tdrag ? 0.32 : 0.10);
+            var idle = tdrag ? 0.15 : 1;                            // idle meredup saat di-drag
+            var bY = Math.sin(t * 0.50) * 3.0 * idle;
+            var bX = Math.cos(t * 0.38) * 2.2 * idle;
+            var bZ = Math.sin(t * 0.66) * 9   * idle;
+            tcard.style.transform = 'rotateY('+(bY+uY)+'deg) rotateX('+(bX+uX)+'deg) translateZ('+(12+bZ)+'px)';
+          }
+        }
+        requestAnimationFrame(tframe);
+      }
+      requestAnimationFrame(tframe);
 
       // ── Putar kartu Flash Sale pakai jari ──
-      var tcard, tsx, tsy, tdrag=false, tmoved=false, tFloatTimer=null;
       scene.addEventListener('touchstart', function(e){
         tcard = document.getElementById('heroFlashCard');
         if(!tcard || !tcard.contains(e.target)) { tdrag=false; return; }
         var t=e.touches[0]; tsx=t.clientX; tsy=t.clientY; tdrag=true; tmoved=false;
-        if(tFloatTimer) clearTimeout(tFloatTimer);
-        tcard.classList.remove('hero-autofloat');     // stop idle agar transform drag berlaku
-        tcard.style.transition='none';
       }, {passive:true});
       scene.addEventListener('touchmove', function(e){
-        if(!tdrag || !tcard) return;
+        if(!tdrag) return;
         var t=e.touches[0], dx=t.clientX-tsx, dy=t.clientY-tsy;
         if(Math.abs(dx)+Math.abs(dy) > 6) tmoved=true;
         // ambil alih hanya jika gerak horizontal dominan → scroll vertikal tetap jalan
         if(tmoved && Math.abs(dx) > Math.abs(dy)*1.2){
           e.preventDefault();
-          tcard.style.transform = 'rotateY('+(dx*0.6)+'deg) rotateX('+(-dy*0.5)+'deg) translateZ(14px)';
+          uYt = dx * 0.6; uXt = -dy * 0.5;
           var hint=document.getElementById('heroDragHint'); if(hint) hint.style.display='none';
         }
       }, {passive:false});
-      var tEnd = function(){
-        if(!tdrag || !tcard) return; tdrag=false;
-        tcard.style.transition='transform .55s cubic-bezier(.2,.8,.3,1.3)';
-        tcard.style.transform='';                       // pegas balik
-        tFloatTimer = setTimeout(function(){ if(tcard){ tcard.style.transition=''; tcard.classList.add('hero-autofloat'); } }, 600);
-      };
+      var tEnd = function(){ if(!tdrag) return; tdrag=false; uYt=0; uXt=0; };  // pegas balik via lerp
       scene.addEventListener('touchend', tEnd);
       scene.addEventListener('touchcancel', tEnd);
       return;
@@ -9192,10 +9206,12 @@ function serabutStore() {
                     if (rect.top <= 120 && rect.bottom > 120) {
                         if (this.activeSection !== id) {
                             this.activeSection = id;
-                            // Tour guide per section — jelaskan ulang tiap masuk (termasuk scroll up)
-                            if (this.activePage === 'home' && id !== 'hero') {
+                            // Tour guide per section: HANYA desktop (di mobile bikin bubble muncul
+                            // tiap scroll/keyboard → mengganggu). Mobile cukup sapaan awal + nav.
+                            const isDesktop = window.innerWidth >= 768;
+                            if (isDesktop && this.activePage === 'home' && id !== 'hero') {
                                 this.showGuide('sec:' + id, { force: true });
-                            } else if (this.activePage === 'home' && id === 'hero') {
+                            } else if (isDesktop && this.activePage === 'home' && id === 'hero') {
                                 this.showGuide('home', { force: true });
                             }
                         }
@@ -10685,6 +10701,8 @@ function serabutStore() {
             'sec:footer':   'Kalau butuh sesuatu, kontak sama jam buka kami ada di sini. Info cara bayarnya juga ada.',
         },
         showGuide(page, opts={}) {
+            // jangan ganggu saat user mengetik, atau setelah user menutup guide
+            if (this._guideStopped || this.inputFocused) return;
             const text = this._guideTexts[page];
             if (!text) { this.guideShow = false; return; }
             // tampilkan sekali per halaman per sesi (kecuali dipaksa)
@@ -10701,6 +10719,7 @@ function serabutStore() {
         hideGuide() {
             if (this._guideTimer) clearTimeout(this._guideTimer);
             this.guideShow = false;
+            this._guideStopped = true;       // user menutup → jangan munculkan lagi sesi ini
         },
         setPage(page, opts={}) {
             // Simpan scroll position & catalog state halaman sebelumnya
