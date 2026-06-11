@@ -229,6 +229,14 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 
 - [2026-06-12] Selesai: Fix FAB Sera ke-tap nyasar di section Cek Status (mobile, index.html only) — tombol "Cek" ada di pojok kanan baris input, persis di bawah FAB Sera (fixed bottom-right ~y637–704). Tap tombol Cek malah kena FAB → chat kebuka & terasa "tak bisa ditutup" (tiap tap re-trigger FAB). Fix: FAB `x-show` tambah `&& !(activeSection==='status' && window.innerWidth < 768)` → FAB sembunyi saat section status aktif di mobile. Verifikasi preview: display→none saat activeSection='status' @375px, csPopup toggle tetap normal, console bersih
 
+- [2026-06-12] Selesai: Fix "chat Sera kebuka sendiri" saat fokus field search (index.html only) — AKAR MASALAH SEBENARNYA: di iOS, fokus ke input search memicu klik sintetis yang nyasar ke FAB Sera (`position:fixed`) → `openSera()` jalan → chat (csPopup) kebuka tanpa diniatkan. Terjadi di SEMUA input search (produk + Cek Status), bukan cuma section status. Fix berlapis:
+  - `openSera()` early-return jika `inputFocused || csKeyboardOffset` (sedang ngetik / keyboard naik) + `_fabGuardUntil` (700ms pasca-blur) + `statusInView` (mobile)
+  - FAB `pointer-events:none` saat `inputFocused || csKeyboardOffset || (statusInView && mobile)` → cegah klik sintetis kena FAB walau sedang di leave-transition
+  - IntersectionObserver khusus `#sec-status` → `statusInView` (deteksi deterministik, ganti tebakan band `currentSection`)
+  - Verifikasi via state Alpine: openSera diblok saat focus/keyboard/status, buka normal di luar itu; pointer-events none↔auto sesuai state; console bersih
+  - Catatan: percobaan awal (hide FAB by activeSection/currentSection) gagal karena (a) section detection lag & (b) trigger ternyata BUKAN overlap posisi tapi klik sintetis iOS pada SEMUA field
+  - GOTCHA: preview lokal (python http.server) MENGUNCI scroll (window.scrollTo no-op) & salah-lapor display x-show+x-transition → andalkan state Alpine + binding :class (pointer-events) untuk verifikasi, bukan getComputedStyle display
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
