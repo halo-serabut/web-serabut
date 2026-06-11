@@ -203,6 +203,11 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Footer links (`.flink`, 13 link): underline gradient merah→amber slide-in dari kiri + geser halus + warna putih; varian `.flink-dim` untuk legal
   - Semua hormati prefers-reduced-motion
 
+- [2026-06-10 sesi 2] Selesai: Fix mobile (index.html only):
+  - Bug FAB Sera ke-tap nyasar saat keyboard mobile terbuka → chat kebuka tak sengaja: FAB sekarang `x-show="!csPopup && !csKeyboardOffset"` (sembunyi saat keyboard terbuka)
+  - Drag-to-spin kartu Flash Sale kini jalan di mobile (touch): cabang isTouch di init hero tilt — touchstart/move/end di `scene`, geser horizontal dominan → rotateY/rotateX + preventDefault, geser vertikal tetap scroll; pegas balik + autofloat di-pause saat drag
+  - Hint "Tarik untuk putar" kini tampil di mobile juga (hapus `hidden md:flex` → `flex`)
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
