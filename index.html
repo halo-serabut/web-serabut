@@ -6600,7 +6600,7 @@
 <!-- FAB Button: auto-hide di mobile, tempel ke dinding -->
 <div class="fixed md:bottom-8 right-0 md:right-8 z-[90] transition-all duration-500"
      :class="[csHidden && !csPopup ? 'cs-peek' : '', productDetailOverlay ? 'bottom-44' : 'bottom-24']"
-     x-show="!csPopup && !csKeyboardOffset && !inputFocused"
+     x-show="!csPopup && !csKeyboardOffset && !inputFocused && !(activeSection==='status' && window.innerWidth < 768)"
      x-transition:enter="transition ease-out duration-200"
      x-transition:enter-start="opacity-0 scale-75"
      x-transition:enter-end="opacity-100 scale-100"

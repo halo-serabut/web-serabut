@@ -227,6 +227,8 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Cegah ghost-tap FAB: focusout input set `_fabGuardUntil = now+700` + delay inputFocused→false jadi 400ms (FAB baru muncul setelah keyboard benar2 turun); openSera sudah cek `_fabGuardUntil`
   - QC: mobile greeting=false & showGuide no-op, ghost-tap diblok lalu normal setelah guard; desktop guide tetap jalan; console bersih
 
+- [2026-06-12] Selesai: Fix FAB Sera ke-tap nyasar di section Cek Status (mobile, index.html only) — tombol "Cek" ada di pojok kanan baris input, persis di bawah FAB Sera (fixed bottom-right ~y637–704). Tap tombol Cek malah kena FAB → chat kebuka & terasa "tak bisa ditutup" (tiap tap re-trigger FAB). Fix: FAB `x-show` tambah `&& !(activeSection==='status' && window.innerWidth < 768)` → FAB sembunyi saat section status aktif di mobile. Verifikasi preview: display→none saat activeSection='status' @375px, csPopup toggle tetap normal, console bersih
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
