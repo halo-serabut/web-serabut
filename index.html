@@ -8581,7 +8581,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-8',
+        APP_VERSION:      '20260612-9',
 
         // PWA Install
         pwaPopup:            false,
@@ -9472,28 +9472,32 @@ function serabutStore() {
             // true, cek LANGSUNG ke DOM: kalau ada field fokus / keyboard naik / baru menyentuh
             // input → ini pasti tak disengaja (ghost-click iOS / overlap) → kembalikan false.
             // Menangkap SEMUA jalur: klik, ghost-click, maupun panggilan programatik.
+            const _csDebug = /[?&]debug=1/.test(location.search);
             this.$watch('csPopup', (val) => {
                 if (!val) return;
                 const ae = document.activeElement;
+                const isMobile     = window.innerWidth < 768;
                 const fieldFocused = ae && ae.matches && ae.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, select');
                 const recentInput  = Date.now() - this._lastInputTouch < 2500;
-                const reverted = !!(fieldFocused || recentInput || this.csKeyboardOffset || this.inputFocused);
-                // Diagnostik (bisa dibaca via remote-debug: window.__csOpenLog)
+                const openerArmedAgo = Date.now() - this._openerArmed;
+                // Di MOBILE, chat HANYA boleh buka kalau ada pointerdown ASLI di tombolnya
+                // (<1000ms). Ghost-click iOS / open programatik tidak meng-arm → dibatalkan.
+                const noRealGesture = isMobile && openerArmedAgo > 1000;
+                const reverted = !!(fieldFocused || recentInput || this.csKeyboardOffset || this.inputFocused || noRealGesture);
                 try {
-                    (window.__csOpenLog = window.__csOpenLog || []).push({
-                        t: new Date().toISOString(),
+                    const entry = {
+                        t: new Date().toLocaleTimeString(),
                         activeEl: ae ? (ae.tagName + (ae.type ? '['+ae.type+']' : '')) : 'none',
                         lastInputTouchAgo: Date.now() - this._lastInputTouch,
                         kbOffset: this.csKeyboardOffset, inputFocused: this.inputFocused,
-                        openerArmedAgo: Date.now() - this._openerArmed,
-                        reverted
-                    });
+                        openerArmedAgo, isMobile, reverted,
+                        cause: fieldFocused?'fieldFocused':recentInput?'recentInput':this.csKeyboardOffset?'keyboard':this.inputFocused?'inputFocused':noRealGesture?'noRealGesture':'ALLOWED'
+                    };
+                    (window.__csOpenLog = window.__csOpenLog || []).push(entry);
                     if (window.__csOpenLog.length > 20) window.__csOpenLog.shift();
+                    if (_csDebug) this._csDebugToast(entry);
                 } catch {}
-                if (reverted) {
-                    this.csPopup = false;
-                    if (ae && ae.blur && fieldFocused) { /* biarkan field tetap fokus utk user ngetik */ }
-                }
+                if (reverted) this.csPopup = false;
             });
 
             // ── Keyboard height tracking untuk mobile chat popup ──
@@ -10547,6 +10551,21 @@ function serabutStore() {
             this.csKeyboardOffset = 0;
             // cegah ghost-click langsung membuka lagi tepat setelah ditutup
             this._fabGuardUntil = Date.now() + 800;
+        },
+        // Diagnostik on-screen (aktif via ?debug=1) — tampilkan kenapa chat coba dibuka
+        _csDebugToast(e) {
+            try {
+                let box = document.getElementById('csDebugBox');
+                if (!box) {
+                    box = document.createElement('div');
+                    box.id = 'csDebugBox';
+                    box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#111;color:#0f0;font:11px/1.4 monospace;padding:8px 10px;border-radius:8px;white-space:pre-wrap;box-shadow:0 4px 20px rgba(0,0,0,.4);max-height:45vh;overflow:auto';
+                    box.addEventListener('click', () => box.remove());
+                    document.body.appendChild(box);
+                }
+                const tag = e.reverted ? '🛑 DIBLOKIR' : '✅ DIBUKA';
+                box.textContent = `${tag} (${e.cause})\nactiveEl=${e.activeEl}  mobile=${e.isMobile}\ninputTouchAgo=${e.lastInputTouchAgo}ms  openerArmedAgo=${e.openerArmedAgo}ms\nkbOffset=${e.kbOffset}  inputFocused=${e.inputFocused}\n(tap utk tutup)`;
+            } catch {}
         },
         openCSChat(guestName) {
             const nama = this.currentUser ? this.currentUser.nama : (guestName || '').trim();
