@@ -8581,7 +8581,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-12',
+        APP_VERSION:      '20260612-13',
 
         // PWA Install
         pwaPopup:            false,
@@ -9156,6 +9156,12 @@ function serabutStore() {
 
         // ── Init ──────────────────────────────────────
         async init() {
+            // PALING ATAS & sebelum await apa pun: pasang semua guard chat + listener UI.
+            // KRUSIAL — kalau ditaruh setelah `await fetchProducts/loadSiteSettings`, di HP
+            // yang lambat/flaky await itu hang/reject → guard tak pernah terpasang → chat Sera
+            // kebuka bebas saat fokus search. Inilah root cause "cuma bug di HP, aman di emulator".
+            this._setupChatGuards();
+
             // Scroll to top on load — prevent browser scroll restore
             if (history.scrollRestoration) history.scrollRestoration = 'manual';
             window.scrollTo(0, 0);
@@ -9282,21 +9288,10 @@ function serabutStore() {
             // ── PWA Service Worker ─────────────────────────
             // updateViaCache:'none' → browser SELALU ambil sw.js fresh (jangan dari HTTP cache),
             // + ?v=APP_VERSION supaya URL berubah tiap rilis → cegah SW "beku" gara2 Cloudflare
-            // nge-cache sw.js (penyebab index.html lama nempel di HP). Auto-reload saat SW baru aktif.
+            // nge-cache sw.js. TANPA auto-reload (bikin loop/lambat) — SW network-first sudah
+            // cukup ambil HTML terbaru di load berikutnya.
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/sw.js?v=' + this.APP_VERSION, { updateViaCache: 'none' })
-                    .then(reg => {
-                        reg.addEventListener('updatefound', () => {
-                            const nw = reg.installing;
-                            if (!nw) return;
-                            nw.addEventListener('statechange', () => {
-                                // SW baru sudah aktif menggantikan yang lama → reload sekali utk HTML terbaru
-                                if (nw.state === 'activated' && navigator.serviceWorker.controller) {
-                                    location.reload();
-                                }
-                            });
-                        });
-                    })
                     .catch(() => {});
             }
 
@@ -9423,7 +9418,10 @@ function serabutStore() {
                 }
             }, 1000);
             this.$nextTick(() => this.initScrollSpy());
+        },
 
+        // ── Semua guard chat + listener UI, dipasang DI AWAL init (sebelum await) ──
+        _setupChatGuards() {
             // ── Ukur tinggi header mobile yang sebenarnya → --hdr-h ──
             // Tombol cart + padding + safe-area bisa bikin header > 3.5rem; offset search &
             // konten harus ikut tinggi nyata supaya tidak ketutup navbar.
