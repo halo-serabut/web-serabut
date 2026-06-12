@@ -8581,7 +8581,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-9',
+        APP_VERSION:      '20260612-10',
 
         // PWA Install
         pwaPopup:            false,
@@ -9473,6 +9473,17 @@ function serabutStore() {
             // input → ini pasti tak disengaja (ghost-click iOS / overlap) → kembalikan false.
             // Menangkap SEMUA jalur: klik, ghost-click, maupun panggilan programatik.
             const _csDebug = /[?&]debug=1/.test(location.search);
+            // Banner versi langsung saat load (kalau ?debug=1) — kalau banner ini TIDAK muncul
+            // berarti HP masih versi lama (cache), bukan masalah kode.
+            if (_csDebug) {
+                try {
+                    const vb = document.createElement('div');
+                    vb.style.cssText = 'position:fixed;left:8px;top:8px;z-index:99999;background:#064e3b;color:#6ee7b7;font:12px/1.4 monospace;padding:6px 10px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4)';
+                    vb.textContent = 'DEBUG AKTIF · v' + this.APP_VERSION;
+                    vb.addEventListener('click', () => vb.remove());
+                    document.body.appendChild(vb);
+                } catch {}
+            }
             this.$watch('csPopup', (val) => {
                 if (!val) return;
                 const ae = document.activeElement;
