@@ -6453,7 +6453,7 @@
 ══════════════════════════════════════════════════════ -->
 
 <!-- Popup card: mobile = full-width from bottom (behind navbar), desktop = positioned card -->
-<div id="seraChatPanel" class="fixed inset-x-0 bottom-0 px-0 pb-0 z-[91] md:inset-auto md:bottom-28 md:right-8 md:px-0 md:pb-0"
+<div class="fixed inset-x-0 bottom-0 px-0 pb-0 z-[91] md:inset-auto md:bottom-28 md:right-8 md:px-0 md:pb-0"
      :style="{ bottom: csKeyboardOffset ? csKeyboardOffset+'px' : null }"
      x-show="csPopup"
      x-transition:enter="transition ease-out duration-300"
@@ -8581,7 +8581,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-16',
+        APP_VERSION:      '20260612-17',
 
         // PWA Install
         pwaPopup:            false,
@@ -8596,7 +8596,6 @@ function serabutStore() {
         inputFocused: false,
         _lastInputTouch: 0,   // timestamp interaksi input terakhir → tolak ghost-click iOS buka chat
         _openerArmed: 0,      // timestamp pointerdown/touchstart ASLI di tombol pembuka chat → izin buka
-        _dlog: null,          // logger panel debug (diisi saat ?debug=1)
         csGuestName: '',
         csMessages:  [],
         csInput:     '',
@@ -9486,75 +9485,6 @@ function serabutStore() {
             // Tidak percaya flag (inputFocused bisa telat di-reset). Saat csPopup berubah jadi
             // true, cek LANGSUNG ke DOM: kalau ada field fokus / keyboard naik / baru menyentuh
             // input → ini pasti tak disengaja (ghost-click iOS / overlap) → kembalikan false.
-            // Menangkap SEMUA jalur: klik, ghost-click, maupun panggilan programatik.
-            const _csDebug = /[?&]debug=1/.test(location.search);
-            // ── PANEL DIAGNOSTIK ON-SCREEN (?debug=1) — catat timeline lengkap di layar HP ──
-            // Tiap event relevan tampil di panel; user tinggal reproduce di HP lalu screenshot.
-            if (_csDebug) {
-                try {
-                    const panel = document.createElement('div');
-                    panel.id = 'seraDebugPanel';
-                    panel.style.cssText = 'position:fixed;left:6px;right:6px;bottom:6px;z-index:2147483647;background:rgba(0,0,0,.92);color:#9eff9e;font:11px/1.35 monospace;padding:8px 10px;border-radius:10px;max-height:42vh;overflow:auto;box-shadow:0 4px 24px rgba(0,0,0,.5);border:1px solid #1f5;';
-                    const head = document.createElement('div');
-                    head.style.cssText = 'color:#6ee7b7;font-weight:bold;margin-bottom:4px;display:flex;justify-content:space-between;';
-                    head.innerHTML = '<span>SERA DEBUG · v'+this.APP_VERSION+'</span><span style="color:#fca5a5">tap=clear</span>';
-                    const body = document.createElement('div'); body.id='seraDebugBody';
-                    panel.appendChild(head); panel.appendChild(body);
-                    panel.addEventListener('click', () => { body.innerHTML=''; });
-                    document.body.appendChild(panel);
-                    this._dlog = (msg, color) => {
-                        try {
-                            const line = document.createElement('div');
-                            line.style.color = color || '#9eff9e';
-                            const ts = new Date().toLocaleTimeString().split(' ')[0];
-                            line.textContent = ts + '  ' + msg;
-                            body.appendChild(line);
-                            while (body.childElementCount > 40) body.removeChild(body.firstChild);
-                            panel.scrollTop = panel.scrollHeight;
-                        } catch {}
-                    };
-                    this._dlog('panel siap. tap field cari sampai chat kebuka.', '#6ee7b7');
-                    this._dlog('init csPopup='+this.csPopup+' csHidden='+this.csHidden, '#6ee7b7');
-                    // Tangkap error JS apa pun supaya kelihatan di panel (kalau _setupChatGuards
-                    // crash di tengah jalan, sisa guard di bawahnya tak akan terpasang)
-                    window.addEventListener('error', e => {
-                        this._dlog('❌ JS ERROR: '+e.message+' @ '+(e.filename||'').split('/').pop()+':'+e.lineno, '#fca5a5');
-                    });
-                    window.addEventListener('unhandledrejection', e => {
-                        this._dlog('❌ PROMISE REJECT: '+(e.reason && e.reason.message || e.reason), '#fca5a5');
-                    });
-                    // Catat SEMUA event di tombol pembuka chat + fokus field
-                    ['pointerdown','touchstart','click'].forEach(t =>
-                        document.addEventListener(t, e => {
-                            const o = e.target.closest && e.target.closest('[data-chat-open]');
-                            if (o) this._dlog('🔴 OPENER '+t+' di <'+e.target.tagName+'> detail='+e.detail, '#fca5a5');
-                        }, true));
-                    document.addEventListener('focusin', e => {
-                        if (e.target.matches && e.target.matches('input,textarea,select'))
-                            this._dlog('⌨️ focusin <'+e.target.tagName+' type='+(e.target.type||'')+'>', '#93c5fd');
-                    }, true);
-                    document.addEventListener('focusout', e => {
-                        if (e.target.matches && e.target.matches('input,textarea,select'))
-                            this._dlog('⌨️ focusout', '#93c5fd');
-                    }, true);
-                    // Awasi guideShow juga (jaga2 kalau yg "nyangkut" itu bubble guide, bukan chat)
-                    this.$watch('guideShow', v => { if(v) this._dlog('💡 guideShow→true', '#fcd34d'); });
-                    // ── OBSERVASI LANGSUNG DOM panel chat (bypass asumsi reaktivitas Alpine) ──
-                    // Catat SETIAP kali style/class panel chat berubah (mis. display:none → block),
-                    // berbarengan dengan nilai csPopup/csHidden/activeElement saat itu juga.
-                    this.$nextTick(() => {
-                        const panelEl = document.getElementById('seraChatPanel');
-                        if (!panelEl) { this._dlog('⚠️ #seraChatPanel tidak ditemukan di DOM', '#fca5a5'); return; }
-                        this._dlog('👀 observing #seraChatPanel, display awal='+getComputedStyle(panelEl).display, '#6ee7b7');
-                        new MutationObserver((muts) => {
-                            const ae = document.activeElement;
-                            this._dlog('🔭 PANEL MUTASI ('+muts.map(m=>m.attributeName).join(',')+') display='+getComputedStyle(panelEl).display
-                                +' csPopup='+this.csPopup+' csHidden='+this.csHidden
-                                +' active='+(ae?ae.tagName+(ae.type?'['+ae.type+']':''):'none'), '#fcd34d');
-                        }).observe(panelEl, { attributes: true, attributeFilter: ['style','class'] });
-                    });
-                } catch {}
-            }
             this.$watch('csPopup', (val) => {
                 if (!val) return;
                 const ae = document.activeElement;
@@ -9566,25 +9496,8 @@ function serabutStore() {
                 // (<1000ms). Ghost-click iOS / open programatik tidak meng-arm → dibatalkan.
                 const noRealGesture = isMobile && openerArmedAgo > 1000;
                 const reverted = !!(fieldFocused || recentInput || this.csKeyboardOffset || this.inputFocused || noRealGesture);
-                try {
-                    const entry = {
-                        t: new Date().toLocaleTimeString(),
-                        activeEl: ae ? (ae.tagName + (ae.type ? '['+ae.type+']' : '')) : 'none',
-                        lastInputTouchAgo: Date.now() - this._lastInputTouch,
-                        kbOffset: this.csKeyboardOffset, inputFocused: this.inputFocused,
-                        openerArmedAgo, isMobile, reverted,
-                        cause: fieldFocused?'fieldFocused':recentInput?'recentInput':this.csKeyboardOffset?'keyboard':this.inputFocused?'inputFocused':noRealGesture?'noRealGesture':'ALLOWED'
-                    };
-                    (window.__csOpenLog = window.__csOpenLog || []).push(entry);
-                    if (window.__csOpenLog.length > 20) window.__csOpenLog.shift();
-                    if (_csDebug && this._dlog) this._dlog(
-                        (reverted?'💬🛑 csPopup DIBLOKIR ['+entry.cause+']':'💬✅ csPopup DIBUKA')
-                        + ' active='+entry.activeEl+' armedAgo='+openerArmedAgo+'ms kb='+entry.kbOffset,
-                        reverted?'#fde047':'#f87171');
-                } catch {}
                 if (reverted) this.csPopup = false;
             });
-            if (this._dlog) this._dlog('✅ watch csPopup terpasang', '#6ee7b7');
 
             // ── Keyboard height tracking untuk mobile chat popup ──
             if (window.visualViewport) {
@@ -10615,7 +10528,6 @@ function serabutStore() {
         },
 
         openSera() {
-            if (this._dlog) this._dlog('▶ openSera() dipanggil; armedAgo='+(Date.now()-this._openerArmed)+'ms inputFocused='+this.inputFocused+' kb='+this.csKeyboardOffset, '#c4b5fd');
             // Abaikan klik jika baru saja ada modal tertutup (cegah ghost-click di mobile)
             if (Date.now() < this._fabGuardUntil) return;
             // Jangan buka chat saat user sedang mengetik / keyboard terbuka. Di iOS klik sintetis
@@ -10638,21 +10550,6 @@ function serabutStore() {
             this.csKeyboardOffset = 0;
             // cegah ghost-click langsung membuka lagi tepat setelah ditutup
             this._fabGuardUntil = Date.now() + 800;
-        },
-        // Diagnostik on-screen (aktif via ?debug=1) — tampilkan kenapa chat coba dibuka
-        _csDebugToast(e) {
-            try {
-                let box = document.getElementById('csDebugBox');
-                if (!box) {
-                    box = document.createElement('div');
-                    box.id = 'csDebugBox';
-                    box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:#111;color:#0f0;font:11px/1.4 monospace;padding:8px 10px;border-radius:8px;white-space:pre-wrap;box-shadow:0 4px 20px rgba(0,0,0,.4);max-height:45vh;overflow:auto';
-                    box.addEventListener('click', () => box.remove());
-                    document.body.appendChild(box);
-                }
-                const tag = e.reverted ? '🛑 DIBLOKIR' : '✅ DIBUKA';
-                box.textContent = `${tag} (${e.cause})\nactiveEl=${e.activeEl}  mobile=${e.isMobile}\ninputTouchAgo=${e.lastInputTouchAgo}ms  openerArmedAgo=${e.openerArmedAgo}ms\nkbOffset=${e.kbOffset}  inputFocused=${e.inputFocused}\n(tap utk tutup)`;
-            } catch {}
         },
         openCSChat(guestName) {
             const nama = this.currentUser ? this.currentUser.nama : (guestName || '').trim();
