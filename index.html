@@ -8581,7 +8581,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-13',
+        APP_VERSION:      '20260612-14',
 
         // PWA Install
         pwaPopup:            false,
@@ -9514,6 +9514,15 @@ function serabutStore() {
                         } catch {}
                     };
                     this._dlog('panel siap. tap field cari sampai chat kebuka.', '#6ee7b7');
+                    this._dlog('init csPopup='+this.csPopup+' csHidden='+this.csHidden, '#6ee7b7');
+                    // Tangkap error JS apa pun supaya kelihatan di panel (kalau _setupChatGuards
+                    // crash di tengah jalan, sisa guard di bawahnya tak akan terpasang)
+                    window.addEventListener('error', e => {
+                        this._dlog('❌ JS ERROR: '+e.message+' @ '+(e.filename||'').split('/').pop()+':'+e.lineno, '#fca5a5');
+                    });
+                    window.addEventListener('unhandledrejection', e => {
+                        this._dlog('❌ PROMISE REJECT: '+(e.reason && e.reason.message || e.reason), '#fca5a5');
+                    });
                     // Catat SEMUA event di tombol pembuka chat + fokus field
                     ['pointerdown','touchstart','click'].forEach(t =>
                         document.addEventListener(t, e => {
@@ -9561,6 +9570,7 @@ function serabutStore() {
                 } catch {}
                 if (reverted) this.csPopup = false;
             });
+            if (this._dlog) this._dlog('✅ watch csPopup terpasang', '#6ee7b7');
 
             // ── Keyboard height tracking untuk mobile chat popup ──
             if (window.visualViewport) {
