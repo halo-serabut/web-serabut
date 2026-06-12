@@ -8580,7 +8580,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-5',
+        APP_VERSION:      '20260612-6',
 
         // PWA Install
         pwaPopup:            false,
@@ -8594,6 +8594,7 @@ function serabutStore() {
         csKeyboardOffset: 0,
         inputFocused: false,
         _lastInputTouch: 0,   // timestamp interaksi input terakhir → tolak ghost-click iOS buka chat
+        _openerArmed: 0,      // timestamp pointerdown/touchstart ASLI di tombol pembuka chat → izin buka
         csGuestName: '',
         csMessages:  [],
         csInput:     '',
@@ -9426,7 +9427,14 @@ function serabutStore() {
             // touchstart paling awal di rantai event iOS → catat waktu interaksi input
             document.addEventListener('touchstart', (e) => {
                 if (_isField(e.target)) this._lastInputTouch = Date.now();
+                // ARM: sentuhan ASLI pada tombol pembuka chat → izinkan klik berikutnya membuka chat
+                if (e.target.closest && e.target.closest('[data-chat-open]')) this._openerArmed = Date.now();
             }, { passive: true, capture: true });
+            // pointerdown ASLI pada tombol pembuka chat (mouse/touch/pen) → arm.
+            // Ghost-click sintetis iOS TIDAK didahului pointerdown, jadi tidak akan ter-arm.
+            document.addEventListener('pointerdown', (e) => {
+                if (e.target.closest && e.target.closest('[data-chat-open]')) this._openerArmed = Date.now();
+            }, true);
             document.addEventListener('focusin', (e) => {
                 if (_isField(e.target)) { this.inputFocused = true; this._lastInputTouch = Date.now(); }
             });
@@ -9446,8 +9454,13 @@ function serabutStore() {
             document.addEventListener('click', (e) => {
                 const opener = e.target.closest && e.target.closest('[data-chat-open]');
                 if (!opener) return;
+                // GERBANG UTAMA: klik pointer HARUS didahului pointerdown/touchstart asli di
+                // opener (<700ms). Ghost-click iOS tidak punya pointerdown → tidak ter-arm.
+                // e.detail===0 = aktivasi keyboard (Enter/Space) → tetap diizinkan utk a11y.
+                const armed = Date.now() - this._openerArmed < 700;
+                const isPointerClick = e.detail > 0;
                 const recentInput = Date.now() - this._lastInputTouch < 2000;
-                if (recentInput || this.inputFocused || this.csKeyboardOffset || Date.now() < this._fabGuardUntil) {
+                if ((isPointerClick && !armed) || recentInput || this.inputFocused || this.csKeyboardOffset || Date.now() < this._fabGuardUntil) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
                 }
