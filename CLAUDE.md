@@ -237,6 +237,13 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Catatan: percobaan awal (hide FAB by activeSection/currentSection) gagal karena (a) section detection lag & (b) trigger ternyata BUKAN overlap posisi tapi klik sintetis iOS pada SEMUA field
   - GOTCHA: preview lokal (python http.server) MENGUNCI scroll (window.scrollTo no-op) & salah-lapor display x-show+x-transition → andalkan state Alpine + binding :class (pointer-events) untuk verifikasi, bukan getComputedStyle display
 
+- [2026-06-12 sesi lanjут] Selesai: Fix DEFINITIF chat Sera kebuka saat fokus search + matikan 3D di mobile (index.html only):
+  - Akar masalah final: `scrollIntoView` saat fokus input (line ~9266) menggeser konten, lalu iOS melempar **ghost click** di koordinat tap awal yang nyasar ke tombol pembuka chat. FAB sendiri `display:none` saat fokus (tak bisa diklik), jadi pelakunya tombol `csPopup=true` MENTAH yang belum dijaga (`Chat Sera →` di kartu produk line 2307, `Hubungi Live Agent` FAQ line 3936).
+  - Fix berlapis: catat `_lastInputTouch` di `touchstart`(capture)+`focusin`+`focusout` field → `openSera()` tolak buka jika `<1000ms` sejak sentuh input (+ guard `inputFocused`/`csKeyboardOffset`/`_fabGuardUntil`/`statusInView`). SEMUA jalur buka chat (FAB + 2 tombol) sekarang lewat `openSera()` — tidak ada lagi `csPopup=true` mentah.
+  - Hero 3D tilt & card-tilt testimoni dimatikan di mobile via `innerWidth<768` (bukan cuma `pointer:coarse`, krn sebagian browser mobile lapor pointer:fine). Hero card sudah statis di mobile sebelumnya juga.
+  - Verifikasi state Alpine: openSera diblok saat ghost-click(<1s)/inputFocused/keyboard/status, buka normal setelah cooldown & tap deliberate; focusin input real men-set guard; console bersih; render mobile OK.
+  - Catatan deploy: APP_VERSION tidak bust cache HTML Cloudflare → user WAJIB hard-refresh/incognito utk dapat versi baru (kemungkinan besar alasan fix sebelumnya "masih sama").
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
