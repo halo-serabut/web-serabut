@@ -2304,7 +2304,7 @@
                                 </div>
                                 <div class="flex items-center gap-2 text-xs text-gray-500">
                                     <svg class="w-3.5 h-3.5 text-brand-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                    <span>Butuh bantuan? <button @click.prevent="openSera()" class="text-brand-500 font-semibold hover:underline">Chat Sera →</button></span>
+                                    <span>Butuh bantuan? <button data-chat-open @click.prevent="openSera()" class="text-brand-500 font-semibold hover:underline">Chat Sera →</button></span>
                                 </div>
                             </div>
                             <!-- Rating mini -->
@@ -3933,7 +3933,7 @@
                                 class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold rounded-xl transition-all active:scale-95">
                             Lihat Produk
                         </button>
-                        <button @click="openSera()"
+                        <button data-chat-open @click="openSera()"
                                 class="px-4 py-2 gradient-card text-white text-xs font-semibold rounded-xl transition-all active:scale-95 shadow-md">
                             Hubungi Live Agent
                         </button>
@@ -6447,7 +6447,7 @@
      x-transition:leave-end="opacity-0 translate-y-8"
      style="transform-origin: bottom center">
     <!-- Backdrop: klik di luar untuk menutup (mobile gelap, desktop transparan) -->
-    <div class="fixed inset-0 bg-black/50 md:bg-transparent -z-10" @click="csPopup=false; csHidden=true"></div>
+    <div class="fixed inset-0 bg-black/50 md:bg-transparent -z-10" @click="closeSera()"></div>
     <div class="relative bg-white rounded-t-3xl md:rounded-2xl shadow-2xl border border-gray-100 w-full md:w-96 flex flex-col overflow-hidden"
          :style="csKeyboardOffset ? 'max-height:calc(100dvh - '+csKeyboardOffset+'px)' : 'min-height:60dvh;max-height:88dvh'"
          style="min-height:60dvh;max-height:88dvh"
@@ -6458,13 +6458,13 @@
            if(_swipeDelta > 0) $el.style.transform = 'translateY('+Math.min(_swipeDelta*0.6,120)+'px)';
          "
          @touchend="
-           if(_swipeDelta > 80) { $el.style.transform=''; csPopup=false; csHidden=true; }
+           if(_swipeDelta > 80) { $el.style.transform=''; closeSera(); }
            else { $el.style.transition='transform 0.3s'; $el.style.transform=''; setTimeout(()=>$el.style.transition='',300); }
            _swipeDelta=0;
          ">
         <!-- Drag handle mobile only — clean pill, no text -->
         <div class="md:hidden flex justify-center pt-3 pb-2 flex-none cursor-grab active:cursor-grabbing select-none"
-             @click="csPopup=false; csHidden=true">
+             @click="closeSera()">
             <div class="w-10 h-1 bg-gray-300 rounded-full"></div>
         </div>
         <!-- Header -->
@@ -6485,7 +6485,7 @@
                 </div>
             </div>
             <!-- Tutup button — lebih besar dan jelas -->
-            <button @click="csPopup=false; csHidden=true" aria-label="Tutup chat"
+            <button @click="closeSera()" aria-label="Tutup chat"
                     class="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/80 hover:text-white px-3 py-1.5 rounded-xl text-xs font-semibold transition-all">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 Tutup
@@ -6627,7 +6627,7 @@
         <div class="absolute -bottom-1.5 right-6 w-3 h-3 bg-white border-r border-b border-gray-100 rotate-45"></div>
     </div>
 
-    <button @click="openSera()"
+    <button data-chat-open @click="openSera()"
             :class="guideAttn && 'sera-attn'"
             class="cs-fab cs-fab-float w-16 h-16 rounded-full shadow-2xl transition-all duration-200 active:scale-90 active:shadow-md relative overflow-hidden bg-transparent p-0">
 
@@ -8560,7 +8560,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-3',
+        APP_VERSION:      '20260612-4',
 
         // PWA Install
         pwaPopup:            false,
@@ -9398,6 +9398,20 @@ function serabutStore() {
                     setTimeout(() => { this.inputFocused = false; }, 400);  // FAB baru muncul setelah keyboard benar2 turun
                 }
             });
+
+            // ── BENTENG UTAMA (DOM capture): blokir "ghost click" iOS pada pembuka chat ──
+            // Di iOS, fokus ke field search bisa memicu klik sintetis yang nyasar ke tombol
+            // pembuka chat (FAB / Chat Sera / Live Agent). Listener capture ini berjalan SEBELUM
+            // handler Alpine @click, jadi mencegat di level DOM tanpa bergantung timing Alpine.
+            document.addEventListener('click', (e) => {
+                const opener = e.target.closest && e.target.closest('[data-chat-open]');
+                if (!opener) return;
+                const recentInput = Date.now() - this._lastInputTouch < 1300;
+                if (recentInput || this.inputFocused || this.csKeyboardOffset || Date.now() < this._fabGuardUntil) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                }
+            }, true);
 
             // ── Keyboard height tracking untuk mobile chat popup ──
             if (window.visualViewport) {
@@ -10444,6 +10458,13 @@ function serabutStore() {
             this.csHidden = false;
             this.csPopup = true;
         },
+        closeSera() {
+            this.csPopup = false;
+            this.csHidden = true;
+            this.csKeyboardOffset = 0;
+            // cegah ghost-click langsung membuka lagi tepat setelah ditutup
+            this._fabGuardUntil = Date.now() + 800;
+        },
         openCSChat(guestName) {
             const nama = this.currentUser ? this.currentUser.nama : (guestName || '').trim();
             if (!nama) return;
@@ -10628,7 +10649,14 @@ function serabutStore() {
             if (sectionId === 'hero') { window.scrollTo({ top: 0, behavior: 'smooth' }); history.replaceState(null, '', '/'); return; }
             const el = document.getElementById('sec-' + sectionId);
             if (!el) return;
-            const top = el.getBoundingClientRect().top + window.scrollY - 68;
+            // Offset = tinggi header fixed (mobile lebih tinggi krn safe-area notch) + sedikit napas,
+            // supaya isi paling atas section (mis. search produk) tidak ketutup header.
+            let offset = 68;
+            if (window.innerWidth < 768) {
+                const hdr = document.querySelector('header.fixed');
+                offset = (hdr ? hdr.getBoundingClientRect().height : 88) + 12;
+            }
+            const top = el.getBoundingClientRect().top + window.scrollY - offset;
             window.scrollTo({ top, behavior: 'smooth' });
             history.replaceState(null, '', '#' + sectionId);
         },
