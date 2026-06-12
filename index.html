@@ -8581,7 +8581,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-11',
+        APP_VERSION:      '20260612-12',
 
         // PWA Install
         pwaPopup:            false,
@@ -8596,6 +8596,7 @@ function serabutStore() {
         inputFocused: false,
         _lastInputTouch: 0,   // timestamp interaksi input terakhir → tolak ghost-click iOS buka chat
         _openerArmed: 0,      // timestamp pointerdown/touchstart ASLI di tombol pembuka chat → izin buka
+        _dlog: null,          // logger panel debug (diisi saat ?debug=1)
         csGuestName: '',
         csMessages:  [],
         csInput:     '',
@@ -9489,15 +9490,48 @@ function serabutStore() {
             // input → ini pasti tak disengaja (ghost-click iOS / overlap) → kembalikan false.
             // Menangkap SEMUA jalur: klik, ghost-click, maupun panggilan programatik.
             const _csDebug = /[?&]debug=1/.test(location.search);
-            // Banner versi langsung saat load (kalau ?debug=1) — kalau banner ini TIDAK muncul
-            // berarti HP masih versi lama (cache), bukan masalah kode.
+            // ── PANEL DIAGNOSTIK ON-SCREEN (?debug=1) — catat timeline lengkap di layar HP ──
+            // Tiap event relevan tampil di panel; user tinggal reproduce di HP lalu screenshot.
             if (_csDebug) {
                 try {
-                    const vb = document.createElement('div');
-                    vb.style.cssText = 'position:fixed;left:8px;top:8px;z-index:99999;background:#064e3b;color:#6ee7b7;font:12px/1.4 monospace;padding:6px 10px;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4)';
-                    vb.textContent = 'DEBUG AKTIF · v' + this.APP_VERSION;
-                    vb.addEventListener('click', () => vb.remove());
-                    document.body.appendChild(vb);
+                    const panel = document.createElement('div');
+                    panel.id = 'seraDebugPanel';
+                    panel.style.cssText = 'position:fixed;left:6px;right:6px;bottom:6px;z-index:2147483647;background:rgba(0,0,0,.92);color:#9eff9e;font:11px/1.35 monospace;padding:8px 10px;border-radius:10px;max-height:42vh;overflow:auto;box-shadow:0 4px 24px rgba(0,0,0,.5);border:1px solid #1f5;';
+                    const head = document.createElement('div');
+                    head.style.cssText = 'color:#6ee7b7;font-weight:bold;margin-bottom:4px;display:flex;justify-content:space-between;';
+                    head.innerHTML = '<span>SERA DEBUG · v'+this.APP_VERSION+'</span><span style="color:#fca5a5">tap=clear</span>';
+                    const body = document.createElement('div'); body.id='seraDebugBody';
+                    panel.appendChild(head); panel.appendChild(body);
+                    panel.addEventListener('click', () => { body.innerHTML=''; });
+                    document.body.appendChild(panel);
+                    this._dlog = (msg, color) => {
+                        try {
+                            const line = document.createElement('div');
+                            line.style.color = color || '#9eff9e';
+                            const ts = new Date().toLocaleTimeString().split(' ')[0];
+                            line.textContent = ts + '  ' + msg;
+                            body.appendChild(line);
+                            while (body.childElementCount > 40) body.removeChild(body.firstChild);
+                            panel.scrollTop = panel.scrollHeight;
+                        } catch {}
+                    };
+                    this._dlog('panel siap. tap field cari sampai chat kebuka.', '#6ee7b7');
+                    // Catat SEMUA event di tombol pembuka chat + fokus field
+                    ['pointerdown','touchstart','click'].forEach(t =>
+                        document.addEventListener(t, e => {
+                            const o = e.target.closest && e.target.closest('[data-chat-open]');
+                            if (o) this._dlog('🔴 OPENER '+t+' di <'+e.target.tagName+'> detail='+e.detail, '#fca5a5');
+                        }, true));
+                    document.addEventListener('focusin', e => {
+                        if (e.target.matches && e.target.matches('input,textarea,select'))
+                            this._dlog('⌨️ focusin <'+e.target.tagName+' type='+(e.target.type||'')+'>', '#93c5fd');
+                    }, true);
+                    document.addEventListener('focusout', e => {
+                        if (e.target.matches && e.target.matches('input,textarea,select'))
+                            this._dlog('⌨️ focusout', '#93c5fd');
+                    }, true);
+                    // Awasi guideShow juga (jaga2 kalau yg "nyangkut" itu bubble guide, bukan chat)
+                    this.$watch('guideShow', v => { if(v) this._dlog('💡 guideShow→true', '#fcd34d'); });
                 } catch {}
             }
             this.$watch('csPopup', (val) => {
@@ -9522,7 +9556,10 @@ function serabutStore() {
                     };
                     (window.__csOpenLog = window.__csOpenLog || []).push(entry);
                     if (window.__csOpenLog.length > 20) window.__csOpenLog.shift();
-                    if (_csDebug) this._csDebugToast(entry);
+                    if (_csDebug && this._dlog) this._dlog(
+                        (reverted?'💬🛑 csPopup DIBLOKIR ['+entry.cause+']':'💬✅ csPopup DIBUKA')
+                        + ' active='+entry.activeEl+' armedAgo='+openerArmedAgo+'ms kb='+entry.kbOffset,
+                        reverted?'#fde047':'#f87171');
                 } catch {}
                 if (reverted) this.csPopup = false;
             });
@@ -10556,6 +10593,7 @@ function serabutStore() {
         },
 
         openSera() {
+            if (this._dlog) this._dlog('▶ openSera() dipanggil; armedAgo='+(Date.now()-this._openerArmed)+'ms inputFocused='+this.inputFocused+' kb='+this.csKeyboardOffset, '#c4b5fd');
             // Abaikan klik jika baru saja ada modal tertutup (cegah ghost-click di mobile)
             if (Date.now() < this._fabGuardUntil) return;
             // Jangan buka chat saat user sedang mengetik / keyboard terbuka. Di iOS klik sintetis
