@@ -244,6 +244,11 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Verifikasi state Alpine: openSera diblok saat ghost-click(<1s)/inputFocused/keyboard/status, buka normal setelah cooldown & tap deliberate; focusin input real men-set guard; console bersih; render mobile OK.
   - Catatan deploy: APP_VERSION tidak bust cache HTML Cloudflare → user WAJIB hard-refresh/incognito utk dapat versi baru (kemungkinan besar alasan fix sebelumnya "masih sama").
 
+- [2026-06-12 sesi 3] Selesai: 3 bug mobile (index.html only), QA verified via preview (APP_VERSION 20260612-5):
+  - **Search field ketutup navbar**: AKAR MASALAH — header mobile render ~75px (tombol cart `w-12 h-12` 48px + padding + safe-area > `min-h-3.5rem`), tapi `.sticky-search-top`/`.main-top-offset` cuma hitung `3.5rem + env(safe)` = 62px → search & konten ketutup ~13px di bawah header. Fix: ukur tinggi header SEBENARNYA runtime → set CSS var `--hdr-h` (`_setHdrH()` di init + listener resize/orientationchange); offset pakai `var(--hdr-h, fallback)`. Verified: stickyTop=75=headerBottom, no overlap.
+  - **Chat Sera auto-buka saat fokus field search**: perkuat guard ghost-click iOS — `type="search"` TIDAK di-`scrollIntoView` (pemicu utama pergeseran konten), input lain pakai `block:'nearest'`; benteng capture window 1300→2000ms, `openSera` lastInputTouch 1000→1600ms. Verified state Alpine: klik opener saat recentTouch/inputFocused → diblok (csPopup tetap false); deliberate open+close tetap jalan.
+  - **Hero mobile no-animasi + alignment**: media query `@media(max-width:767px)` matikan canvas/orb/streak/3D `perspective`/`hero-depth-*` translateZ/glare/js-tilt. Bonus fix: `translateZ(85px)` pada `.hero-depth-3` + perspective off-center bikin h1 "Platform Produk Digital" tergeser kiri (tak sejajar subtext) — dengan 3D off, h1 kini sejajar subtext. Canvas loop di-skip di JS (`innerWidth<768` return, TANPA inline display none → cegah lock permanen saat viewport race; hiding via CSS). Desktop 3D utuh (canvas block @1280, depth3 translateZ aktif).
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif

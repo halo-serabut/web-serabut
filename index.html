@@ -492,16 +492,32 @@
             .hero-layer, .hero-card-3d { transform: none !important; }
             .sera-bubble, .sera-attn { animation: none !important; }
         }
+        /* ── MOBILE: hero statis & datar — tanpa animasi/3D (smooth + cepat) ──
+           translateZ pada hero-depth + perspective off-center bikin teks "Platform
+           Produk Digital" tergeser ke kiri (tak sejajar subtext). Datarkan semua. */
+        @media (max-width: 767px) {
+            #heroCanvas { display: none !important; }
+            .hero-orb, .hero-streak, .hero-ptcl { display: none !important; animation: none !important; }
+            .hero-autofloat { animation: none !important; }
+            .hero-3d { perspective: none !important; }
+            .hero-layer, .hero-card-3d { transform: none !important; }
+            .hero-depth-1, .hero-depth-2, .hero-depth-3 { transform: none !important; }
+            .hero-glare { display: none !important; }
+            .js-tilt { transform: none !important; }
+            .js-tilt::before { display: none !important; }
+        }
         .gradient-card  { background: linear-gradient(135deg, #DC2626, #EF4444); }
         .card-hover     { transition: transform .18s ease, box-shadow .18s ease; }
         .card-hover:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(220,38,38,.12); }
         .card-hover:active { transform: translateY(-1px); }
         .pb-safe { padding-bottom: max(env(safe-area-inset-bottom), .75rem); }
         .pt-safe-header { padding-top: max(env(safe-area-inset-top, 0px), 6px); }
+        /* --hdr-h diukur runtime dari tinggi header mobile yang SEBENARNYA (tombol cart +
+           padding + safe-area bisa > 3.5rem). Fallback ke calc jika JS belum jalan. */
         @supports (padding-top: env(safe-area-inset-top)) {
-            .main-top-offset { padding-top: calc(3.5rem + env(safe-area-inset-top)); }
-            .sticky-search-top { top: calc(3.5rem + env(safe-area-inset-top)); }
-            .overlay-top { top: calc(3.5rem + env(safe-area-inset-top)); }
+            .main-top-offset { padding-top: var(--hdr-h, calc(3.5rem + max(env(safe-area-inset-top, 0px), 6px))); }
+            .sticky-search-top { top: var(--hdr-h, calc(3.5rem + max(env(safe-area-inset-top, 0px), 6px))); }
+            .overlay-top { top: var(--hdr-h, calc(3.5rem + max(env(safe-area-inset-top, 0px), 6px))); }
         }
         @media (min-width: 768px) { .overlay-top { top: 68px; } }
 
@@ -8322,6 +8338,10 @@
 
   var canvas = document.getElementById('heroCanvas');
   if(!canvas) return;
+  // Mobile: jangan jalankan loop canvas (statis + cepat). Hidingnya via CSS media
+  // query (#heroCanvas display:none ≤767px) — JANGAN set inline style supaya tidak
+  // ke-lock permanen kalau viewport sempat sempit saat load.
+  if(window.innerWidth < 768){ return; }
   var ctx = canvas.getContext('2d');
   var W, H, particles, mouse = {x:-999,y:-999};
   var isMob = window.innerWidth < 768;
@@ -8560,7 +8580,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-4',
+        APP_VERSION:      '20260612-5',
 
         // PWA Install
         pwaPopup:            false,
@@ -9264,8 +9284,12 @@ function serabutStore() {
             // ── Keyboard push-up: scroll input into view saat keyboard muncul ──
             document.addEventListener('focusin', (e) => {
                 if (e.target.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, select')) {
+                    // Field search (type=search) JANGAN di-scroll: pergeseran konten saat fokus
+                    // memicu "ghost click" iOS yang nyasar ke tombol pembuka chat. Biarkan diam.
+                    if (e.target.type === 'search') return;
                     setTimeout(() => {
-                        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // block:'nearest' → geser seminimal mungkin (kurangi pemicu ghost-click)
+                        e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }, 350); // tunggu keyboard iOS terbuka (~300ms)
                 }
             });
@@ -9381,6 +9405,22 @@ function serabutStore() {
             }, 1000);
             this.$nextTick(() => this.initScrollSpy());
 
+            // ── Ukur tinggi header mobile yang sebenarnya → --hdr-h ──
+            // Tombol cart + padding + safe-area bisa bikin header > 3.5rem; offset search &
+            // konten harus ikut tinggi nyata supaya tidak ketutup navbar.
+            const _setHdrH = () => {
+                const h = document.querySelector('header.md\\:hidden');
+                if (h && h.offsetHeight > 0) {
+                    document.documentElement.style.setProperty('--hdr-h', h.offsetHeight + 'px');
+                } else {
+                    document.documentElement.style.removeProperty('--hdr-h'); // desktop → pakai fallback/md:pt-16
+                }
+            };
+            this.$nextTick(_setHdrH);
+            setTimeout(_setHdrH, 300);
+            window.addEventListener('resize', _setHdrH);
+            window.addEventListener('orientationchange', () => setTimeout(_setHdrH, 250));
+
             // ── Sembunyikan FAB Sera saat user mengetik di input apa pun (cegah ter-tap nyasar) ──
             const _isField = (el) => el && el.matches && el.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, select');
             // touchstart paling awal di rantai event iOS → catat waktu interaksi input
@@ -9406,7 +9446,7 @@ function serabutStore() {
             document.addEventListener('click', (e) => {
                 const opener = e.target.closest && e.target.closest('[data-chat-open]');
                 if (!opener) return;
-                const recentInput = Date.now() - this._lastInputTouch < 1300;
+                const recentInput = Date.now() - this._lastInputTouch < 2000;
                 if (recentInput || this.inputFocused || this.csKeyboardOffset || Date.now() < this._fabGuardUntil) {
                     e.preventDefault();
                     e.stopImmediatePropagation();
@@ -10448,7 +10488,7 @@ function serabutStore() {
             // ("ghost click") bisa nyasar ke FAB / tombol Chat saat fokus ke field search → chat
             // kebuka sendiri. Tolak juga jika baru saja menyentuh input (dalam 1 detik).
             if (this.inputFocused || this.csKeyboardOffset) return;
-            if (Date.now() - this._lastInputTouch < 1000) return;
+            if (Date.now() - this._lastInputTouch < 1600) return;
             // Di mobile, saat section Cek Status terlihat, FAB menempel di atas tombol "Cek".
             // Tolak buka chat agar tap tombol Cek tidak nyasar membuka Sera.
             if (window.innerWidth < 768 && this.statusInView) return;
