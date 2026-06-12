@@ -249,6 +249,12 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - **Chat Sera auto-buka saat fokus field search**: perkuat guard ghost-click iOS — `type="search"` TIDAK di-`scrollIntoView` (pemicu utama pergeseran konten), input lain pakai `block:'nearest'`; benteng capture window 1300→2000ms, `openSera` lastInputTouch 1000→1600ms. Verified state Alpine: klik opener saat recentTouch/inputFocused → diblok (csPopup tetap false); deliberate open+close tetap jalan.
   - **Hero mobile no-animasi + alignment**: media query `@media(max-width:767px)` matikan canvas/orb/streak/3D `perspective`/`hero-depth-*` translateZ/glare/js-tilt. Bonus fix: `translateZ(85px)` pada `.hero-depth-3` + perspective off-center bikin h1 "Platform Produk Digital" tergeser kiri (tak sejajar subtext) — dengan 3D off, h1 kini sejajar subtext. Canvas loop di-skip di JS (`innerWidth<768` return, TANPA inline display none → cegah lock permanen saat viewport race; hiding via CSS). Desktop 3D utuh (canvas block @1280, depth3 translateZ aktif).
 
+- [2026-06-12 sesi 4] Chat Sera kebuka saat fokus search — JARING TERAKHIR real-time (index.html only, APP_VERSION 20260612-7):
+  - ROOT CAUSE (akhirnya): semua guard sebelumnya (benteng click capture, gerbang pointerdown-armed, guard di openSera) berada di **jalur klik** dan/atau mengandalkan **flag `inputFocused`** yang di-reset dengan delay 400ms → bisa STALE saat ghost-click iOS tiba. Jadi sebagian pembukaan tetap lolos. Tidak bisa direpro di preview (programmatic focus tak set activeElement; ghost-click iOS device-only).
+  - FIX definitif: `this.$watch('csPopup')` — saat csPopup→true, cek LANGSUNG ke DOM real-time (`document.activeElement` field? `csKeyboardOffset`>0? `_lastInputTouch`<2500ms? `inputFocused`?) → kalau ya, set balik `false`. Path-independent: menangkap klik, ghost-click, overlap, maupun panggilan programatik. Konsekuensi: chat tak bisa dibuka 2.5s setelah menyentuh input (trade-off diterima).
+  - Diagnostik: `window.__csOpenLog` (≤20 entri) catat activeEl/kbOffset/inputFocused/reverted tiap kali csPopup coba dibuka — utk audit di device via remote-debug kalau masih lolos.
+  - Verified preview: open saat keyboard naik → reverted; open <2.5s pasca input → reverted; open bersih (openSera) → tetap buka; console bersih.
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif

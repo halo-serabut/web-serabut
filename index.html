@@ -8580,7 +8580,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-6',
+        APP_VERSION:      '20260612-7',
 
         // PWA Install
         pwaPopup:            false,
@@ -9465,6 +9465,35 @@ function serabutStore() {
                     e.stopImmediatePropagation();
                 }
             }, true);
+
+            // ── JARING TERAKHIR (real-time): batalkan pembukaan chat tak disengaja ──
+            // Tidak percaya flag (inputFocused bisa telat di-reset). Saat csPopup berubah jadi
+            // true, cek LANGSUNG ke DOM: kalau ada field fokus / keyboard naik / baru menyentuh
+            // input → ini pasti tak disengaja (ghost-click iOS / overlap) → kembalikan false.
+            // Menangkap SEMUA jalur: klik, ghost-click, maupun panggilan programatik.
+            this.$watch('csPopup', (val) => {
+                if (!val) return;
+                const ae = document.activeElement;
+                const fieldFocused = ae && ae.matches && ae.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, select');
+                const recentInput  = Date.now() - this._lastInputTouch < 2500;
+                const reverted = !!(fieldFocused || recentInput || this.csKeyboardOffset || this.inputFocused);
+                // Diagnostik (bisa dibaca via remote-debug: window.__csOpenLog)
+                try {
+                    (window.__csOpenLog = window.__csOpenLog || []).push({
+                        t: new Date().toISOString(),
+                        activeEl: ae ? (ae.tagName + (ae.type ? '['+ae.type+']' : '')) : 'none',
+                        lastInputTouchAgo: Date.now() - this._lastInputTouch,
+                        kbOffset: this.csKeyboardOffset, inputFocused: this.inputFocused,
+                        openerArmedAgo: Date.now() - this._openerArmed,
+                        reverted
+                    });
+                    if (window.__csOpenLog.length > 20) window.__csOpenLog.shift();
+                } catch {}
+                if (reverted) {
+                    this.csPopup = false;
+                    if (ae && ae.blur && fieldFocused) { /* biarkan field tetap fokus utk user ngetik */ }
+                }
+            });
 
             // ── Keyboard height tracking untuk mobile chat popup ──
             if (window.visualViewport) {
