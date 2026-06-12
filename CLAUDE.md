@@ -255,6 +255,13 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Diagnostik: `window.__csOpenLog` (≤20 entri) catat activeEl/kbOffset/inputFocused/reverted tiap kali csPopup coba dibuka — utk audit di device via remote-debug kalau masih lolos.
   - Verified preview: open saat keyboard naik → reverted; open <2.5s pasca input → reverted; open bersih (openSera) → tetap buka; console bersih.
 
+- [2026-06-12 sesi 5] ROOT CAUSE chat Sera kebuka di HP (index.html only, APP_VERSION 20260612-13):
+  - **AKAR MASALAH SEBENARNYA (akhirnya ketemu):** semua guard chat (touchstart `_lastInputTouch`, benteng click-capture, `$watch('csPopup')` safety net, keyboard tracking) didaftarkan di `init()` **SETELAH** `await Promise.all([fetchProducts, loadSiteSettings])`. Di HP lambat/flaky, await ke GAS itu hang/reject → SELURUH kode guard di bawahnya tak pernah jalan → chat kebuka bebas saat fokus search & tak ada yang membatalkan. Di emulator desktop fetch instan → guard kepasang → makanya "cuma bug di HP asli, aman di emulator". Inilah kenapa semua fix -6..-12 tak ngefek: kodenya benar tapi tak pernah ter-eksekusi di device.
+  - FIX: ekstrak seluruh blok guard jadi method `_setupChatGuards()` dan panggil di **baris pertama `init()` sebelum await apa pun**. Verified preview: touchstart set flag, watcher revert, deliberate open jalan, products tetap load.
+  - Juga: hapus SW auto-reload `location.reload()` on activate (penyebab reload loop + load lambat yg dilaporkan user).
+  - Diagnostik tersisa: `?debug=1` → panel on-screen (`_dlog`) catat OPENER/focus/openSera/csPopup; `window.__csOpenLog`. version.txt = cek versi tanpa devtools (footer hidden di mobile).
+  - Lesson: kalau bug "cuma di device tertentu", curigai **urutan init + await yang bisa gagal** sebelum nyalahin logika guard-nya.
+
 ## Current Focus
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
