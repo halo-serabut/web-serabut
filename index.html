@@ -2304,7 +2304,7 @@
                                 </div>
                                 <div class="flex items-center gap-2 text-xs text-gray-500">
                                     <svg class="w-3.5 h-3.5 text-brand-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                    <span>Butuh bantuan? <button @click.prevent="csHidden=false; csPopup=true" class="text-brand-500 font-semibold hover:underline">Chat Sera →</button></span>
+                                    <span>Butuh bantuan? <button @click.prevent="openSera()" class="text-brand-500 font-semibold hover:underline">Chat Sera →</button></span>
                                 </div>
                             </div>
                             <!-- Rating mini -->
@@ -3933,7 +3933,7 @@
                                 class="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold rounded-xl transition-all active:scale-95">
                             Lihat Produk
                         </button>
-                        <button @click="csPopup=true; csHidden=false"
+                        <button @click="openSera()"
                                 class="px-4 py-2 gradient-card text-white text-xs font-semibold rounded-xl transition-all active:scale-95 shadow-md">
                             Hubungi Live Agent
                         </button>
@@ -8173,8 +8173,9 @@
     var copy  = scene ? scene.querySelector('.hero-layer') : null;
     if(!scene) return;
 
-    var isTouch = window.matchMedia('(pointer: coarse)').matches;
-    // Mobile/touch: kartu Flash Sale STATIS — tanpa animasi putar/float (UX & performa).
+    // Mobile = pointer coarse ATAU layar sempit (sebagian browser mobile lapor pointer:fine).
+    var isTouch = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+    // Mobile/touch: kartu Flash Sale STATIS — tanpa animasi 3D tilt/putar/float (UX & performa).
     if(isTouch){
       var rmFloat = function(){
         var c=document.getElementById('heroFlashCard'); if(c){ c.classList.remove('hero-autofloat'); c.style.transform=''; }
@@ -8559,7 +8560,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-2',
+        APP_VERSION:      '20260612-3',
 
         // PWA Install
         pwaPopup:            false,
@@ -8572,6 +8573,7 @@ function serabutStore() {
         csHidden:   true,
         csKeyboardOffset: 0,
         inputFocused: false,
+        _lastInputTouch: 0,   // timestamp interaksi input terakhir → tolak ghost-click iOS buka chat
         csGuestName: '',
         csMessages:  [],
         csInput:     '',
@@ -9380,13 +9382,19 @@ function serabutStore() {
             this.$nextTick(() => this.initScrollSpy());
 
             // ── Sembunyikan FAB Sera saat user mengetik di input apa pun (cegah ter-tap nyasar) ──
+            const _isField = (el) => el && el.matches && el.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, select');
+            // touchstart paling awal di rantai event iOS → catat waktu interaksi input
+            document.addEventListener('touchstart', (e) => {
+                if (_isField(e.target)) this._lastInputTouch = Date.now();
+            }, { passive: true, capture: true });
             document.addEventListener('focusin', (e) => {
-                if (e.target.matches && e.target.matches('input, textarea')) this.inputFocused = true;
+                if (_isField(e.target)) { this.inputFocused = true; this._lastInputTouch = Date.now(); }
             });
             document.addEventListener('focusout', (e) => {
-                if (e.target.matches && e.target.matches('input, textarea')) {
+                if (_isField(e.target)) {
                     // guard ghost-tap: cegah FAB buka chat tepat setelah keyboard menutup
                     this._fabGuardUntil = Date.now() + 700;
+                    this._lastInputTouch = Date.now();
                     setTimeout(() => { this.inputFocused = false; }, 400);  // FAB baru muncul setelah keyboard benar2 turun
                 }
             });
@@ -10423,8 +10431,10 @@ function serabutStore() {
             // Abaikan klik jika baru saja ada modal tertutup (cegah ghost-click di mobile)
             if (Date.now() < this._fabGuardUntil) return;
             // Jangan buka chat saat user sedang mengetik / keyboard terbuka. Di iOS klik sintetis
-            // bisa nyasar ke FAB (posisi fixed) ketika fokus ke field search → chat kebuka sendiri.
+            // ("ghost click") bisa nyasar ke FAB / tombol Chat saat fokus ke field search → chat
+            // kebuka sendiri. Tolak juga jika baru saja menyentuh input (dalam 1 detik).
             if (this.inputFocused || this.csKeyboardOffset) return;
+            if (Date.now() - this._lastInputTouch < 1000) return;
             // Di mobile, saat section Cek Status terlihat, FAB menempel di atas tombol "Cek".
             // Tolak buka chat agar tap tombol Cek tidak nyasar membuka Sera.
             if (window.innerWidth < 768 && this.statusInView) return;
@@ -13918,11 +13928,11 @@ window.SeraRunner = (function(){
 <script>
 (function(){
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var coarse = window.matchMedia('(pointer: coarse)').matches;
+  var coarse = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
 
   function bindTilt(el){
     if(el._tiltBound) return; el._tiltBound = true;
-    if(coarse) return;                      // sentuh: lewati tilt (biar scroll lancar)
+    if(coarse) return;                      // mobile: lewati tilt 3D (biar scroll lancar)
     var MAX = 20;
     el.addEventListener('pointermove', function(e){
       var r = el.getBoundingClientRect();
