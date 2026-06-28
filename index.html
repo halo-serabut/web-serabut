@@ -2020,10 +2020,19 @@
 
                             <!-- Tab: Deskripsi -->
                             <div x-show="pdTab==='deskripsi'" class="p-4 space-y-4">
-                                <!-- Gambar produk -->
-                                <template x-if="getProductImage(selectedVariant || selectedProductGroup)">
-                                    <div class="rounded-2xl overflow-hidden border border-gray-100">
-                                        <img :src="getProductImage(selectedVariant || selectedProductGroup)" alt="Gambar produk" class="w-full object-cover" loading="lazy">
+                                <!-- Gambar produk (galeri) -->
+                                <template x-if="getProductImages(selectedVariant || selectedProductGroup).length">
+                                    <div>
+                                        <div class="rounded-2xl overflow-hidden border border-gray-100">
+                                            <img :src="getProductImages(selectedVariant || selectedProductGroup)[0]" alt="Gambar produk" class="w-full object-cover" loading="lazy">
+                                        </div>
+                                        <template x-if="getProductImages(selectedVariant || selectedProductGroup).length > 1">
+                                            <div class="flex gap-2 mt-2 overflow-x-auto pb-1">
+                                                <template x-for="(img, i) in getProductImages(selectedVariant || selectedProductGroup)" :key="img + i">
+                                                    <img :src="img" alt="Gambar produk" loading="lazy" class="w-16 h-16 object-cover rounded-xl border border-gray-100 flex-none">
+                                                </template>
+                                            </div>
+                                        </template>
                                     </div>
                                 </template>
                                 <!-- Deskripsi / Benefits -->
@@ -4825,7 +4834,7 @@
             <div x-show="adminTab==='produk'">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="font-bold text-gray-900">Manajemen Produk</h2>
-                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,stok:'',iconUrl:'',kategori:'',descHtml:'',gambar:''}; adminBenefitItems=[]; adminBenefitNewItem=''; $nextTick(()=>adminInitDescEditor())" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
+                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,stok:'',iconUrl:'',kategori:'',descHtml:'',gambar:[]}; adminBenefitItems=[]; adminBenefitNewItem=''; $nextTick(()=>adminInitDescEditor())" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
                 </div>
 
                 <!-- Form tambah/edit produk -->
@@ -4880,41 +4889,41 @@
 
                     <!-- Gambar Produk -->
                     <div class="mt-5 border-t border-gray-100 pt-4">
-                        <div class="text-sm font-bold text-gray-800 mb-2">Gambar Produk</div>
-                        <div class="text-xs text-gray-400 mb-3">Upload foto produk (JPG/PNG, otomatis dikompres). Tersimpan di Google Drive.</div>
-                        <div class="flex items-start gap-3">
-                            <!-- Preview -->
-                            <div class="relative flex-none">
-                                <template x-if="adminNewProduct.gambar">
-                                    <div class="relative">
-                                        <img :src="adminNewProduct.gambar" alt="Preview" class="w-28 h-28 object-cover rounded-xl border border-gray-200">
-                                        <button @click="adminRemoveProductImage()" type="button"
-                                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow hover:bg-red-600">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        </button>
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-sm font-bold text-gray-800">Gambar Produk</div>
+                            <div class="text-xs text-gray-400" x-text="(adminNewProduct.gambar?.length || 0) + '/10'"></div>
+                        </div>
+                        <div class="text-xs text-gray-400 mb-3">Upload sampai 10 foto (JPG/PNG, otomatis dikompres). Tersimpan di Google Drive.</div>
+                        <div class="flex flex-wrap gap-3">
+                            <!-- Thumbnails -->
+                            <template x-for="(img, i) in adminNewProduct.gambar" :key="img + i">
+                                <div class="relative w-24 h-24">
+                                    <img :src="img" alt="Preview" class="w-24 h-24 object-cover rounded-xl border border-gray-200 bg-gray-50"
+                                         @error="$el.classList.add('opacity-40')">
+                                    <button @click="adminRemoveProductImage(i)" type="button"
+                                            class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow hover:bg-red-600">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                    <span x-show="i===0" class="absolute bottom-1 left-1 text-[9px] font-bold bg-black/60 text-white px-1.5 py-0.5 rounded">Utama</span>
+                                </div>
+                            </template>
+                            <!-- Upload tile (sembunyi jika sudah 10) -->
+                            <label x-show="(adminNewProduct.gambar?.length || 0) < 10"
+                                   class="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-brand-400 hover:bg-brand-50/40 transition-colors text-gray-400"
+                                   :class="adminImageUploading && 'pointer-events-none opacity-60'">
+                                <template x-if="!adminImageUploading">
+                                    <div class="flex flex-col items-center gap-1">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4v16m8-8H4"/></svg>
+                                        <span class="text-[11px] font-semibold">Tambah</span>
                                     </div>
                                 </template>
-                                <template x-if="!adminNewProduct.gambar">
-                                    <label class="w-28 h-28 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-brand-400 hover:bg-brand-50/40 transition-colors text-gray-400"
-                                           :class="adminImageUploading && 'pointer-events-none opacity-60'">
-                                        <template x-if="!adminImageUploading">
-                                            <div class="flex flex-col items-center gap-1">
-                                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                                <span class="text-[11px] font-semibold">Upload</span>
-                                            </div>
-                                        </template>
-                                        <template x-if="adminImageUploading">
-                                            <svg class="w-7 h-7 animate-spin text-brand-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                                        </template>
-                                        <input type="file" accept="image/*" class="hidden" @change="adminUploadProductImage($event)">
-                                    </label>
+                                <template x-if="adminImageUploading">
+                                    <svg class="w-6 h-6 animate-spin text-brand-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
                                 </template>
-                            </div>
-                            <div class="flex-1 text-xs text-gray-400 pt-1">
-                                <p>Disarankan rasio persegi atau 4:3.</p>
-                                <p class="mt-1" x-show="adminImageUploading">Mengunggah & mengompres gambar…</p>
-                            </div>
+                                <input type="file" accept="image/*" multiple class="hidden" @change="adminUploadProductImage($event)">
+                            </label>
                         </div>
+                        <p class="text-xs text-gray-400 mt-2">Gambar pertama jadi gambar <b>Utama</b>. <span x-show="adminImageUploading">Mengunggah…</span></p>
                     </div>
 
                     <!-- Deskripsi Produk (rich text) -->
@@ -7360,10 +7369,20 @@
             </div>
         </template>
 
-        <!-- Gambar produk -->
-        <template x-if="getProductImage(selectedVariant || selectedProductGroup)">
-            <div class="mx-5 mb-4 rounded-2xl overflow-hidden border border-gray-100">
-                <img :src="getProductImage(selectedVariant || selectedProductGroup)" alt="Gambar produk" class="w-full object-cover" loading="lazy">
+        <!-- Gambar produk (galeri) -->
+        <template x-if="getProductImages(selectedVariant || selectedProductGroup).length">
+            <div class="mx-5 mb-4">
+                <div class="rounded-2xl overflow-hidden border border-gray-100">
+                    <img :src="getProductImages(selectedVariant || selectedProductGroup)[0]" alt="Gambar produk" class="w-full object-cover" loading="lazy">
+                </div>
+                <template x-if="getProductImages(selectedVariant || selectedProductGroup).length > 1">
+                    <div class="flex gap-2 mt-2 overflow-x-auto pb-1">
+                        <template x-for="(img, i) in getProductImages(selectedVariant || selectedProductGroup)" :key="img + i">
+                            <img :src="img" alt="Gambar produk" loading="lazy"
+                                 class="w-16 h-16 object-cover rounded-xl border border-gray-100 flex-none">
+                        </template>
+                    </div>
+                </template>
             </div>
         </template>
         <!-- Deskripsi / Benefits -->
@@ -8647,7 +8666,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260627-1',
+        APP_VERSION:      '20260627-2',
 
         // PWA Install
         pwaPopup:            false,
@@ -8931,7 +8950,7 @@ function serabutStore() {
         adminOrdersPerPage: 10,
         adminEditProduct: null,
         adminAddMode:    false,
-        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, stok:'', iconUrl:'', kategori:'', descHtml:'', gambar:'' },
+        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, stok:'', iconUrl:'', kategori:'', descHtml:'', gambar:[] },
         adminEditFlash:    {},
         adminFlashCampaigns: [],
         adminFlashCampIdx: -1,
@@ -9870,14 +9889,21 @@ function serabutStore() {
             }
             return '';
         },
-        getProductImage(prod) {
+        getProductImages(prod) {
             const p = prod || this.selectedVariant || this.selectedProductGroup;
-            if(p && typeof p === 'object' && p.gambar && String(p.gambar).trim()) return p.gambar;
-            if(p && typeof p === 'object' && p.nama) {
-                const match = this.products.find(x => x.nama === p.nama && (!p.varian || x.varian === p.varian) && x.gambar);
-                if(match?.gambar) return match.gambar;
+            const norm = g => Array.isArray(g) ? g.filter(Boolean) : (g ? [g] : []);
+            if(p && typeof p === 'object') {
+                const own = norm(p.gambar);
+                if(own.length) return own;
+                if(p.nama) {
+                    const match = this.products.find(x => x.nama === p.nama && (!p.varian || x.varian === p.varian) && norm(x.gambar).length);
+                    if(match) return norm(match.gambar);
+                }
             }
-            return '';
+            return [];
+        },
+        getProductImage(prod) {
+            return this.getProductImages(prod)[0] || '';
         },
         getProductBenefits(catOrProduct) {
             // Prioritas 1: object produk langsung (per-produk benefits)
@@ -11950,7 +11976,8 @@ function serabutStore() {
             if(!descHtml && Array.isArray(p.benefits) && p.benefits.length) {
                 descHtml = '<ul>' + p.benefits.map(b => '<li>' + this._escapeHtml(String(b)) + '</li>').join('') + '</ul>';
             }
-            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'', kategori:p.category||'', descHtml:descHtml, gambar:p.gambar||'' };
+            const gambarArr = Array.isArray(p.gambar) ? [...p.gambar] : (p.gambar ? [p.gambar] : []);
+            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'', kategori:p.category||'', descHtml:descHtml, gambar:gambarArr };
             this.adminBenefitCat  = p.category || this.getCategory(p.nama);
             this.adminBenefitItems = Array.isArray(p.benefits) ? [...p.benefits] : [];
             this.adminBenefitNewItem = '';
@@ -11979,7 +12006,7 @@ function serabutStore() {
                     iconUrl:   this.adminNewProduct.iconUrl||'',
                     kategori:  this.adminNewProduct.kategori||'',
                     descHtml:  this.adminNewProduct.descHtml||'',
-                    gambar:    this.adminNewProduct.gambar||'',
+                    gambar:    JSON.stringify(Array.isArray(this.adminNewProduct.gambar) ? this.adminNewProduct.gambar : []),
                 };
                 if(this.adminEditProduct) payload.rowIndex = this.adminEditProduct.rowIndex;
                 const data = await this.gasPost(payload);
@@ -11987,7 +12014,7 @@ function serabutStore() {
                     // Update local state untuk produk yang diedit
                     if(this.adminEditProduct) {
                         const savedDesc = this.adminNewProduct.descHtml||'';
-                        const savedGbr  = this.adminNewProduct.gambar||'';
+                        const savedGbr  = Array.isArray(this.adminNewProduct.gambar) ? [...this.adminNewProduct.gambar] : [];
                         const idx = this.products.findIndex(p => p.rowIndex == this.adminEditProduct.rowIndex);
                         if(idx >= 0) {
                             this.products[idx] = { ...this.products[idx], descHtml: savedDesc, gambar: savedGbr, benefits: [] };
@@ -12229,34 +12256,39 @@ function serabutStore() {
             this.adminFmt('createLink', url);
         },
         async adminUploadProductImage(e) {
-            const file = e.target.files && e.target.files[0];
+            let files = Array.from(e.target.files || []);
             e.target.value = '';
-            if(!file) return;
-            if(!file.type.startsWith('image/')) { this._adminShowMsg('File harus berupa gambar'); return; }
+            if(!files.length) return;
+            if(!Array.isArray(this.adminNewProduct.gambar)) this.adminNewProduct.gambar = [];
+            const sisa = 10 - this.adminNewProduct.gambar.length;
+            if(sisa <= 0) { this._adminShowMsg('Maksimal 10 gambar'); return; }
+            if(files.length > sisa) { this._adminShowMsg('Hanya ' + sisa + ' gambar lagi yang bisa ditambah'); files = files.slice(0, sisa); }
             this.adminImageUploading = true;
+            let ok = 0, fail = 0;
             try {
-                const dataUrl = await this._compressImage(file, 1200, 0.85);
-                const data = await this.gasPost({
-                    action:     'uploadProductImage',
-                    adminEmail: this.currentUser.email,
-                    adminToken: this.currentUser.sessionToken,
-                    dataUrl,
-                    filename:   (this.adminNewProduct.nama || 'produk'),
-                });
-                if(data.success && data.url) {
-                    this.adminNewProduct.gambar = data.url;
-                    this._adminShowMsg('Gambar terupload ✓');
-                } else {
-                    this._adminShowMsg('❌ ' + (data.error || 'Gagal upload gambar'));
+                for(const file of files) {
+                    if(!file.type.startsWith('image/')) { fail++; continue; }
+                    try {
+                        const dataUrl = await this._compressImage(file, 1200, 0.85);
+                        const data = await this.gasPost({
+                            action:     'uploadProductImage',
+                            adminEmail: this.currentUser.email,
+                            adminToken: this.currentUser.sessionToken,
+                            dataUrl,
+                            filename:   (this.adminNewProduct.nama || 'produk'),
+                        });
+                        if(data.success && data.url) { this.adminNewProduct.gambar.push(data.url); ok++; }
+                        else { fail++; this._adminShowMsg('❌ ' + (data.error || 'Gagal upload gambar')); }
+                    } catch(err) { fail++; this._adminShowMsg('Gagal upload: ' + (err.message || err)); }
                 }
-            } catch(err) {
-                this._adminShowMsg('Gagal upload: ' + (err.message || err));
+                if(ok) this._adminShowMsg(ok + ' gambar terupload ✓' + (fail ? (' · ' + fail + ' gagal') : ''));
             } finally {
                 this.adminImageUploading = false;
             }
         },
-        adminRemoveProductImage() {
-            this.adminNewProduct.gambar = '';
+        adminRemoveProductImage(i) {
+            if(Array.isArray(this.adminNewProduct.gambar)) this.adminNewProduct.gambar.splice(i, 1);
+            else this.adminNewProduct.gambar = [];
         },
         // Kompres + resize gambar di client → dataURL JPEG, kurangi payload
         _compressImage(file, maxDim, quality) {

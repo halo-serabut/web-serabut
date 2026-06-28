@@ -491,7 +491,7 @@ function getCatalog() {
       iconUrl:    cIcon   >= 0 ? String(row[cIcon]   || '').trim() : String(row[7] || '').trim(),
       benefits:   parsed.benefits,
       descHtml:   parsed.descHtml,
-      gambar:     cGbr    >= 0 ? String(row[cGbr]    || '').trim() : '',
+      gambar:     cGbr    >= 0 ? _parseImages(row[cGbr]) : [],
       terjual:    cTerjual >= 0 ? (Number(row[cTerjual]) || 0) : 0,
     });
   }
@@ -540,7 +540,7 @@ function getCatalogAdmin({ adminEmail, adminToken }) {
       iconUrl:    cIcon >= 0 ? String(row[cIcon] || '').trim() : String(row[7] || '').trim(),
       benefits:   parsed.benefits,
       descHtml:   parsed.descHtml,
-      gambar:     cGbr  >= 0 ? String(row[cGbr]  || '').trim() : '',
+      gambar:     cGbr  >= 0 ? _parseImages(row[cGbr]) : [],
     });
   }
 
@@ -560,6 +560,19 @@ function _parseProductDesc(raw) {
   }
   // Bukan JSON array → anggap HTML rich text deskripsi
   return { benefits: [], descHtml: t };
+}
+
+// Parse kolom Gambar: bisa JSON array URL atau single URL string. Return array.
+function _parseImages(raw) {
+  const t = String(raw == null ? '' : raw).trim();
+  if (!t) return [];
+  if (t.charAt(0) === '[') {
+    try {
+      const a = JSON.parse(t);
+      if (Array.isArray(a)) return a.filter(function (x) { return x; });
+    } catch (_) {}
+  }
+  return [t];
 }
 
 // ────────────────────────────────────────────────────────
@@ -745,8 +758,8 @@ function uploadProductImage({ adminEmail, adminToken, dataUrl, filename }) {
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   const id  = file.getId();
-  // URL yang reliable untuk <img> embed
-  const url = 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1200';
+  // URL yang reliable untuk <img> embed (lh3 langsung render tanpa delay thumbnail)
+  const url = 'https://lh3.googleusercontent.com/d/' + id + '=w1200';
 
   _logAdminAction(adminEmail, 'uploadProductImage', { id: id, size: bytes.length });
   return { success: true, url: url, id: id };
