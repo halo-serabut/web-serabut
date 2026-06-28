@@ -142,6 +142,7 @@ function doPost(e) {
       case 'updateProductStock':    result = updateProductStock(params); break;
       case 'updateProductAktif':    result = updateProductAktif(params); break;
       case 'saveProductBenefits':       result = saveProductBenefits(params); break;
+      case 'uploadProductImage':        result = uploadProductImage(params); break;
       case 'iPaymuAdminGetBalance':     result = iPaymuAdminGetBalance(params); break;
       case 'iPaymuAdminGetHistory':     result = iPaymuAdminGetHistory(params); break;
       case 'iPaymuAdminGetTransaction': result = iPaymuAdminGetTransaction(params); break;
@@ -162,6 +163,7 @@ function doPost(e) {
       case 'toggleReview':              result = toggleReview(params); break;
       case 'deleteReview':              result = deleteReview(params); break;
       case 'getAdminReviews':           result = getAdminReviews(params); break;
+      case 'resetOfficePassword':   result = resetOfficePassword(params); break;
       default: result = { success: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -463,6 +465,7 @@ function getCatalog() {
   const cKat     = _colIndex(headers, 'kategori', 'category');
   const cIcon    = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
   const cBen     = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
+  const cGbr     = _colIndex(headers, 'gambar', 'image url', 'imageurl', 'image_url', 'foto');
   const cTerjual = _colIndex(headers, 'terjual', 'sold', 'terjual (p)');
   const products = [];
 
@@ -474,9 +477,7 @@ function getCatalog() {
 
     const rawStok = row[6];
     const stok    = (rawStok === '' || rawStok === null || rawStok === undefined) ? null : Number(rawStok);
-    let benefits  = [];
-    try { benefits = JSON.parse(String(cBen >= 0 ? row[cBen] : row[14]) || '[]'); } catch (_) { benefits = []; }
-    if (!Array.isArray(benefits)) benefits = [];
+    const parsed  = _parseProductDesc(cBen >= 0 ? row[cBen] : row[14]);
 
     products.push({
       rowIndex:   i + 1,
@@ -488,7 +489,9 @@ function getCatalog() {
       stok:       stok,
       category:   cKat    >= 0 ? String(row[cKat]    || '').trim() : '',
       iconUrl:    cIcon   >= 0 ? String(row[cIcon]   || '').trim() : String(row[7] || '').trim(),
-      benefits:   benefits,
+      benefits:   parsed.benefits,
+      descHtml:   parsed.descHtml,
+      gambar:     cGbr    >= 0 ? String(row[cGbr]    || '').trim() : '',
       terjual:    cTerjual >= 0 ? (Number(row[cTerjual]) || 0) : 0,
     });
   }
@@ -513,6 +516,7 @@ function getCatalogAdmin({ adminEmail, adminToken }) {
   const cKat     = _colIndex(headers, 'kategori', 'category');
   const cIcon    = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
   const cBen     = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
+  const cGbr     = _colIndex(headers, 'gambar', 'image url', 'imageurl', 'image_url', 'foto');
   const products = [];
 
   for (let i = 1; i < data.length; i++) {
@@ -521,9 +525,7 @@ function getCatalogAdmin({ adminEmail, adminToken }) {
     const aktif   = row[5];
     const rawStok = row[6];
     const stok    = (rawStok === '' || rawStok === null || rawStok === undefined) ? null : Number(rawStok);
-    let benefits  = [];
-    try { benefits = JSON.parse(String(cBen >= 0 ? row[cBen] : row[14]) || '[]'); } catch (_) { benefits = []; }
-    if (!Array.isArray(benefits)) benefits = [];
+    const parsed  = _parseProductDesc(cBen >= 0 ? row[cBen] : row[14]);
 
     products.push({
       rowIndex:   i + 1,
@@ -536,17 +538,34 @@ function getCatalogAdmin({ adminEmail, adminToken }) {
       stok:       stok,
       category:   cKat  >= 0 ? String(row[cKat]  || '').trim() : '',
       iconUrl:    cIcon >= 0 ? String(row[cIcon] || '').trim() : String(row[7] || '').trim(),
-      benefits:   benefits,
+      benefits:   parsed.benefits,
+      descHtml:   parsed.descHtml,
+      gambar:     cGbr  >= 0 ? String(row[cGbr]  || '').trim() : '',
     });
   }
 
   return { success: true, data: products };
 }
 
+// Parse kolom Deskripsi: bisa berupa JSON array (legacy benefits) atau HTML rich text.
+// Return { benefits: [], descHtml: '' }
+function _parseProductDesc(raw) {
+  const t = String(raw == null ? '' : raw).trim();
+  if (!t) return { benefits: [], descHtml: '' };
+  if (t.charAt(0) === '[') {
+    try {
+      const arr = JSON.parse(t);
+      if (Array.isArray(arr)) return { benefits: arr, descHtml: '' };
+    } catch (_) {}
+  }
+  // Bukan JSON array → anggap HTML rich text deskripsi
+  return { benefits: [], descHtml: t };
+}
+
 // ────────────────────────────────────────────────────────
 //  ADD PRODUCT
 // ────────────────────────────────────────────────────────
-function addProduct({ adminEmail, adminToken, nama, varian, masaAktif, harga, linkProduk, aktif, stok, iconUrl, kategori, benefits }) {
+function addProduct({ adminEmail, adminToken, nama, varian, masaAktif, harga, linkProduk, aktif, stok, iconUrl, kategori, benefits, descHtml, gambar }) {
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
   if (!nama || !varian) return { success: false, error: 'Nama dan varian wajib diisi' };
@@ -567,7 +586,12 @@ function addProduct({ adminEmail, adminToken, nama, varian, masaAktif, harga, li
   const cKat    = _colIndex(headers, 'kategori', 'category');
   const cIcon   = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
   const cBen    = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
-  const numCols = Math.max(headers.length, cBen >= 0 ? cBen + 1 : 15);
+  const cGbr    = _colIndex(headers, 'gambar', 'image url', 'imageurl', 'image_url', 'foto');
+  // Deskripsi: prioritas descHtml (rich text), fallback benefits (legacy JSON)
+  const descVal = (descHtml !== undefined && descHtml !== null && String(descHtml).trim() !== '')
+    ? String(descHtml).trim()
+    : ((benefits !== undefined && benefits !== null && benefits !== '') ? String(benefits).trim() : '');
+  const numCols = Math.max(headers.length, cBen >= 0 ? cBen + 1 : 15, cGbr >= 0 ? cGbr + 1 : 0);
 
   const row   = new Array(numCols).fill('');
   row[0] = _sanitizeCell(nama);
@@ -579,14 +603,13 @@ function addProduct({ adminEmail, adminToken, nama, varian, masaAktif, harga, li
   row[6] = (stok === '' || stok === null || stok === undefined) ? '' : Number(stok);
   if (cKat  >= 0) row[cKat]  = _sanitizeCell(kategori || '');
   if (cIcon >= 0) row[cIcon] = String(iconUrl  || '').trim();
-  if (benefits !== undefined && benefits !== null && benefits !== '') {
-    if (cBen >= 0) row[cBen] = String(benefits).trim();
-  }
+  if (cGbr  >= 0) row[cGbr]  = String(gambar   || '').trim();
+  if (descVal && cBen >= 0) row[cBen] = descVal;
 
   sheet.appendRow(row);
 
-  if (benefits !== undefined && benefits !== null && benefits !== '' && cBen < 0) {
-    sheet.getRange(sheet.getLastRow(), 15).setValue(String(benefits).trim());
+  if (descVal && cBen < 0) {
+    sheet.getRange(sheet.getLastRow(), 15).setValue(descVal);
   }
 
   CacheService.getScriptCache().remove('getCatalog_v1');
@@ -597,7 +620,7 @@ function addProduct({ adminEmail, adminToken, nama, varian, masaAktif, harga, li
 // ────────────────────────────────────────────────────────
 //  UPDATE PRODUCT
 // ────────────────────────────────────────────────────────
-function updateProduct({ adminEmail, adminToken, rowIndex, nama, varian, masaAktif, harga, linkProduk, aktif, stok, iconUrl, kategori, benefits }) {
+function updateProduct({ adminEmail, adminToken, rowIndex, nama, varian, masaAktif, harga, linkProduk, aktif, stok, iconUrl, kategori, benefits, descHtml, gambar }) {
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
   if (!rowIndex) return { success: false, error: 'rowIndex diperlukan' };
@@ -617,6 +640,7 @@ function updateProduct({ adminEmail, adminToken, rowIndex, nama, varian, masaAkt
   const cKat    = _colIndex(headers, 'kategori', 'category');
   const cIcon   = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
   const cBen    = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
+  const cGbr    = _colIndex(headers, 'gambar', 'image url', 'imageurl', 'image_url', 'foto');
 
   sheet.getRange(row, 1).setValue(_sanitizeCell(nama || ''));
   sheet.getRange(row, 2).setValue(_sanitizeCell(varian || ''));
@@ -627,7 +651,11 @@ function updateProduct({ adminEmail, adminToken, rowIndex, nama, varian, masaAkt
   sheet.getRange(row, 7).setValue(stokVal);
   if (cKat  >= 0 && kategori !== undefined) sheet.getRange(row, cKat  + 1).setValue(_sanitizeCell(kategori || ''));
   if (cIcon >= 0)                           sheet.getRange(row, cIcon + 1).setValue(_sanitizeCell(iconUrl  || ''));
-  if (benefits !== undefined && benefits !== null && benefits !== '') {
+  if (cGbr  >= 0 && gambar !== undefined)   sheet.getRange(row, cGbr  + 1).setValue(String(gambar || '').trim());
+  // Deskripsi: prioritas descHtml (rich text), fallback benefits (legacy)
+  if (descHtml !== undefined && descHtml !== null) {
+    sheet.getRange(row, cBen >= 0 ? cBen + 1 : 15).setValue(String(descHtml).trim());
+  } else if (benefits !== undefined && benefits !== null && benefits !== '') {
     sheet.getRange(row, cBen >= 0 ? cBen + 1 : 15).setValue(String(benefits).trim());
   }
 
@@ -684,6 +712,44 @@ function saveProductBenefits({ adminEmail, adminToken, rowIndex, benefits }) {
   sheet.getRange(Number(rowIndex), 15).setValue(String(benefits || '[]').trim());
   CacheService.getScriptCache().remove('getCatalog_v1');
   return { success: true };
+}
+
+// ────────────────────────────────────────────────────────
+//  UPLOAD PRODUCT IMAGE → Google Drive
+// ────────────────────────────────────────────────────────
+function uploadProductImage({ adminEmail, adminToken, dataUrl, filename }) {
+  const authErr = _requireAdmin(adminEmail, adminToken);
+  if (authErr) return { success: false, error: authErr };
+  if (!dataUrl) return { success: false, error: 'Data gambar kosong' };
+
+  // dataUrl format: data:image/jpeg;base64,xxxx
+  const m = String(dataUrl).match(/^data:([^;]+);base64,(.+)$/);
+  if (!m) return { success: false, error: 'Format gambar tidak valid' };
+  const mime = m[1];
+  if (mime.indexOf('image/') !== 0) return { success: false, error: 'File harus berupa gambar' };
+
+  const bytes = Utilities.base64Decode(m[2]);
+  // Batas ~6MB setelah decode (payload GAS aman)
+  if (bytes.length > 6 * 1024 * 1024) return { success: false, error: 'Ukuran gambar terlalu besar (maks 6MB)' };
+
+  const ext  = (mime.split('/')[1] || 'jpg').replace('jpeg', 'jpg');
+  const safe = String(filename || 'produk').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 40);
+  const blob = Utilities.newBlob(bytes, mime, safe + '_' + Date.now() + '.' + ext);
+
+  // Cari/buat folder khusus gambar produk
+  const FOLDER_NAME = 'Serabut Produk Images';
+  let folder;
+  const it = DriveApp.getFoldersByName(FOLDER_NAME);
+  folder = it.hasNext() ? it.next() : DriveApp.createFolder(FOLDER_NAME);
+
+  const file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  const id  = file.getId();
+  // URL yang reliable untuk <img> embed
+  const url = 'https://drive.google.com/thumbnail?id=' + id + '&sz=w1200';
+
+  _logAdminAction(adminEmail, 'uploadProductImage', { id: id, size: bytes.length });
+  return { success: true, url: url, id: id };
 }
 
 // ────────────────────────────────────────────────────────
@@ -1082,6 +1148,81 @@ function smartSearch(query) {
   }
 
   return { success: true, data: results };
+}
+
+// ────────────────────────────────────────────────────────
+//  RESET PASSWORD AKUN OFFICE 365
+// ────────────────────────────────────────────────────────
+function resetOfficePassword({ officeEmail, buyerEmail }) {
+  if (!officeEmail) return { success: false, error: 'officeEmail wajib diisi' };
+
+  // Rate limit: max 3 reset per officeEmail per jam
+  if (!_rateLimit('resetOffice_' + officeEmail.toLowerCase(), 3, 3600)) {
+    return { success: false, error: 'Terlalu banyak permintaan reset. Coba lagi dalam 1 jam.' };
+  }
+
+  const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('List Account 365');
+  if (!sheet) return { success: false, error: 'Sheet tidak ditemukan' };
+
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+
+  const colOfficeAcc = findColIdx(headers, ['office account', 'office acc', 'msa']);
+  const colPassword  = findColIdx(headers, ['password', 'pw', 'pass', 'kata sandi']);
+  const colBuyer     = findColIdx(headers, ['buyer name', 'nama pembeli', 'mail active', '4reminder', 'email active']);
+  const colWA        = findColIdx(headers, ['no whatsapp', 'no wa', 'whatsapp', 'no hp']);
+
+  if (colOfficeAcc < 0) return { success: false, error: 'Kolom Office Account tidak ditemukan di sheet' };
+  if (colPassword  < 0) return { success: false, error: 'Kolom Password tidak ditemukan di sheet. Tambahkan kolom "Password" di List Account 365.' };
+
+  const emailNorm = officeEmail.trim().toLowerCase();
+  let foundRow = -1;
+  let buyerWA  = '';
+
+  for (let i = 1; i < data.length; i++) {
+    const acc = String(data[i][colOfficeAcc] || '').trim().toLowerCase();
+    if (acc === emailNorm) {
+      foundRow = i;
+      if (colWA >= 0) buyerWA = String(data[i][colWA] || '').trim();
+      break;
+    }
+  }
+
+  if (foundRow < 0) return { success: false, error: 'Akun Office tidak ditemukan: ' + officeEmail };
+
+  // Generate password baru: 10 karakter, kombinasi huruf + angka + simbol
+  const chars    = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  let newPassword = '';
+  for (let i = 0; i < 10; i++) {
+    newPassword += chars[Math.floor(Math.random() * chars.length)];
+  }
+
+  // Update password di sheet
+  sheet.getRange(foundRow + 1, colPassword + 1).setValue(newPassword);
+  SpreadsheetApp.flush();
+
+  // Kirim notif WA ke buyer jika ada nomor WA
+  if (buyerWA) {
+    const waMsg = `🔑 *Password Akun Office 365 Direset*\n\nAkun: ${officeEmail}\nPassword Baru: *${newPassword}*\n\nSilakan login ulang di office.com dengan password ini.\n— Serabut Store`;
+    try {
+      UrlFetchApp.fetch('https://api.fonnte.com/send', {
+        method: 'post',
+        headers: { 'Authorization': FONNTE_TOKEN },
+        payload: { target: _normalizeWA(buyerWA), message: waMsg },
+        muteHttpExceptions: true,
+      });
+    } catch(_) {}
+  }
+
+  // Kirim notif WA ke grup admin (WA_GROUP_ESCALATION)
+  try {
+    const adminMsg = `🔑 *Reset Password Office 365*\n\n• Akun: ${officeEmail}\n• Password Baru: ${newPassword}\n• Via: Web (Cek Status)\n— Sera`;
+    sendWAToGroup(adminMsg);
+  } catch(_) {}
+
+  Logger.log('Reset password Office 365: ' + officeEmail);
+  return { success: true, officeEmail, newPassword };
 }
 
 // ────────────────────────────────────────────────────────

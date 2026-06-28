@@ -375,6 +375,21 @@
 
     <style>
         [x-cloak] { display: none !important; }
+        /* ── Rich text editor (admin produk) ── */
+        .rt-btn { display:inline-flex; align-items:center; justify-content:center; min-width:28px; height:28px; padding:0 6px; border-radius:8px; color:#4b5563; transition:background .15s,color .15s; }
+        .rt-btn:hover { background:#e5e7eb; color:#111827; }
+        .rt-editor[contenteditable]:empty:before { content: attr(data-placeholder); color:#9ca3af; pointer-events:none; }
+        /* ── Rendered rich text (prose-mini) ── */
+        .prose-mini { word-break: break-word; }
+        .prose-mini p { margin: 0 0 .6em; }
+        .prose-mini p:last-child { margin-bottom: 0; }
+        .prose-mini h3 { font-size: .95rem; font-weight: 700; color:#374151; margin:.4em 0 .4em; }
+        .prose-mini ul { list-style: disc; padding-left: 1.25rem; margin: 0 0 .6em; }
+        .prose-mini ol { list-style: decimal; padding-left: 1.25rem; margin: 0 0 .6em; }
+        .prose-mini li { margin: .15em 0; }
+        .prose-mini a { color:#dc2626; text-decoration: underline; }
+        .prose-mini strong { font-weight: 700; }
+        .prose-mini em { font-style: italic; }
         /* Z-index scale — referensi layer (jangan gunakan nilai di luar skema ini):
            --z-content:40  --z-sticky:49  --z-nav:50  --z-overlay:100
            --z-modal:200   --z-bottom-nav:350  --z-modal-top:480–510  --z-alert:600 */
@@ -2005,19 +2020,30 @@
 
                             <!-- Tab: Deskripsi -->
                             <div x-show="pdTab==='deskripsi'" class="p-4 space-y-4">
-                                <!-- Benefits -->
+                                <!-- Gambar produk -->
+                                <template x-if="getProductImage(selectedVariant || selectedProductGroup)">
+                                    <div class="rounded-2xl overflow-hidden border border-gray-100">
+                                        <img :src="getProductImage(selectedVariant || selectedProductGroup)" alt="Gambar produk" class="w-full object-cover" loading="lazy">
+                                    </div>
+                                </template>
+                                <!-- Deskripsi / Benefits -->
                                 <div>
                                     <div class="text-sm font-bold text-gray-700 mb-3">Yang kamu dapat</div>
-                                    <div class="space-y-2.5">
-                                        <template x-for="benefit in getProductBenefits(selectedVariant || selectedProductGroup.category)" :key="benefit">
-                                            <div class="flex items-start gap-2.5">
-                                                <div class="w-5 h-5 rounded-full bg-brand-50 flex items-center justify-center flex-none mt-0.5">
-                                                    <svg class="w-3 h-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                    <template x-if="getProductDescHtml(selectedVariant || selectedProductGroup)">
+                                        <div class="prose-mini text-sm text-gray-600 leading-relaxed" x-html="getProductDescHtml(selectedVariant || selectedProductGroup)"></div>
+                                    </template>
+                                    <template x-if="!getProductDescHtml(selectedVariant || selectedProductGroup)">
+                                        <div class="space-y-2.5">
+                                            <template x-for="benefit in getProductBenefits(selectedVariant || selectedProductGroup.category)" :key="benefit">
+                                                <div class="flex items-start gap-2.5">
+                                                    <div class="w-5 h-5 rounded-full bg-brand-50 flex items-center justify-center flex-none mt-0.5">
+                                                        <svg class="w-3 h-3 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                                                    </div>
+                                                    <span class="text-sm text-gray-600 leading-relaxed" x-text="benefit"></span>
                                                 </div>
-                                                <span class="text-sm text-gray-600 leading-relaxed" x-text="benefit"></span>
-                                            </div>
-                                        </template>
-                                    </div>
+                                            </template>
+                                        </div>
+                                    </template>
                                 </div>
                                 <!-- Trust signals — colorful mini cards -->
                                 <div class="border-t border-gray-100 pt-4 grid grid-cols-2 gap-2">
@@ -4799,7 +4825,7 @@
             <div x-show="adminTab==='produk'">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="font-bold text-gray-900">Manajemen Produk</h2>
-                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,stok:'',iconUrl:'',kategori:''}; adminBenefitItems=[]; adminBenefitNewItem=''" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
+                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,stok:'',iconUrl:'',kategori:'',descHtml:'',gambar:''}; adminBenefitItems=[]; adminBenefitNewItem=''; $nextTick(()=>adminInitDescEditor())" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
                 </div>
 
                 <!-- Form tambah/edit produk -->
@@ -4852,51 +4878,80 @@
                         <span class="text-sm text-gray-700 font-medium">Produk Aktif (tampil di katalog)</span>
                     </label>
 
-                    <!-- Deskripsi: Yang kamu dapat -->
+                    <!-- Gambar Produk -->
                     <div class="mt-5 border-t border-gray-100 pt-4">
-                        <div class="flex items-center justify-between mb-3">
+                        <div class="text-sm font-bold text-gray-800 mb-2">Gambar Produk</div>
+                        <div class="text-xs text-gray-400 mb-3">Upload foto produk (JPG/PNG, otomatis dikompres). Tersimpan di Google Drive.</div>
+                        <div class="flex items-start gap-3">
+                            <!-- Preview -->
+                            <div class="relative flex-none">
+                                <template x-if="adminNewProduct.gambar">
+                                    <div class="relative">
+                                        <img :src="adminNewProduct.gambar" alt="Preview" class="w-28 h-28 object-cover rounded-xl border border-gray-200">
+                                        <button @click="adminRemoveProductImage()" type="button"
+                                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow hover:bg-red-600">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+                                </template>
+                                <template x-if="!adminNewProduct.gambar">
+                                    <label class="w-28 h-28 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-brand-400 hover:bg-brand-50/40 transition-colors text-gray-400"
+                                           :class="adminImageUploading && 'pointer-events-none opacity-60'">
+                                        <template x-if="!adminImageUploading">
+                                            <div class="flex flex-col items-center gap-1">
+                                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                                <span class="text-[11px] font-semibold">Upload</span>
+                                            </div>
+                                        </template>
+                                        <template x-if="adminImageUploading">
+                                            <svg class="w-7 h-7 animate-spin text-brand-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                                        </template>
+                                        <input type="file" accept="image/*" class="hidden" @change="adminUploadProductImage($event)">
+                                    </label>
+                                </template>
+                            </div>
+                            <div class="flex-1 text-xs text-gray-400 pt-1">
+                                <p>Disarankan rasio persegi atau 4:3.</p>
+                                <p class="mt-1" x-show="adminImageUploading">Mengunggah & mengompres gambar…</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deskripsi Produk (rich text) -->
+                    <div class="mt-5 border-t border-gray-100 pt-4">
+                        <div class="flex items-center justify-between mb-2">
                             <div>
-                                <div class="text-sm font-bold text-gray-800">Yang kamu dapat</div>
+                                <div class="text-sm font-bold text-gray-800">Deskripsi Produk</div>
                                 <div class="text-xs text-gray-400 mt-0.5">
-                                    Deskripsi spesifik untuk:
-                                    <span class="font-semibold text-brand-500" x-text="adminEditProduct ? (adminNewProduct.nama + (adminNewProduct.varian ? ' · ' + adminNewProduct.varian : '')) : '(produk baru)'"></span>
+                                    Deskripsi untuk:
+                                    <span class="font-semibold text-brand-500" x-text="(adminNewProduct.nama || '(produk baru)') + (adminNewProduct.varian ? ' · ' + adminNewProduct.varian : '')"></span>
                                 </div>
                             </div>
                         </div>
-                        <div class="space-y-1.5 mb-3">
-                            <template x-for="(item, i) in adminBenefitItems" :key="i">
-                                <div class="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
-                                    <span class="text-brand-500 font-bold text-sm flex-none">✓</span>
-                                    <input x-model="adminBenefitItems[i]" type="text"
-                                           class="flex-1 text-sm text-gray-700 bg-transparent focus:outline-none focus:bg-white focus:ring-1 focus:ring-brand-300 rounded-lg px-1.5 py-0.5 min-w-0">
-                                    <div class="flex items-center gap-0.5 flex-none">
-                                        <button @click="adminBenefitMoveUp(i)" :disabled="i===0" class="p-1 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors">
-                                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-                                        </button>
-                                        <button @click="adminBenefitMoveDown(i)" :disabled="i>=adminBenefitItems.length-1" class="p-1 rounded hover:bg-gray-200 disabled:opacity-30 transition-colors">
-                                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                                        </button>
-                                        <button @click="adminBenefitRemove(i)" class="p-1 rounded hover:bg-red-100 text-red-400 transition-colors">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                        <div class="flex gap-2 mb-3">
-                            <input x-model="adminBenefitNewItem" @keydown.enter.prevent="adminBenefitAdd()"
-                                   type="text" placeholder="Tambah item benefit..."
-                                   class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                            <button @click="adminBenefitAdd()" :disabled="!adminBenefitNewItem.trim()"
-                                    class="px-3 py-2 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold disabled:opacity-40 hover:bg-gray-200 transition-colors">
-                                + Tambah
+                        <!-- Toolbar -->
+                        <div class="flex flex-wrap items-center gap-1 border border-gray-200 border-b-0 rounded-t-xl px-2 py-1.5 bg-gray-50">
+                            <button type="button" @mousedown.prevent="adminFmt('bold')" class="rt-btn" title="Tebal"><span class="font-bold text-sm">B</span></button>
+                            <button type="button" @mousedown.prevent="adminFmt('italic')" class="rt-btn" title="Miring"><span class="italic text-sm">I</span></button>
+                            <button type="button" @mousedown.prevent="adminFmt('underline')" class="rt-btn" title="Garis bawah"><span class="underline text-sm">U</span></button>
+                            <span class="w-px h-5 bg-gray-300 mx-0.5"></span>
+                            <button type="button" @mousedown.prevent="adminFmt('insertUnorderedList')" class="rt-btn" title="Bullet list">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
                             </button>
+                            <button type="button" @mousedown.prevent="adminFmt('insertOrderedList')" class="rt-btn" title="Numbered list">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6h11M10 12h11M10 18h11M4 6h.01M3 12h2l-2 3h2M4 18h0"/></svg>
+                            </button>
+                            <span class="w-px h-5 bg-gray-300 mx-0.5"></span>
+                            <button type="button" @mousedown.prevent="adminFmt('formatBlock','<h3>')" class="rt-btn text-xs font-bold" title="Judul">H</button>
+                            <button type="button" @mousedown.prevent="adminFmt('formatBlock','<p>')" class="rt-btn text-xs" title="Paragraf">¶</button>
+                            <button type="button" @mousedown.prevent="adminRtLink()" class="rt-btn" title="Tautan">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 010 5.656l-3 3a4 4 0 11-5.656-5.656l1.5-1.5m6.328-1.828a4 4 0 00-5.656 0m5.656 0l1.5-1.5a4 4 0 115.656 5.656l-3 3a4 4 0 01-5.656 0"/></svg>
+                            </button>
+                            <button type="button" @mousedown.prevent="adminFmt('removeFormat')" class="rt-btn ml-auto text-[10px] text-gray-500" title="Hapus format">Clear</button>
                         </div>
-                        <button @click="adminSaveBenefits()" :disabled="adminSaving || !adminEditProduct"
-                                class="px-4 py-2 border border-brand-300 text-brand-600 rounded-xl text-sm font-semibold hover:bg-brand-50 transition-colors flex items-center gap-1.5 disabled:opacity-40">
-                            <svg x-show="adminSaving" class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                            <span x-text="adminSaving ? 'Menyimpan...' : 'Simpan Deskripsi'"></span>
-                        </button>
+                        <div x-ref="descEditor" contenteditable="true"
+                             @input="adminSyncDesc()" @blur="adminSyncDesc()"
+                             data-placeholder="Tulis deskripsi produk di sini… (paragraf, bold, italic, list)"
+                             class="rt-editor prose-mini w-full min-h-[140px] max-h-[340px] overflow-y-auto border border-gray-200 rounded-b-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-brand-400 bg-white"></div>
                     </div>
 
                     <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100">
@@ -7305,17 +7360,28 @@
             </div>
         </template>
 
-        <!-- Benefits -->
+        <!-- Gambar produk -->
+        <template x-if="getProductImage(selectedVariant || selectedProductGroup)">
+            <div class="mx-5 mb-4 rounded-2xl overflow-hidden border border-gray-100">
+                <img :src="getProductImage(selectedVariant || selectedProductGroup)" alt="Gambar produk" class="w-full object-cover" loading="lazy">
+            </div>
+        </template>
+        <!-- Deskripsi / Benefits -->
         <div class="bg-gray-50 mx-5 rounded-2xl p-4 mb-4">
             <div class="text-sm font-bold text-gray-700 mb-3">Yang kamu dapat</div>
-            <div class="space-y-2">
-                <template x-for="benefit in getProductBenefits(selectedVariant || selectedProductGroup?.category)" :key="benefit">
-                    <div class="flex items-start gap-2">
-                        <span class="text-brand-500 flex-none mt-0.5 font-bold text-sm">✓</span>
-                        <span class="text-sm text-gray-600 leading-relaxed" x-text="benefit"></span>
-                    </div>
-                </template>
-            </div>
+            <template x-if="getProductDescHtml(selectedVariant || selectedProductGroup)">
+                <div class="prose-mini text-sm text-gray-600 leading-relaxed" x-html="getProductDescHtml(selectedVariant || selectedProductGroup)"></div>
+            </template>
+            <template x-if="!getProductDescHtml(selectedVariant || selectedProductGroup)">
+                <div class="space-y-2">
+                    <template x-for="benefit in getProductBenefits(selectedVariant || selectedProductGroup?.category)" :key="benefit">
+                        <div class="flex items-start gap-2">
+                            <span class="text-brand-500 flex-none mt-0.5 font-bold text-sm">✓</span>
+                            <span class="text-sm text-gray-600 leading-relaxed" x-text="benefit"></span>
+                        </div>
+                    </template>
+                </div>
+            </template>
         </div>
 
         <!-- Price + CTA -->
@@ -8581,7 +8647,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260612-17',
+        APP_VERSION:      '20260627-1',
 
         // PWA Install
         pwaPopup:            false,
@@ -8865,7 +8931,7 @@ function serabutStore() {
         adminOrdersPerPage: 10,
         adminEditProduct: null,
         adminAddMode:    false,
-        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, stok:'', iconUrl:'', kategori:'' },
+        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, stok:'', iconUrl:'', kategori:'', descHtml:'', gambar:'' },
         adminEditFlash:    {},
         adminFlashCampaigns: [],
         adminFlashCampIdx: -1,
@@ -8916,6 +8982,7 @@ function serabutStore() {
         adminBenefitCat:   'Office 365',
         adminBenefitItems: [],
         adminBenefitNewItem: '',
+        adminImageUploading: false,
         adminFeaturedItems:   [],
         adminFeaturedSearch:  '',
         adminFeaturedResults: [],
@@ -9792,6 +9859,25 @@ function serabutStore() {
         getCategoryIcon(cat) {
             const m={'Office 365':'📧','Adobe':'🎨','Windows':'🪟','Office':'💼','Google':'☁️','CorelDRAW':'✏️','Project':'📊','Visio':'📐','Windows Server':'🖥️'};
             return m[cat]||'📦';
+        },
+        getProductDescHtml(prod) {
+            const p = prod || this.selectedVariant || this.selectedProductGroup;
+            if(p && typeof p === 'object' && p.descHtml && String(p.descHtml).trim()) return p.descHtml;
+            // fallback: cari di products by nama+varian (selectedProductGroup tidak bawa descHtml)
+            if(p && typeof p === 'object' && p.nama) {
+                const match = this.products.find(x => x.nama === p.nama && (!p.varian || x.varian === p.varian) && x.descHtml);
+                if(match?.descHtml) return match.descHtml;
+            }
+            return '';
+        },
+        getProductImage(prod) {
+            const p = prod || this.selectedVariant || this.selectedProductGroup;
+            if(p && typeof p === 'object' && p.gambar && String(p.gambar).trim()) return p.gambar;
+            if(p && typeof p === 'object' && p.nama) {
+                const match = this.products.find(x => x.nama === p.nama && (!p.varian || x.varian === p.varian) && x.gambar);
+                if(match?.gambar) return match.gambar;
+            }
+            return '';
         },
         getProductBenefits(catOrProduct) {
             // Prioritas 1: object produk langsung (per-produk benefits)
@@ -11859,12 +11945,18 @@ function serabutStore() {
             // Update semua state langsung (synchronous) agar reactive binding tidak rusak
             this.adminEditProduct = { ...p, _uid: p.rowIndex }; // spread + uid agar referensi selalu baru
             this.adminAddMode     = false;
-            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'', kategori:p.category||'' };
+            // Deskripsi: pakai descHtml jika ada, kalau tidak konversi benefits legacy → list HTML
+            let descHtml = p.descHtml || '';
+            if(!descHtml && Array.isArray(p.benefits) && p.benefits.length) {
+                descHtml = '<ul>' + p.benefits.map(b => '<li>' + this._escapeHtml(String(b)) + '</li>').join('') + '</ul>';
+            }
+            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'', kategori:p.category||'', descHtml:descHtml, gambar:p.gambar||'' };
             this.adminBenefitCat  = p.category || this.getCategory(p.nama);
             this.adminBenefitItems = Array.isArray(p.benefits) ? [...p.benefits] : [];
             this.adminBenefitNewItem = '';
-            // Scroll ke form (hanya setelah render selesai)
+            // Scroll ke form + isi editor (hanya setelah render selesai)
             this.$nextTick(() => {
+                this.adminInitDescEditor();
                 document.getElementById('adminProdukForm')?.scrollIntoView({ behavior:'smooth', block:'start' });
             });
         },
@@ -11886,17 +11978,19 @@ function serabutStore() {
                     stok:      this.adminNewProduct.stok===''?'':Number(this.adminNewProduct.stok),
                     iconUrl:   this.adminNewProduct.iconUrl||'',
                     kategori:  this.adminNewProduct.kategori||'',
-                    benefits:  JSON.stringify(this.adminBenefitItems),
+                    descHtml:  this.adminNewProduct.descHtml||'',
+                    gambar:    this.adminNewProduct.gambar||'',
                 };
                 if(this.adminEditProduct) payload.rowIndex = this.adminEditProduct.rowIndex;
                 const data = await this.gasPost(payload);
                 if(data.success) {
-                    // Update local state benefits untuk produk yang diedit
+                    // Update local state untuk produk yang diedit
                     if(this.adminEditProduct) {
-                        const saved = [...this.adminBenefitItems];
+                        const savedDesc = this.adminNewProduct.descHtml||'';
+                        const savedGbr  = this.adminNewProduct.gambar||'';
                         const idx = this.products.findIndex(p => p.rowIndex == this.adminEditProduct.rowIndex);
                         if(idx >= 0) {
-                            this.products[idx] = { ...this.products[idx], benefits: saved };
+                            this.products[idx] = { ...this.products[idx], descHtml: savedDesc, gambar: savedGbr, benefits: [] };
                             this.products = [...this.products];
                         }
                     }
@@ -12105,6 +12199,90 @@ function serabutStore() {
             } finally {
                 this.adminSaving = false;
             }
+        },
+
+        // ── Admin: Rich text deskripsi ────────────────
+        _escapeHtml(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        },
+        adminInitDescEditor() {
+            const el = this.$refs.descEditor;
+            if(el) el.innerHTML = this.adminNewProduct.descHtml || '';
+        },
+        adminSyncDesc() {
+            const el = this.$refs.descEditor;
+            if(!el) return;
+            let html = el.innerHTML.trim();
+            // Anggap kosong jika hanya tag kosong
+            if(html === '<br>' || html === '<div><br></div>' || html === '<p><br></p>') html = '';
+            this.adminNewProduct.descHtml = html;
+        },
+        adminFmt(cmd, val) {
+            const el = this.$refs.descEditor;
+            if(el) el.focus();
+            try { document.execCommand(cmd, false, val || null); } catch(e) {}
+            this.adminSyncDesc();
+        },
+        adminRtLink() {
+            const url = prompt('Masukkan URL tautan:', 'https://');
+            if(!url) return;
+            this.adminFmt('createLink', url);
+        },
+        async adminUploadProductImage(e) {
+            const file = e.target.files && e.target.files[0];
+            e.target.value = '';
+            if(!file) return;
+            if(!file.type.startsWith('image/')) { this._adminShowMsg('File harus berupa gambar'); return; }
+            this.adminImageUploading = true;
+            try {
+                const dataUrl = await this._compressImage(file, 1200, 0.85);
+                const data = await this.gasPost({
+                    action:     'uploadProductImage',
+                    adminEmail: this.currentUser.email,
+                    adminToken: this.currentUser.sessionToken,
+                    dataUrl,
+                    filename:   (this.adminNewProduct.nama || 'produk'),
+                });
+                if(data.success && data.url) {
+                    this.adminNewProduct.gambar = data.url;
+                    this._adminShowMsg('Gambar terupload ✓');
+                } else {
+                    this._adminShowMsg('❌ ' + (data.error || 'Gagal upload gambar'));
+                }
+            } catch(err) {
+                this._adminShowMsg('Gagal upload: ' + (err.message || err));
+            } finally {
+                this.adminImageUploading = false;
+            }
+        },
+        adminRemoveProductImage() {
+            this.adminNewProduct.gambar = '';
+        },
+        // Kompres + resize gambar di client → dataURL JPEG, kurangi payload
+        _compressImage(file, maxDim, quality) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let { width:w, height:h } = img;
+                        if(w > maxDim || h > maxDim) {
+                            if(w >= h) { h = Math.round(h * maxDim / w); w = maxDim; }
+                            else       { w = Math.round(w * maxDim / h); h = maxDim; }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w; canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,w,h);
+                        ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = reject;
+                    img.src = reader.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
         },
 
         // ── Admin: Footer ─────────────────────────────
