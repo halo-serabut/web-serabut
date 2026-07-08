@@ -278,7 +278,10 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - **Deploy**: GAS pakai DriveApp (scope baru) → deployer WAJIB re-authorize sekali saat `clasp push`/buka editor. Tambah kolom header "Gambar" di tab Catalog GSheet (opsional; tanpa itu field gambar diabaikan, deskripsi tetap jalan).
   - Catatan: form admin ter-gate role admin → tak bisa diuji penuh di preview lokal; diverifikasi parse bersih + semua method/state terdaftar via Alpine.$data.
 
+- [2026-07-09] Selesai: Banner pengumuman WhatsApp gangguan + admin toggle (index.html only, APP_VERSION 20260709-2) — mobile: banner amber di bawah header; desktop: toast putih kanan-bawah (bottom-28 right-8, z-[89], di atas FAB Sera). Email kontak: halo@serabut.id. Tab admin baru "Pengumuman" (grup Konten): toggle ON/OFF + edit teks + email + live preview, simpan ke Settings GAS keys `announce.on/text/email` (tanpa perubahan backend — saveSettings generic). loadSiteSettings override default lokal `ANNOUNCE_ON/TEXT/EMAIL` jika key ada. Polish UX (APP_VERSION 20260709-3): dismiss diingat per sesi via sessionStorage `srb_announce_dismissed` (`dismissAnnounce()`), emoji 🙏 anti-orphan (&nbsp;), `role="status" aria-live="polite"`, toast desktop naik otomatis saat bubble Sera tampil (`:class guideShow ? bottom-[17rem] : bottom-28`).
+
 ## Current Focus
+- **Banner WA gangguan sedang ON** (default lokal true) — admin bisa OFF via tab Pengumuman; setelah admin pernah save, Settings GAS yang menang
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
 - **FONNTE_TOKEN** harus diset di GAS Script Properties agar WA notification aktif
 - **Google SSO** sudah aktif (GOOGLE_CLIENT_ID sudah diisi di Alpine config)
