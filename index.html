@@ -8889,7 +8889,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260715-3',
+        APP_VERSION:      '20260715-4',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
@@ -10607,7 +10607,8 @@ function serabutStore() {
             // Tampilkan pilihan metode (QRIS gratis vs Xendit) — tidak lagi auto-redirect
             this.orderModal = false;
             this.cartCheckoutModal = false;
-            this.paymentChoice = { orderId, paymentUrl };
+            // loading/error WAJIB ada sejak awal — tanpa key ini Alpine :disabled malah men-set disabled
+            this.paymentChoice = { orderId, paymentUrl, loading: false, error: '' };
         },
 
         async paymentChooseXendit() {
@@ -10673,7 +10674,7 @@ function serabutStore() {
         qrisBackToChooser() {
             const q = this.qrisPay;
             this.closeQrisPay();
-            if (q) this.paymentChoice = { orderId: q.orderId, paymentUrl: q.paymentUrl };
+            if (q) this.paymentChoice = { orderId: q.orderId, paymentUrl: q.paymentUrl, loading: false, error: '' };
         },
 
         async qrisClaim() {

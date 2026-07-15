@@ -296,6 +296,8 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - paymentChooseXendit: loading state "Preparing secure payment page…" + error inline di chooser
   - E2E verified: order SRB-22727338 dibuat TANPA paymentUrl → klik opsi 2 → invoice dibuat on-demand → redirect checkout.xendit.co OK
 
+- [2026-07-15 sesi 3] Fix: opsi "Virtual Account / E-Wallet" di chooser grey/tak bisa diklik (APP_VERSION 20260715-4) — `:disabled="paymentChoice?.loading"` dengan key `loading` TIDAK ADA di objek → Alpine malah men-set `disabled` (bukan remove); fix: `paymentChoice` selalu dibuat dengan `loading:false, error:''` eksplisit (startPaymentRedirect + qrisBackToChooser). Lesson: key yang dipakai binding Alpine harus ada sejak objek dibuat.
+
 ## Current Focus
 - **QRIS checkout LIVE** (GAS @162 + frontend 20260715-1) — verifikasi pembayaran manual via WA grup + app Dana; admin ubah status di Semua Order
 - **Banner WA gangguan sedang ON** (default lokal true) — admin bisa OFF via tab Pengumuman; setelah admin pernah save, Settings GAS yang menang
