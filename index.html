@@ -3234,7 +3234,7 @@
                                 </div>
                                 <span class="text-[11px] font-bold px-2.5 py-1 rounded-lg flex-none mt-0.5"
                                       :class="{
-                                          'bg-yellow-50 text-yellow-700':    order.status==='Pending' && orderMsLeft(order) > 0,
+                                          'bg-yellow-50 text-yellow-700':    order.status==='Pending' && (orderMsLeft(order) > 0 || orderAwaitingVerification(order)),
                                           'bg-blue-50 text-blue-700':        order.status==='Diproses',
                                           'bg-emerald-50 text-emerald-700':  order.status==='Aktif'||order.status==='Selesai',
                                           'bg-red-50 text-red-600':          orderIsCancelled(order)
@@ -3373,7 +3373,7 @@
                     <div class="flex items-center gap-2">
                         <span class="text-xs font-bold px-3 py-1 rounded-xl"
                               :class="{
-                                  'bg-yellow-50 text-yellow-700':   orderDetailModal?.status==='Pending' && orderMsLeft(orderDetailModal) > 0,
+                                  'bg-yellow-50 text-yellow-700':   orderDetailModal?.status==='Pending' && (orderMsLeft(orderDetailModal) > 0 || orderAwaitingVerification(orderDetailModal)),
                                   'bg-blue-50 text-blue-700':       orderDetailModal?.status==='Diproses',
                                   'bg-emerald-50 text-emerald-700': orderDetailModal?.status==='Aktif'||orderDetailModal?.status==='Selesai',
                                   'bg-red-50 text-red-600':         orderIsCancelled(orderDetailModal)
@@ -7317,15 +7317,17 @@
             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
 
-        <button @click="paymentChooseXendit()" class="w-full min-h-[44px] text-left border border-gray-200 rounded-xl p-4 hover:bg-gray-50 active:scale-[0.99] transition flex items-center gap-3 relative cursor-pointer">
+        <button @click="paymentChooseXendit()" :disabled="paymentChoice?.loading" class="w-full min-h-[44px] text-left border border-gray-200 rounded-xl p-4 hover:bg-gray-50 active:scale-[0.99] disabled:opacity-70 transition flex items-center gap-3 relative cursor-pointer">
             <span class="absolute -top-2.5 left-4 bg-amber-100 text-amber-700 text-[11px] font-bold px-2 py-0.5 rounded-full">+ admin fee</span>
             <svg class="w-7 h-7 text-gray-500 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
             <span class="flex-1 min-w-0">
                 <span class="block font-bold text-gray-800 text-sm">Virtual Account / E-Wallet</span>
-                <span class="block text-[11px] text-gray-500 mt-0.5">Bank transfer, e-wallet, retail outlets. Instant automatic confirmation, 24/7.</span>
+                <span class="block text-[11px] text-gray-500 mt-0.5" x-text="paymentChoice?.loading ? 'Preparing secure payment page…' : 'Bank transfer, e-wallet, retail outlets. Instant automatic confirmation, 24/7.'"></span>
             </span>
-            <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <svg x-show="!paymentChoice?.loading" class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            <svg x-show="paymentChoice?.loading" class="w-4 h-4 text-gray-400 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
         </button>
+        <p x-show="paymentChoice?.error" class="text-xs text-red-600 font-semibold mt-3 text-center" x-text="paymentChoice?.error"></p>
 
         <div class="flex items-center justify-center gap-1.5 mt-5 text-[11px] text-gray-400">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
@@ -8887,7 +8889,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260715-2',
+        APP_VERSION:      '20260715-3',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
@@ -10570,8 +10572,8 @@ function serabutStore() {
                     this.cart = [];
                     this.saveCart();
                     this.cartCheckoutModal = false;
-                    if (data.paymentUrl) {
-                        this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
+                    if (data.paymentUrl || data.paymentMode === 'xendit') {
+                        this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl || '');
                     } else if (data.paymentMode === 'manual') {
                         const cartItems = this.cart.map(c => ({ produk: c.nama, varian: c.varian||'-', masaAktif: c.masaAktif||'-', harga: c.harga }));
                         this.showManualPaymentInfo(data.orderId, data.total, cartItems, this.user?.nama||'');
@@ -10608,10 +10610,22 @@ function serabutStore() {
             this.paymentChoice = { orderId, paymentUrl };
         },
 
-        paymentChooseXendit() {
+        async paymentChooseXendit() {
             const p = this.paymentChoice;
-            this.paymentChoice = null;
-            if (p?.paymentUrl) window.location.href = p.paymentUrl;
+            if (!p || p.loading) return;
+            if (p.paymentUrl) { this.paymentChoice = null; window.location.href = p.paymentUrl; return; }
+            // Invoice Xendit dibuat lazy di sini (bukan saat order dibuat) — cegah email invoice prematur
+            p.loading = true; p.error = '';
+            try {
+                const d = await this.gasPost({ action: 'createXenditInvoiceForOrder', orderId: p.orderId });
+                if (d.success && d.paymentUrl) {
+                    this.paymentChoice = null;
+                    window.location.href = d.paymentUrl;
+                    return;
+                }
+                p.error = d.error || 'Failed to prepare payment. Please try again.';
+            } catch { p.error = 'Connection failed. Please try again.'; }
+            p.loading = false;
         },
 
         _loadQRCodeLib() {
@@ -10740,15 +10754,9 @@ function serabutStore() {
             this.iPaymuLoading = true;
             this.iPaymuError   = '';
             try {
-                const d    = this.currentOrderIPaymuData || {};
                 const data = await this.gasPost({
-                    action:     'createXenditInvoice',
-                    orderId:    this.currentOrderId,
-                    items:      d.items || [],
-                    buyerName:  d.buyerName || '',
-                    buyerEmail: d.buyerEmail || '',
-                    buyerPhone: d.buyerPhone || '',
-                    total:      d.total || 0,
+                    action:  'createXenditInvoiceForOrder',
+                    orderId: this.currentOrderId,
                 });
                 if (data.success && data.paymentUrl) {
                     this.openPaymentIframe(this.currentOrderId || '', data.paymentUrl);
@@ -10811,9 +10819,9 @@ function serabutStore() {
                     imageUrl:       this.getProductLogo(this.selectedProductGroup.category || this.selectedProductGroup.nama),
                 });
                 if(data.success) {
-                    if (data.paymentUrl) {
+                    if (data.paymentUrl || data.paymentMode === 'xendit') {
                         this.orderModal = false;
-                        this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl);
+                        this.startPaymentRedirect(data.orderId || data.referenceId || '', data.paymentUrl || '');
                     } else if (data.paymentMode === 'manual') {
                         this.orderModal = false;
                         const finalHarga = unitHarga * qty;
@@ -11134,10 +11142,15 @@ function serabutStore() {
             const dateStr = this.formatOrderDate(datePart);
             return timePart ? `${dateStr}, ${timePart} WIB` : dateStr;
         },
+        orderAwaitingVerification(order) {
+            return (order?.paymentStatus || '') === 'Menunggu Verifikasi';
+        },
         orderIsCancelled(order) {
+            if (this.orderAwaitingVerification(order)) return false; // klaim QRIS → jangan auto-batal saat menunggu verifikasi admin
             return order?.status === 'Dibatalkan' || (order?.status === 'Pending' && this.orderMsLeft(order) <= 0);
         },
         orderDisplayStatus(order) {
+            if (order?.status === 'Pending' && this.orderAwaitingVerification(order)) return 'Menunggu Verifikasi';
             if (order?.status === 'Pending' && this.orderMsLeft(order) <= 0) return 'Dibatalkan';
             if (order?.status === 'Pending' && this.orderMsLeft(order) > 0) return 'Belum Dibayar';
             return order?.status || '';

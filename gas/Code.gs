@@ -117,6 +117,7 @@ function doPost(e) {
       case 'createIPaymuPayment':     result = createIPaymuPayment(params); break;
       case 'ipaymuCallback':          result = ipaymuCallback(params); break;
       case 'createXenditInvoice':     result = createXenditInvoice(params); break;
+      case 'createXenditInvoiceForOrder': result = createXenditInvoiceForOrder(params); break;
       case 'xenditCallback':          result = xenditCallback(params, e); break;
       case 'confirmPayment':          result = confirmPayment(params); break;
       case 'checkIPaymuOrderStatus':  result = checkIPaymuOrderStatus(params); break;
@@ -1729,26 +1730,8 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   let paymentUrl = null;
   let paymentError = null;
 
-  if (paymentMode === 'xendit') {
-    try {
-      const xnRes = createXenditInvoice({
-        orderId,
-        items:     [{ produk, varian: varian||'-', masaAktif: masaAktif||'-', harga: hargaNum, qty: 1 }],
-        buyerName:  userNama,
-        buyerEmail: userEmail,
-        buyerPhone: userWa,
-        total: hargaNum
-      });
-      if (xnRes.success) paymentUrl = xnRes.paymentUrl;
-      else {
-        paymentError = xnRes.error || 'Gagal membuat sesi pembayaran';
-        Logger.log('createOrder Xendit error: ' + paymentError);
-      }
-    } catch(e) {
-      paymentError = 'Xendit exception: ' + e.message;
-      Logger.log('createOrder Xendit exception: ' + e.message);
-    }
-  }
+  // Mode xendit: invoice TIDAK dibuat di sini — dibuat lazy via createXenditInvoiceForOrder
+  // saat buyer memilih metode VA/E-Wallet (mencegah email invoice prematur)
   // mode manual: paymentUrl tetap null → frontend tampilkan WA payment info
 
   return { success: true, orderId, harga: hargaNum, paymentUrl, paymentError, paymentMode };
@@ -2208,27 +2191,7 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   let paymentUrl = null;
   let paymentError = null;
 
-  if (paymentMode === 'xendit') {
-    try {
-      const xnItems = computedItems;
-      const xnRes = createXenditInvoice({
-        orderId,
-        items:     xnItems,
-        buyerName:  userNama,
-        buyerEmail: userEmail,
-        buyerPhone: userWa,
-        total: totalHarga
-      });
-      if (xnRes.success) paymentUrl = xnRes.paymentUrl;
-      else {
-        paymentError = xnRes.error || 'Gagal membuat sesi pembayaran';
-        Logger.log('createCartOrder Xendit error: ' + paymentError);
-      }
-    } catch(e) {
-      paymentError = 'Xendit exception: ' + e.message;
-      Logger.log('createCartOrder Xendit exception: ' + e.message);
-    }
-  }
+  // Mode xendit: invoice dibuat lazy via createXenditInvoiceForOrder saat buyer pilih VA/E-Wallet
 
   return { success: true, orderId, total: totalHarga, paymentUrl, paymentError, paymentMode };
 }
@@ -3292,6 +3255,31 @@ function xenditGetTransactions(params) {
     }))};
   }
   return { success: false, error: 'Gagal ambil transaksi' };
+}
+
+// Buat invoice Xendit dari data order di sheet (server-side, anti-tamper)
+// Dipanggil LAZY saat buyer memilih metode VA/E-Wallet — bukan saat order dibuat,
+// agar email invoice Xendit tidak terkirim sebelum buyer memilih metode bayar
+function createXenditInvoiceForOrder({ orderId }) {
+  const id = String(orderId || '').trim();
+  if (!id) return { success: false, error: 'Order ID wajib diisi' };
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: false, error: 'Sheet tidak ditemukan' };
+  const data = sheet.getDataRange().getValues();
+  const items = [];
+  let total = 0, nama = '', email = '', wa = '';
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() !== id) continue;
+    nama  = nama  || String(data[i][2] || '');
+    email = email || String(data[i][3] || '');
+    wa    = wa    || String(data[i][4] || '');
+    const harga = Number(data[i][8]) || 0;
+    items.push({ produk: String(data[i][5] || ''), varian: String(data[i][6] || '-'), masaAktif: String(data[i][7] || '-'), harga: harga, qty: 1 });
+    total += harga;
+  }
+  if (!items.length) return { success: false, error: 'Order tidak ditemukan' };
+  if (total <= 0)     return { success: false, error: 'Nominal order tidak valid' };
+  return createXenditInvoice({ orderId: id, items: items, buyerName: nama, buyerEmail: email, buyerPhone: wa, total: total });
 }
 
 function createXenditInvoice({ orderId, items, buyerName, buyerEmail, buyerPhone, total }) {

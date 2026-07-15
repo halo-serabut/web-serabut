@@ -290,6 +290,12 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - Deploy: QRIS_STATIC sudah diset di Script Properties; GAS @162 live; clasp login sekarang pakai halo@serabut.id (pemilik script — editor lintas domain tidak boleh deploy); E2E verified: order test SRB-19919458/SRB-20160799 → chooser → QR asli → klaim → WA grup masuk + sheet Menunggu Verifikasi (order test boleh dihapus dari sheet)
   - QR merchant asli TIDAK ada di repo (uat/qris-live-1137.png sudah dihapus, mockup pakai QR dummy)
 
+- [2026-07-15 sesi 2] Selesai & LIVE (GAS @163, APP_VERSION 20260715-3): 3 fix pasca-rilis QRIS:
+  - Badge status order konsisten: `orderAwaitingVerification()` — Pending + paymentStatus 'Menunggu Verifikasi' → badge "Menunggu Verifikasi" (kuning), tidak lagi "Belum Dibayar"; order yang sudah klaim QRIS tidak auto-"Dibatalkan" saat lewat expiry
+  - Email invoice Xendit prematur: createOrder/createCartOrder TIDAK lagi membuat invoice di awal — GAS baru `createXenditInvoiceForOrder {orderId}` (data dari sheet, anti-tamper) dipanggil lazy saat buyer klik opsi VA/E-Wallet di chooser; `payViaIPaymu` juga dialihkan ke endpoint ini (sebelumnya kirim currentOrderIPaymuData yang selalu null)
+  - paymentChooseXendit: loading state "Preparing secure payment page…" + error inline di chooser
+  - E2E verified: order SRB-22727338 dibuat TANPA paymentUrl → klik opsi 2 → invoice dibuat on-demand → redirect checkout.xendit.co OK
+
 ## Current Focus
 - **QRIS checkout LIVE** (GAS @162 + frontend 20260715-1) — verifikasi pembayaran manual via WA grup + app Dana; admin ubah status di Semua Order
 - **Banner WA gangguan sedang ON** (default lokal true) — admin bisa OFF via tab Pengumuman; setelah admin pernah save, Settings GAS yang menang
