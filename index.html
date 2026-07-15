@@ -1134,7 +1134,7 @@
                             <!-- Items — max 3 visible, sisanya scroll -->
                             <div class="divide-y divide-gray-100 max-h-[264px] overflow-y-auto">
                                 <template x-for="(item, idx) in (flashSale.items?.length ? flashSale.items : [{produk:flashSale.produk,varian:flashSale.varian,harga:flashSale.harga,hargaAsli:flashSale.hargaAsli,diskon:flashSale.diskon}])" :key="idx">
-                                    <div class="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors">
+                                    <div @click="flashSaleBeli(item)" class="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors cursor-pointer">
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center gap-2 mb-0.5">
                                                 <span class="bg-red-500 text-white text-xs font-black px-1.5 py-0.5 rounded-full whitespace-nowrap" x-text="item.diskon+'% OFF'"></span>
@@ -1145,7 +1145,7 @@
                                         </div>
                                         <div class="flex-none flex flex-col items-end gap-1.5">
                                             <div class="text-brand-600 font-black text-base leading-none" x-text="formatPrice(item.harga)"></div>
-                                            <button @click="flashSaleBeli(item)"
+                                            <button
                                                     class="bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-black text-xs px-3 py-1.5 rounded-lg transition-all active:scale-95 whitespace-nowrap">
                                                 Beli →
                                             </button>
@@ -8887,7 +8887,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260715-1',
+        APP_VERSION:      '20260715-2',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
@@ -10521,9 +10521,9 @@ function serabutStore() {
             this.cartOrderIds = [];
             const profileEmail = this.currentUser?.email || '';
             this.cartCheckoutExtra = {
-                guestNama: this.isMember ? (this.currentUser?.nama||'') : '',
+                guestNama: this.isMember ? String(this.currentUser?.nama||'') : '',
                 guestEmail: this.isMember ? profileEmail : '',
-                guestWa: this.isMember ? (this.currentUser?.wa||'') : '',
+                guestWa: this.isMember ? String(this.currentUser?.wa||'') : '',
             };
             this.cartCheckoutModal = true;
         },
@@ -10538,7 +10538,7 @@ function serabutStore() {
             this.cartCheckoutLoading = true;
             const uNama  = this.isMember ? (this.currentUser?.nama||'') : this.cartCheckoutExtra.guestNama.trim();
             const uEmail = this.isMember ? (this.currentUser?.email||'') : this.cartCheckoutExtra.guestEmail.trim();
-            const _rawWa = this.cartCheckoutExtra.guestWa.trim();
+            const _rawWa = String(this.cartCheckoutExtra.guestWa||'').trim();
             const uWa    = this.isMember ? (this.currentUser?.wa||'') : (_rawWa ? '62' + _rawWa.replace(/^0+/, '') : '');
             const items  = this.cart.map(item => {
                 const ex = item.extra || {};
