@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout — Serabut Store</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }</script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<style>
+.tnum{font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body class="bg-white min-h-screen font-sans text-gray-800" x-data="{
+  step: 'choose',
+  claimed: false,
+  claiming: false,
+  summaryOpen: false,
+  countdown: 900,
+  get expired() { return this.countdown <= 0 && !this.claimed },
+  fmtTime() { const m=Math.floor(this.countdown/60), s=this.countdown%60; return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); },
+  claimPay() { this.claiming=true; setTimeout(()=>{ this.claiming=false; this.claimed=true; }, 1200); },
+  regenerate() { this.countdown=900; },
+  startTimer() { setInterval(()=>{ if(this.step==='qris' && !this.claimed && this.countdown>0) this.countdown--; }, 1000); }
+}" x-init="startTimer()">
+
+<div class="min-h-screen flex flex-col lg:flex-row">
+
+  <!-- LEFT: payment -->
+  <main class="flex-1 bg-white px-5 py-6 lg:py-10 order-2 lg:order-1 flex flex-col">
+    <div class="w-full max-w-xl mx-auto">
+      <div class="hidden lg:flex items-center gap-3 mb-10">
+        <img src="/logo.png" alt="Serabut Store logo" class="w-10 h-10 rounded-full" onerror="this.style.display='none'">
+        <span class="text-xl font-bold text-red-600">Serabut Store</span>
+      </div>
+
+      <div class="text-center mb-8">
+        <div class="text-[11px] lg:text-xs font-semibold tracking-wide text-gray-500 uppercase">Pay before July 15, 2026 at 11:46 PM</div>
+        <div class="text-3xl lg:text-4xl font-bold text-red-600 mt-2 tnum">IDR 1,<span class="text-red-400">137</span></div>
+        <div class="text-xs text-gray-400 mt-1">Includes unique code <b class="text-gray-500">137</b> to verify your order</div>
+      </div>
+
+      <!-- STEP 1 -->
+      <template x-if="step==='choose'">
+        <div class="max-w-lg mx-auto w-full">
+          <div class="text-xs font-semibold tracking-wide text-gray-500 uppercase mb-4">Payment method</div>
+
+          <button @click="step='qris'" class="w-full min-h-[44px] text-left border-2 border-red-500 rounded-xl p-4 mb-4 hover:bg-red-50 active:scale-[0.99] transition flex items-center gap-4 relative cursor-pointer" aria-label="Pay with QRIS, free, no admin fee">
+            <span class="absolute -top-2.5 left-4 bg-green-100 text-green-700 text-[11px] font-bold px-2 py-0.5 rounded-full">FREE — no admin fee</span>
+            <svg class="w-8 h-8 text-red-600 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z"/></svg>
+            <span class="flex-1 min-w-0">
+              <span class="block font-bold">QRIS</span>
+              <span class="block text-xs text-gray-500 mt-0.5">Scan with GoPay, Dana, OVO, ShopeePay, or any mobile banking app. Verified in 1–5 min (8 AM–10 PM).</span>
+            </span>
+            <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+
+          <button class="w-full min-h-[44px] text-left border border-gray-200 rounded-xl p-4 hover:bg-gray-50 active:scale-[0.99] transition flex items-center gap-4 relative cursor-pointer" aria-label="Pay with virtual account or e-wallet, admin fee applies">
+            <span class="absolute -top-2.5 left-4 bg-amber-100 text-amber-700 text-[11px] font-bold px-2 py-0.5 rounded-full">+ admin fee</span>
+            <svg class="w-8 h-8 text-gray-500 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+            <span class="flex-1 min-w-0">
+              <span class="block font-bold">Virtual Account / E-Wallet</span>
+              <span class="block text-xs text-gray-500 mt-0.5">Bank transfer, e-wallet, retail outlets. Instant automatic confirmation, 24/7.</span>
+            </span>
+            <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+
+          <div class="flex items-center justify-center gap-1.5 mt-8 text-[11px] text-gray-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+            Secure payment · Amount verified server-side
+          </div>
+        </div>
+      </template>
+
+      <!-- STEP 2 -->
+      <template x-if="step==='qris'">
+        <div class="max-w-sm mx-auto w-full">
+          <button x-show="!claimed" @click="step='choose'" class="min-h-[44px] text-xs text-gray-500 hover:text-red-600 flex items-center gap-1 cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg> Change payment method
+          </button>
+
+          <div class="border border-gray-200 rounded-2xl p-6 bg-white shadow-sm text-center">
+
+            <!-- active QR -->
+            <template x-if="!claimed && !expired">
+              <div>
+                <div class="font-bold">Scan to pay</div>
+                <div class="text-xs text-gray-500 mb-4">Serabut Store · NMID ID1021…059</div>
+
+                <img class="w-52 h-52 mx-auto rounded-lg border border-gray-100"
+                     width="208" height="208"
+                     src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=MOCKUP-SAMPLE-NOT-REAL-QRIS"
+                     alt="Dynamic QRIS payment code, amount IDR 1,137">
+
+                <div class="mt-4 text-2xl font-bold text-gray-900 tnum">IDR 1,<span class="text-red-600">137</span></div>
+                <div class="text-[11px] text-gray-500 mt-1 leading-relaxed">Amount is locked in the QR — no manual entry needed.</div>
+
+                <div class="flex items-center justify-center gap-2 mt-4 text-xs font-semibold tnum" :class="countdown<300?'text-red-600':'text-gray-600'" role="timer" aria-label="Time remaining">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 3"/></svg>
+                  Expires in <span x-text="fmtTime()"></span>
+                </div>
+
+                <div class="mt-4 text-left bg-gray-50 rounded-xl p-3.5">
+                  <div class="text-[11px] font-bold text-gray-600 uppercase tracking-wide mb-2">How to pay</div>
+                  <ol class="text-xs text-gray-600 space-y-1.5">
+                    <li class="flex gap-2"><span class="w-4 h-4 bg-red-100 text-red-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">1</span>Open GoPay, Dana, OVO, or your banking app</li>
+                    <li class="flex gap-2"><span class="w-4 h-4 bg-red-100 text-red-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">2</span>Scan this QR — the amount fills in automatically</li>
+                    <li class="flex gap-2"><span class="w-4 h-4 bg-red-100 text-red-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">3</span>Confirm payment, then tap the button below</li>
+                  </ol>
+                </div>
+
+                <button @click="claimPay()" :disabled="claiming" class="w-full min-h-[48px] mt-5 bg-red-600 hover:bg-red-700 active:scale-[0.99] disabled:opacity-70 text-white font-bold py-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-2">
+                  <svg x-show="claiming" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  <span x-text="claiming ? 'Notifying our team…' : &quot;I've completed the payment&quot;"></span>
+                </button>
+              </div>
+            </template>
+
+            <!-- expired -->
+            <template x-if="expired">
+              <div>
+                <div class="w-14 h-14 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                  <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 3"/></svg>
+                </div>
+                <div class="font-bold text-gray-900 text-lg">QR code expired</div>
+                <div class="text-xs text-gray-500 mt-2">Don't worry — your order is still saved. Generate a new QR to continue.</div>
+                <button @click="regenerate()" class="w-full min-h-[48px] mt-5 bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-bold py-3 rounded-xl transition cursor-pointer">
+                  Generate new QR
+                </button>
+                <button class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Already paid? Contact support</button>
+              </div>
+            </template>
+
+            <!-- claimed -->
+            <template x-if="claimed">
+              <div>
+                <div class="w-14 h-14 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
+                  <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div class="font-bold text-gray-900 text-lg">Payment received — verifying</div>
+                <div class="text-xs text-gray-500 mt-2 leading-relaxed">Our team has been notified and is checking your payment of <b class="tnum">IDR 1,137</b>. This usually takes 1–5 minutes. We'll confirm via WhatsApp and email.</div>
+
+                <button class="w-full min-h-[48px] mt-5 bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-bold py-3 rounded-xl transition cursor-pointer">View my orders</button>
+                <button class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Back to home</button>
+              </div>
+            </template>
+          </div>
+
+          <div class="text-center mt-4">
+            <a href="#" class="text-[11px] text-gray-400 hover:text-red-600 underline underline-offset-2">Having trouble? Chat with support</a>
+          </div>
+        </div>
+      </template>
+    </div>
+  </main>
+
+  <!-- RIGHT: order summary -->
+  <aside class="w-full lg:w-[420px] xl:w-[460px] bg-gray-50 border-b lg:border-b-0 lg:border-l border-gray-200 order-1 lg:order-2">
+    <div class="lg:hidden px-5 pt-4 pb-1 flex items-center gap-2">
+      <img src="/logo.png" alt="Serabut Store logo" class="w-7 h-7 rounded-full" onerror="this.style.display='none'">
+      <span class="font-bold text-red-600">Serabut Store</span>
+    </div>
+    <div class="lg:hidden px-5 py-2">
+    <button class="w-full min-h-[52px] px-4 py-3 flex items-center justify-between cursor-pointer bg-white border border-gray-200 rounded-xl shadow-sm active:scale-[0.99] transition" @click="summaryOpen=!summaryOpen" :aria-expanded="summaryOpen" aria-controls="order-summary">
+      <span class="flex items-center gap-2.5 min-w-0">
+        <svg class="w-5 h-5 text-red-600 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z"/></svg>
+        <span class="text-left min-w-0">
+          <span class="block text-sm font-semibold text-gray-800 truncate">Order summary · 1 item</span>
+          <span class="block text-[11px] font-semibold text-red-600" x-text="summaryOpen ? 'Hide details' : 'View details'"></span>
+        </span>
+      </span>
+      <span class="flex items-center gap-2 shrink-0">
+        <span class="text-sm font-bold text-red-600 tnum">IDR 1,137</span>
+        <svg class="w-4 h-4 text-red-600 transition-transform" :class="summaryOpen?'rotate-180':''" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </span>
+    </button>
+    </div>
+
+    <div id="order-summary" class="px-5 pb-5 lg:px-8 lg:py-10" :class="summaryOpen?'block':'hidden lg:block'">
+      <div class="hidden lg:block text-xl font-bold text-gray-900 mb-1">Order summary</div>
+      <div class="text-xs text-gray-500 mb-5 lg:mb-6">Invoice #: <span class="font-semibold text-gray-700">SRB-260714-021</span></div>
+
+      <div class="flex items-start gap-2 text-sm mb-3">
+        <svg class="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h6M5 4h14a1 1 0 011 1v16l-3-2-2 2-3-2-3 2-2-2-3 2V5a1 1 0 011-1z"/></svg>
+        <div><span class="font-semibold">Description</span><br><span class="text-gray-500 text-xs">Serabut Store — Order SRB-260714-021</span></div>
+      </div>
+      <div class="flex items-start gap-2 text-sm pb-4 border-b border-gray-200">
+        <svg class="w-4 h-4 text-red-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 3"/></svg>
+        <div>Pay before <span class="font-semibold">July 15, 2026 at 11:46 PM</span></div>
+      </div>
+
+      <div class="py-4 border-b border-gray-200">
+        <div class="flex justify-between text-sm gap-3">
+          <div class="min-w-0"><div class="font-medium">Microsoft Office 365 (Web) — 1 Year</div><div class="text-xs text-gray-500 tnum">1 × IDR 1,000</div></div>
+          <div class="font-semibold whitespace-nowrap tnum">IDR 1,000</div>
+        </div>
+      </div>
+
+      <div class="py-4 space-y-2 text-sm tnum">
+        <div class="flex justify-between text-gray-600"><span>Subtotal</span><span>IDR 1,000</span></div>
+        <div class="flex justify-between text-gray-600"><span>Unique verification code</span><span>IDR 137</span></div>
+        <div class="flex justify-between text-gray-600"><span>Admin fee</span><span class="text-green-600 font-semibold">FREE</span></div>
+      </div>
+
+      <div class="flex justify-between items-center pt-4 border-t-2 border-gray-300">
+        <span class="font-bold text-gray-900">Total due</span>
+        <span class="text-xl lg:text-2xl font-bold text-red-600 tnum">IDR 1,137</span>
+      </div>
+    </div>
+  </aside>
+
+</div>
+</body>
+</html>

@@ -7297,6 +7297,137 @@
 </div>
 
 <!-- iPaymu return notification -->
+<!-- ── Payment Method Chooser — QRIS (free) vs Xendit ── -->
+<div x-show="paymentChoice" class="fixed inset-0 z-[500] flex items-center justify-center px-4" style="display:none">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-3xl shadow-xl max-w-md w-full p-6">
+        <div class="text-center mb-5">
+            <h3 class="font-black text-gray-900 text-xl mb-2">Order created!</h3>
+            <div class="inline-block bg-brand-50 text-brand-600 font-bold text-sm px-4 py-1.5 rounded-full" x-text="paymentChoice?.orderId"></div>
+            <p class="text-gray-500 text-sm mt-3">Choose how you'd like to pay</p>
+        </div>
+
+        <button @click="paymentChooseQris()" class="w-full min-h-[44px] text-left border-2 border-brand-500 rounded-xl p-4 mb-4 hover:bg-brand-50 active:scale-[0.99] transition flex items-center gap-3 relative cursor-pointer">
+            <span class="absolute -top-2.5 left-4 bg-green-100 text-green-700 text-[11px] font-bold px-2 py-0.5 rounded-full">FREE — no admin fee</span>
+            <svg class="w-7 h-7 text-brand-600 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z"/></svg>
+            <span class="flex-1 min-w-0">
+                <span class="block font-bold text-gray-800 text-sm">QRIS</span>
+                <span class="block text-[11px] text-gray-500 mt-0.5">Scan with GoPay, Dana, OVO, ShopeePay, or m-banking. Verified in 1–5 min (8 AM–10 PM).</span>
+            </span>
+            <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+
+        <button @click="paymentChooseXendit()" class="w-full min-h-[44px] text-left border border-gray-200 rounded-xl p-4 hover:bg-gray-50 active:scale-[0.99] transition flex items-center gap-3 relative cursor-pointer">
+            <span class="absolute -top-2.5 left-4 bg-amber-100 text-amber-700 text-[11px] font-bold px-2 py-0.5 rounded-full">+ admin fee</span>
+            <svg class="w-7 h-7 text-gray-500 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/></svg>
+            <span class="flex-1 min-w-0">
+                <span class="block font-bold text-gray-800 text-sm">Virtual Account / E-Wallet</span>
+                <span class="block text-[11px] text-gray-500 mt-0.5">Bank transfer, e-wallet, retail outlets. Instant automatic confirmation, 24/7.</span>
+            </span>
+            <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </button>
+
+        <div class="flex items-center justify-center gap-1.5 mt-5 text-[11px] text-gray-400">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+            Secure payment · Amount verified server-side
+        </div>
+    </div>
+</div>
+
+<!-- ── QRIS Payment Modal ── -->
+<div x-show="qrisPay" class="fixed inset-0 z-[500] flex items-center justify-center px-4 py-6" style="display:none">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-3xl shadow-xl max-w-sm w-full p-6 text-center max-h-[92vh] overflow-y-auto">
+
+        <!-- loading -->
+        <template x-if="qrisPay?.loading">
+            <div class="py-10">
+                <svg class="w-10 h-10 mx-auto animate-spin text-brand-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <p class="text-sm text-gray-500 mt-4">Preparing your QRIS…</p>
+            </div>
+        </template>
+
+        <!-- error -->
+        <template x-if="qrisPay && !qrisPay.loading && qrisPay.error && !qrisPay.claimed">
+            <div class="py-6">
+                <div class="w-14 h-14 mx-auto bg-red-50 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div class="font-bold text-gray-900" x-text="qrisPay?.error"></div>
+                <button @click="qrisBackToChooser()" class="w-full min-h-[44px] mt-5 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition cursor-pointer">Back to payment options</button>
+                <button @click="closeQrisPay()" class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Close</button>
+            </div>
+        </template>
+
+        <!-- active QR -->
+        <template x-if="qrisPay && !qrisPay.loading && !qrisPay.error && !qrisPay.claimed && qrisPay.countdown > 0">
+            <div>
+                <button @click="qrisBackToChooser()" class="min-h-[44px] text-xs text-gray-500 hover:text-brand-600 flex items-center gap-1 cursor-pointer -mt-2 mb-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg> Change payment method
+                </button>
+                <div class="font-bold text-gray-900">Scan to pay</div>
+                <div class="text-xs text-gray-500 mb-4">Serabut Store · QRIS</div>
+
+                <div id="qrisQrBox" class="w-52 h-52 mx-auto rounded-lg border border-gray-100 flex items-center justify-center [&>img]:rounded [&>canvas]:rounded"></div>
+
+                <div class="mt-4 text-2xl font-bold text-gray-900" style="font-variant-numeric:tabular-nums">
+                    IDR <span x-text="(qrisPay?.amount||0).toLocaleString('en-US').slice(0,-3)"></span><span class="text-brand-600" x-text="(qrisPay?.amount||0).toLocaleString('en-US').slice(-3)"></span>
+                </div>
+                <div class="text-[11px] text-gray-500 mt-1 leading-relaxed">Amount is locked in the QR — no manual entry needed.<br>The last 3 digits are your order's unique verification code.</div>
+
+                <div class="flex items-center justify-center gap-2 mt-4 text-xs font-semibold" :class="qrisPay?.countdown < 300 ? 'text-brand-600' : 'text-gray-600'" style="font-variant-numeric:tabular-nums" role="timer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 3"/></svg>
+                    Expires in <span x-text="qrisFmtTime()"></span>
+                </div>
+
+                <div class="mt-4 text-left bg-gray-50 rounded-xl p-3.5">
+                    <div class="text-[11px] font-bold text-gray-600 uppercase tracking-wide mb-2">How to pay</div>
+                    <ol class="text-xs text-gray-600 space-y-1.5">
+                        <li class="flex gap-2"><span class="w-4 h-4 bg-brand-50 text-brand-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">1</span>Open GoPay, Dana, OVO, or your banking app</li>
+                        <li class="flex gap-2"><span class="w-4 h-4 bg-brand-50 text-brand-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">2</span>Scan this QR — the amount fills in automatically</li>
+                        <li class="flex gap-2"><span class="w-4 h-4 bg-brand-50 text-brand-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">3</span>Confirm payment, then tap the button below</li>
+                    </ol>
+                </div>
+
+                <button @click="qrisClaim()" :disabled="qrisPay?.claiming" class="w-full min-h-[48px] mt-5 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] disabled:opacity-70 text-white font-bold py-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-2">
+                    <svg x-show="qrisPay?.claiming" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    <span x-text="qrisPay?.claiming ? 'Notifying our team…' : &quot;I've completed the payment&quot;"></span>
+                </button>
+                <div class="text-[11px] text-gray-400 mt-3">Our team gets notified instantly and verifies within 1–5 minutes.</div>
+            </div>
+        </template>
+
+        <!-- expired -->
+        <template x-if="qrisPay && !qrisPay.loading && !qrisPay.error && !qrisPay.claimed && qrisPay.countdown <= 0">
+            <div class="py-4">
+                <div class="w-14 h-14 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 3"/></svg>
+                </div>
+                <div class="font-bold text-gray-900 text-lg">QR code expired</div>
+                <div class="text-xs text-gray-500 mt-2">Don't worry — your order is still saved. Generate a new QR to continue.</div>
+                <button @click="qrisPay.countdown = 900; $nextTick(() => { const el=document.getElementById('qrisQrBox'); if(el && window.QRCode && qrisPay?.qrString){ el.innerHTML=''; new QRCode(el,{text:qrisPay.qrString,width:208,height:208,correctLevel:QRCode.CorrectLevel.M}); } })" class="w-full min-h-[48px] mt-5 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition cursor-pointer">Generate new QR</button>
+                <button @click="qrisClaim()" class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Already paid? Notify our team</button>
+            </div>
+        </template>
+
+        <!-- claimed -->
+        <template x-if="qrisPay?.claimed">
+            <div class="py-2">
+                <div class="w-14 h-14 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div class="font-bold text-gray-900 text-lg">Payment received — verifying</div>
+                <div class="text-xs text-gray-500 mt-2 leading-relaxed">Our team has been notified and is checking your payment of <b style="font-variant-numeric:tabular-nums" x-text="'IDR ' + (qrisPay?.amount||0).toLocaleString('en-US')"></b>. This usually takes 1–5 minutes. We'll confirm via WhatsApp and email.</div>
+
+                <template x-if="currentUser">
+                    <button @click="closeQrisPay(true)" class="w-full min-h-[48px] mt-5 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition cursor-pointer">View my orders</button>
+                </template>
+                <button @click="closeQrisPay()" class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Back to home</button>
+            </div>
+        </template>
+    </div>
+</div>
+
 <div x-show="iPaymuReturnStatus" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
      role="alert" aria-live="assertive"
      class="fixed left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-auto md:max-w-sm z-[500] toast-top">
@@ -8756,7 +8887,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260709-3',
+        APP_VERSION:      '20260715-1',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
@@ -8931,6 +9062,9 @@ function serabutStore() {
 
         // Reset Password (dari profil — butuh password lama)
         redirectPayment: null, // { orderId, countdown, paymentUrl }
+                paymentChoice: null,   // { orderId, paymentUrl } — pilih QRIS vs Xendit setelah order dibuat
+                qrisPay: null,         // { orderId, amount, baseAmount, uniqueCode, qrString, countdown, claimed, claiming, loading, error, paymentUrl }
+                _qrisTimer: null,
         manualPayment:   null, // { orderId, total } — mode manual WA
         paymentIframe: null,
         legalModal:     null,
@@ -10468,15 +10602,89 @@ function serabutStore() {
         },
 
         startPaymentRedirect(orderId, paymentUrl) {
-            this.redirectPayment = { orderId, paymentUrl, countdown: 3 };
-            const tick = setInterval(() => {
-                this.redirectPayment.countdown--;
-                if (this.redirectPayment.countdown <= 0) {
-                    clearInterval(tick);
-                    this.redirectPayment = null;
-                    window.location.href = paymentUrl;
-                }
+            // Tampilkan pilihan metode (QRIS gratis vs Xendit) — tidak lagi auto-redirect
+            this.orderModal = false;
+            this.cartCheckoutModal = false;
+            this.paymentChoice = { orderId, paymentUrl };
+        },
+
+        paymentChooseXendit() {
+            const p = this.paymentChoice;
+            this.paymentChoice = null;
+            if (p?.paymentUrl) window.location.href = p.paymentUrl;
+        },
+
+        _loadQRCodeLib() {
+            return new Promise((resolve) => {
+                if (window.QRCode) return resolve(true);
+                const s = document.createElement('script');
+                s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+                s.onload = () => resolve(true);
+                s.onerror = () => resolve(false);
+                document.head.appendChild(s);
+            });
+        },
+
+        async paymentChooseQris() {
+            const p = this.paymentChoice;
+            if (!p) return;
+            this.paymentChoice = null;
+            this.qrisPay = { orderId: p.orderId, paymentUrl: p.paymentUrl || '', loading: true, error: '', claimed: false, claiming: false, countdown: 900, amount: 0, baseAmount: 0, uniqueCode: 0, qrString: '' };
+            const [libOk, d] = await Promise.all([
+                this._loadQRCodeLib(),
+                this.gasPost({ action: 'getQrisPayment', orderId: p.orderId }),
+            ]);
+            if (!this.qrisPay) return; // sudah ditutup user
+            if (!d.success || !libOk) {
+                this.qrisPay.error = d.error || 'Failed to load QRIS. Please try again.';
+                this.qrisPay.loading = false;
+                return;
+            }
+            Object.assign(this.qrisPay, { amount: d.amount, baseAmount: d.baseAmount, uniqueCode: d.uniqueCode, qrString: d.qrString, loading: false });
+            this.$nextTick(() => {
+                const el = document.getElementById('qrisQrBox');
+                if (el && window.QRCode) { el.innerHTML = ''; new QRCode(el, { text: d.qrString, width: 208, height: 208, correctLevel: QRCode.CorrectLevel.M }); }
+            });
+            clearInterval(this._qrisTimer);
+            this._qrisTimer = setInterval(() => {
+                if (this.qrisPay && !this.qrisPay.claimed && this.qrisPay.countdown > 0) this.qrisPay.countdown--;
             }, 1000);
+        },
+
+        qrisFmtTime() {
+            const c = Math.max(0, this.qrisPay?.countdown || 0);
+            return String(Math.floor(c / 60)).padStart(2, '0') + ':' + String(c % 60).padStart(2, '0');
+        },
+
+        qrisBackToChooser() {
+            const q = this.qrisPay;
+            this.closeQrisPay();
+            if (q) this.paymentChoice = { orderId: q.orderId, paymentUrl: q.paymentUrl };
+        },
+
+        async qrisClaim() {
+            if (!this.qrisPay || this.qrisPay.claiming) return;
+            this.qrisPay.claiming = true;
+            this.qrisPay.error = '';
+            try {
+                const d = await this.gasPost({ action: 'qrisClaimPaid', orderId: this.qrisPay.orderId });
+                if (d.success) this.qrisPay.claimed = true;
+                else this.qrisPay.error = d.error || 'Failed to notify our team. Please try again.';
+            } catch { this.qrisPay.error = 'Connection failed. Please try again.'; }
+            this.qrisPay.claiming = false;
+        },
+
+        closeQrisPay(showOrders) {
+            clearInterval(this._qrisTimer);
+            const orderId = this.qrisPay?.orderId;
+            this.qrisPay = null;
+            if (showOrders && this.currentUser) {
+                this.profileOverlay = true; document.body.style.overflow = 'hidden';
+                this.loadProfile();
+                this.profileTab = 'pesanan';
+                this.pendingOrderDetailId = orderId;
+                this.loadOrders(true);
+            }
         },
 
         openPaymentIframe(orderId, paymentUrl) {

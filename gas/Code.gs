@@ -120,6 +120,8 @@ function doPost(e) {
       case 'xenditCallback':          result = xenditCallback(params, e); break;
       case 'confirmPayment':          result = confirmPayment(params); break;
       case 'checkIPaymuOrderStatus':  result = checkIPaymuOrderStatus(params); break;
+      case 'getQrisPayment':          result = getQrisPayment(params); break;
+      case 'qrisClaimPaid':           result = qrisClaimPaid(params); break;
       case 'cancelOrder':             result = cancelOrder(params); break;
       case 'requestDeleteAccount':    result = requestDeleteAccount(params); break;
       // CS
@@ -3734,6 +3736,23 @@ function testWAGroupNotif() {
   Logger.log('Mengirim test WA ke grup...');
   sendWAToGroup(msg);
   Logger.log('Selesai. Cek grup WA.');
+}
+
+// Test notif ORDER MASUK ke WAG — format sama dengan groupMsg di createOrder (UNPAID).
+// Jalankan dari editor GAS untuk verifikasi token Fonnte baru + nomor sudah masuk grup.
+function testOrderMasukWAG() {
+  const msg = `*ORDER BARU: Microsoft Office 365 (Web)* [TEST]\n` +
+    `Order ID: *SRB-TEST-002*\n` +
+    `Varian: Personal\n` +
+    `Durasi: 1 Tahun\n` +
+    `Nama: Eko Harianto\n` +
+    `Email Aktif: test@gmail.com\n` +
+    `No WA: 628881700555\n` +
+    `Total: Rp 35.000\n` +
+    `Status: *UNPAID*`;
+  Logger.log('Mengirim test order masuk ke grup...');
+  sendWAToGroup(msg);
+  Logger.log('Selesai. Cek grup WA — kalau tidak masuk, cek Execution log (respons Fonnte) & pastikan nomor baru sudah join grup.');
 }
 
 function testSyncOrders() {
