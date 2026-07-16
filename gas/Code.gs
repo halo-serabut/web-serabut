@@ -118,6 +118,7 @@ function doPost(e) {
       case 'ipaymuCallback':          result = ipaymuCallback(params); break;
       case 'createXenditInvoice':     result = createXenditInvoice(params); break;
       case 'createXenditInvoiceForOrder': result = createXenditInvoiceForOrder(params); break;
+      case 'createXenditVA':          result = createXenditVA(params); break;
       case 'xenditCallback':          result = xenditCallback(params, e); break;
       case 'confirmPayment':          result = confirmPayment(params); break;
       case 'checkIPaymuOrderStatus':  result = checkIPaymuOrderStatus(params); break;
@@ -3282,6 +3283,81 @@ function createXenditInvoiceForOrder({ orderId }) {
   return createXenditInvoice({ orderId: id, items: items, buyerName: nama, buyerEmail: email, buyerPhone: wa, total: total });
 }
 
+// ────────────────────────────────────────────────────────
+//  XENDIT FIXED VIRTUAL ACCOUNT — bayar langsung di serabut.id
+//  tanpa lewat halaman checkout Xendit. Konfirmasi via webhook FVA paid.
+// ────────────────────────────────────────────────────────
+const XENDIT_VA_BANKS = ['BNI', 'BRI', 'BSI', 'CIMB', 'MANDIRI', 'PERMATA'];
+
+// Fee VA dibebankan ke buyer = Rp 4.000 (rate kontrak flat semua bank);
+// PPN 11% (Rp 440) ditanggung merchant — keputusan owner 2026-07-16.
+// Override via Settings sheet key 'xendit.vafee' (angka rupiah).
+// ponytail: flat semua bank; ganti ke map per-bank kalau rate kontrak ternyata beda
+function _xenditVAFee() {
+  try {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_SETTINGS);
+    if (sheet) {
+      const data = sheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]).trim() === 'xendit.vafee') {
+          const n = Number(data[i][1]);
+          if (n > 0) return n;
+        }
+      }
+    }
+  } catch (e) {}
+  return 4000;
+}
+
+function createXenditVA({ orderId, bankCode }) {
+  const id   = String(orderId || '').trim();
+  const bank = String(bankCode || '').trim().toUpperCase();
+  if (!id) return { success: false, error: 'Order ID wajib diisi' };
+  if (XENDIT_VA_BANKS.indexOf(bank) < 0) return { success: false, error: 'Bank tidak didukung' };
+
+  // Idempotent per order+bank — klik ulang bank yang sama = VA yang sama
+  const cache  = CacheService.getScriptCache();
+  const cKey   = 'xva_' + id + '_' + bank;
+  const cached = cache.get(cKey);
+  if (cached) return JSON.parse(cached);
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
+  if (!sheet) return { success: false, error: 'Sheet tidak ditemukan' };
+  const data = sheet.getDataRange().getValues();
+  let total = 0, found = false;
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]).trim() !== id) continue;
+    found = true;
+    total += Number(data[i][8]) || 0;
+  }
+  if (!found)     return { success: false, error: 'Order tidak ditemukan' };
+  if (total <= 0) return { success: false, error: 'Nominal order tidak valid' };
+
+  const fee    = _xenditVAFee();
+  const amount = total + fee;
+  const expiry = new Date(Date.now() + 24 * 3600 * 1000);
+  const res = _xenditRequest('/callback_virtual_accounts', {
+    external_id:     id,
+    bank_code:       bank,
+    name:            'Serabut Store',
+    is_closed:       true,       // nominal terkunci — transfer selain expected_amount ditolak bank
+    is_single_use:   true,
+    expected_amount: amount,
+    expiration_date: expiry.toISOString(),
+  });
+  if (!res || !res.account_number) {
+    return { success: false, error: (res && (res.message || res.error_code)) || 'Gagal membuat Virtual Account' };
+  }
+  const out = {
+    success: true, orderId: id, bankCode: bank,
+    accountNumber: String(res.account_number),
+    amount: amount, baseAmount: total, fee: fee,
+    expiresAt: res.expiration_date || expiry.toISOString(),
+  };
+  try { cache.put(cKey, JSON.stringify(out), 21600); } catch (e) {}
+  return out;
+}
+
 function createXenditInvoice({ orderId, items, buyerName, buyerEmail, buyerPhone, total }) {
   const xenItems = items.map(it => ({
     name:     it.produk + (it.varian && it.varian!=='-' ? ' - '+it.varian : '') + (it.masaAktif && it.masaAktif!=='-' ? ' ('+it.masaAktif+')' : ''),
@@ -3376,9 +3452,16 @@ function xenditCallback(params, e) {
   }
 
   // Xendit sends `status` field: PAID, EXPIRED, PENDING
-  const status   = String(params.status || '').toUpperCase();
+  let status     = String(params.status || '').toUpperCase();
   const extId    = String(params.external_id || params.id || '').trim();
-  const method   = String(params.payment_method || params.payment_channel || 'Xendit').trim();
+  let method     = String(params.payment_method || params.payment_channel || 'Xendit').trim();
+
+  // Callback FVA paid (Fixed VA) tidak punya field `status` — kehadiran
+  // callback_virtual_account_id + amount berarti dana sudah masuk
+  if (!status && params.callback_virtual_account_id) {
+    status = 'PAID';
+    method = ('VA ' + String(params.bank_code || '')).trim();
+  }
 
   if (!extId) return { success: false, error: 'external_id kosong' };
 

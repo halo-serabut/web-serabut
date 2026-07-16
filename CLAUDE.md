@@ -298,7 +298,17 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 
 - [2026-07-15 sesi 3] Fix: opsi "Virtual Account / E-Wallet" di chooser grey/tak bisa diklik (APP_VERSION 20260715-4) — `:disabled="paymentChoice?.loading"` dengan key `loading` TIDAK ADA di objek → Alpine malah men-set `disabled` (bukan remove); fix: `paymentChoice` selalu dibuat dengan `loading:false, error:''` eksplisit (startPaymentRedirect + qrisBackToChooser). Lesson: key yang dipakai binding Alpine harus ada sejak objek dibuat.
 
+- [2026-07-16] Selesai (LOKAL, belum deploy): Xendit Fixed VA langsung di serabut.id — tanpa halaman checkout Xendit (APP_VERSION 20260716-1):
+  - **gas/Code.gs**: `createXenditVA {orderId, bankCode}` — bank whitelist BNI/BRI/BSI/CIMB/MANDIRI/PERMATA (channel "Fixed" yang aktif di dashboard Xendit), total dari sheet (anti-tamper) + fee, POST `/callback_virtual_accounts` (is_closed + is_single_use, expected_amount terkunci, expiry 24 jam), idempotent via CacheService 6 jam per order+bank; `_xenditVAFee()` default 4440 override via Settings key `xendit.vafee`; `xenditCallback` extended: payload FVA paid (tanpa field `status`, ada `callback_virtual_account_id`) → PAID, method "VA {bank}" — reuse notif WA grup + buyer WA/email existing; doPost case `createXenditVA`
+  - **index.html**: chooser 3 seksi — QRIS (FREE) / grid 6 bank VA + chip fee "+ Rp 4.440" / "Other methods" (AstraPay, Indomaret, PayLater via invoice Xendit lama); modal `vaPay` baru body-level: nomor VA + copy, nominal + fee + valid until, how-to-pay, note auto-confirm; state `vaPay` + `XND_VA_FEE` (override dari getSettings), methods `paymentChooseVA/vaCopy/vaBackToChooser/closeVaPay/vaExpiryText/vaBankLabel`; `paymentChoice` selalu punya key `vaLoading` (Alpine key gotcha)
+  - QC preview: chooser desktop + mobile OK, modal VA OK, back-to-chooser OK, console bersih, Code.gs parse OK
+  - Fee final: Rp 4.000 ke buyer (rate kontrak flat), PPN Rp 440 ditanggung merchant (keputusan owner)
+  - BUG Alpine varian baru: `:disabled="a || b"` yang hasilnya `''` (string kosong) → Alpine tetap MEN-SET disabled; semua tombol bank mati diam-diam. Fix: `:disabled="!!(a || b)"`. Lesson: binding boolean Alpine harus selalu dipaksa boolean (`!!`), bukan cuma "key harus ada"
+  - GAS sudah deployed @164; createXenditVA diuji live (VA BNI asli terbuat, idempotent, bank invalid ditolak); klik fisik tombol bank → modal VA verified di preview
+  - **DEPLOY CHECKLIST (belum dilakukan)**: (1) clasp push + deploy GAS; (2) dashboard Xendit → Pengaturan → Developer → Webhooks → isi callback URL **"Fixed Virtual Account paid"** = `https://script.google.com/.../exec?action=xenditCallback&token=XENDIT_WEBHOOK_TOKEN` (pola sama dgn invoice); (3) opsional Settings key `xendit.vafee` sesuai rate kontrak (Pengaturan → Tagihan dan Biaya → Struktur biaya); (4) test order kecil E2E
+
 ## Current Focus
+- **Xendit Fixed VA in-site** selesai di lokal (20260716-1) — MENUNGGU deploy GAS + set webhook FVA paid di dashboard Xendit + test E2E
 - **QRIS checkout LIVE** (GAS @162 + frontend 20260715-1) — verifikasi pembayaran manual via WA grup + app Dana; admin ubah status di Semua Order
 - **Banner WA gangguan sedang ON** (default lokal true) — admin bisa OFF via tab Pengumuman; setelah admin pernah save, Settings GAS yang menang
 - iPaymu sudah fully integrated & teruji — sync, WA notif, payment return banner semua working
