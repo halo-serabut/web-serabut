@@ -307,6 +307,8 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - GAS sudah deployed @164; createXenditVA diuji live (VA BNI asli terbuat, idempotent, bank invalid ditolak); klik fisik tombol bank → modal VA verified di preview
   - **DEPLOY CHECKLIST (belum dilakukan)**: (1) clasp push + deploy GAS; (2) dashboard Xendit → Pengaturan → Developer → Webhooks → isi callback URL **"Fixed Virtual Account paid"** = `https://script.google.com/.../exec?action=xenditCallback&token=XENDIT_WEBHOOK_TOKEN` (pola sama dgn invoice); (3) opsional Settings key `xendit.vafee` sesuai rate kontrak (Pengaturan → Tagihan dan Biaya → Struktur biaya); (4) test order kecil E2E
 
+- [2026-07-16 sesi 2] Selesai & LIVE (GAS @165, APP_VERSION 20260716-2): QRIS Manual di admin — tab baru "QRIS Manual" (grup Transaksi): input nominal bebas → QR QRIS Dana dinamis (nominal terkunci); GAS `getQrisManual {amount}` (requireAdmin, 1–100jt, reuse `qrisStaticToDynamic`); frontend state `adminQris` + `adminQrisGenerate()` (QR render client-side qrcodejs, box #adminQrisBox). Catatan: adminToken = `this.currentUser.sessionToken` (BUKAN this.sessionToken). Juga: fix VA fee → Rp 4.000; VA chooser+modal live & teruji klik fisik.
+
 ## Current Focus
 - **Xendit Fixed VA in-site** selesai di lokal (20260716-1) — MENUNGGU deploy GAS + set webhook FVA paid di dashboard Xendit + test E2E
 - **QRIS checkout LIVE** (GAS @162 + frontend 20260715-1) — verifikasi pembayaran manual via WA grup + app Dana; admin ubah status di Semua Order

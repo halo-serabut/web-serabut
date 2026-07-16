@@ -123,6 +123,7 @@ function doPost(e) {
       case 'confirmPayment':          result = confirmPayment(params); break;
       case 'checkIPaymuOrderStatus':  result = checkIPaymuOrderStatus(params); break;
       case 'getQrisPayment':          result = getQrisPayment(params); break;
+      case 'getQrisManual':           result = getQrisManual(params); break;
       case 'qrisClaimPaid':           result = qrisClaimPaid(params); break;
       case 'cancelOrder':             result = cancelOrder(params); break;
       case 'requestDeleteAccount':    result = requestDeleteAccount(params); break;

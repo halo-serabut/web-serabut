@@ -130,6 +130,28 @@ function getQrisPayment(params) {
 }
 
 // ────────────────────────────────────────────────────────
+//  ENDPOINT admin — doPost action: getQrisManual { amount }
+//  QRIS dinamis nominal bebas (tanpa order) — untuk tagihan manual
+// ────────────────────────────────────────────────────────
+function getQrisManual(params) {
+  const authErr = _requireAdmin(params.adminEmail, params.adminToken);
+  if (authErr) return { success: false, error: authErr };
+
+  const amount = Math.round(Number(params.amount));
+  if (!amount || amount < 1 || amount > 100000000) return { success: false, error: 'Nominal tidak valid (1 – 100.000.000)' };
+
+  const qrisStatic = PropertiesService.getScriptProperties().getProperty('QRIS_STATIC');
+  if (!qrisStatic) return { success: false, error: 'QRIS_STATIC belum diset' };
+
+  try {
+    return { success: true, amount: amount, qrString: qrisStaticToDynamic(qrisStatic, amount) };
+  } catch (err) {
+    Logger.log('getQrisManual error: ' + err.message);
+    return { success: false, error: 'Gagal membuat QRIS: ' + err.message };
+  }
+}
+
+// ────────────────────────────────────────────────────────
 //  ENDPOINT — doPost action: qrisClaimPaid { orderId }
 //  Buyer klik "I've completed the payment" → tandai Menunggu Verifikasi
 //  + WA ke grup admin untuk cek app Dana
