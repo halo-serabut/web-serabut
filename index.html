@@ -4441,7 +4441,7 @@
             <!-- Tab Navigation Mobile: horizontal scroll -->
             <div class="relative mb-4 md:hidden">
                 <div class="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto no-scrollbar">
-                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'announce',label:'Pengumuman'},{id:'orders',label:'Semua Order'},{id:'users',label:'Users'},{id:'quotation',label:'Quotation'},{id:'ulasan',label:'Ulasan'},{id:'payment',label:'Pembayaran'},{id:'ipaymu',label:'Xendit'}]" :key="tab.id">
+                    <template x-for="tab in [{id:'flashsale',label:'Diskon'},{id:'hero',label:'Hero'},{id:'kategori',label:'Kategori'},{id:'produk',label:'Produk'},{id:'populer',label:'Populer'},{id:'panduan',label:'Panduan'},{id:'footer',label:'Footer'},{id:'announce',label:'Pengumuman'},{id:'orders',label:'Semua Order'},{id:'users',label:'Users'},{id:'quotation',label:'Quotation'},{id:'ulasan',label:'Ulasan'},{id:'payment',label:'Pembayaran'},{id:'ipaymu',label:'Xendit'},{id:'qrismanual',label:'QRIS Manual'}]" :key="tab.id">
                         <button @click="adminTab=tab.id; adminInitTab(tab.id); $el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'})"
                                 :class="adminTab===tab.id?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500'"
                                 class="px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex-none"
@@ -5783,29 +5783,69 @@
 
             <!-- ── Tab: Xendit ── -->
             <!-- ── QRIS MANUAL — QR dinamis nominal bebas (tagihan manual) ── -->
-            <div x-show="adminTab==='qrismanual'" class="max-w-md">
-                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-5 md:shadow-sm">
+            <div x-show="adminTab==='qrismanual'" class="grid md:grid-cols-2 gap-4 max-w-4xl items-start">
+
+                <!-- Generator -->
+                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
                     <h2 class="font-bold text-gray-900 text-sm mb-1">QRIS Manual</h2>
                     <p class="text-xs text-gray-500 mb-4">Buat QR QRIS (Dana) dengan nominal bebas — untuk tagihan di luar order web. Nominal terkunci di QR.</p>
 
-                    <label class="block text-xs font-semibold text-gray-600 mb-1.5">Nominal (Rp)</label>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1.5" for="adminQrisAmount">Nominal</label>
                     <div class="flex gap-2">
-                        <input type="number" min="1" x-model.number="adminQris.amount" @keydown.enter="adminQrisGenerate()" placeholder="100000"
-                               class="flex-1 min-w-0 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400">
-                        <button @click="adminQrisGenerate()" :disabled="adminQris.loading" class="bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white text-sm font-bold px-5 rounded-xl transition-colors flex items-center gap-2 shrink-0">
+                        <div class="flex-1 min-w-0 relative">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-400 pointer-events-none">Rp</span>
+                            <input id="adminQrisAmount" type="number" inputmode="numeric" min="1" x-model.number="adminQris.amount" @keydown.enter="adminQrisGenerate()" placeholder="100.000"
+                                   class="w-full border border-gray-200 rounded-xl pl-10 pr-3.5 py-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400" style="font-variant-numeric:tabular-nums">
+                        </div>
+                        <button @click="adminQrisGenerate()" :disabled="adminQris.loading" class="min-h-[44px] bg-brand-500 hover:bg-brand-600 active:scale-[0.98] disabled:opacity-50 text-white text-sm font-bold px-4 sm:px-5 rounded-xl transition flex items-center gap-2 shrink-0 cursor-pointer">
                             <svg x-show="adminQris.loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                             <span x-text="adminQris.loading ? 'Membuat…' : 'Buat QR'"></span>
                         </button>
                     </div>
-                    <p x-show="adminQris.error" class="text-xs text-red-600 font-semibold mt-2" x-text="adminQris.error"></p>
+                    <div class="mt-1.5 min-h-[16px]">
+                        <p x-show="adminQris.error" class="text-xs text-red-600 font-semibold" x-text="adminQris.error"></p>
+                        <p x-show="!adminQris.error && adminQris.amount > 0" class="text-[11px] text-gray-400" x-text="'= Rp ' + Number(adminQris.amount||0).toLocaleString('id-ID')"></p>
+                    </div>
 
                     <template x-if="adminQris.qrString">
-                        <div class="mt-5 text-center border-t border-gray-100 pt-5">
-                            <div id="adminQrisBox" class="w-52 h-52 mx-auto rounded-lg border border-gray-100 flex items-center justify-center [&>img]:rounded [&>canvas]:rounded"></div>
+                        <div class="mt-4 text-center border-t border-gray-100 pt-5">
+                            <div id="adminQrisBox" class="w-52 h-52 mx-auto rounded-lg border border-gray-100 flex items-center justify-center [&>img]:rounded [&>canvas]:rounded bg-white"></div>
                             <div class="mt-3 text-2xl font-bold text-gray-900" style="font-variant-numeric:tabular-nums" x-text="'Rp ' + (adminQris.qrAmount||0).toLocaleString('id-ID')"></div>
-                            <div class="text-[11px] text-gray-500 mt-1">Serabut Store · QRIS — nominal terisi otomatis saat discan</div>
+                            <div class="text-[11px] text-gray-500 mt-1 mb-4">Serabut Store · QRIS — nominal terisi otomatis saat discan</div>
+                            <button @click="adminQrisDownload()" class="w-full min-h-[44px] border border-gray-200 hover:border-brand-300 hover:bg-brand-50/40 active:scale-[0.99] text-gray-700 text-sm font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                                Download QR
+                            </button>
                         </div>
                     </template>
+                </div>
+
+                <!-- Riwayat -->
+                <div class="bg-white md:rounded-2xl md:border md:border-gray-100 p-4 md:p-5 md:shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="font-bold text-gray-900 text-sm">Riwayat</h2>
+                        <button x-show="adminQrisHistory.length" @click="adminQrisClearHistory()" class="text-xs text-gray-400 hover:text-red-600 font-semibold transition-colors cursor-pointer">Hapus semua</button>
+                    </div>
+                    <template x-if="!adminQrisHistory.length">
+                        <p class="text-xs text-gray-400 py-6 text-center">Belum ada riwayat — QR yang kamu buat akan tercatat di sini.</p>
+                    </template>
+                    <div class="divide-y divide-gray-50">
+                        <template x-for="(h, i) in adminQrisHistory" :key="h.ts">
+                            <button @click="adminQris.amount = h.amount; adminQrisGenerate()" class="w-full min-h-[52px] flex items-center gap-3 py-2.5 text-left hover:bg-gray-50 active:bg-gray-100 rounded-lg px-2 -mx-2 transition-colors cursor-pointer group">
+                                <span class="w-8 h-8 bg-brand-50 text-brand-600 rounded-lg flex items-center justify-center shrink-0">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/></svg>
+                                </span>
+                                <span class="flex-1 min-w-0">
+                                    <span class="block text-sm font-bold text-gray-800" style="font-variant-numeric:tabular-nums" x-text="'Rp ' + Number(h.amount).toLocaleString('id-ID')"></span>
+                                    <span class="block text-[11px] text-gray-400" x-text="new Date(h.ts).toLocaleString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'})"></span>
+                                </span>
+                                <span class="text-[11px] font-semibold text-gray-300 group-hover:text-brand-600 transition-colors flex items-center gap-1 shrink-0">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                    Buat lagi
+                                </span>
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </div>
 
@@ -8985,7 +9025,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260716-2',
+        APP_VERSION:      '20260716-3',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
@@ -9162,6 +9202,7 @@ function serabutStore() {
         redirectPayment: null, // { orderId, countdown, paymentUrl }
                 vaPay: null,           // { orderId, bank, accountNumber, amount, baseAmount, fee, expiresAt, copied, paymentUrl }
                 adminQris: { amount: '', loading: false, error: '', qrAmount: 0, qrString: '' }, // QRIS Manual admin
+                adminQrisHistory: (() => { try { return JSON.parse(localStorage.getItem('srb_qris_manual_hist') || '[]'); } catch { return []; } })(), // riwayat QRIS Manual (per perangkat)
                 XND_VA_FEE: 4000,      // fee VA dibebankan ke buyer (rate kontrak; PPN ditanggung merchant) — override via Settings 'xendit.vafee'
                 paymentChoice: null,   // { orderId, paymentUrl } — pilih QRIS vs Xendit setelah order dibuat
                 qrisPay: null,         // { orderId, amount, baseAmount, uniqueCode, qrString, countdown, claimed, claiming, loading, error, paymentUrl }
@@ -10782,9 +10823,27 @@ function serabutStore() {
                         const el = document.getElementById('adminQrisBox');
                         if (el && window.QRCode) { el.innerHTML = ''; new QRCode(el, { text: d.qrString, width: 208, height: 208, correctLevel: QRCode.CorrectLevel.M }); }
                     });
+                    // Catat ke riwayat (dedupe entri teratas dengan nominal sama, max 20)
+                    this.adminQrisHistory = [{ amount: d.amount, ts: Date.now() }, ...this.adminQrisHistory.filter(h => h.amount !== d.amount)].slice(0, 20);
+                    try { localStorage.setItem('srb_qris_manual_hist', JSON.stringify(this.adminQrisHistory)); } catch {}
                 }
             } catch { q.error = 'Gagal terhubung. Coba lagi.'; }
             q.loading = false;
+        },
+
+        adminQrisDownload() {
+            const box = document.getElementById('adminQrisBox');
+            const src = box?.querySelector('img')?.src || (box?.querySelector('canvas')?.toDataURL('image/png'));
+            if (!src) return;
+            const a = document.createElement('a');
+            a.href = src;
+            a.download = 'qris-serabut-' + (this.adminQris.qrAmount || 0) + '.png';
+            a.click();
+        },
+
+        adminQrisClearHistory() {
+            this.adminQrisHistory = [];
+            try { localStorage.removeItem('srb_qris_manual_hist'); } catch {}
         },
 
         closeVaPay(showOrders) {

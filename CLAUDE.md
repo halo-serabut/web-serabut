@@ -309,6 +309,8 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
 
 - [2026-07-16 sesi 2] Selesai & LIVE (GAS @165, APP_VERSION 20260716-2): QRIS Manual di admin — tab baru "QRIS Manual" (grup Transaksi): input nominal bebas → QR QRIS Dana dinamis (nominal terkunci); GAS `getQrisManual {amount}` (requireAdmin, 1–100jt, reuse `qrisStaticToDynamic`); frontend state `adminQris` + `adminQrisGenerate()` (QR render client-side qrcodejs, box #adminQrisBox). Catatan: adminToken = `this.currentUser.sessionToken` (BUKAN this.sessionToken). Juga: fix VA fee → Rp 4.000; VA chooser+modal live & teruji klik fisik.
 
+- [2026-07-16 sesi 3] Selesai & LIVE (APP_VERSION 20260716-3, frontend only): QRIS Manual polish + riwayat — layout 2 kolom desktop (generator | riwayat) / stack mobile; input prefix "Rp" + preview format id-ID; tombol **Download QR** (`adminQrisDownload` — ambil img/canvas dari #adminQrisBox → a.download PNG); riwayat di localStorage `srb_qris_manual_hist` (state `adminQrisHistory`, max 20, dedupe nominal sama, klik item = set amount + generate ulang, "Hapus semua"); tab qrismanual ditambahkan ke array pill mobile admin (line ~4444 — array TERPISAH dari sidebar desktop, jangan lupa kalau nambah tab admin baru!)
+
 ## Current Focus
 - **Xendit Fixed VA in-site** selesai di lokal (20260716-1) — MENUNGGU deploy GAS + set webhook FVA paid di dashboard Xendit + test E2E
 - **QRIS checkout LIVE** (GAS @162 + frontend 20260715-1) — verifikasi pembayaran manual via WA grup + app Dana; admin ubah status di Semua Order
