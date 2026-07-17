@@ -871,6 +871,16 @@ function updateOrderStatus({ adminEmail, adminToken, rowIndex, status, paymentMe
     if (pmIdx >= 0) sheet.getRange(ri, pmIdx + 1).setValue(paymentMethod);
   }
 
+  // Admin memproses/menyelesaikan order = pembayaran sudah diverifikasi manual
+  // (mis. QRIS Dana) → tandai Lunas agar badge konsisten dengan jalur webhook
+  if (status === 'Diproses' || status === 'Aktif' || status === 'Selesai') {
+    const psIdx = headers.findIndex(h => /payment.?status/i.test(String(h)));
+    if (psIdx >= 0) {
+      const cur = String(sheet.getRange(ri, psIdx + 1).getValue() || '').trim();
+      if (cur !== 'Lunas' && cur !== 'Berhasil') sheet.getRange(ri, psIdx + 1).setValue('Lunas');
+    }
+  }
+
   // Kirim notif ke buyer jika status jadi Aktif atau Selesai (skip jika hanya update paymentMethod)
   if (!skipNotify && (status === 'Aktif' || status === 'Selesai')) {
     try {
@@ -1722,6 +1732,13 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
     groupMsg = `*ORDER BARU: ${produk}*\nOrder ID: *${orderId}*\nVarian: ${varian || '-'}\nDurasi: ${masaAktif || '-'}\nNama: ${userNama}\nEmail Aktif: ${emailAktif || '-'}${reminderLine}\nNo WA: ${userWa || '-'}\nTotal: Rp ${hargaNum.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
   }
 
+  // Sisipkan nominal QRIS (total + kode unik deterministik) agar admin bisa
+  // cocokkan pembayaran di app Dana walau buyer tidak menekan tombol klaim
+  try {
+    const qrisNominal = hargaNum + _qrisUniqueCode(orderId);
+    groupMsg = groupMsg.replace('\nStatus: *UNPAID*', `\nNominal QRIS: *Rp ${qrisNominal.toLocaleString('id-ID')}*\nStatus: *UNPAID*`);
+  } catch (e) {}
+
   // Kirim notif WAG segera saat order dibuat
   sendWAToGroup(groupMsg);
 
@@ -2183,7 +2200,9 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
                       firstVar.includes('web')    ? `ORDER WEB: ${firstProduk}` :
                       firstProduk.toLowerCase().includes('adobe') ? `ORDER ADOBE: ${firstProduk}` :
                       items.length > 1 ? `ORDER BARU (${items.length} item)` : `ORDER BARU: ${firstProduk}`;
-  const cartGroupMsg = `*${cartTitle}*\nOrder ID: *${orderId}*\nPembeli: ${userNama}\n────────────────────\n${waLines.join('\n')}\n────────────────────\nTotal: Rp ${totalHarga.toLocaleString('id-ID')}\nStatus: *UNPAID*`;
+  let qrisCartLine = '';
+  try { qrisCartLine = `\nNominal QRIS: *Rp ${(totalHarga + _qrisUniqueCode(orderId)).toLocaleString('id-ID')}*`; } catch (e) {}
+  const cartGroupMsg = `*${cartTitle}*\nOrder ID: *${orderId}*\nPembeli: ${userNama}\n────────────────────\n${waLines.join('\n')}\n────────────────────\nTotal: Rp ${totalHarga.toLocaleString('id-ID')}${qrisCartLine}\nStatus: *UNPAID*`;
   sendWAToGroup(cartGroupMsg);
 
   // WA + email ke buyer dikirim setelah pembayaran berhasil (xenditCallback / syncOrders)
