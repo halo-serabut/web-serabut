@@ -487,6 +487,27 @@
             50%     { transform: rotateX(-3deg) rotateY(5deg) translateZ(22px); }
         }
         .hero-autofloat { animation: hero-float3d 7s ease-in-out infinite; }
+        /* Ketebalan kartu 3D — slab belakang + bayangan lantai (desktop only) */
+        @media (min-width: 768px) {
+            #heroFlashCard { transform-style: preserve-3d; }
+            /* Balok pipih: 6 irisan rapat membentuk ketebalan solid (sudut bulat ikut tebal, tanpa celah) */
+            .hero-slab { position:absolute; inset:0; transform-style:preserve-3d; pointer-events:none; }
+            .hero-slice {
+                position:absolute; inset:0; border-radius:1.5rem;
+                background:#e6eaf0;
+                transform-style:preserve-3d;
+            }
+            .hero-slice:last-child {
+                background:linear-gradient(160deg, #f2f4f8, #cdd4e0);
+                box-shadow: inset 0 -3px 10px rgba(110,122,142,.28);
+            }
+            /* Muka belakang balok — konten brand, di-flip 180° agar terbaca dari belakang */
+            .hero-back-face {
+                position:absolute; inset:0; border-radius:1.5rem;
+                transform:rotateY(180deg) translateZ(0.5px); backface-visibility:hidden; -webkit-backface-visibility:hidden;
+                display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+            }
+        }
 
         /* ── Sera guide speech bubble ── */
         @keyframes sera-pop {
@@ -847,36 +868,56 @@
 ══════════════════════════════════════════════════════ -->
 <nav class="hidden md:block fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-gray-100 shadow-sm">
     <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <button @click="scrollTo('hero')" class="flex items-center gap-2.5 group">
+        <button @click="scrollTo('hero')" class="flex items-center gap-2.5 group shrink-0">
             <img src="/logo.png" alt="Serabut" class="w-9 h-9 rounded-xl shadow-sm">
-            <div class="font-black text-gray-900 text-lg tracking-tight">Serabut Store</div>
+            <div class="font-black text-gray-900 text-lg tracking-tight hidden lg:block">Serabut Store</div>
         </button>
 
-        <!-- Nav center: search saat di catalog, pills saat di halaman lain -->
-        <div class="flex-1 mx-6 max-w-md" x-show="catalogInView"
-             x-transition:enter="transition duration-300 ease-out" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-             x-transition:leave="transition duration-300 ease-in" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
-            <div class="relative">
+        <!-- Nav center: pills ringkas + search selalu tampil -->
+        <div class="flex-1 flex items-center justify-center gap-3 mx-4 min-w-0">
+            <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1 shrink-0">
+                <button @click="scrollTo('catalog')" :class="currentSection==='catalog' ? 'bg-brand-50 text-brand-600 font-bold border border-brand-200' : 'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm transition-all">Produk</button>
+                <button @click="scrollTo('status')" :class="currentSection==='status' ? 'bg-brand-50 text-brand-600 font-bold border border-brand-200' : 'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm transition-all">Cek Akun</button>
+                <div x-data="{open:false}" @click.outside="open=false" class="relative">
+                    <button @click="open=!open" :aria-expanded="open" aria-haspopup="true"
+                            :class="open || ['panduan','faq','download'].includes(currentSection) ? 'bg-brand-50 text-brand-600 font-bold border border-brand-200' : 'text-gray-500 hover:text-gray-800'"
+                            class="px-4 py-2 rounded-lg text-sm transition-all flex items-center gap-1">
+                        Bantuan
+                        <svg class="w-3.5 h-3.5 transition-transform" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div x-show="open" x-cloak @click="open=false"
+                         x-transition:enter="transition duration-150 ease-out" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
+                         class="absolute left-0 top-full mt-2 w-56 bg-white border border-gray-100 rounded-2xl shadow-xl p-1.5 z-50">
+                        <button @click="scrollTo('panduan')" class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <span class="block font-semibold">Panduan</span>
+                            <span class="block text-[11px] text-gray-400">Cara aktivasi &amp; instalasi</span>
+                        </button>
+                        <button @click="scrollTo('faq')" class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <span class="block font-semibold">Tanya Jawab (FAQ)</span>
+                            <span class="block text-[11px] text-gray-400">Pertanyaan yang sering ditanyakan</span>
+                        </button>
+                        <button @click="scrollTo('download')" class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                            <span class="block font-semibold">Download</span>
+                            <span class="block text-[11px] text-gray-400">Installer resmi produk</span>
+                        </button>
+                    </div>
+                </div>
+                <template x-if="currentUser?.role?.toLowerCase()==='admin'">
+                    <button @click="adminOverlay=true; document.body.style.overflow='hidden'; adminTab='flashsale'; adminInitTab('flashsale'); _adminPrefetch()" :class="adminOverlay?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        Admin
+                    </button>
+                </template>
+            </div>
+            <div class="relative flex-1 max-w-xs min-w-[150px] hidden lg:block">
                 <div class="absolute inset-y-0 left-3.5 flex items-center pointer-events-none"><svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
-                <input x-model="searchQuery" x-ref="navSearch" type="search" placeholder="Cari produk..." autocomplete="off" aria-label="Cari produk"
-                       class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
+                <input x-model="searchQuery" x-ref="navSearch" type="search" placeholder="Cari produk…" autocomplete="off" aria-label="Cari produk"
+                       @keydown.enter="scrollTo('catalog')" @focus="if(!catalogInView) scrollTo('catalog')"
+                       class="w-full pl-10 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all placeholder:text-gray-400">
                 <button x-show="searchQuery" @click="searchQuery=''" aria-label="Hapus pencarian" class="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-        </div>
-        <div class="flex items-center bg-gray-50 rounded-xl p-1 gap-1" x-show="!catalogInView"
-             x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
-             x-transition:leave="transition duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
-            <template x-for="item in navItems.filter(i => i.desktop !== false)" :key="item.id">
-                <button @click="scrollTo(item.scrollTarget || item.id)" :class="currentSection===(item.scrollTarget||item.id) ? 'bg-brand-50 text-brand-600 font-bold border border-brand-200' : 'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm transition-all" x-text="item.label"></button>
-            </template>
-            <template x-if="currentUser?.role?.toLowerCase()==='admin'">
-                <button @click="adminOverlay=true; document.body.style.overflow='hidden'; adminTab='flashsale'; adminInitTab('flashsale'); _adminPrefetch()" :class="adminOverlay?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                    Admin
-                </button>
-            </template>
         </div>
 
         <!-- Auth area desktop -->
@@ -895,13 +936,13 @@
                              x-text="(currentUser?.nama||'U')[0].toUpperCase()"></div>
                         <span class="text-sm font-semibold text-gray-700" x-text="(currentUser?.nama||'').split(' ')[0]||'User'"></span>
                     </button>
-                    <button @click="logoutConfirm=true" class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1">Logout</button>
+                    <button @click="logoutConfirm=true" class="text-xs text-gray-400 hover:text-red-500 transition-colors ml-1">Keluar</button>
                 </div>
             </template>
             <template x-if="!currentUser">
                 <div class="flex items-center gap-2">
-                    <button @click="openAuth('login')" class="text-sm font-semibold text-gray-600 hover:text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all">Login</button>
-                    <button @click="openAuth('register')" class="gradient-card text-white text-sm font-bold px-4 py-2 rounded-xl shadow-sm hover:shadow transition-all">Register</button>
+                    <button @click="openAuth('login')" class="text-sm font-semibold text-gray-600 hover:text-gray-900 px-4 py-2 rounded-xl hover:bg-gray-50 transition-all">Masuk</button>
+                    <button @click="openAuth('register')" class="gradient-card text-white text-sm font-bold px-4 py-2 rounded-xl shadow-sm hover:shadow transition-all">Daftar</button>
                 </div>
             </template>
         </div>
@@ -1023,7 +1064,7 @@
             <div id="hero3dScene" class="hero-3d max-w-6xl mx-auto px-4 py-12 md:py-16 flex flex-col md:flex-row md:items-center gap-8 md:gap-12 relative">
                 <!-- Left: copy -->
                 <div class="hero-layer flex-1 max-w-2xl">
-                    <h1 class="hero-depth-3 text-3xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
+                    <h1 class="text-3xl md:text-5xl font-black leading-tight mb-4 tracking-tight">
                         <span x-text="siteSettings.hero.tagline1">Platform Produk Digital</span><br>
                         <span class="text-yellow-300" x-text="siteSettings.hero.tagline2">Harga Terjangkau</span>
                     </h1>
@@ -1071,6 +1112,32 @@
                             Tarik untuk putar
                         </div>
 
+                        <!-- Ketebalan balok: 6 irisan rapat di belakang muka kartu (desktop only) -->
+                        <div class="hero-slab hidden md:block" aria-hidden="true">
+                            <div class="hero-slice" style="transform:translateZ(-1px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-2px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-3px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-4px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-5px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-6px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-7px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-8px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-9px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-10px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-11px)"></div>
+                            <div class="hero-slice" style="transform:translateZ(-12px)">
+                                <div class="hero-back-face">
+                                    <img src="/logo.png" alt="" class="w-14 h-14 rounded-2xl shadow-md">
+                                    <div class="font-black text-gray-800 text-lg mt-2">Serabut Store</div>
+                                    <div class="text-gray-400 text-xs font-semibold tracking-wide">serabut.id</div>
+                                    <div class="mt-3 bg-yellow-100 text-yellow-700 text-[11px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                        FLASH SALE
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- ── Mobile banner (solid white) ── -->
                         <div class="md:hidden bg-white rounded-2xl p-3 shadow-md">
                             <!-- Header: badge + countdown -->
@@ -1082,7 +1149,7 @@
                                     <span class="text-yellow-600 text-[10px] font-black tracking-widest">FLASH SALE</span>
                                     <span class="bg-yellow-400 text-gray-900 text-[10px] font-black px-1.5 py-0.5 rounded-full" x-text="(flashSale.items?.length||1)+' item'"></span>
                                 </div>
-                                <div class="flex items-center gap-1 text-gray-400 text-[10px] font-mono">
+                                <div x-show="flashSaleCountdownShow" class="flex items-center gap-1 text-gray-400 text-[10px] font-mono">
                                     <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     <span x-text="flashSaleCountdown"></span>
                                 </div>
@@ -1107,8 +1174,8 @@
                             </div>
                         </div>
 
-                        <!-- ── Desktop: produk-first card (solid white) ── -->
-                        <div class="hidden md:block relative bg-white rounded-3xl shadow-xl overflow-hidden">
+                        <!-- ── Desktop: produk-first card (akrilik translusen) ── -->
+                        <div class="hidden md:block relative bg-white/90 backdrop-blur-md rounded-3xl shadow-xl overflow-hidden">
                             <div class="hero-glare"></div>
                             <!-- Header -->
                             <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-100 bg-amber-50">
@@ -1125,8 +1192,8 @@
                                         <div class="text-gray-400 text-[10px] mt-0.5">Penawaran terbatas</div>
                                     </div>
                                 </div>
-                                <!-- Right: countdown pill -->
-                                <div class="flex items-center gap-1 bg-white rounded-lg px-2.5 py-1.5 border border-gray-200 flex-none">
+                                <!-- Right: countdown pill — hanya saat sisa ≤ 10 hari -->
+                                <div x-show="flashSaleCountdownShow" class="flex items-center gap-1 bg-white rounded-lg px-2.5 py-1.5 border border-gray-200 flex-none">
                                     <svg class="w-3 h-3 text-amber-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     <span class="font-mono text-[11px] font-bold text-gray-700 tabular-nums" x-text="flashSaleCountdown"></span>
                                 </div>
@@ -8729,8 +8796,10 @@
       var bRotX = Math.cos(t * 0.43) * 1.8 * idle;
       var bZ    = Math.sin(t * 0.7)  * 10  * idle;
 
+      // Pose 3D dasar (-10deg Y / +4deg X) — kartu selalu tampak miring dimensional,
+      // pointer/drag/breathing bergerak di sekitar pose ini
       if(card) card.style.transform =
-        'rotateY('+(cX*9 + bRotY + uY)+'deg) rotateX('+(-cY*9 + bRotX + uX)+'deg) translateZ('+(20 + bZ)+'px)';
+        'rotateY('+(-10 + cX*9 + bRotY + uY)+'deg) rotateX('+(4 + -cY*9 + bRotX + uX)+'deg) translateZ('+(20 + bZ)+'px)';
       if(copy) copy.style.transform =
         'rotateY('+(cX*3 + bRotY*0.4)+'deg) rotateX('+(-cY*3 + bRotX*0.4)+'deg) translateZ('+(bZ*0.3)+'px)';
       if(glare){
@@ -9025,7 +9094,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260716-3',
+        APP_VERSION:      '20260719-1',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
@@ -9284,6 +9353,7 @@ function serabutStore() {
             startDate: '',
         },
         flashSaleCountdown: '--:--:--',
+                flashSaleCountdownShow: false, // timer hanya tampil saat sisa ≤ 10 hari
 
         // Site Settings (dari GAS Settings tab)
         siteSettings: {
@@ -9424,12 +9494,12 @@ function serabutStore() {
 
         // ── Static Data ──────────────────────────────
         navItems: [
-            { id:'home',     label:'Home',      scrollTarget:'hero',     mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
-            { id:'catalog',  label:'Products',  scrollTarget:'catalog',  mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>` },
-            { id:'status',   label:'Status',    scrollTarget:'status',   mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
-            { id:'panduan',  label:'Guide',     scrollTarget:'panduan',  mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>` },
+            { id:'home',     label:'Beranda',   scrollTarget:'hero',     mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>` },
+            { id:'catalog',  label:'Produk',    scrollTarget:'catalog',  mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>` },
+            { id:'status',   label:'Cek Akun',  scrollTarget:'status',   mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
+            { id:'panduan',  label:'Panduan',   scrollTarget:'panduan',  mobile:true,  icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>` },
             { id:'faq',      label:'FAQ',       scrollTarget:'faq',      mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` },
-            { id:'download', label:'Downloads', scrollTarget:'download',  mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>` },
+            { id:'download', label:'Download',  scrollTarget:'download',  mobile:false, icon:`<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>` },
         ],
         _categoryIconMap: {
             'Office 365':    `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>`,
@@ -9864,7 +9934,8 @@ function serabutStore() {
                 const _dl = new Date(this.flashSale.deadline);
                 if(isNaN(_dl.getTime())) return;
                 const diff = _dl - new Date();
-                if(diff <= 0) { this.flashSaleCountdown = '00:00:00'; this.flashSale.aktif = false; return; }
+                if(diff <= 0) { this.flashSaleCountdown = '00:00:00'; this.flashSaleCountdownShow = false; this.flashSale.aktif = false; return; }
+                this.flashSaleCountdownShow = diff <= 10 * 86400000;
                 const totalH = Math.floor(diff/3600000);
                 const d = Math.floor(totalH/24);
                 const h = totalH % 24;
