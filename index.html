@@ -7249,8 +7249,12 @@
             <!-- License (produk one-time: Windows, Office, CorelDraw, dll): email penerima -->
             <template x-if="cartAddPending && cartExtraType(cartAddPending.product, cartAddPending.variant)==='license'">
                 <div>
-                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email Penerima <span class="text-red-500">*</span></label>
-                    <p class="text-[11px] text-gray-400 mb-2">Produk/lisensi akan dikirimkan ke email ini.</p>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">
+                        <span x-text="inviteBrand(cartAddPending?.product?.nama) ? ('Email akun ' + inviteBrand(cartAddPending?.product?.nama) + ' kamu') : 'Email Penerima'"></span>
+                        <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-[11px] text-gray-400 mb-2"
+                       x-text="inviteBrand(cartAddPending?.product?.nama) ? ('Undangan akan dikirim ke email ini — pakai email yang terdaftar di akun ' + inviteBrand(cartAddPending?.product?.nama) + ' kamu.') : 'Produk/lisensi akan dikirimkan ke email ini.'"></p>
                     <input x-model="cartAddExtra.emailAktif" type="email" placeholder="email@kamu.com" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all" :class="cartAddError&&!cartAddExtra.emailAktif?'border-red-400':''">
                 </div>
             </template>
@@ -8475,7 +8479,12 @@
             <template x-if="orderExtraType==='other'">
                 <div class="space-y-3">
                     <div>
-                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">Email untuk menerima produk <span class="text-red-500">*</span></label>
+                        <label class="text-xs font-bold text-gray-700 mb-1.5 block">
+                            <span x-text="inviteBrand(selectedProductGroup?.nama) ? ('Email akun ' + inviteBrand(selectedProductGroup?.nama) + ' kamu') : 'Email untuk menerima produk'"></span>
+                            <span class="text-red-500">*</span>
+                        </label>
+                        <p x-show="inviteBrand(selectedProductGroup?.nama)" class="text-[11px] text-gray-400 mb-2"
+                           x-text="'Undangan akan dikirim ke email ini — pakai email yang terdaftar di akun ' + inviteBrand(selectedProductGroup?.nama) + ' kamu.'"></p>
                         <label x-show="currentUser?.email" class="flex items-center gap-2 cursor-pointer mb-2 select-none">
                             <input type="checkbox" x-model="orderExtra.emailSameAsProfile" @change="if(orderExtra.emailSameAsProfile) orderExtra.emailAktif=(currentUser?.email||'')" class="w-4 h-4 rounded accent-red-600">
                             <span class="text-xs text-gray-600">Gunakan email profil saya — <span class="font-semibold text-gray-800" x-text="currentUser?.email"></span></span>
@@ -9105,7 +9114,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260726-5',
+        APP_VERSION:      '20260726-6',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
@@ -10653,6 +10662,15 @@ function serabutStore() {
             if (v.includes('web') && (name.includes('renewal') || this.renewalMode)) return 'renewal';
             if (v.includes('web'))                                                  return 'web';
             return 'other';
+        },
+        // Produk yang aktivasinya lewat undangan ke akun brand (bukan kirim lisensi).
+        // Return nama brand-nya, '' kalau produk biasa.
+        inviteBrand(nama) {
+            const n = String(nama || '').toLowerCase();
+            if(n.includes('canva')) return 'Canva';
+            if(n.includes('spotify')) return 'Spotify';
+            if(n.includes('netflix')) return 'Netflix';
+            return '';
         },
         get isOneTimeProduct() {
             const ma = (this.selectedVariant?.masaAktif || '').toLowerCase();
