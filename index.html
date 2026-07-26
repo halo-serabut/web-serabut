@@ -5053,6 +5053,9 @@
                             </label>
                         </div>
                         <p class="text-xs text-gray-400 mt-2">Gambar pertama jadi gambar <b>Utama</b>. <span x-show="adminImageUploading">Mengunggah…</span></p>
+                        <p x-show="adminImageError" class="text-xs text-red-600 font-semibold mt-1 flex items-start gap-1">
+                            <span>⚠️</span><span x-text="adminImageError"></span>
+                        </p>
                     </div>
 
                     <!-- Deskripsi Produk (rich text) -->
@@ -9100,7 +9103,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260726-2',
+        APP_VERSION:      '20260726-3',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
@@ -9452,6 +9455,7 @@ function serabutStore() {
         adminBenefitItems: [],
         adminBenefitNewItem: '',
         adminImageUploading: false,
+        adminImageError:     '',   // pesan gagal upload (persisten, bukan toast)
         adminFeaturedItems:   [],
         adminFeaturedSearch:  '',
         adminFeaturedResults: [],
@@ -12943,6 +12947,7 @@ function serabutStore() {
             if(sisa <= 0) { this._adminShowMsg('Maksimal 10 gambar'); return; }
             if(files.length > sisa) { this._adminShowMsg('Hanya ' + sisa + ' gambar lagi yang bisa ditambah'); files = files.slice(0, sisa); }
             this.adminImageUploading = true;
+            this.adminImageError = '';
             let ok = 0, fail = 0;
             try {
                 for(const file of files) {
@@ -12967,8 +12972,8 @@ function serabutStore() {
                             filename:   (this.adminNewProduct.nama || 'produk'),
                         });
                         if(data.success && data.url) { swap(data.url); ok++; }
-                        else { swap(null); fail++; this._adminShowMsg('❌ ' + (data.error || 'Gagal upload gambar')); }
-                    } catch(err) { swap(null); fail++; this._adminShowMsg('Gagal upload: ' + (err.message || err)); }
+                        else { swap(null); fail++; this.adminImageError = data.error || 'Gagal upload gambar (server tidak mengembalikan URL)'; }
+                    } catch(err) { swap(null); fail++; this.adminImageError = 'Gagal upload: ' + (err.message || err); }
                 }
                 if(ok) this._adminShowMsg(ok + ' gambar terupload ✓' + (fail ? (' · ' + fail + ' gagal') : ''));
             } finally {
