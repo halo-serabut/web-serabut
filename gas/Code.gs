@@ -570,6 +570,17 @@ function _parseProductDesc(raw) {
 }
 
 // Parse kolom Gambar: bisa JSON array URL atau single URL string. Return array.
+// Pastikan kolom "Gambar" ada di sheet Catalog — kalau belum, bikin di kolom terakhir.
+// Tanpa ini URL gambar diabaikan diam-diam (cGbr = -1) → upload berhasil tapi tak tersimpan.
+function _ensureGambarCol(sheet) {
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const idx = _colIndex(headers, 'gambar', 'image url', 'imageurl', 'image_url', 'foto');
+  if (idx >= 0) return idx;
+  const col = sheet.getLastColumn() + 1;
+  sheet.getRange(1, col).setValue('Gambar').setFontWeight('bold');
+  return col - 1;
+}
+
 function _parseImages(raw) {
   const t = String(raw == null ? '' : raw).trim();
   if (!t) return [];
@@ -606,7 +617,9 @@ function addProduct({ adminEmail, adminToken, nama, varian, masaAktif, harga, li
   const cKat    = _colIndex(headers, 'kategori', 'category');
   const cIcon   = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
   const cBen    = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
-  const cGbr    = _colIndex(headers, 'gambar', 'image url', 'imageurl', 'image_url', 'foto');
+  const cGbr    = (gambar !== undefined && gambar !== null && String(gambar).trim() !== '' && String(gambar).trim() !== '[]')
+    ? _ensureGambarCol(sheet)
+    : _colIndex(headers, 'gambar', 'image url', 'imageurl', 'image_url', 'foto');
   // Deskripsi: prioritas descHtml (rich text), fallback benefits (legacy JSON)
   const descVal = (descHtml !== undefined && descHtml !== null && String(descHtml).trim() !== '')
     ? String(descHtml).trim()
@@ -660,7 +673,9 @@ function updateProduct({ adminEmail, adminToken, rowIndex, nama, varian, masaAkt
   const cKat    = _colIndex(headers, 'kategori', 'category');
   const cIcon   = _colIndex(headers, 'icon url', 'iconurl', 'icon_url');
   const cBen    = _colIndex(headers, 'deskripsi', 'benefits', 'benefit');
-  const cGbr    = _colIndex(headers, 'gambar', 'image url', 'imageurl', 'image_url', 'foto');
+  const cGbr    = (gambar !== undefined && gambar !== null && String(gambar).trim() !== '' && String(gambar).trim() !== '[]')
+    ? _ensureGambarCol(sheet)
+    : _colIndex(headers, 'gambar', 'image url', 'imageurl', 'image_url', 'foto');
 
   sheet.getRange(row, 1).setValue(_sanitizeCell(nama || ''));
   sheet.getRange(row, 2).setValue(_sanitizeCell(varian || ''));
@@ -5070,4 +5085,12 @@ function setupAutoCancelTrigger() {
     .everyHours(1)
     .create();
   Logger.log('Trigger autoCancelExpiredOrders setiap 1 jam berhasil dipasang.');
+}
+
+// Jalankan sekali dari editor Apps Script untuk memicu prompt izin Drive
+// (webapp jalan sebagai deployer — scope Drive harus disetujui akun itu).
+function testDriveAuth() {
+  const it = DriveApp.getFoldersByName('Serabut Produk Images');
+  const folder = it.hasNext() ? it.next() : DriveApp.createFolder('Serabut Produk Images');
+  Logger.log('OK folder: ' + folder.getName() + ' / ' + folder.getId());
 }

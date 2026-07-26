@@ -5136,7 +5136,7 @@
                                 <div class="flex items-start gap-3 mb-3">
                                     <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-none shadow-sm border border-white"
                                          :class="getCategoryBg(getCategory(p.nama))">
-                                        <img :src="getProductLogo(getCategory(p.nama))" class="w-7 h-7 object-contain" onerror="this.style.display='none'">
+                                        <img :src="getProductThumb(p)" :class="getProductImage(p) ? 'w-12 h-12 object-cover rounded-2xl' : 'w-7 h-7 object-contain'" onerror="this.style.display='none'">
                                     </div>
                                     <div class="flex-1 min-w-0 pt-0.5">
                                         <div class="font-bold text-gray-900 text-sm leading-snug line-clamp-1" x-text="p.nama"></div>
@@ -9103,7 +9103,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260726-3',
+        APP_VERSION:      '20260726-4',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
