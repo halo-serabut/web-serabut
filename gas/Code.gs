@@ -125,6 +125,8 @@ function doPost(e) {
       case 'getQrisPayment':          result = getQrisPayment(params); break;
       case 'getQrisManual':           result = getQrisManual(params); break;
       case 'qrisClaimPaid':           result = qrisClaimPaid(params); break;
+      case 'createGobizTransaction':  result = createGobizTransaction(params); break;
+      case 'gobizCheckPaid':          result = gobizCheckPaid(params); break;
       case 'cancelOrder':             result = cancelOrder(params); break;
       case 'requestDeleteAccount':    result = requestDeleteAccount(params); break;
       // CS
@@ -756,12 +758,21 @@ function uploadProductImage({ adminEmail, adminToken, dataUrl, filename }) {
 
   // Cari/buat folder khusus gambar produk
   const FOLDER_NAME = 'Serabut Produk Images';
-  let folder;
-  const it = DriveApp.getFoldersByName(FOLDER_NAME);
-  folder = it.hasNext() ? it.next() : DriveApp.createFolder(FOLDER_NAME);
-
-  const file = folder.createFile(blob);
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  let file;
+  try {
+    const it = DriveApp.getFoldersByName(FOLDER_NAME);
+    const folder = it.hasNext() ? it.next() : DriveApp.createFolder(FOLDER_NAME);
+    file = folder.createFile(blob);
+  } catch (e) {
+    // Error Drive (belum authorize / kuota / kebijakan domain) — tampilkan apa adanya ke admin
+    return { success: false, error: 'Drive: ' + e.message };
+  }
+  // Sharing bisa diblok kebijakan domain → jangan sampai membatalkan upload
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) {
+    return { success: false, error: 'Drive sharing: ' + e.message };
+  }
   const id  = file.getId();
   // URL yang reliable untuk <img> embed (lh3 langsung render tanpa delay thumbnail)
   const url = 'https://lh3.googleusercontent.com/d/' + id + '=w1200';
