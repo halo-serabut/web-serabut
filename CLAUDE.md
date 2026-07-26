@@ -326,6 +326,9 @@ Langsung tanya: "File mana yang perlu diedit?" — jangan explore dulu.
   - **Teks hero rata kiri**: hapus class `hero-depth-3` dari h1 (translateZ 85px + perspective off-center menggeser judul vs subteks)
   - GOTCHA preview: server preview bisa nyangkut menyajikan file BASI (fetch /index.html utk konfirmasi versi; restart via preview_start) + init 3D bisa skip krn innerWidth=0 saat load (resize dulu baru reload)
 
+- [2026-07-26] Selesai: logo kategori "Lainnya"/tak dikenal tidak lagi pinjam logo Office → SVG data URI kotak paket abu-abu (`genericLogo` di `getProductLogo`); kartu katalog pakai helper baru `getProductThumb(p)` = gambar produk (col Gambar) kalau ada, fallback logo kategori (foto render `w-full h-16 object-cover`) — APP_VERSION 20260726-1
+- [2026-07-26] Selesai: preview instan upload gambar produk (admin) — `adminUploadProductImage` push dataURL hasil kompres ke `adminNewProduct.gambar` SEBELUM POST ke Drive, lalu `swap()` tukar jadi URL Drive (atau buang kalau gagal/sudah dihapus admin); thumbnail dataURL dapat overlay spinner; tombol Simpan/Update disabled saat `adminImageUploading` (`!!` boolean gotcha) + `adminSaveProduct` filter dataURL sebagai jaring pengaman — APP_VERSION 20260726-2
+
 ## Current Focus
 - **Xendit Fixed VA in-site** selesai di lokal (20260716-1) — MENUNGGU deploy GAS + set webhook FVA paid di dashboard Xendit + test E2E
 - **QRIS checkout LIVE** (GAS @162 + frontend 20260715-1) — verifikasi pembayaran manual via WA grup + app Dana; admin ubah status di Semua Order
