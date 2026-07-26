@@ -2019,8 +2019,10 @@
                         <!-- Product identity: logo + info -->
                         <div class="flex items-start gap-4 md:gap-5">
                             <!-- Logo pill — glassmorphism -->
-                            <div class="flex-none w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-xl ring-1 ring-white/60" style="box-shadow:0 8px 32px rgba(0,0,0,0.14)">
-                                <img :src="getProductLogo(selectedProductGroup.category)" :alt="selectedProductGroup.category" fetchpriority="high" class="w-14 h-14 md:w-16 md:h-16 object-contain" onerror="this.style.display='none'">
+                            <div class="flex-none w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-xl ring-1 ring-white/60 overflow-hidden" style="box-shadow:0 8px 32px rgba(0,0,0,0.14)">
+                                <img :src="getProductImage(selectedVariant || selectedProductGroup) || getProductLogo(selectedProductGroup.category)" :alt="selectedProductGroup.nama" fetchpriority="high"
+                                     :class="getProductImage(selectedVariant || selectedProductGroup) ? 'w-full h-full object-cover' : 'w-14 h-14 md:w-16 md:h-16 object-contain'"
+                                     onerror="this.style.display='none'">
                             </div>
                             <div class="flex-1 min-w-0 pt-1">
                                 <!-- Category badge -->
@@ -9103,7 +9105,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260726-4',
+        APP_VERSION:      '20260726-5',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
