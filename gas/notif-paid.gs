@@ -57,11 +57,19 @@ function notifPaid(params) {
     return { success: true };
   }
 
-  // Anti-dobel: pakai ID transaksi kalau ada, kalau tidak pakai nominal + menit.
-  // Kasar, tapi jauh lebih baik daripada notif dibuang diam-diam.
-  const dedupeKey = 'notifPaid:' + (txnMatch ? txnMatch[1] : amount + '@' + Math.floor(Date.now() / 60000));
-  if (cache.get(dedupeKey)) return { success: true };
-  cache.put(dedupeKey, '1', 21600); // 6 jam
+  // Anti-dobel. ID transaksi disimpan PERMANEN (bukan cache 6 jam): Android menyodorkan
+  // ulang semua notif yang masih di panel tiap MacroDroid nyambung lagi (mis. HP dibuka),
+  // jadi notif lama bisa datang berhari-hari kemudian dan tidak boleh diproses dua kali.
+  const props = PropertiesService.getScriptProperties();
+  if (txnMatch) {
+    if (props.getProperty('notifTxn:' + txnMatch[1])) return { success: true };
+    props.setProperty('notifTxn:' + txnMatch[1], String(Date.now()));
+  } else {
+    // Tanpa ID transaksi hanya bisa ditebak dari nominal + menit — cukup untuk notif kembar
+    const k = 'notifPaid:' + amount + '@' + Math.floor(Date.now() / 60000);
+    if (cache.get(k)) return { success: true };
+    cache.put(k, '1', 21600);
+  }
 
   let orderId;
   try {
