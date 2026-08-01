@@ -15,11 +15,17 @@
 //  Upgrade path: createGobizTransaction/gobizCheckPaid di gobiz-pay.gs.
 // ────────────────────────────────────────────────────────
 
-// "Rp1.000 berhasil diterima" → 1000 ; "Rp 1.234.567," → 1234567
-function _notifParseAmount(text) {
-  const m = String(text).match(/rp\s*([\d.,]+)/i);
-  if (!m) return 0;
-  return Number(m[1].replace(/[^\d]/g, '')) || 0;
+// Semua nominal yang muncul di teks, urut kemunculan.
+// "Rp1.000 berhasil diterima" → [1000] ; "Rp1.100 | Rp5.088" → [1100, 5088]
+function _notifParseAmounts(text) {
+  const out = [];
+  const re = /rp\s*([\d.,]+)/gi;
+  let m;
+  while ((m = re.exec(String(text)))) {
+    const n = Number(m[1].replace(/[^\d]/g, ''));
+    if (n && out.indexOf(n) < 0) out.push(n);
+  }
+  return out;
 }
 
 // ────────────────────────────────────────────────────────
@@ -30,7 +36,13 @@ function notifPaid(params) {
   if (!secret) return { success: false, error: 'NOTIF_TOKEN belum diset' };
   if (String(params.token || '').trim() !== secret) return { success: false, error: 'Unauthorized' };
 
-  const raw = String(params.title || '') + ' ' + String(params.text || '');
+  // Terima semua varian teks notifikasi. Notif yang dikelompokkan Android bikin
+  // teks ringkas ({notification}) berisi ringkasan/notif lama — teks panjang
+  // (big text) yang memuat isi sebenarnya. Kirim semuanya, biar di sini yang memilih.
+  const raw = [params.title, params.text, params.bigText, params.ticker]
+    .map(function (v) { return String(v || ''); })
+    .filter(function (v) { return v && v !== 'null'; })
+    .join(' | ');
   const cache = CacheService.getScriptCache();
 
   // Jejak notif terakhir — biar bisa dicek kalau ada yang "seharusnya masuk tapi tidak"
@@ -39,8 +51,21 @@ function notifPaid(params) {
   // Hanya notif "uang masuk". Notif lain (pesanan GoFood, promo, dll) diabaikan diam-diam.
   if (!/diterima|masuk|berhasil/i.test(raw)) return { success: true };
 
-  const amount = _notifParseAmount(raw);
+  const amounts = _notifParseAmounts(raw);
   const txnMatch = raw.match(/id\s*transaksi[:\s]*([A-Za-z0-9_-]+)/i);
+
+  // Payload bisa memuat lebih dari satu nominal (teks ringkas basi + teks panjang baru).
+  // Yang dipakai: nominal pertama yang benar-benar cocok dengan order belum lunas.
+  let amount = amounts[0] || 0, orderId = '';
+  try {
+    for (let i = 0; i < amounts.length && !orderId; i++) {
+      orderId = _notifFindOrderByAmount(amounts[i]);
+      if (orderId) amount = amounts[i];
+    }
+  } catch (err) {
+    Logger.log('notifPaid find error: ' + err.message);
+    return { success: false, error: 'find: ' + err.message };
+  }
 
   // Notif uang masuk tapi tak terbaca → JANGAN diam. Lapor apa adanya ke WA grup,
   // maks 1x per 10 menit biar tidak banjir kalau formatnya berubah total.
@@ -57,29 +82,16 @@ function notifPaid(params) {
     return { success: true };
   }
 
-  // Anti-dobel. ID transaksi disimpan PERMANEN (bukan cache 6 jam): Android menyodorkan
-  // ulang semua notif yang masih di panel tiap MacroDroid nyambung lagi (mis. HP dibuka),
-  // jadi notif lama bisa datang berhari-hari kemudian dan tidak boleh diproses dua kali.
-  const props = PropertiesService.getScriptProperties();
-  if (txnMatch) {
-    if (props.getProperty('notifTxn:' + txnMatch[1])) return { success: true };
-    props.setProperty('notifTxn:' + txnMatch[1], String(Date.now()));
-  } else {
-    // Tanpa ID transaksi hanya bisa ditebak dari nominal + menit — cukup untuk notif kembar
-    const k = 'notifPaid:' + amount + '@' + Math.floor(Date.now() / 60000);
-    if (cache.get(k)) return { success: true };
-    cache.put(k, '1', 21600);
-  }
-
-  let orderId;
-  try {
-    orderId = _notifFindOrderByAmount(amount);
-  } catch (err) {
-    Logger.log('notifPaid find error: ' + err.message);
-    return { success: false, error: 'find: ' + err.message };
-  }
-
+  // Anti-dobel TIDAK perlu di jalur order ketemu: _notifFindOrderByAmount hanya
+  // mengembalikan order yang belum lunas, dan _gobizMarkPaid sendiri idempotent.
+  // Notif lama yang disodorkan ulang Android otomatis jatuh ke jalur "tidak cocok".
   if (!orderId) {
+    // Cegah WA berulang untuk notif lama yang sama — permanen, bukan cache 6 jam
+    const props = PropertiesService.getScriptProperties();
+    const key = 'notifSeen:' + (txnMatch ? txnMatch[1] : amount + '@' + Math.floor(Date.now() / 60000));
+    if (props.getProperty(key)) return { success: true };
+    props.setProperty(key, String(Date.now()));
+
     sendWAToGroup(
       '💵 *Ada uang masuk, tapi belum ketemu ordernya*\n\n' +
       'Nominal: *Rp ' + amount.toLocaleString('id-ID') + '*\n' +
@@ -148,7 +160,10 @@ function testNotifPaid() {
     ['Pesanan baru masuk', 0],
   ];
   cases.forEach(function (c) {
-    if (_notifParseAmount(c[0]) !== c[1]) throw new Error('parse gagal: ' + c[0]);
+    if ((_notifParseAmounts(c[0])[0] || 0) !== c[1]) throw new Error('parse gagal: ' + c[0]);
   });
+  // payload campuran: nominal basi + nominal baru harus terbaca dua-duanya
+  const multi = _notifParseAmounts('Rp1.100 berhasil diterima | Rp5.088 berhasil diterima');
+  if (multi.join() !== '1100,5088') throw new Error('parse ganda gagal: ' + multi.join());
   Logger.log('parse OK. Order cocok utk Rp1.000: "' + _notifFindOrderByAmount(1000) + '"');
 }
