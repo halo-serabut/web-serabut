@@ -178,7 +178,8 @@ function qrisClaimPaid(params) {
     total += Number(data[i][hrgCol]) || 0;
     if (psCol >= 0) {
       const ps = String(data[i][psCol] || '').trim();
-      if (ps === 'Berhasil') return { success: true, alreadyPaid: true };
+      // Sudah terdeteksi lunas (notif HP / webhook) → jangan turunkan lagi ke Menunggu Verifikasi
+      if (ps === 'Berhasil' || ps === 'Lunas') return { success: true, alreadyPaid: true };
       if (ps === 'Menunggu Verifikasi') alreadyClaimed = true;
       sheet.getRange(i + 1, psCol + 1).setValue('Menunggu Verifikasi');
     }
@@ -190,14 +191,13 @@ function qrisClaimPaid(params) {
   if (!alreadyClaimed) {
     const amount = total + _qrisUniqueCode(orderId);
     sendWAToGroup(
-      '💰 *KLAIM PEMBAYARAN QRIS*\n' +
-      '────────────────────\n' +
-      'Order ID: *' + orderId + '*\n' +
-      'Nominal: *Rp ' + amount.toLocaleString('id-ID') + '*\n' +
-      '(3 digit terakhir = kode unik order)\n' +
-      '────────────────────\n' +
-      'Buyer klaim sudah bayar via QRIS Dana.\n' +
-      'Cek app Dana → jika nominal cocok, ubah status di Admin > Semua Order.'
+      '⚠️ *Pembeli klaim sudah bayar, tapi belum terdeteksi*\n\n' +
+      'Order *' + orderId + '*\n' +
+      'Nominal: *Rp ' + amount.toLocaleString('id-ID') + '*\n\n' +
+      'Pembeli menekan tombol konfirmasi, tapi notifikasi pembayaran belum masuk. ' +
+      'Bisa jadi notifnya telat sedikit, atau memang belum benar-benar dibayar.\n\n' +
+      'Tunggu sebentar — kalau pembayarannya beneran masuk, saya kirim konfirmasi otomatis menyusul. ' +
+      'Kalau tidak ada kabar lagi, berarti perlu dicek manual ya.'
     );
   }
   return { success: true };

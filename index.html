@@ -7465,7 +7465,7 @@
             <svg class="w-7 h-7 text-brand-600 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z"/></svg>
             <span class="flex-1 min-w-0">
                 <span class="block font-bold text-gray-800 text-sm">QRIS</span>
-                <span class="block text-[11px] text-gray-500 mt-0.5">Scan with GoPay, Dana, OVO, ShopeePay, or m-banking. Verified in 1–5 min (8 AM–10 PM).</span>
+                <span class="block text-[11px] text-gray-500 mt-0.5">GoPay, Dana, OVO, ShopeePay, atau m-banking. Langsung terkonfirmasi.</span>
             </span>
             <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </button>
@@ -7513,7 +7513,7 @@
         <template x-if="qrisPay?.loading">
             <div class="py-10">
                 <svg class="w-10 h-10 mx-auto animate-spin text-brand-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                <p class="text-sm text-gray-500 mt-4">Preparing your QRIS…</p>
+                <p class="text-sm text-gray-500 mt-4">Menyiapkan QR kamu…</p>
             </div>
         </template>
 
@@ -7524,8 +7524,8 @@
                     <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
                 <div class="font-bold text-gray-900" x-text="qrisPay?.error"></div>
-                <button @click="qrisBackToChooser()" class="w-full min-h-[44px] mt-5 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition cursor-pointer">Back to payment options</button>
-                <button @click="closeQrisPay()" class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Close</button>
+                <button @click="qrisBackToChooser()" class="w-full min-h-[44px] mt-5 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition cursor-pointer">Pilih cara bayar lain</button>
+                <button @click="closeQrisPay()" class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Tutup</button>
             </div>
         </template>
 
@@ -7533,37 +7533,41 @@
         <template x-if="qrisPay && !qrisPay.loading && !qrisPay.error && !qrisPay.claimed && qrisPay.countdown > 0">
             <div>
                 <button @click="qrisBackToChooser()" class="min-h-[44px] text-xs text-gray-500 hover:text-brand-600 flex items-center gap-1 cursor-pointer -mt-2 mb-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg> Change payment method
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg> Ganti cara bayar
                 </button>
-                <div class="font-bold text-gray-900">Scan to pay</div>
+                <div class="font-bold text-gray-900">Tinggal scan, terus bayar</div>
                 <div class="text-xs text-gray-500 mb-4">Serabut Store · QRIS</div>
 
                 <div id="qrisQrBox" class="w-52 h-52 mx-auto rounded-lg border border-gray-100 flex items-center justify-center [&>img]:rounded [&>canvas]:rounded"></div>
 
                 <div class="mt-4 text-2xl font-bold text-gray-900" style="font-variant-numeric:tabular-nums">
-                    IDR <span x-text="(qrisPay?.amount||0).toLocaleString('en-US').slice(0,-3)"></span><span class="text-brand-600" x-text="(qrisPay?.amount||0).toLocaleString('en-US').slice(-3)"></span>
+                    Rp <span x-text="(qrisPay?.amount||0).toLocaleString('id-ID').slice(0,-3)"></span><span class="text-brand-600" x-text="(qrisPay?.amount||0).toLocaleString('id-ID').slice(-3)"></span>
                 </div>
-                <div class="text-[11px] text-gray-500 mt-1 leading-relaxed">Amount is locked in the QR — no manual entry needed.<br>The last 3 digits are your order's unique verification code.</div>
+                <div class="text-[11px] text-gray-500 mt-1 leading-relaxed">Nominalnya sudah nempel di QR-nya, jadi nggak usah ketik manual.<br>Tiga angka terakhir itu kode unik pesanan kamu.</div>
 
                 <div class="flex items-center justify-center gap-2 mt-4 text-xs font-semibold" :class="qrisPay?.countdown < 300 ? 'text-brand-600' : 'text-gray-600'" style="font-variant-numeric:tabular-nums" role="timer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 3"/></svg>
-                    Expires in <span x-text="qrisFmtTime()"></span>
+                    QR berlaku <span x-text="qrisFmtTime()"></span> lagi
                 </div>
 
                 <div class="mt-4 text-left bg-gray-50 rounded-xl p-3.5">
-                    <div class="text-[11px] font-bold text-gray-600 uppercase tracking-wide mb-2">How to pay</div>
+                    <div class="text-[11px] font-bold text-gray-600 uppercase tracking-wide mb-2">Cara bayar</div>
                     <ol class="text-xs text-gray-600 space-y-1.5">
-                        <li class="flex gap-2"><span class="w-4 h-4 bg-brand-50 text-brand-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">1</span>Open GoPay, Dana, OVO, or your banking app</li>
-                        <li class="flex gap-2"><span class="w-4 h-4 bg-brand-50 text-brand-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">2</span>Scan this QR — the amount fills in automatically</li>
-                        <li class="flex gap-2"><span class="w-4 h-4 bg-brand-50 text-brand-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">3</span>Confirm payment, then tap the button below</li>
+                        <li class="flex gap-2"><span class="w-4 h-4 bg-brand-50 text-brand-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">1</span>Buka GoPay, Dana, OVO, atau apl bank kamu</li>
+                        <li class="flex gap-2"><span class="w-4 h-4 bg-brand-50 text-brand-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">2</span>Scan QR ini, nominalnya muncul sendiri</li>
+                        <li class="flex gap-2"><span class="w-4 h-4 bg-brand-50 text-brand-600 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-px">3</span>Bayar seperti biasa</li>
                     </ol>
                 </div>
 
                 <button @click="qrisClaim()" :disabled="qrisPay?.claiming" class="w-full min-h-[48px] mt-5 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] disabled:opacity-70 text-white font-bold py-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-2">
                     <svg x-show="qrisPay?.claiming" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                    <span x-text="qrisPay?.claiming ? 'Notifying our team…' : &quot;I've completed the payment&quot;"></span>
+                    <span x-text="qrisPay?.claiming ? 'Sebentar ya…' : 'Konfirmasi Pembayaran'"></span>
                 </button>
-                <div class="text-[11px] text-gray-400 mt-3">Our team gets notified instantly and verifies within 1–5 minutes.</div>
+                <button @click="qrisDownloadQr()" class="w-full min-h-[44px] mt-2 border border-gray-200 text-gray-700 hover:bg-gray-50 active:scale-[0.99] font-bold text-sm py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                    Unduh QR
+                </button>
+                <div class="text-[11px] text-gray-400 mt-3 leading-relaxed">Begitu kamu bayar, kami langsung tahu.<br>Tombol di atas cuma buat mempercepat.</div>
             </div>
         </template>
 
@@ -7573,10 +7577,10 @@
                 <div class="w-14 h-14 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
                     <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 3"/></svg>
                 </div>
-                <div class="font-bold text-gray-900 text-lg">QR code expired</div>
-                <div class="text-xs text-gray-500 mt-2">Don't worry — your order is still saved. Generate a new QR to continue.</div>
-                <button @click="qrisPay.countdown = 900; $nextTick(() => { const el=document.getElementById('qrisQrBox'); if(el && window.QRCode && qrisPay?.qrString){ el.innerHTML=''; new QRCode(el,{text:qrisPay.qrString,width:208,height:208,correctLevel:QRCode.CorrectLevel.M}); } })" class="w-full min-h-[48px] mt-5 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition cursor-pointer">Generate new QR</button>
-                <button @click="qrisClaim()" class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Already paid? Notify our team</button>
+                <div class="font-bold text-gray-900 text-lg">QR-nya sudah lewat waktu</div>
+                <div class="text-xs text-gray-500 mt-2">Pesanan kamu masih aman kok. Bikin QR baru buat lanjut.</div>
+                <button @click="qrisPay.countdown = 900; $nextTick(() => { const el=document.getElementById('qrisQrBox'); if(el && window.QRCode && qrisPay?.qrString){ el.innerHTML=''; new QRCode(el,{text:qrisPay.qrString,width:208,height:208,correctLevel:QRCode.CorrectLevel.M}); } })" class="w-full min-h-[48px] mt-5 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition cursor-pointer">Buat QR baru</button>
+                <button @click="qrisClaim()" class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Sudah bayar? Kabari kami</button>
             </div>
         </template>
 
@@ -7586,13 +7590,13 @@
                 <div class="w-14 h-14 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-4">
                     <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 </div>
-                <div class="font-bold text-gray-900 text-lg">Payment received — verifying</div>
-                <div class="text-xs text-gray-500 mt-2 leading-relaxed">Our team has been notified and is checking your payment of <b style="font-variant-numeric:tabular-nums" x-text="'IDR ' + (qrisPay?.amount||0).toLocaleString('en-US')"></b>. This usually takes 1–5 minutes. We'll confirm via WhatsApp and email.</div>
+                <div class="font-bold text-gray-900 text-lg" x-text="qrisPay?.paid ? 'Pembayaran kamu sudah masuk' : 'Makasih, lagi kami cek'"></div>
+                <div class="text-xs text-gray-500 mt-2 leading-relaxed" x-text="qrisPay?.paid ? 'Pesanan langsung kami proses. Kalau ada yang perlu ditanyakan, chat kami aja.' : 'Biasanya nggak sampai semenit. Kamu bakal dikabari lewat WhatsApp.'"></div>
 
                 <template x-if="currentUser">
-                    <button @click="closeQrisPay(true)" class="w-full min-h-[48px] mt-5 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition cursor-pointer">View my orders</button>
+                    <button @click="closeQrisPay(true)" class="w-full min-h-[48px] mt-5 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition cursor-pointer">Lihat pesanan saya</button>
                 </template>
-                <button @click="closeQrisPay()" class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Back to home</button>
+                <button @click="closeQrisPay()" class="w-full min-h-[44px] mt-2 text-gray-500 hover:text-gray-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition cursor-pointer">Kembali ke beranda</button>
             </div>
         </template>
     </div>
@@ -9114,7 +9118,7 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260726-6',
+        APP_VERSION:      '20260801-1',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         ANNOUNCE_ON:      true,
@@ -10939,14 +10943,22 @@ function serabutStore() {
             q.loading = false;
         },
 
-        adminQrisDownload() {
-            const box = document.getElementById('adminQrisBox');
+        _downloadQr(boxId, filename) {
+            const box = document.getElementById(boxId);
             const src = box?.querySelector('img')?.src || (box?.querySelector('canvas')?.toDataURL('image/png'));
             if (!src) return;
             const a = document.createElement('a');
             a.href = src;
-            a.download = 'qris-serabut-' + (this.adminQris.qrAmount || 0) + '.png';
+            a.download = filename;
             a.click();
+        },
+
+        adminQrisDownload() {
+            this._downloadQr('adminQrisBox', 'qris-serabut-' + (this.adminQris.qrAmount || 0) + '.png');
+        },
+
+        qrisDownloadQr() {
+            this._downloadQr('qrisQrBox', 'qris-' + (this.qrisPay?.orderId || 'serabut') + '.png');
         },
 
         adminQrisClearHistory() {
@@ -11038,9 +11050,9 @@ function serabutStore() {
             this.qrisPay.error = '';
             try {
                 const d = await this.gasPost({ action: 'qrisClaimPaid', orderId: this.qrisPay.orderId });
-                if (d.success) this.qrisPay.claimed = true;
-                else this.qrisPay.error = d.error || 'Failed to notify our team. Please try again.';
-            } catch { this.qrisPay.error = 'Connection failed. Please try again.'; }
+                if (d.success) { this.qrisPay.claimed = true; this.qrisPay.paid = !!d.alreadyPaid; }
+                else this.qrisPay.error = d.error || 'Gagal mengirim konfirmasi. Coba lagi ya.';
+            } catch { this.qrisPay.error = 'Koneksi bermasalah. Coba lagi ya.'; }
             this.qrisPay.claiming = false;
         },
 
