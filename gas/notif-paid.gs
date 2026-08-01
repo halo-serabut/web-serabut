@@ -31,28 +31,51 @@ function notifPaid(params) {
   if (String(params.token || '').trim() !== secret) return { success: false, error: 'Unauthorized' };
 
   const raw = String(params.title || '') + ' ' + String(params.text || '');
+  const cache = CacheService.getScriptCache();
 
-  // Hanya notif "uang masuk". Notif lain (pesanan GoFood, promo, dll) diabaikan.
+  // Jejak notif terakhir — biar bisa dicek kalau ada yang "seharusnya masuk tapi tidak"
+  PropertiesService.getScriptProperties().setProperty('NOTIF_LAST', new Date().toISOString() + ' | ' + raw.slice(0, 300));
+
+  // Hanya notif "uang masuk". Notif lain (pesanan GoFood, promo, dll) diabaikan diam-diam.
   if (!/diterima|masuk|berhasil/i.test(raw)) return { success: true };
 
   const amount = _notifParseAmount(raw);
-  if (!amount) return { success: true };
-
-  // Anti-dobel via ID transaksi. Tanpa ID tidak ada cara aman bedakan notif ulang
-  // dari dua pembayaran nominal sama — lebih baik diam daripada dobel proses.
   const txnMatch = raw.match(/id\s*transaksi[:\s]*([A-Za-z0-9_-]+)/i);
-  if (!txnMatch) return { success: true };
-  const cache = CacheService.getScriptCache();
-  if (cache.get('notifPaid:' + txnMatch[1])) return { success: true };
-  cache.put('notifPaid:' + txnMatch[1], '1', 21600); // 6 jam
 
-  const orderId = _notifFindOrderByAmount(amount);
+  // Notif uang masuk tapi tak terbaca → JANGAN diam. Lapor apa adanya ke WA grup,
+  // maks 1x per 10 menit biar tidak banjir kalau formatnya berubah total.
+  if (!amount) {
+    if (!cache.get('notifUnparsed')) {
+      cache.put('notifUnparsed', '1', 600);
+      sendWAToGroup(
+        '❓ *Ada notifikasi pembayaran yang tidak terbaca*\n\n' +
+        'Isi notifnya:\n_' + raw.slice(0, 250) + '_\n\n' +
+        'Nominalnya tidak bisa saya baca, jadi tidak ada order yang saya proses. ' +
+        'Kalau ini pembayaran beneran, tolong dicek manual ya.'
+      );
+    }
+    return { success: true };
+  }
+
+  // Anti-dobel: pakai ID transaksi kalau ada, kalau tidak pakai nominal + menit.
+  // Kasar, tapi jauh lebih baik daripada notif dibuang diam-diam.
+  const dedupeKey = 'notifPaid:' + (txnMatch ? txnMatch[1] : amount + '@' + Math.floor(Date.now() / 60000));
+  if (cache.get(dedupeKey)) return { success: true };
+  cache.put(dedupeKey, '1', 21600); // 6 jam
+
+  let orderId;
+  try {
+    orderId = _notifFindOrderByAmount(amount);
+  } catch (err) {
+    Logger.log('notifPaid find error: ' + err.message);
+    return { success: false, error: 'find: ' + err.message };
+  }
 
   if (!orderId) {
     sendWAToGroup(
       '💵 *Ada uang masuk, tapi belum ketemu ordernya*\n\n' +
       'Nominal: *Rp ' + amount.toLocaleString('id-ID') + '*\n' +
-      'ID transaksi: ' + txnMatch[1] + '\n\n' +
+      (txnMatch ? 'ID transaksi: ' + txnMatch[1] + '\n' : '') + '\n' +
       'Tidak ada order Pending dengan nominal persis segitu. Biasanya ini pembayaran di luar web, ' +
       'atau nominalnya dibulatkan pembeli sehingga kode uniknya hilang.\n\n' +
       'Tolong dicek manual di Admin > Semua Order ya.'
@@ -60,7 +83,15 @@ function notifPaid(params) {
     return { success: true, matched: false, amount: amount };
   }
 
-  _gobizMarkPaid(orderId, 'GoPay QRIS'); // set Lunas + Diproses + WA grup + notif buyer
+  try {
+    _gobizMarkPaid(orderId, 'GoPay QRIS'); // set Lunas + Diproses + WA grup + notif buyer
+  } catch (err) {
+    Logger.log('notifPaid mark error: ' + err.message);
+    // Sheet sudah mungkin ter-update tapi notif gagal → jangan diam, laporkan
+    sendWAToGroup('⚠️ *Pembayaran masuk tapi notifikasinya gagal*\n\nOrder *' + orderId +
+      '*\nNominal: *Rp ' + amount.toLocaleString('id-ID') + '*\n\nCek status ordernya manual ya. (' + err.message + ')');
+    return { success: false, error: 'mark: ' + err.message };
+  }
   return { success: true, matched: true, orderId: orderId, amount: amount };
 }
 
@@ -97,6 +128,11 @@ function _notifFindOrderByAmount(amount) {
 // ────────────────────────────────────────────────────────
 //  TEST — jalankan dari GAS editor
 // ────────────────────────────────────────────────────────
+// Notif terakhir yang benar-benar sampai ke GAS — kosong = MacroDroid tidak pernah kirim
+function testNotifLast() {
+  Logger.log(PropertiesService.getScriptProperties().getProperty('NOTIF_LAST') || '(belum pernah ada notif masuk)');
+}
+
 function testNotifPaid() {
   const cases = [
     ['Rp1.000 berhasil diterima. ID transaksi: 40tc6WND', 1000],
