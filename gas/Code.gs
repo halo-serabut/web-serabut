@@ -105,6 +105,7 @@ function doPost(e) {
       case 'resendOTP':         result = resendOTP(params); break;
       case 'login':             result = login(params); break;
       case 'googleLogin':       result = googleLogin(params); break;
+      case 'sendAuthEmail':     result = sendAuthEmail(params); break;
       // User (authenticated)
       case 'createOrder':       result = createOrder(params); break;
       case 'getOrders':         result = getOrders(params); break;
@@ -3116,6 +3117,26 @@ function buildStatusEmailHTML(nama, orderId, produkLine, harga, emailAktif, stat
 // ────────────────────────────────────────────────────────
 //  EMAIL
 // ────────────────────────────────────────────────────────
+// ── Email-bridge untuk Supabase Edge Functions (auth via Supabase) ──
+// Edge Function panggil ini utk kirim email OTP/welcome (reuse GmailApp).
+// Diproteksi AUTH_BRIDGE_SECRET (Script Property) — server-to-server, bukan _srb.
+function sendAuthEmail(params) {
+  const secret = PropertiesService.getScriptProperties().getProperty('AUTH_BRIDGE_SECRET') || '';
+  if (!secret || String(params.bridgeSecret || '') !== secret) {
+    return { success: false, error: 'unauthorized' };
+  }
+  const email = String(params.email || '').toLowerCase().trim();
+  const nama  = String(params.nama || '').trim() || 'Kak';
+  if (!email) return { success: false, error: 'email kosong' };
+  try {
+    if (params.kind === 'welcome') sendWelcomeEmail(email, nama);
+    else sendOTPEmail(email, nama, String(params.otp || ''));
+    return { success: true };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
 function sendOTPEmail(email, nama, otp) {
   const subject  = `Kode OTP Serabut Store ${otp}`;
   const htmlBody = buildOTPEmailHTML(nama, otp);
