@@ -9119,6 +9119,7 @@ function serabutStore() {
         SUPABASE_URL:     'https://pmyuwaerzzpjwskdzxxw.supabase.co',
         SUPABASE_ANON:    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBteXV3YWVyenpwandza2R6eHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NDY3NjYsImV4cCI6MjEwMjMyMjc2Nn0.GwGn3FEQXroAPl7H6bql-g-QhYMcavaP4BwuVCVl-f8',
         USE_SUPABASE_CATALOG: true, // false = balik pakai GAS
+        USE_SUPABASE_AUTH: false, // true = login/register/OTP/forgot lewat Supabase; false = GAS (default sampai Orders ikut migrasi)
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
         APP_VERSION:      '20260815-1',
@@ -10593,6 +10594,15 @@ ANNOUNCE_ON:      false,
             this.authLoading=true; this.authError='';
             try {
                 const email = this.loginForm.email.toLowerCase().trim();
+                if(this.USE_SUPABASE_AUTH){
+                    const r = await this._supaPassSignIn(email, this.loginForm.password);
+                    if(r.success){
+                        await this._supaSetSession(r.session, 'login');
+                        this.closeAuthModal();
+                        this.loginForm = {email:'',password:''};
+                    } else { this.authError = r.error; }
+                    this.authLoading=false; return;
+                }
                 const hashed = await sha256(email + ':' + this.loginForm.password);
                 const hashedLegacy = await sha256(this.loginForm.password);
                 const data = await this.gasPost({ action:'login', email, password:hashed, passwordLegacy:hashedLegacy });
@@ -10621,6 +10631,13 @@ ANNOUNCE_ON:      false,
             if(!privacyAccepted){ this.authError='Harap setujui Kebijakan Privasi terlebih dahulu'; return; }
             this.authLoading=true; this.authError='';
             try {
+                if(this.USE_SUPABASE_AUTH){
+                    this._supaSignupData = { nama, wa, password }; // dipakai saat verify OTP
+                    const r = await this._supaFn('otp-request', { email, purpose:'signup', no_hp:wa });
+                    if(r.success){ this.closeAuthModal(); this.openOTPModal(email); }
+                    else { this.authError = r.error||'Registrasi gagal'; }
+                    this.authLoading=false; return;
+                }
                 const hashed = await sha256(email + ':' + password);
                 const data = await this.gasPost({ action:'register', nama, email, wa, password:hashed, privacyConsent:'1' });
                 if(data.success && data.action==='verify_otp') {
@@ -10662,6 +10679,24 @@ ANNOUNCE_ON:      false,
             if(!this.otpCode||this.otpCode.length!==6){ this.otpError='Masukkan 6 digit kode OTP'; return; }
             this.otpLoading=true; this.otpError='';
             try {
+                if(this.USE_SUPABASE_AUTH){
+                    const s = this._supaSignupData || {};
+                    const r = await this._supaFn('otp-verify', {
+                        email:this.otpEmail, otp:this.otpCode, purpose:'signup',
+                        nama:s.nama, no_hp:s.wa, password:s.password,
+                    });
+                    if(r.success && r.token_hash){
+                        const v = await this._supaVerifyTokenHash(r.token_hash);
+                        if(v.success){ await this._supaSetSession(v.session, 'register'); }
+                        else { // akun terbuat tapi sesi gagal → suruh login manual
+                            this.authError = 'Akun dibuat. Silakan login.'; this.openAuth('login');
+                        }
+                        this.closeOTPModal();
+                        this.registerForm = {nama:'',email:'',wa:'',password:''};
+                        this._supaSignupData = null;
+                    } else { this.otpError = r.error||'Verifikasi gagal'; }
+                    this.otpLoading=false; return;
+                }
                 const data = await this.gasPost({ action:'verifyOTP', email:this.otpEmail, otp:this.otpCode });
                 if(data.success) {
                     this.currentUser = { ...data.user, loginAt: new Date().toISOString() };
@@ -10680,7 +10715,10 @@ ANNOUNCE_ON:      false,
         async resendOTP() {
             this.otpResending=true; this.otpError='';
             try {
-                const data = await this.gasPost({ action:'resendOTP', email:this.otpEmail });
+                const s = this._supaSignupData || {};
+                const data = this.USE_SUPABASE_AUTH
+                    ? await this._supaFn('otp-request', { email:this.otpEmail, purpose:'signup', no_hp:s.wa })
+                    : await this.gasPost({ action:'resendOTP', email:this.otpEmail });
                 if(data.success) { this.startOTPTimer(); this.otpError=''; }
                 else { this.otpError = data.error||'Gagal kirim ulang OTP'; }
             } catch { this.otpError='Gagal terhubung ke server'; }
@@ -12754,6 +12792,61 @@ ANNOUNCE_ON:      false,
             if(!res.ok) throw new Error((data&&(data.message||data.error))||`HTTP ${res.status}`);
             return data;
         },
+        // ── Supabase Auth (buyer) — dipakai saat USE_SUPABASE_AUTH ──
+        async _supaFn(name, body){
+            const res = await fetch(`${this.SUPABASE_URL}/functions/v1/${name}`, {
+                method:'POST',
+                headers:{ apikey:this.SUPABASE_ANON, Authorization:`Bearer ${this.SUPABASE_ANON}`, 'Content-Type':'application/json' },
+                body: JSON.stringify(body)
+            });
+            const txt = await res.text(); let d=null; try{ d = txt?JSON.parse(txt):null; }catch{}
+            return d || { success:false, error:`HTTP ${res.status}` };
+        },
+        async _supaPassSignIn(email, password){
+            const res = await fetch(`${this.SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                method:'POST', headers:{ apikey:this.SUPABASE_ANON, 'Content-Type':'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const j = await res.json();
+            if(!j.access_token) return { success:false, error: j.error_description || j.msg || 'Email atau password salah' };
+            return { success:true, session:j };
+        },
+        async _supaVerifyTokenHash(tokenHash){
+            const res = await fetch(`${this.SUPABASE_URL}/auth/v1/verify`, {
+                method:'POST', headers:{ apikey:this.SUPABASE_ANON, 'Content-Type':'application/json' },
+                body: JSON.stringify({ type:'email', token_hash: tokenHash })
+            });
+            const j = await res.json();
+            if(!j.access_token) return { success:false, error: j.error_description || j.msg || 'Gagal membuat sesi' };
+            return { success:true, session:j };
+        },
+        async _supaLoadProfile(accessToken){
+            const res = await fetch(`${this.SUPABASE_URL}/rest/v1/profiles?select=id,nama,email,no_hp,role&limit=1`, {
+                headers:{ apikey:this.SUPABASE_ANON, Authorization:`Bearer ${accessToken}` }
+            });
+            const rows = await res.json();
+            return Array.isArray(rows) && rows[0] ? rows[0] : null;
+        },
+        // Bangun currentUser dari sesi Supabase + profil, lalu persist (mirror alur GAS).
+        async _supaSetSession(session, greetMode){
+            const prof = await this._supaLoadProfile(session.access_token) || {};
+            this._supaToken = session.access_token; // reuse utk _supaWrite (admin)
+            this.currentUser = {
+                id:      prof.id || session.user?.id,
+                nama:    prof.nama || session.user?.user_metadata?.nama || '',
+                email:   prof.email || session.user?.email || '',
+                wa:      prof.no_hp || '',
+                role:    prof.role || 'buyer',
+                sessionToken: session.access_token, // ponytail: dipakai app existing; validasi GAS baru saat Orders migrasi
+                loginAt: new Date().toISOString(),
+            };
+            const { sessionToken:_st, ...pub } = this.currentUser;
+            localStorage.setItem('serabutUser', JSON.stringify(pub));
+            localStorage.setItem('srb_tok', session.access_token);
+            this._loadMyReviews();
+            if(greetMode) this._greetUser(this.currentUser, greetMode);
+            if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
+        },
         _supaProductRow(){
             const p = this.adminNewProduct;
             return {
@@ -14130,7 +14223,14 @@ ANNOUNCE_ON:      false,
             if (!this.forgotPwEmail.trim()) { this.forgotPwError='Email harus diisi'; return; }
             this.forgotPwLoading=true; this.forgotPwError='';
             try {
-                const data = await this.gasPost({ action:'forgotPasswordSendOTP', email: this.forgotPwEmail.trim().toLowerCase() });
+                const email = this.forgotPwEmail.trim().toLowerCase();
+                if(this.USE_SUPABASE_AUTH){
+                    const r = await this._supaFn('otp-request', { email, purpose:'reset' });
+                    if(r.success){ this.forgotPwHasWa=false; this.forgotPwStep=2; }
+                    else { this.forgotPwError = r.error||'Gagal mengirim kode OTP'; }
+                    this.forgotPwLoading=false; return;
+                }
+                const data = await this.gasPost({ action:'forgotPasswordSendOTP', email });
                 if (data.success) {
                     this.forgotPwMaskedEmail = data.maskedEmail || '';
                     this.forgotPwMaskedWa    = data.maskedWa    || '';
@@ -14153,8 +14253,10 @@ ANNOUNCE_ON:      false,
             this.forgotPwLoading=true; this.forgotPwError='';
             try {
                 const email   = this.forgotPwEmail.trim().toLowerCase();
-                const newHash = await sha256(email + ':' + this.forgotPwNewPw);
-                const data    = await this.gasPost({ action:'forgotPasswordVerify', email, otp: this.forgotPwOtp.trim(), newPassword: newHash });
+                const otp     = this.forgotPwOtp.trim();
+                const data    = this.USE_SUPABASE_AUTH
+                    ? await this._supaFn('otp-verify', { email, otp, purpose:'reset', newPassword: this.forgotPwNewPw })
+                    : await this.gasPost({ action:'forgotPasswordVerify', email, otp, newPassword: await sha256(email + ':' + this.forgotPwNewPw) });
                 if (data.success) { this.forgotPwSuccess=true; }
                 else { this.forgotPwError = data.error||'Gagal reset password'; }
             } catch { this.forgotPwError='Gagal terhubung ke server'; }
