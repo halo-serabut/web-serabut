@@ -10600,7 +10600,7 @@ ANNOUNCE_ON:      false,
                         await this._supaSetSession(r.session, 'login');
                         this.closeAuthModal();
                         this.loginForm = {email:'',password:''};
-                    } else { this.authError = r.error; }
+                    } else { this.authError = (r.error||'Login gagal') + '. Akun lama? Pakai "Lupa Password" untuk set ulang.'; }
                     this.authLoading=false; return;
                 }
                 const hashed = await sha256(email + ':' + this.loginForm.password);

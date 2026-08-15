@@ -3137,6 +3137,45 @@ function sendAuthEmail(params) {
   }
 }
 
+// ── MIGRASI: impor semua user Users-web → Supabase Auth (one-time, jalankan dari editor GAS) ──
+// Baca sheet, kirim ke Edge Function import-users (gated AUTH_BRIDGE_SECRET). Idempotent.
+function migrateUsersToSupabase() {
+  const SUPABASE_URL  = 'https://pmyuwaerzzpjwskdzxxw.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBteXV3YWVyenpwandza2R6eHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NDY3NjYsImV4cCI6MjEwMjMyMjc2Nn0.GwGn3FEQXroAPl7H6bql-g-QhYMcavaP4BwuVCVl-f8';
+  const secret = PropertiesService.getScriptProperties().getProperty('AUTH_BRIDGE_SECRET') || '';
+  if (!secret) throw new Error('AUTH_BRIDGE_SECRET belum diset di Script Properties');
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_USERS);
+  if (!sheet) throw new Error('Sheet ' + TAB_USERS + ' tidak ada');
+  const data = sheet.getDataRange().getValues();
+
+  const users = [];
+  for (let i = 1; i < data.length; i++) {
+    const r = data[i];
+    const email = String(r[1] || '').toLowerCase().trim();
+    if (!email || email.indexOf('@') < 0) continue;
+    users.push({
+      nama:   String(r[0] || '').trim(),
+      email:  email,
+      wa:     String(r[2] || '').trim(),
+      role:   String(r[9] || 'buyer').trim().toLowerCase(),
+      status: String(r[5] || 'Aktif').trim(),
+    });
+  }
+
+  const res = UrlFetchApp.fetch(SUPABASE_URL + '/functions/v1/import-users', {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'Authorization': 'Bearer ' + SUPABASE_ANON, 'apikey': SUPABASE_ANON, 'x-bridge-secret': secret },
+    payload: JSON.stringify({ users: users }),
+    muteHttpExceptions: true,
+  });
+  const body = res.getContentText();
+  Logger.log('Total baris user: ' + users.length);
+  Logger.log('Hasil import: ' + body);
+  return body;
+}
+
 function sendOTPEmail(email, nama, otp) {
   const subject  = `Kode OTP Serabut Store ${otp}`;
   const htmlBody = buildOTPEmailHTML(nama, otp);
