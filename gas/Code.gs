@@ -1746,6 +1746,14 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
     msNama || '-', username || '-', microsoftEmail || '-', emailAktif || '-', emailReminder || '-'
   ]);
 
+  // Full move: mirror ke Supabase (best-effort, tak menggagalkan order)
+  if (_ordersStoreOn()) {
+    _ordersWrite({ action:'insert', rows:[ _orderRowSupa({
+      orderId, userNama, userEmail, userWa, produk, varian, masaAktif,
+      harga: hargaNum, msNama, username, microsoftEmail, emailAktif, emailReminder,
+    }) ] });
+  }
+
   const varLower    = (varian || '').toLowerCase();
   const isFamily    = varLower.includes('family');
   const isWeb       = varLower.includes('web');
@@ -2179,6 +2187,7 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
   let totalHarga = 0;
   const waLines       = [];
   const computedItems = []; // simpan item + harga final (sudah discount)
+const supaRows      = []; // full move: baris utk Supabase orders
 
   for (let idx = 0; idx < items.length; idx++) {
     const it = items[idx];
@@ -2203,6 +2212,11 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
       it.produk, it.varian||'-', it.masaAktif||'-', hargaNum, 'Pending',
       it.msNama||'-', it.username||'-', it.microsoftEmail||'-', it.emailAktif||'-', '-'
     ]);
+    if (_ordersStoreOn()) supaRows.push(_orderRowSupa({
+      orderId, userNama, userEmail, userWa, produk: it.produk, varian: it.varian,
+      masaAktif: it.masaAktif, harga: hargaNum, msNama: it.msNama, username: it.username,
+      microsoftEmail: it.microsoftEmail, emailAktif: it.emailAktif,
+    }));
 
     const varLower  = (it.varian || '').toLowerCase();
     const isFamily  = varLower.includes('family');
@@ -2220,6 +2234,9 @@ function createCartOrder({ email, sessionToken, userNama, userEmail, userWa, ite
     waLines.push(line);
     computedItems.push({ produk: it.produk, varian: it.varian||'-', masaAktif: it.masaAktif||'-', harga: hargaNum, qty: Number(it.qty)||1 });
   }
+
+  // Full move: mirror semua item ke Supabase sekali (best-effort)
+  if (_ordersStoreOn() && supaRows.length) _ordersWrite({ action:'insert', rows: supaRows });
 
   // Kirim notif WAG segera saat order dibuat
   const firstVar    = (items[0]?.varian || '').toLowerCase();
@@ -3135,6 +3152,41 @@ function sendAuthEmail(params) {
   } catch (e) {
     return { success: false, error: e.message };
   }
+}
+
+// ── ORDERS → Supabase (full move) ──
+// Aktif saat Script Property ORDERS_STORE='supabase'. GAS tetap orchestrator (validasi harga,
+// WA notif); persist state order lewat Edge orders-write (bridge-gated). Sheet tetap ditulis
+// sbg fallback sampai flip. Best-effort: kegagalan Supabase tak menggagalkan order (sheet aman).
+const SUPABASE_URL_SRB  = 'https://pmyuwaerzzpjwskdzxxw.supabase.co';
+const SUPABASE_ANON_SRB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBteXV3YWVyenpwandza2R6eHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NDY3NjYsImV4cCI6MjEwMjMyMjc2Nn0.GwGn3FEQXroAPl7H6bql-g-QhYMcavaP4BwuVCVl-f8';
+function _ordersStoreOn() {
+  return String(PropertiesService.getScriptProperties().getProperty('ORDERS_STORE') || '').toLowerCase() === 'supabase';
+}
+function _ordersWrite(payload) {
+  const secret = PropertiesService.getScriptProperties().getProperty('AUTH_BRIDGE_SECRET') || '';
+  if (!secret) { Logger.log('_ordersWrite skip: AUTH_BRIDGE_SECRET kosong'); return { success:false }; }
+  try {
+    const res = UrlFetchApp.fetch(SUPABASE_URL_SRB + '/functions/v1/orders-write', {
+      method: 'post', contentType: 'application/json',
+      headers: { 'Authorization': 'Bearer ' + SUPABASE_ANON_SRB, 'apikey': SUPABASE_ANON_SRB, 'x-bridge-secret': secret },
+      payload: JSON.stringify(payload), muteHttpExceptions: true,
+    });
+    const out = JSON.parse(res.getContentText() || '{}');
+    if (!out.success) Logger.log('_ordersWrite gagal: ' + res.getContentText());
+    return out;
+  } catch (e) { Logger.log('_ordersWrite error: ' + e.message); return { success:false, error:e.message }; }
+}
+// Bentuk satu baris order utk Supabase (snake_case). Dipakai createOrder & createCartOrder.
+function _orderRowSupa(o) {
+  return {
+    order_id: o.orderId, nama: o.userNama || '', email: o.userEmail || '', no_wa: o.userWa || '',
+    produk: o.produk || '', varian: o.varian || '-', masa_aktif: o.masaAktif || '-',
+    harga: Number(o.harga) || 0, status: o.status || 'Pending',
+    nama_ms: o.msNama || '-', username: o.username || '-', email_ms: o.microsoftEmail || '-',
+    email_aktif: o.emailAktif || '-', email_reminder: o.emailReminder || '-',
+    payment_status: o.paymentStatus || 'UNPAID',
+  };
 }
 
 // ── MIGRASI: impor semua user Users-web → Supabase Auth (one-time, jalankan dari editor GAS) ──

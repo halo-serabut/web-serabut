@@ -384,7 +384,11 @@ Tujuan: pindahkan backend GAS + Google Sheets ke Supabase (Postgres + PostgREST 
     - Frontend: gagal login Supabase → hint "Akun lama? Pakai Lupa Password untuk set ulang".
     - E2E verified via curl: user sintetis → created:1, WA `081..`→`6281..`, must_reset=true; re-run → skipped:1; secret salah → 401; test user dihapus (cascade).
     - **DEPLOY (owner, saat siap flip auth)**: (a) `clasp push` GAS; (b) jalankan `migrateUsersToSupabase()` sekali dari editor → cek Logger `{created,skipped,failed}`; (c) baru pertimbangkan `USE_SUPABASE_AUTH:true` setelah slice 5.
-  - **BELUM (slice berikutnya)**: (5) Orders → Supabase (lalu updateProfile/changePassword/admin actions ikut pindah, baru flag `USE_SUPABASE_AUTH` bisa default true).
+  - 🚧 **Slice 5 IN PROGRESS (Orders → Supabase, FULL MOVE — keputusan owner)**: cutover backend penuh (orders memaksa auth+profile+admin ikut, krn buyer baca order via RLS JWT-email). Dibangun di balik flag + fallback sheet, flip di akhir setelah E2E.
+    - ✅ Tabel `public.orders` (1 baris/item, mirror sheet; kolom snake_case + payment_method/payment_status) + RLS: buyer baca `lower(email)=JWT email`, admin full (`is_admin()`), update admin; service_role utk sistem. Index order_id + lower(email).
+    - ✅ Edge **`orders-write`** (ACTIVE, gated x-bridge-secret): `action:'insert'{rows}` + `action:'status'{orderId,status?,paymentMethod?,paymentStatus?}`. E2E curl: insert/status/401 OK.
+    - ✅ GAS: konst `SUPABASE_URL_SRB/ANON_SRB`, helper `_ordersStoreOn()` (Script Property `ORDERS_STORE='supabase'`), `_ordersWrite(payload)` (best-effort, tak gagalkan order), `_orderRowSupa(o)`. **Wired: createOrder + createCartOrder** insert ke Supabase (masih dual: sheet + Supabase).
+    - **BELUM**: status update — `updateOrderStatus` + payment paid paths (`_gobizMarkPaid`/notif, `qrisClaimPaid`, `xenditCallback`, iPaymu sync) belum panggil `_ordersWrite('status')`. Frontend read: `getOrders`(buyer) + `getAllOrders`(admin) belum baca Supabase. Cutover: flip `ORDERS_STORE` + `USE_SUPABASE_AUTH` + migrasi updateProfile/changePassword. Belum `clasp push`/deploy (ORDERS_STORE default off → dormant, aman).
   - **GOTCHA**: `_supaEnsureAuth()` frontend sekarang login sbg `halo@serabut.id` (admin) — saat auth buyer live, admin write harus divalidasi via `profiles.role='admin'`, bukan sekadar "authenticated".
 - **Catatan**: GAS lama masih hidup sebagai fallback + belum-dimigrasi. Cloudflare bisa sajikan HTML basi beberapa menit (cek incognito).
 
