@@ -9118,10 +9118,13 @@ function serabutStore() {
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260801-1',
+        APP_VERSION:      '20260801-2',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
-        ANNOUNCE_ON:      true,
+        // Default false: banner baru muncul kalau Settings GAS bilang aktif.
+// Kalau default true, semua pengunjung sempat melihat peringatan gangguan
+// beberapa detik sebelum setelan aslinya datang.
+ANNOUNCE_ON:      false,
         ANNOUNCE_TEXT:    'Layanan WhatsApp sedang gangguan sementara. Untuk bantuan & konfirmasi pesanan, silakan hubungi kami via email',
         ANNOUNCE_EMAIL:   'halo@serabut.id',
         announceDismissed: sessionStorage.getItem('srb_announce_dismissed') === '1',
