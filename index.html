@@ -9116,9 +9116,12 @@ function serabutStore() {
     return {
         // Config
         GAS_URL:          'https://script.google.com/macros/s/AKfycbwt6SJi1nXOKc5I0CMWaTIfxtaBDoi3e4RyOPn7Znea-VUbABvg__4KA5n-QYfP308n9w/exec',
+        SUPABASE_URL:     'https://pmyuwaerzzpjwskdzxxw.supabase.co',
+        SUPABASE_ANON:    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBteXV3YWVyenpwandza2R6eHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NDY3NjYsImV4cCI6MjEwMjMyMjc2Nn0.GwGn3FEQXroAPl7H6bql-g-QhYMcavaP4BwuVCVl-f8',
+        USE_SUPABASE_CATALOG: true, // false = balik pakai GAS
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260801-2',
+        APP_VERSION:      '20260815-1',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -10087,12 +10090,24 @@ ANNOUNCE_ON:      false,
         },
 
         // ── Load Site Settings dari GAS ───────────────
+        async _loadSettingsObj() {
+            try {
+                const res  = await fetch(`${this.SUPABASE_URL}/rest/v1/settings?select=key,value`, {
+                    headers:{ apikey:this.SUPABASE_ANON, Authorization:`Bearer ${this.SUPABASE_ANON}` }
+                });
+                const rows = await res.json();
+                if(Array.isArray(rows) && rows.length){ const o={}; rows.forEach(r=>o[r.key]=r.value==null?'':String(r.value)); return o; }
+            } catch {}
+            try { // fallback GAS
+                const res = await fetch(`${this.GAS_URL}?action=getSettings`);
+                const data = await res.json();
+                return data.success ? data.data : null;
+            } catch { return null; }
+        },
         async loadSiteSettings() {
             try {
-                const res  = await fetch(`${this.GAS_URL}?action=getSettings`);
-                const data = await res.json();
-                if(!data.success) return;
-                const s = data.data;
+                const s = await this._loadSettingsObj();
+                if(!s) return;
 
                 // Flash Sale — multi-campaign
                 const fsCampaigns = (() => { try { return JSON.parse(s['flashSale.campaigns']||'[]'); } catch { return []; } })();
@@ -10226,12 +10241,55 @@ ANNOUNCE_ON:      false,
             const CACHE_KEY = 'serabut_catalog_cache';
             const TTL = 5 * 60 * 1000; // 5 menit
             const _mapProducts = (list) => list.map(p=>({...p, category: p.category || this.getCategory(p.nama)}));
-            const _fetchFresh  = async () => {
+            const _parseDesc = (raw) => {
+                const t = String(raw==null?'':raw).trim();
+                if(!t) return { benefits:[], descHtml:'' };
+                if(t.charAt(0)==='[') { try { const a=JSON.parse(t); if(Array.isArray(a)) return { benefits:a, descHtml:'' }; } catch {} }
+                return { benefits:[], descHtml:t };
+            };
+            const _parseImgs = (raw) => {
+                const t = String(raw==null?'':raw).trim();
+                if(!t) return [];
+                if(t.charAt(0)==='[') { try { const a=JSON.parse(t); if(Array.isArray(a)) return a.filter(x=>x); } catch {} }
+                return [t];
+            };
+            const _fetchSupabase = async () => {
+                const res = await fetch(`${this.SUPABASE_URL}/rest/v1/catalog?select=*&aktif=eq.true`, {
+                    headers: { apikey: this.SUPABASE_ANON, Authorization: `Bearer ${this.SUPABASE_ANON}` }
+                });
+                const rows = await res.json();
+                if(!Array.isArray(rows)) return null;
+                return rows.map(r => {
+                    const d = _parseDesc(r.deskripsi);
+                    return {
+                        nama:       String(r.nama_produk||'').trim(),
+                        varian:     String(r.varian||'').trim(),
+                        masaAktif:  String(r.masa_aktif||'-').trim(),
+                        harga:      Number(r.harga)||0,
+                        linkProduk: String(r.link_produk||'').trim(),
+                        stok:       (r.stok==null||r.stok==='') ? null : Number(r.stok),
+                        category:   String(r.kategori||'').trim(),
+                        benefits:   d.benefits,
+                        descHtml:   d.descHtml,
+                        gambar:     _parseImgs(r.gambar),
+                        terjual:    Number(r.terjual)||0,
+                    };
+                });
+            };
+            const _fetchGAS = async () => {
                 const res  = await fetch(`${this.GAS_URL}?action=getCatalog`);
                 const data = await res.json();
-                if(data.success&&data.data) {
-                    const mapped = _mapProducts(data.data);
-                    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: data.data })); } catch {}
+                return (data.success && data.data) ? data.data : null;
+            };
+            const _fetchFresh  = async () => {
+                let data = null;
+                if(this.USE_SUPABASE_CATALOG && this.SUPABASE_ANON !== 'PASTE_ANON_KEY_DI_SINI') {
+                    try { data = await _fetchSupabase(); } catch { data = null; }
+                }
+                if(!data) data = await _fetchGAS(); // fallback aman
+                if(data) {
+                    const mapped = _mapProducts(data);
+                    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
                     return mapped;
                 }
                 return null;
@@ -11960,7 +12018,10 @@ ANNOUNCE_ON:      false,
 
         // ── Admin save helper ─────────────────────────
         async _adminSave(key, value) {
-            return this.gasPost({ action:'saveSettings', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, key, value });
+            try {
+                await this._supaWrite('POST', 'settings', { key, value: value==null?'':String(value) }, 'resolution=merge-duplicates');
+                return { success:true };
+            } catch(err) { return { success:false, error: err.message }; }
         },
         _showToast(msg, type='default', emoji='', duration=3500) {
             if (this.globalToast.timer) clearTimeout(this.globalToast.timer);
@@ -12420,13 +12481,11 @@ ANNOUNCE_ON:      false,
         // ── Payment Methods admin ─────────────────────────
         async adminLoadPaymentMethods() {
             try {
-                const data = await fetch(`${this.GAS_URL}?action=getSettings`).then(r=>r.json());
-                if(data.success && data.data) {
-                    const raw = data.data['payment.methods'];
-                    if(raw) {
-                        const pm = JSON.parse(raw);
-                        if(Array.isArray(pm) && pm.length) this.adminPaymentList = pm;
-                    }
+                const s = await this._loadSettingsObj();
+                const raw = s && s['payment.methods'];
+                if(raw) {
+                    const pm = JSON.parse(raw);
+                    if(Array.isArray(pm) && pm.length) this.adminPaymentList = pm;
                 }
             } catch(e) { /* pakai defaults dari state */ }
             this.adminPaymentLoaded = true;
@@ -12434,13 +12493,7 @@ ANNOUNCE_ON:      false,
         async adminSavePaymentMethods() {
             this.adminPaymentSaving = true;
             try {
-                const data = await this.gasPost({
-                    action: 'saveSettings',
-                    adminEmail: this.currentUser?.email,
-                    adminToken: this.currentUser?.sessionToken,
-                    key: 'payment.methods',
-                    value: JSON.stringify(this.adminPaymentList)
-                });
+                const data = await this._adminSave('payment.methods', JSON.stringify(this.adminPaymentList));
                 if(data.success) {
                     // Update live di frontend
                     this.paymentMethods = this.adminPaymentList.filter(p=>p.active).map(p=>p.label);
@@ -12673,12 +12726,74 @@ ANNOUNCE_ON:      false,
         },
 
         // ── Admin: Products ───────────────────────────
+        // ── Supabase admin write helpers (migrasi katalog) ──
+        _parseDescJS(raw){ const t=String(raw==null?'':raw).trim(); if(!t) return {benefits:[],descHtml:''}; if(t.charAt(0)==='['){ try{ const a=JSON.parse(t); if(Array.isArray(a)) return {benefits:a,descHtml:''}; }catch{} } return {benefits:[],descHtml:t}; },
+        _parseImgsJS(raw){ const t=String(raw==null?'':raw).trim(); if(!t) return []; if(t.charAt(0)==='['){ try{ const a=JSON.parse(t); if(Array.isArray(a)) return a.filter(x=>x); }catch{} } return [t]; },
+        async _supaEnsureAuth(){
+            if(this._supaToken) return this._supaToken;
+            const email = this.currentUser?.email;
+            const pass = prompt(`Password Supabase untuk ${email} (sekali per sesi):`);
+            if(!pass) throw new Error('Login Supabase dibatalkan');
+            const res = await fetch(`${this.SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                method:'POST', headers:{ apikey:this.SUPABASE_ANON, 'Content-Type':'application/json' },
+                body: JSON.stringify({ email, password: pass })
+            });
+            const j = await res.json();
+            if(!j.access_token) throw new Error(j.error_description||'Login Supabase gagal');
+            this._supaToken = j.access_token;
+            return this._supaToken;
+        },
+        async _supaWrite(method, path, body, prefer){
+            const token = await this._supaEnsureAuth();
+            const res = await fetch(`${this.SUPABASE_URL}/rest/v1/${path}`, {
+                method, headers:{ apikey:this.SUPABASE_ANON, Authorization:`Bearer ${token}`, 'Content-Type':'application/json', Prefer:'return=representation'+(prefer?','+prefer:'') },
+                body: body ? JSON.stringify(body) : undefined
+            });
+            if(res.status===401){ this._supaToken=null; throw new Error('Sesi Supabase habis, coba simpan lagi'); }
+            const txt = await res.text(); let data=null; try{ data = txt?JSON.parse(txt):null; }catch{}
+            if(!res.ok) throw new Error((data&&(data.message||data.error))||`HTTP ${res.status}`);
+            return data;
+        },
+        _supaProductRow(){
+            const p = this.adminNewProduct;
+            return {
+                nama_produk: p.nama,
+                varian:      p.varian,
+                masa_aktif:  p.masaAktif,
+                harga:       Number(p.harga)||0,
+                link_produk: p.linkProduk||'',
+                aktif:       (String(p.aktif)==='true'||p.aktif===true),
+                stok:        (p.stok===''||p.stok==null)?null:Number(p.stok),
+                kategori:    p.kategori||'',
+                deskripsi:   p.descHtml||'',
+                gambar:      JSON.stringify(Array.isArray(p.gambar)?p.gambar.filter(u=>!String(u).startsWith('data:')):[]),
+            };
+        },
         async adminLoadProducts() {
             this.adminProductsLoading=true;
             try {
-                const data = await this.gasPost({ action:'getCatalogAdmin', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken });
-                this.adminProducts = data.success ? data.data : [];
-                if (data.success) this.adminProductsLoaded = true;
+                const res  = await fetch(`${this.SUPABASE_URL}/rest/v1/catalog?select=*&order=id.asc`, {
+                    headers:{ apikey:this.SUPABASE_ANON, Authorization:`Bearer ${this.SUPABASE_ANON}` }
+                });
+                const rows = await res.json();
+                this.adminProducts = Array.isArray(rows) ? rows.map(r=>{
+                    const d = this._parseDescJS(r.deskripsi);
+                    return {
+                        rowIndex:  r.id, id: r.id,   // alias id → rowIndex (kompat kode lama)
+                        nama:      String(r.nama_produk||'').trim(),
+                        varian:    String(r.varian||'').trim(),
+                        masaAktif: String(r.masa_aktif||'-').trim(),
+                        harga:     Number(r.harga)||0,
+                        linkProduk:String(r.link_produk||'').trim(),
+                        aktif:     r.aktif===true,
+                        stok:      (r.stok==null||r.stok==='')?null:Number(r.stok),
+                        category:  String(r.kategori||'').trim(),
+                        benefits:  d.benefits,
+                        descHtml:  d.descHtml,
+                        gambar:    this._parseImgsJS(r.gambar),
+                    };
+                }) : [];
+                this.adminProductsLoaded = true;
             } catch { this.adminProducts=[]; }
             this.adminProductsLoading=false;
         },
@@ -12711,76 +12826,62 @@ ANNOUNCE_ON:      false,
                 this.adminNewProduct.gambar = this.adminNewProduct.gambar.filter(u => !String(u).startsWith('data:'));
             this.adminSaving=true;
             try {
-                const action = this.adminEditProduct ? 'updateProduct' : 'addProduct';
-                const payload = {
-                    action, adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken,
-                    nama:      this.adminNewProduct.nama,
-                    varian:    this.adminNewProduct.varian,
-                    masaAktif: this.adminNewProduct.masaAktif,
-                    harga:     this.adminNewProduct.harga,
-                    linkProduk:this.adminNewProduct.linkProduk,
-                    aktif:     String(this.adminNewProduct.aktif),
-                    stok:      this.adminNewProduct.stok===''?'':Number(this.adminNewProduct.stok),
-                    iconUrl:   this.adminNewProduct.iconUrl||'',
-                    kategori:  this.adminNewProduct.kategori||'',
-                    descHtml:  this.adminNewProduct.descHtml||'',
-                    gambar:    JSON.stringify(Array.isArray(this.adminNewProduct.gambar) ? this.adminNewProduct.gambar : []),
-                };
-                if(this.adminEditProduct) payload.rowIndex = this.adminEditProduct.rowIndex;
-                const data = await this.gasPost(payload);
-                if(data.success) {
-                    // Update local state untuk produk yang diedit
-                    if(this.adminEditProduct) {
-                        const savedDesc = this.adminNewProduct.descHtml||'';
-                        const savedGbr  = Array.isArray(this.adminNewProduct.gambar) ? [...this.adminNewProduct.gambar] : [];
-                        const idx = this.products.findIndex(p => p.rowIndex == this.adminEditProduct.rowIndex);
-                        if(idx >= 0) {
-                            this.products[idx] = { ...this.products[idx], descHtml: savedDesc, gambar: savedGbr, benefits: [] };
-                            this.products = [...this.products];
-                        }
+                const row = this._supaProductRow();
+                if(this.adminEditProduct) {
+                    await this._supaWrite('PATCH', `catalog?id=eq.${this.adminEditProduct.rowIndex}`, row);
+                } else {
+                    await this._supaWrite('POST', 'catalog', row);
+                }
+                // Update local state untuk produk yang diedit
+                if(this.adminEditProduct) {
+                    const savedDesc = this.adminNewProduct.descHtml||'';
+                    const savedGbr  = Array.isArray(this.adminNewProduct.gambar) ? [...this.adminNewProduct.gambar] : [];
+                    const idx = this.products.findIndex(p => p.rowIndex == this.adminEditProduct.rowIndex);
+                    if(idx >= 0) {
+                        this.products[idx] = { ...this.products[idx], descHtml: savedDesc, gambar: savedGbr, benefits: [] };
+                        this.products = [...this.products];
                     }
-                    this._adminShowMsg(this.adminEditProduct ? 'Produk & deskripsi diupdate ✓' : 'Produk ditambahkan ✓');
-                    this.adminEditProduct=null; this.adminAddMode=false;
-                    await this.adminLoadProducts();
-                    await this.fetchProducts();
-                } else { this._adminShowMsg(data.error||'Gagal menyimpan'); }
-            } catch { this._adminShowMsg('Gagal terhubung'); }
+                }
+                this._adminShowMsg(this.adminEditProduct ? 'Produk & deskripsi diupdate ✓' : 'Produk ditambahkan ✓');
+                this.adminEditProduct=null; this.adminAddMode=false;
+                await this.adminLoadProducts();
+                await this.fetchProducts();
+            } catch(err) { this._adminShowMsg(err.message||'Gagal menyimpan'); }
             this.adminSaving=false;
         },
         async adminToggleAktif(p) {
             const newAktif = !p.aktif;
             p.aktif = newAktif;
             try {
-                const data = await this.gasPost({ action:'updateProductAktif', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:p.rowIndex, aktif:String(newAktif) });
-                if (!data.success) { p.aktif = !newAktif; this._adminShowMsg(data.error||'Gagal update'); }
-                else { this._adminShowMsg(newAktif ? 'Produk diaktifkan ✓' : 'Produk dinonaktifkan ✓'); await this.fetchProducts(); }
-            } catch { p.aktif = !newAktif; this._adminShowMsg('Gagal terhubung'); }
+                await this._supaWrite('PATCH', `catalog?id=eq.${p.rowIndex}`, { aktif:newAktif });
+                this._adminShowMsg(newAktif ? 'Produk diaktifkan ✓' : 'Produk dinonaktifkan ✓'); await this.fetchProducts();
+            } catch(err) { p.aktif = !newAktif; this._adminShowMsg(err.message||'Gagal update'); }
         },
         async adminUpdateStock(p, val) {
-            const stok = val===''?'':Number(val);
+            const stok = val===''?null:Number(val);
             try {
-                await this.gasPost({ action:'updateProductStock', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:p.rowIndex, stok });
-                p.stok = val===''?null:Number(val);
+                await this._supaWrite('PATCH', `catalog?id=eq.${p.rowIndex}`, { stok });
+                p.stok = stok;
                 this._adminShowMsg('Stok diperbarui ✓');
                 await this.fetchProducts();
-            } catch { this._adminShowMsg('Gagal update stok'); }
+            } catch(err) { this._adminShowMsg(err.message||'Gagal update stok'); }
         },
         async adminDeleteProduct(p) {
             if(!confirm(`Hapus produk "${p.nama} — ${p.varian}"?`)) return;
             try {
-                const data = await this.gasPost({ action:'deleteProduct', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:p.rowIndex });
-                if(data.success) { this._adminShowMsg('Produk dihapus ✓'); await this.adminLoadProducts(); await this.fetchProducts(); }
-                else { this._adminShowMsg(data.error||'Gagal hapus'); }
-            } catch { this._adminShowMsg('Gagal terhubung'); }
+                await this._supaWrite('DELETE', `catalog?id=eq.${p.rowIndex}`);
+                this._adminShowMsg('Produk dihapus ✓'); await this.adminLoadProducts(); await this.fetchProducts();
+            } catch(err) { this._adminShowMsg(err.message||'Gagal hapus'); }
         },
 
         // ── Admin: Guides ─────────────────────────────
         async adminLoadGuides() {
             this.adminGuidesLoading=true;
             try {
-                const res  = await fetch(`${this.GAS_URL}?action=getGuides`);
-                const data = await res.json();
-                if(data.success) { this.adminGuides = data.data; this.adminGuidesLoaded = true; }
+                const s = await this._loadSettingsObj() || {};
+                const parse = (k)=>{ try{ const a=JSON.parse(s[k]||'[]'); return Array.isArray(a)?a:[]; }catch{ return []; } };
+                this.adminGuides = { office365:parse('guides.office365'), windows:parse('guides.windows'), adobe:parse('guides.adobe') };
+                this.adminGuidesLoaded = true;
             } catch {}
             this.adminGuidesLoading=false;
         },
@@ -12798,7 +12899,7 @@ ANNOUNCE_ON:      false,
                 const entry = { title:this.adminNewGuide.title, steps:this.adminNewGuide.steps.filter(s=>s.trim()), note:this.adminNewGuide.note };
                 if(this.adminEditGuideIdx>=0) tabGuides[this.adminEditGuideIdx]=entry;
                 else tabGuides.push(entry);
-                const data = await this.gasPost({ action:'saveGuides', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, tab:this.adminGuideTab, guidesJson:JSON.stringify(tabGuides) });
+                const data = await this._adminSave(`guides.${this.adminGuideTab}`, JSON.stringify(tabGuides));
                 if(data.success) {
                     this.adminGuides[this.adminGuideTab] = tabGuides;
                     this.guides[this.adminGuideTab] = tabGuides.map(g=>({...g,open:false}));
@@ -12814,7 +12915,7 @@ ANNOUNCE_ON:      false,
             try {
                 const tabGuides = [...this.adminGuides[this.adminGuideTab]];
                 tabGuides.splice(gi,1);
-                const data = await this.gasPost({ action:'saveGuides', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, tab:this.adminGuideTab, guidesJson:JSON.stringify(tabGuides) });
+                const data = await this._adminSave(`guides.${this.adminGuideTab}`, JSON.stringify(tabGuides));
                 if(data.success) {
                     this.adminGuides[this.adminGuideTab]=tabGuides;
                     this.guides[this.adminGuideTab]=tabGuides.map(g=>({...g,open:false}));
@@ -12921,26 +13022,16 @@ ANNOUNCE_ON:      false,
             if(!rowIndex) { this._adminShowMsg('Pilih produk terlebih dahulu'); return; }
             this.adminSaving = true;
             try {
-                const data = await this.gasPost({
-                    action:      'saveProductBenefits',
-                    adminEmail:  this.currentUser.email,
-                    adminToken:  this.currentUser.sessionToken,
-                    rowIndex,
-                    benefits:    JSON.stringify(this.adminBenefitItems),
-                });
-                if(data.success) {
-                    const saved = [...this.adminBenefitItems];
-                    const idx = this.products.findIndex(p => p.rowIndex == rowIndex);
-                    if(idx >= 0) {
-                        this.products[idx] = { ...this.products[idx], benefits: saved };
-                        this.products = [...this.products];
-                    }
-                    this._adminShowMsg('Deskripsi disimpan ✓');
-                } else {
-                    this._adminShowMsg('❌ ' + (data.error||'Gagal'));
+                await this._supaWrite('PATCH', `catalog?id=eq.${rowIndex}`, { deskripsi: JSON.stringify(this.adminBenefitItems) });
+                const saved = [...this.adminBenefitItems];
+                const idx = this.products.findIndex(p => p.rowIndex == rowIndex);
+                if(idx >= 0) {
+                    this.products[idx] = { ...this.products[idx], benefits: saved };
+                    this.products = [...this.products];
                 }
+                this._adminShowMsg('Deskripsi disimpan ✓');
             } catch(err) {
-                this._adminShowMsg('Gagal terhubung: ' + err.message);
+                this._adminShowMsg('❌ ' + (err.message||'Gagal'));
             } finally {
                 this.adminSaving = false;
             }
