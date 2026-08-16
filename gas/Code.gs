@@ -4663,8 +4663,89 @@ function _ensureReviewsSheet() {
   return sheet;
 }
 
+// ── REVIEWS → Supabase (mirror; frontend tetap lewat GAS) ──
+// Aktif saat Script Property REVIEWS_STORE='supabase'. Sheet tetap ditulis (dual-write) sampai flip.
+function _reviewsStoreOn() {
+  return String(PropertiesService.getScriptProperties().getProperty('REVIEWS_STORE') || '').toLowerCase() === 'supabase';
+}
+function _reviewsWrite(payload) {
+  const secret = PropertiesService.getScriptProperties().getProperty('AUTH_BRIDGE_SECRET') || '';
+  if (!secret) { Logger.log('_reviewsWrite skip: AUTH_BRIDGE_SECRET kosong'); return { success:false }; }
+  try {
+    const res = UrlFetchApp.fetch(SUPABASE_URL_SRB + '/functions/v1/reviews-write', {
+      method: 'post', contentType: 'application/json',
+      headers: { 'Authorization': 'Bearer ' + SUPABASE_ANON_SRB, 'apikey': SUPABASE_ANON_SRB, 'x-bridge-secret': secret },
+      payload: JSON.stringify(payload), muteHttpExceptions: true,
+    });
+    const out = JSON.parse(res.getContentText() || '{}');
+    if (!out.success) Logger.log('_reviewsWrite gagal: ' + res.getContentText());
+    return out;
+  } catch (e) { Logger.log('_reviewsWrite error: ' + e.message); return { success:false, error:e.message }; }
+}
+// ISO Jakarta (+07:00) dari Date/nilai sheet, atau '' kalau bukan tanggal.
+function _reviewTglISO(v) {
+  var d = v instanceof Date ? v : (v ? new Date(v) : null);
+  return (d && !isNaN(d.getTime())) ? Utilities.formatDate(d, 'Asia/Jakarta', "yyyy-MM-dd'T'HH:mm:ssXXX") : '';
+}
+// Mirror satu review ke Supabase (dipakai submitReview). Best-effort, no-op saat flag off.
+function _reviewMirrorInsert(o) {
+  if (!_reviewsStoreOn()) return;
+  _reviewsWrite({ action: 'insert', row: {
+    review_id: o.reviewId, tanggal: _reviewTglISO(o.tanggal), order_id: o.orderId || '',
+    email: o.email || '', nama_tampil: o.namaTampil || '', produk: o.produk || '', varian: o.varian || '',
+    rating: Number(o.rating) || 0, komentar: o.komentar || '', published: o.published !== false,
+    reminder_sent: o.reminderSent || '', likes: Number(o.likes) || 0,
+  }});
+}
+// Backfill penuh (jalankan manual dari editor sekali): sheet Reviews → upsert ke Supabase.
+function migrateReviewsToSupabase() {
+  const sheet = _ensureReviewsSheet();
+  const data  = sheet.getDataRange().getValues();
+  if (data.length < 2) { Logger.log('migrateReviews: kosong'); return 0; }
+  const h = data[0].map(x => String(x).toLowerCase().trim());
+  const cId = _colIndex(h,'review id'), cTgl = _colIndex(h,'tanggal'), cOid = _colIndex(h,'order id'),
+        cEmail = _colIndex(h,'email'), cNama = _colIndex(h,'nama tampil'), cProd = _colIndex(h,'produk'),
+        cVar = _colIndex(h,'varian'), cRat = _colIndex(h,'rating'), cKom = _colIndex(h,'komentar'),
+        cPub = _colIndex(h,'published'), cRem = _colIndex(h,'reminder sent'), cLikes = _colIndex(h,'likes');
+  const rows = [];
+  for (let i = 1; i < data.length; i++) {
+    const r = data[i]; if (!r[cId]) continue;
+    const pub = r[cPub];
+    rows.push({
+      review_id: String(r[cId]), tanggal: _reviewTglISO(r[cTgl]), order_id: String(r[cOid]||''),
+      email: String(r[cEmail]||''), nama_tampil: String(r[cNama]||''), produk: String(r[cProd]||''),
+      varian: String(r[cVar]||''), rating: Number(r[cRat])||0, komentar: String(r[cKom]||''),
+      published: pub === true || String(pub).toUpperCase() === 'TRUE',
+      reminder_sent: cRem>=0 ? String(r[cRem]||'') : '', likes: cLikes>=0 ? (Number(r[cLikes])||0) : 0,
+    });
+  }
+  const out = _reviewsWrite({ action: 'insert', rows: rows });
+  Logger.log('migrateReviews: ' + rows.length + ' → ' + JSON.stringify(out));
+  return rows.length;
+}
+// Baris Supabase → bentuk publik getReviews. Pure (tanpa SpreadsheetApp) agar bisa diuji node.
+function _mapSupaReviewPublic(r) {
+  return {
+    id: String(r.review_id || ''),
+    tgl: r.tanggal ? Utilities.formatDate(new Date(r.tanggal), 'Asia/Jakarta', 'dd MMM yyyy') : '',
+    nama: String(r.nama_tampil || 'Pengguna'),
+    produk: String(r.produk || ''), varian: String(r.varian || ''),
+    rating: Number(r.rating) || 5, komentar: String(r.komentar || ''),
+    likes: Number(r.likes) || 0,
+  };
+}
+
 // ── GET REVIEWS (public) — per produk, only published ──
 function getReviews(produk) {
+  if (_reviewsStoreOn()) {
+    const out = _reviewsWrite({ action: 'list', produk: produk || '', publishedOnly: true });
+    if (out && out.success && Array.isArray(out.rows)) {
+      const reviews = out.rows.map(_mapSupaReviewPublic);
+      reviews.sort((a, b) => (b.rating !== a.rating) ? b.rating - a.rating : (b.likes !== a.likes) ? b.likes - a.likes : b.id.localeCompare(a.id));
+      return { success: true, data: reviews };
+    }
+    // Edge gagal → fallback sheet di bawah
+  }
   const sheet = _ensureReviewsSheet();
   const data  = sheet.getDataRange().getValues();
   if (data.length < 2) return { success: true, data: [] };
@@ -4718,6 +4799,19 @@ function getReviews(produk) {
 // ── GET BUYER'S OWN REVIEWS (semua review milik buyer ini) ──
 function getBuyerReviews({ sessionToken, email }) {
   if (!email) return { success: false, error: 'Email diperlukan' };
+  if (_reviewsStoreOn()) {
+    const out = _reviewsWrite({ action: 'list', email: String(email).trim() });
+    if (out && out.success && Array.isArray(out.rows)) {
+      return { success: true, data: out.rows.map(r => ({
+        reviewId: String(r.review_id || ''), orderId: String(r.order_id || ''),
+        rating: Number(r.rating) || 5, komentar: String(r.komentar || ''),
+        anonim: String(r.nama_tampil || '') === 'Anonim',
+        submittedAt: r.tanggal ? new Date(r.tanggal).getTime() : 0,
+        tgl: r.tanggal ? Utilities.formatDate(new Date(r.tanggal), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm') : '',
+      })) };
+    }
+    // Edge gagal → fallback sheet
+  }
   const sheet = _ensureReviewsSheet();
   const data  = sheet.getDataRange().getValues();
   if (data.length < 2) return { success: true, data: [] };
@@ -4805,6 +4899,8 @@ function submitReview({ sessionToken, email, orderId, produk, varian, rating, ko
   ]);
   SpreadsheetApp.flush();
 
+  _reviewMirrorInsert({ reviewId, tanggal, orderId, email, namaTampil, produk, varian, rating, komentar, published: true, likes: 0 });
+
   // Update terjual di Catalog (col P, index 15)
   _incrementTerjual(produk);
 
@@ -4859,6 +4955,7 @@ function editReview({ sessionToken, email, reviewId, rating, komentar, anonim })
     sheet.getRange(i + 1, cKomen + 1).setValue(String(komentar).trim());
     sheet.getRange(i + 1, cNama + 1).setValue(namaTampil);
     SpreadsheetApp.flush();
+    if (_reviewsStoreOn()) _reviewsWrite({ action: 'patch', reviewId: String(reviewId), fields: { rating: Number(rating), komentar: String(komentar).trim(), nama_tampil: namaTampil } });
     Logger.log('Review edited: ' + reviewId);
     return { success: true };
   }
@@ -5085,6 +5182,7 @@ function likeReview({ reviewId }) {
       const current = Number(data[i][cLikes]) || 0;
       sheet.getRange(i + 1, cLikes + 1).setValue(current + 1);
       SpreadsheetApp.flush();
+      if (_reviewsStoreOn()) _reviewsWrite({ action: 'patch', reviewId: String(reviewId), fields: { likes: current + 1 } });
       return { success: true, likes: current + 1 };
     }
   }
@@ -5105,6 +5203,7 @@ function deleteReview({ adminEmail, adminToken, reviewId }) {
     if (String(data[i][cId]) === String(reviewId)) {
       sheet.deleteRow(i + 1);
       SpreadsheetApp.flush();
+      if (_reviewsStoreOn()) _reviewsWrite({ action: 'delete', reviewId: String(reviewId) });
       _logAdminAction(adminEmail, 'deleteReview', { reviewId });
       return { success: true };
     }
@@ -5127,6 +5226,7 @@ function toggleReview({ adminEmail, adminToken, reviewId, published }) {
     if (String(data[i][cId]) === String(reviewId)) {
       sheet.getRange(i + 1, cPub + 1).setValue(published ? true : false);
       SpreadsheetApp.flush();
+      if (_reviewsStoreOn()) _reviewsWrite({ action: 'patch', reviewId: String(reviewId), fields: { published: !!published } });
       _logAdminAction(adminEmail, 'toggleReview', { reviewId, published });
       return { success: true };
     }
