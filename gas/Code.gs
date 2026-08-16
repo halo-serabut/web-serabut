@@ -1171,20 +1171,20 @@ function smartSearch(query) {
 
   const q = String(query).toLowerCase().trim();
 
-  // Sumber baris ternormalisasi: Supabase (flag on, fallback sheet saat gagal) atau sheet langsung.
+  // Sumber baris ternormalisasi: Supabase (flag on, filter di Postgres) atau sheet langsung (fallback).
   let rows = null;
   if (_accountsStoreOn()) {
-    const out = _accountsWrite({ action: 'list' });
-    if (out && out.success && Array.isArray(out.rows)) rows = out.rows;
+    const out = _accountsWrite({ action: 'list', q: q });
+    if (out && out.success && Array.isArray(out.rows)) rows = out.rows; // sudah terfilter server-side
   }
   if (rows === null) {
+    // Fallback sheet: filter lokal (Edge gagal / flag off).
     rows = [];
     ACCOUNT_SHEETS.forEach(cfg => { rows = rows.concat(_accountRowsForSheet(cfg)); });
+    rows = rows.filter(r => [r.nama, r.email_pembeli, r.akun, r.wa].some(v => String(v || '').toLowerCase().includes(q)));
   }
 
-  const results = rows
-    .filter(r => [r.nama, r.email_pembeli, r.akun, r.wa].some(v => String(v || '').toLowerCase().includes(q)))
-    .map(_accountRowToResult);
+  const results = rows.map(_accountRowToResult);
 
   return { success: true, data: results };
 }

@@ -35,7 +35,16 @@ Deno.serve(async (req) => {
     }
 
     if (body.action === "list") {
-      const { data, error } = await admin.from("akun_inventory").select("*");
+      // Filter di Postgres (bukan tarik semua): ilike ke-4 kolom searchable. Hindari transfer ribuan baris/search.
+      let query = admin.from("akun_inventory").select("*");
+      const q = String(body.q || "").replace(/[,()*%\\]/g, "").trim();
+      if (q) {
+        const like = `%${q}%`;
+        query = query.or(
+          `nama.ilike.${like},email_pembeli.ilike.${like},akun.ilike.${like},wa.ilike.${like}`,
+        );
+      }
+      const { data, error } = await query;
       if (error) throw error;
       return json({ success: true, rows: data || [] });
     }
