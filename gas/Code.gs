@@ -852,6 +852,11 @@ function getAllOrders({ adminEmail, adminToken }) {
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
 
+  if (_ordersStoreOn()) {
+    var all = _ordersReadSupa(''); // '' = semua order (admin)
+    if (all) return { success: true, data: _flatSupaOrders(all) }; // null = Edge gagal → fallback sheet
+  }
+
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
   if (!sheet) return { success: true, data: [] };
 
@@ -912,13 +917,45 @@ function getAllOrders({ adminEmail, adminToken }) {
 // ────────────────────────────────────────────────────────
 //  UPDATE ORDER STATUS (admin)
 // ────────────────────────────────────────────────────────
-function updateOrderStatus({ adminEmail, adminToken, rowIndex, status, paymentMethod, skipNotify }) {
+function updateOrderStatus({ adminEmail, adminToken, rowIndex, orderId, status, paymentMethod, skipNotify }) {
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
-  if (!rowIndex || (!status && !paymentMethod)) return { success: false, error: 'Data tidak lengkap' };
+  if ((!rowIndex && !orderId) || (!status && !paymentMethod)) return { success: false, error: 'Data tidak lengkap' };
 
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
   if (!sheet) return { success: false, error: 'Tab Orders tidak ditemukan' };
+
+  // Jalur orderId (admin baca dari Supabase → tak ada rowIndex sheet): update SEMUA baris order.
+  if (orderId) {
+    const d = sheet.getDataRange().getValues();
+    const hh = d[0].map(function (h) { return String(h).toLowerCase().trim(); });
+    const idC = hh.indexOf('order id'), stC = hh.indexOf('status');
+    const pmC = hh.indexOf('payment method'), psC = hh.indexOf('payment status');
+    if (idC < 0 || stC < 0) return { success: false, error: 'Kolom tidak ditemukan' };
+    const paid = (status === 'Diproses' || status === 'Aktif' || status === 'Selesai');
+    let first = null;
+    for (let i = 1; i < d.length; i++) {
+      if (String(d[i][idC]).trim() !== String(orderId).trim()) continue;
+      if (!first) first = d[i];
+      if (status) sheet.getRange(i + 1, stC + 1).setValue(status);
+      if (paymentMethod && pmC >= 0) sheet.getRange(i + 1, pmC + 1).setValue(paymentMethod);
+      if (paid && psC >= 0) {
+        const cur = String(d[i][psC] || '').trim();
+        if (cur !== 'Lunas' && cur !== 'Berhasil') sheet.getRange(i + 1, psC + 1).setValue('Lunas');
+      }
+    }
+    if (!first) return { success: false, error: 'Order tidak ditemukan' };
+    SpreadsheetApp.flush();
+    if (!skipNotify && (status === 'Aktif' || status === 'Selesai')) {
+      try {
+        const g = function (n) { const c = hh.indexOf(n); return c >= 0 ? String(first[c] || '') : ''; };
+        sendBuyerStatusNotif(g('no wa'), g('email'), g('nama'), String(orderId), g('produk'), g('varian'), g('masa aktif'), Number(first[hh.indexOf('harga')]) || 0, g('email aktif'), status);
+      } catch (e) { Logger.log('Notif buyer error: ' + e.message); }
+    }
+    _ordersMirror(String(orderId).trim());
+    _logAdminAction(adminEmail, 'updateOrderStatus', { orderId, status, paymentMethod });
+    return { success: true };
+  }
 
   const ri = Number(rowIndex);
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -3284,6 +3321,32 @@ function _groupSupaOrders(rows) {
     }
   });
   return keys.map(function (k) { return map[k]; });
+}
+// Bentuk flat admin (1 entri/baris, newest-first) dari baris Supabase. Tanpa rowIndex (admin update pakai orderId).
+function _flatSupaOrders(rows) {
+  return (rows || []).slice()
+    .sort(function (a, b) { return String(b.tanggal || '').localeCompare(String(a.tanggal || '')); })
+    .map(function (r) {
+      return {
+        orderId:        String(r.order_id || ''),
+        tanggal:        r.tanggal ? Utilities.formatDate(new Date(r.tanggal), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm') : '',
+        nama:           String(r.nama || ''),
+        email:          String(r.email || ''),
+        wa:             String(r.no_wa || ''),
+        produk:         String(r.produk || ''),
+        varian:         String(r.varian || ''),
+        masaAktif:      String(r.masa_aktif || ''),
+        harga:          Number(r.harga) || 0,
+        status:         String(r.status || 'Pending'),
+        paymentMethod:  String(r.payment_method || ''),
+        paymentStatus:  String(r.payment_status || ''),
+        msNama:         String(r.nama_ms || ''),
+        username:       String(r.username || ''),
+        microsoftEmail: String(r.email_ms || ''),
+        emailAktif:     String(r.email_aktif || ''),
+        emailReminder:  String(r.email_reminder || ''),
+      };
+    });
 }
 function _getOrdersSupa(email) {
   var rows = _ordersReadSupa(email);

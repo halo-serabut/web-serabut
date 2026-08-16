@@ -9122,7 +9122,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260816-1',
+        APP_VERSION:      '20260816-2',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -13365,7 +13365,7 @@ ANNOUNCE_ON:      false,
         async adminUpdateOrderStatus(order, newStatus, silent=false, payMethod) {
             if(!newStatus) return;
             try {
-                const payload = { action:'updateOrderStatus', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:order.rowIndex, status:newStatus };
+                const payload = { action:'updateOrderStatus', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, orderId:order.orderId, rowIndex:order.rowIndex, status:newStatus };
                 if(payMethod) payload.paymentMethod = payMethod;
                 const data = await this.gasPost(payload);
                 if(data.success) {
@@ -13963,7 +13963,7 @@ ANNOUNCE_ON:      false,
 
         async adminUpdateGroupStatus(group, newStatus, payMethod) {
             if(!newStatus) return;
-            await Promise.all(group.items.map(item => this.adminUpdateOrderStatus(item, newStatus, true, payMethod)));
+            await this.adminUpdateOrderStatus(group, newStatus, true, payMethod); // order-level: 1 update per orderId
             group.status = newStatus;
             group.items.forEach(i => { i.status = newStatus; if(payMethod) i.paymentMethod = payMethod; });
             this._adminShowMsg(`${group.orderId} (${group.items.length} item) → ${newStatus}${payMethod?' via '+payMethod:''} ✓`);
@@ -13973,9 +13973,7 @@ ANNOUNCE_ON:      false,
             if (!pm) { this._adminShowMsg('Pilih metode pembayaran dulu'); return; }
             this.adminPayMethodSaving = group.orderId;
             try {
-                await Promise.all(group.items.map(item =>
-                    this.gasPost({ action:'updateOrderStatus', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, rowIndex:item.rowIndex, status:item.status, paymentMethod:pm, skipNotify:true })
-                ));
+                await this.gasPost({ action:'updateOrderStatus', adminEmail:this.currentUser.email, adminToken:this.currentUser.sessionToken, orderId:group.orderId, status:group.status, paymentMethod:pm, skipNotify:true });
                 group.items.forEach(i => { i.paymentMethod = pm; });
                 this.adminPayMethodEdit = null;
                 this._adminShowMsg(`${group.orderId} metode bayar → ${pm} ✓`);
