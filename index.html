@@ -9119,10 +9119,10 @@ function serabutStore() {
         SUPABASE_URL:     'https://pmyuwaerzzpjwskdzxxw.supabase.co',
         SUPABASE_ANON:    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBteXV3YWVyenpwandza2R6eHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NDY3NjYsImV4cCI6MjEwMjMyMjc2Nn0.GwGn3FEQXroAPl7H6bql-g-QhYMcavaP4BwuVCVl-f8',
         USE_SUPABASE_CATALOG: true, // false = balik pakai GAS
-        USE_SUPABASE_AUTH: false, // true = login/register/OTP/forgot lewat Supabase; false = GAS (default sampai Orders ikut migrasi)
+        USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260815-1',
+        APP_VERSION:      '20260816-1',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -12827,6 +12827,16 @@ ANNOUNCE_ON:      false,
             const rows = await res.json();
             return Array.isArray(rows) && rows[0] ? rows[0] : null;
         },
+        // Baca/tulis profiles pakai token BUYER sendiri (RLS own-row) — bukan _supaWrite (itu login admin).
+        async _supaSelf(method, path, body){
+            const res = await fetch(`${this.SUPABASE_URL}/rest/v1/${path}`, {
+                method, headers:{ apikey:this.SUPABASE_ANON, Authorization:`Bearer ${this.currentUser.sessionToken}`, 'Content-Type':'application/json', Prefer:'return=representation' },
+                body: body ? JSON.stringify(body) : undefined
+            });
+            const txt = await res.text(); let data=null; try{ data = txt?JSON.parse(txt):null; }catch{}
+            if(!res.ok) throw new Error((data&&(data.message||data.error))||`HTTP ${res.status}`);
+            return data;
+        },
         // Bangun currentUser dari sesi Supabase + profil, lalu persist (mirror alur GAS).
         async _supaSetSession(session, greetMode){
             const prof = await this._supaLoadProfile(session.access_token) || {};
@@ -14135,6 +14145,14 @@ ANNOUNCE_ON:      false,
         },
         async loadProfile() {
             if(!this.currentUser) return;
+            if(this.USE_SUPABASE_AUTH){
+                try {
+                    const rows = await this._supaSelf('GET', `profiles?id=eq.${this.currentUser.id}&select=nama,no_hp,tanggal_lahir,jenis_kelamin,kota,provinsi&limit=1`);
+                    const p = Array.isArray(rows) && rows[0] ? rows[0] : {};
+                    this.profileExtra = { nama:p.nama||'', tanggalLahir:p.tanggal_lahir||'', jenisKelamin:p.jenis_kelamin||'', alamat:p.kota||'', provinsi:p.provinsi||'' };
+                } catch {}
+                return;
+            }
             try {
                 const data = await this.gasPost({ action:'getProfile', email:this.currentUser.email, sessionToken:this.currentUser.sessionToken });
                 if(data.success) this.profileExtra = data.profile || {};
@@ -14155,6 +14173,23 @@ ANNOUNCE_ON:      false,
         async saveProfile() {
             if(!this.editForm.nama.trim()){ this.editError='Nama tidak boleh kosong'; return; }
             this.editLoading=true; this.editError='';
+            const waNorm = this.editForm.wa ? '62' + this.editForm.wa.replace(/^0+/, '') : '';
+            if(this.USE_SUPABASE_AUTH){
+                try {
+                    await this._supaSelf('PATCH', `profiles?id=eq.${this.currentUser.id}`, {
+                        nama: this.editForm.nama.trim(), no_hp: waNorm,
+                        tanggal_lahir: this.editForm.tanggalLahir || null, jenis_kelamin: this.editForm.jenisKelamin || null,
+                        kota: this.editForm.alamat || null, provinsi: this.editForm.provinsi || null,
+                    });
+                    this.currentUser = { ...this.currentUser, nama: this.editForm.nama.trim(), wa: waNorm };
+                    const { sessionToken:_st6, ...userPub6 } = this.currentUser;
+                    localStorage.setItem('serabutUser', JSON.stringify(userPub6));
+                    this.profileExtra = { ...this.profileExtra, ...this.editForm };
+                    this.editMode = false;
+                } catch(e) { this.editError = e.message || 'Gagal menyimpan'; }
+                this.editLoading=false;
+                return;
+            }
             try {
                 const data = await this.gasPost({
                     action:       'updateProfile',
@@ -14184,6 +14219,23 @@ ANNOUNCE_ON:      false,
             if(newPassword.length<6){ this.resetPwError='Password baru minimal 6 karakter'; return; }
             if(newPassword!==konfirmasi){ this.resetPwError='Konfirmasi password tidak cocok'; return; }
             this.resetPwLoading=true; this.resetPwError='';
+            if(this.USE_SUPABASE_AUTH){
+                try {
+                    const email = this.currentUser.email.toLowerCase().trim();
+                    // Verifikasi password lama dulu (GoTrue tak minta old pw saat PUT, jadi cek manual)
+                    const chk = await this._supaPassSignIn(email, oldPassword);
+                    if(!chk.success){ this.resetPwError='Password lama salah'; this.resetPwLoading=false; return; }
+                    const res = await fetch(`${this.SUPABASE_URL}/auth/v1/user`, {
+                        method:'PUT', headers:{ apikey:this.SUPABASE_ANON, Authorization:`Bearer ${this.currentUser.sessionToken}`, 'Content-Type':'application/json' },
+                        body: JSON.stringify({ password: newPassword })
+                    });
+                    const j = await res.json();
+                    if(res.ok && j.id){ this.resetPwSuccess=true; setTimeout(()=>{ this.logout(); this.openAuthModal('login'); }, 2000); }
+                    else { this.resetPwError = j.error_description || j.msg || 'Gagal mengubah password'; }
+                } catch { this.resetPwError='Gagal terhubung ke server'; }
+                this.resetPwLoading=false;
+                return;
+            }
             try {
                 const email = this.currentUser.email.toLowerCase().trim();
                 const oldHash = await sha256(email + ':' + oldPassword);

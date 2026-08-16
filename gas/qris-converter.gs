@@ -187,6 +187,7 @@ function qrisClaimPaid(params) {
   }
   if (!found) return { success: false, error: 'Order tidak ditemukan' };
   SpreadsheetApp.flush();
+  _ordersMirror(orderId);
 
   if (!alreadyClaimed) {
     const amount = total + _qrisUniqueCode(orderId);

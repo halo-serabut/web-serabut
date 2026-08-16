@@ -293,9 +293,32 @@ function validateSession(email, sessionToken) {
   return false;
 }
 
+// Token Supabase = JWT (3 segmen, diawali "eyJ"). Session token GAS lama = UUID → diskriminator bersih.
+function _looksLikeSupaJWT(t) {
+  return typeof t === 'string' && t.slice(0, 3) === 'eyJ' && t.split('.').length === 3;
+}
+// Verifikasi access_token Supabase via GoTrue /auth/v1/user → { id, email } atau null.
+function _supaVerifyToken(token) {
+  try {
+    var res = UrlFetchApp.fetch(SUPABASE_URL_SRB + '/auth/v1/user', {
+      method: 'get',
+      headers: { 'Authorization': 'Bearer ' + token, 'apikey': SUPABASE_ANON_SRB },
+      muteHttpExceptions: true,
+    });
+    if (res.getResponseCode() !== 200) return null;
+    var u = JSON.parse(res.getContentText() || '{}');
+    return (u && u.email) ? { id: u.id, email: String(u.email).toLowerCase().trim() } : null;
+  } catch (e) { Logger.log('_supaVerifyToken error: ' + e.message); return null; }
+}
+
 // Require authenticated user — return error string atau null jika OK
 function _requireAuth(email, sessionToken) {
   if (!email || !sessionToken) return 'Autentikasi diperlukan. Silakan login ulang.';
+  if (_looksLikeSupaJWT(sessionToken)) {
+    var v = _supaVerifyToken(sessionToken);
+    if (v && v.email === String(email).toLowerCase().trim()) return null;
+    return 'Sesi tidak valid atau kadaluarsa. Silakan login ulang.';
+  }
   if (!validateSession(email, sessionToken)) return 'Sesi tidak valid atau kadaluarsa. Silakan login ulang.';
   return null;
 }
@@ -304,6 +327,12 @@ function _requireAuth(email, sessionToken) {
 function _requireAdmin(adminEmail, adminToken) {
   if (!adminEmail) return 'Akses ditolak';
   if (!adminToken) return 'Token admin diperlukan. Silakan login ulang.';
+  if (_looksLikeSupaJWT(adminToken)) {
+    var v = _supaVerifyToken(adminToken);
+    if (!v || v.email !== String(adminEmail).toLowerCase().trim()) return 'Sesi admin tidak valid. Silakan login ulang.';
+    if (!isAdminEmail(adminEmail)) return 'Akses ditolak';
+    return null;
+  }
   if (!validateSession(adminEmail, adminToken)) return 'Sesi admin tidak valid. Silakan login ulang.';
   if (!isAdminEmail(adminEmail)) return 'Akses ditolak';
   return null;
@@ -925,6 +954,7 @@ function updateOrderStatus({ adminEmail, adminToken, rowIndex, status, paymentMe
       sendBuyerStatusNotif(buyerWa, buyerEmail, buyerNama, orderId, produk, varian, masaAktif, harga, emailAktif, status);
     } catch(e) { Logger.log('Notif buyer error: ' + e.message); }
   }
+  _ordersMirror(String(sheet.getRange(ri, 1).getValue() || ''));
   _logAdminAction(adminEmail, 'updateOrderStatus', { rowIndex, status, paymentMethod });
   return { success: true };
 }
@@ -1860,6 +1890,7 @@ function getOrderDetail({ orderId }) {
 
 function getOrders({ email }) {
   if (!email) return { success: false, error: 'Email diperlukan' };
+  if (_ordersStoreOn()) { var supa = _getOrdersSupa(email); if (supa) return supa; } // null = Edge gagal → fallback sheet
 
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(TAB_ORDERS);
@@ -2396,6 +2427,7 @@ function ipaymuCallback(params) {
       sheet.getRange(i + 1, psCol + 1).setValue(paymentStatus);
       
       Logger.log('ipaymuCallback: order ' + referenceId + ' → ' + paymentMethod + ', ' + paymentStatus);
+      _ordersMirror(String(referenceId).trim());
       return { success: true };
     }
   }
@@ -2476,6 +2508,7 @@ function checkIPaymuOrderStatus({ orderId, email }) {
         sheet.getRange(i + 1, psCol + 1).setValue('Berhasil');
       }
       try { SpreadsheetApp.flush(); } catch(e) {}
+      _ordersMirror(String(orderId).trim());
       Logger.log('checkIPaymuOrderStatus: order ' + orderId + ' restored → Diproses (' + payMethod + ')');
       return { success: true, paid: true, paymentMethod: payMethod, paymentStatus: 'Berhasil', orderStatus: 'Diproses' };
     }
@@ -2512,6 +2545,7 @@ function cancelOrder({ orderId, email }) {
   }
   if (!found) return { success: false, error: 'Order tidak ditemukan atau sudah diproses' };
   try { SpreadsheetApp.flush(); } catch(e) {}
+  _ordersMirror(String(orderId).trim());
   return { success: true };
 }
 
@@ -2672,6 +2706,7 @@ function confirmPayment({ orderId }) {
     sendBuyerOrderConfirm(userWa, userEmail, userNama, orderId, buyerItems, totalHarga);
   } catch(e) { Logger.log('confirmPayment: buyer notif error: ' + e.message); }
 
+  _ordersMirror(String(orderId).trim());
   return { success: true, orderId, productName: productName || '', paymentMethod: payMethod || '', totalHarga, items: buyerItems, buyerNama: userNama };
 }
 
@@ -3188,6 +3223,82 @@ function _orderRowSupa(o) {
     payment_status: o.paymentStatus || 'UNPAID',
   };
 }
+// Sinkronkan status order ke Supabase dari kondisi sheet TERKINI (sumber kebenaran saat dual-write).
+// Dipanggil di semua jalur ubah status / pembayaran. No-op saat ORDERS_STORE off. Best-effort.
+// ponytail: scan sheet penuh per panggilan (getDataRange), OK di volume order + event jarang.
+function _ordersMirror(orderId) {
+  if (!_ordersStoreOn() || !orderId) return;
+  try {
+    var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
+    if (!sheet) return;
+    var data = sheet.getDataRange().getValues(); // getValues() flush write pending
+    var h = data[0].map(function (x) { return String(x).toLowerCase().trim(); });
+    var idCol = h.indexOf('order id'), stCol = h.indexOf('status');
+    var pmCol = h.indexOf('payment method'), psCol = h.indexOf('payment status');
+    if (idCol < 0) return;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idCol]).trim() !== String(orderId).trim()) continue;
+      var patch = { action: 'status', orderId: String(orderId).trim() };
+      if (stCol >= 0) patch.status = String(data[i][stCol] || '');
+      if (pmCol >= 0) patch.paymentMethod = String(data[i][pmCol] || '');
+      if (psCol >= 0) patch.paymentStatus = String(data[i][psCol] || '');
+      _ordersWrite(patch);
+      return;
+    }
+  } catch (e) { Logger.log('_ordersMirror error: ' + e.message); }
+}
+// Baca baris order dari Supabase. Return array saat sukses, null saat GAGAL (bedakan dari kosong→fallback sheet).
+function _ordersReadSupa(email) {
+  var out = _ordersWrite({ action: 'list', email: String(email || '').trim() });
+  return (out && out.success && Array.isArray(out.rows)) ? out.rows : null;
+}
+// Group baris Supabase (snake_case) → bentuk order getOrders. Pure (tanpa SpreadsheetApp) agar bisa diuji node.
+// Butuh r._tgl (tanggal WIB terformat) diisi caller; fallback ke r.tanggal mentah.
+function _groupSupaOrders(rows) {
+  rows = (rows || []).slice().sort(function (a, b) { return String(b.tanggal || '').localeCompare(String(a.tanggal || '')); });
+  var map = {}, keys = [];
+  rows.forEach(function (r) {
+    var oid = String(r.order_id || '').trim(); if (!oid) return;
+    var item = {
+      produk:         String(r.produk || ''),
+      varian:         String(r.varian || '').trim() || '-',
+      masaAktif:      String(r.masa_aktif || '').trim() || '-',
+      harga:          Number(r.harga) || 0,
+      msNama:         String(r.nama_ms || '').trim() || '-',
+      username:       String(r.username || '').trim() || '-',
+      microsoftEmail: String(r.email_ms || '').trim() || '-',
+      emailAktif:     String(r.email_aktif || '').trim() || '-',
+      emailReminder:  String(r.email_reminder || '').trim() || '-',
+    };
+    if (map[oid]) { map[oid].items.push(item); map[oid].total += item.harga; }
+    else {
+      map[oid] = {
+        orderId: oid, tanggal: String(r._tgl || r.tanggal || ''),
+        buyerNama: String(r.nama || ''), buyerWa: String(r.no_wa || ''),
+        status: String(r.status || 'Pending'),
+        paymentMethod: String(r.payment_method || ''), paymentStatus: String(r.payment_status || ''),
+        total: item.harga, items: [item],
+      };
+      keys.push(oid);
+    }
+  });
+  return keys.map(function (k) { return map[k]; });
+}
+function _getOrdersSupa(email) {
+  var rows = _ordersReadSupa(email);
+  if (rows === null) return null; // Edge gagal → caller fallback ke sheet
+  rows.forEach(function (r) {
+    r._tgl = r.tanggal ? Utilities.formatDate(new Date(r.tanggal), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm') : '';
+  });
+  var orders = _groupSupaOrders(rows);
+  var H24 = 24 * 3600 * 1000, nowMs = Date.now();
+  orders.forEach(function (o) {
+    if (o.status !== 'Pending') return;
+    var created = _parseTanggalGAS(o.tanggal);
+    if (created) o.msecLeft = Math.max(0, H24 - (nowMs - created.getTime()));
+  });
+  return { success: true, data: orders };
+}
 
 // ── MIGRASI: impor semua user Users-web → Supabase Auth (one-time, jalankan dari editor GAS) ──
 // Baca sheet, kirim ke Edge Function import-users (gated AUTH_BRIDGE_SECRET). Idempotent.
@@ -3226,6 +3337,58 @@ function migrateUsersToSupabase() {
   Logger.log('Total baris user: ' + users.length);
   Logger.log('Hasil import: ' + body);
   return body;
+}
+
+// ── MIGRASI: backfill semua Orders sheet → Supabase (one-time, jalankan dari editor GAS) ──
+// Idempotent: pakai Edge action 'replace' (delete order_id + insert) → aman di-rerun.
+// WAJIB dijalankan sebelum flip reads ke Supabase (tabel orders kosong = buyer kehilangan riwayat).
+function migrateOrdersToSupabase() {
+  const secret = PropertiesService.getScriptProperties().getProperty('AUTH_BRIDGE_SECRET') || '';
+  if (!secret) throw new Error('AUTH_BRIDGE_SECRET belum diset di Script Properties');
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
+  if (!sheet) throw new Error('Sheet ' + TAB_ORDERS + ' tidak ada');
+  const data = sheet.getDataRange().getValues();
+  const h = data[0].map(function (x) { return String(x).toLowerCase().trim(); });
+  const c = function (name) { return h.indexOf(name); };
+  const idCol = c('order id');
+  if (idCol < 0) throw new Error('Kolom "Order ID" tidak ditemukan');
+  const dateCol = c('tanggal') >= 0 ? c('tanggal') : c('date');
+
+  // Group baris per order_id
+  const byOrder = {};
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var oid = String(row[idCol] || '').trim();
+    if (!oid) continue;
+    var s = function (name) { var k = c(name); return k >= 0 ? String(row[k] || '').trim() : ''; };
+    var tgl = '';
+    if (dateCol >= 0) {
+      tgl = row[dateCol] instanceof Date
+        ? Utilities.formatDate(_fixDateSwap(row[dateCol]), 'Asia/Jakarta', "yyyy-MM-dd'T'HH:mm:ssXXX")
+        : String(row[dateCol] || '');
+    }
+    var rec = {
+      order_id: oid, nama: s('nama'), email: String((c('email') >= 0 ? row[c('email')] : '') || '').toLowerCase().trim(),
+      no_wa: s('no wa'), produk: s('produk'), varian: s('varian') || '-', masa_aktif: s('masa aktif') || '-',
+      harga: c('harga') >= 0 ? Number(row[c('harga')]) || 0 : 0, status: s('status') || 'Pending',
+      nama_ms: s('nama ms') || '-', username: s('username') || '-', email_ms: s('email microsoft') || '-',
+      email_aktif: s('email aktif') || '-', email_reminder: s('email reminder') || '-',
+      payment_method: s('payment method'), payment_status: s('payment status') || 'UNPAID',
+    };
+    if (tgl) rec.tanggal = tgl; // hanya kirim jika kolom tanggal ada (Edge insert abaikan kolom asing? tidak — kolom harus ada)
+    (byOrder[oid] = byOrder[oid] || []).push(rec);
+  }
+
+  var orderIds = Object.keys(byOrder);
+  var ok = 0, fail = 0;
+  for (var j = 0; j < orderIds.length; j++) {
+    var oid2 = orderIds[j];
+    var out = _ordersWrite({ action: 'replace', orderId: oid2, rows: byOrder[oid2] });
+    if (out && out.success) ok++; else { fail++; Logger.log('backfill gagal ' + oid2 + ': ' + JSON.stringify(out)); }
+  }
+  Logger.log('migrateOrders: orders=' + orderIds.length + ' ok=' + ok + ' fail=' + fail);
+  return { orders: orderIds.length, ok: ok, fail: fail };
 }
 
 function sendOTPEmail(email, nama, otp) {
@@ -3676,11 +3839,13 @@ function xenditCallback(params, e) {
         // WA + email ke buyer
         sendBuyerOrderConfirmed(buyerNama, buyerEmail, buyerWa ? _normalizeWA(buyerWa) : '', extId, produk, varian, masaAktif, harga, method, tanggal);
       }
+      _ordersMirror(extId);
     } else if (status === 'EXPIRED') {
       if (curStatus === 'Pending') {
         sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan');
         if (psCol >= 0) sheet.getRange(i + 1, psCol + 1).setValue('Expired');
         SpreadsheetApp.flush();
+        _ordersMirror(extId);
       }
     }
     break;
@@ -3942,6 +4107,7 @@ function iPaymuAdminSyncOrders(params) {
       }
     }
     updated++;
+    _ordersMirror(orderId);
     Logger.log('syncOrders: updated ' + orderId + ' → Diproses via ' + payMethod);
   }
 

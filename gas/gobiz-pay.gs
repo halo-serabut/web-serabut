@@ -220,6 +220,7 @@ function _gobizMarkPaid(orderId, method) {
       );
       sendBuyerOrderConfirmed(buyerNama, buyerEmail, buyerWa ? _normalizeWA(buyerWa) : '', orderId, produk, varian, masaAktif, harga, method, tanggal);
     }
+    _ordersMirror(orderId);
     return;
   }
 }

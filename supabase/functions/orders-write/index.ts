@@ -26,6 +26,30 @@ Deno.serve(async (req) => {
       return json({ success: true, inserted: rows.length });
     }
 
+    // Idempotent backfill: hapus semua baris order_id ini lalu insert ulang.
+    // Aman di-rerun (mis. migrateOrdersToSupabase dijalankan >1x).
+    if (body.action === "replace") {
+      const orderId = String(body.orderId || "").trim();
+      const rows = Array.isArray(body.rows) ? body.rows : [];
+      if (!orderId || !rows.length) return json({ success: false, error: "orderId & rows wajib" }, 400);
+      const del = await admin.from("orders").delete().eq("order_id", orderId);
+      if (del.error) throw del.error;
+      const { error } = await admin.from("orders").insert(rows);
+      if (error) throw error;
+      return json({ success: true, replaced: rows.length });
+    }
+
+    // Baca order (GAS sbg read-orchestrator; reuse grouping getOrders/getAllOrders).
+    // email? → filter buyer (case-insensitive); tanpa email → semua (admin).
+    if (body.action === "list") {
+      const email = String(body.email || "").trim();
+      let q = admin.from("orders").select("*");
+      if (email) q = q.ilike("email", email);
+      const { data, error } = await q;
+      if (error) throw error;
+      return json({ success: true, rows: data || [] });
+    }
+
     if (body.action === "status") {
       const orderId = String(body.orderId || "").trim();
       if (!orderId) return json({ success: false, error: "orderId wajib" }, 400);
