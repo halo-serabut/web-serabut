@@ -1169,107 +1169,22 @@ function saveGuides({ adminEmail, adminToken, tab, guidesJson }) {
 function smartSearch(query) {
   if (!query || !String(query).trim()) return { success: false, error: 'Query kosong' };
 
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const q  = String(query).toLowerCase().trim();
-  const results = [];
+  const q = String(query).toLowerCase().trim();
 
-  // ── Office 365 & Family sheets ────────────────────────
-  const OFFICE_SHEETS = [
-    { name: 'List Account 365',        isFamily: false, defaultFromCol: 6 },
-    { name: 'List Account 365 Family', isFamily: true,  defaultFromCol: 9 },
-  ];
-
-  for (const cfg of OFFICE_SHEETS) {
-    const sheet = ss.getSheetByName(cfg.name);
-    if (!sheet) continue;
-    const data = sheet.getDataRange().getValues();
-    if (data.length < 2) continue;
-
-    const headers = data[0].map(h => String(h).toLowerCase().trim());
-    const col = {
-      buyerName:    findColIdx(headers, ['buyer name', 'nama pembeli', 'nama buyer']),
-      mailActive:   findColIdx(headers, ['mailactive', '4reminder', 'mail active']),
-      emailActive:  findColIdx(headers, ['email active', 'email aktif']),
-      msa:          findColIdx(headers, ['msa']),
-      officeAcc:    findColIdx(headers, ['office account', 'office acc']),
-      wa:           findColIdx(headers, ['no whatsapp', 'no wa', 'whatsapp', 'no hp']),
-      endDate:      findColIdx(headers, ['end subs', 'end date', 'masa berlaku', 'expired date', 'end sub']),
-      startDate:    findColIdx(headers, ['creation date', 'start date', 'invitation date']),
-      status:       findColIdx(headers, ['status']),
-      duration:     findColIdx(headers, ['duration']),
-      subscription: findColIdx(headers, ['subscription']),
-      from:         findColIdx(headers, ['from', 'source', 'platform', 'sumber pembelian']),
-    };
-    const fromCol = col.from !== -1 ? col.from : cfg.defaultFromCol;
-
-    for (let i = 1; i < data.length; i++) {
-      const row = data[i];
-      const searchable = [
-        getVal(row, col.buyerName), getVal(row, col.mailActive),
-        getVal(row, col.emailActive), getVal(row, col.msa),
-        getVal(row, col.officeAcc), getVal(row, col.wa),
-      ].filter(v => v).map(v => v.toLowerCase());
-
-      if (!searchable.some(v => v.includes(q))) continue;
-
-      results.push({
-        sumber:         cfg.name,
-        productType:    cfg.isFamily ? 'office365family' : 'office365',
-        nama:           getVal(row, col.buyerName),
-        emailPembeli:   getVal(row, col.mailActive) || getVal(row, col.emailActive),
-        officeAccount:  getVal(row, col.officeAcc) || getVal(row, col.msa),
-        wa:             getVal(row, col.wa),
-        masaBerlaku:    getDateVal(row, col.endDate),
-        mulaiLangganan: getDateVal(row, col.startDate),
-        status:         getVal(row, col.status) || 'Aktif',
-        durasi:         getVal(row, col.duration),
-        tipe:           getVal(row, col.subscription) || (cfg.isFamily ? 'Family' : 'Personal'),
-        pembelianDari:  getVal(row, fromCol),
-      });
-    }
+  // Sumber baris ternormalisasi: Supabase (flag on, fallback sheet saat gagal) atau sheet langsung.
+  let rows = null;
+  if (_accountsStoreOn()) {
+    const out = _accountsWrite({ action: 'list' });
+    if (out && out.success && Array.isArray(out.rows)) rows = out.rows;
+  }
+  if (rows === null) {
+    rows = [];
+    ACCOUNT_SHEETS.forEach(cfg => { rows = rows.concat(_accountRowsForSheet(cfg)); });
   }
 
-  // ── Adobe CC sheet ────────────────────────────────────
-  const adobeSheet = ss.getSheetByName('List Account Adobe CC');
-  if (adobeSheet) {
-    const data = adobeSheet.getDataRange().getValues();
-    if (data.length >= 2) {
-      const headers = data[0].map(h => String(h).toLowerCase().trim());
-      const col = {
-        duration:     findColIdx(headers, ['duration', 'duration (month)']),
-        product:      findColIdx(headers, ['product', 'produk']),
-        emailActive:  findColIdx(headers, ['email active', 'email aktif']),
-        adobeAcc:     findColIdx(headers, ['adobe account', 'adobe acc', 'adobe email']),
-        startDate:    findColIdx(headers, ['invitation date', 'start date', 'creation date']),
-        endDate:      findColIdx(headers, ['end subs date', 'end subs', 'end date', 'masa berlaku']),
-        from:         findColIdx(headers, ['from', 'source', 'platform']),
-        buyerName:    findColIdx(headers, ['buyer name', 'nama pembeli', 'nama buyer']),
-      };
-
-      for (let i = 1; i < data.length; i++) {
-        const row = data[i];
-        const searchable = [
-          getVal(row, col.buyerName), getVal(row, col.emailActive), getVal(row, col.adobeAcc),
-        ].filter(v => v).map(v => v.toLowerCase());
-
-        if (!searchable.some(v => v.includes(q))) continue;
-
-        results.push({
-          sumber:        'List Account Adobe CC',
-          productType:   'adobe',
-          nama:          getVal(row, col.buyerName),
-          emailPembeli:  getVal(row, col.emailActive),
-          adobeAccount:  getVal(row, col.adobeAcc),
-          masaBerlaku:   getDateVal(row, col.endDate),
-          mulaiLangganan:getDateVal(row, col.startDate),
-          durasi:        getVal(row, col.duration),
-          productName:   getVal(row, col.product) || 'Adobe Creative Cloud',
-          pembelianDari: getVal(row, col.from),
-          status:        'Aktif',
-        });
-      }
-    }
-  }
+  const results = rows
+    .filter(r => [r.nama, r.email_pembeli, r.akun, r.wa].some(v => String(v || '').toLowerCase().includes(q)))
+    .map(_accountRowToResult);
 
   return { success: true, data: results };
 }
@@ -3362,6 +3277,139 @@ function _getOrdersSupa(email) {
     if (created) o.msecLeft = Math.max(0, H24 - (nowMs - created.getTime()));
   });
   return { success: true, data: orders };
+}
+
+// ── AKUN INVENTORY → Supabase (auto-sync Cek Status) ──
+// Sheet = input owner; Supabase = baca (smartSearch). Aktif saat Script Property ACCOUNTS_STORE='supabase'.
+// Sync: replace-per-sheet (idempotent) via Edge accounts-write, dipicu backfill manual + onEdit installable.
+const ACCOUNT_SHEETS = [
+  { name: 'List Account 365',        productType: 'office365',       isFamily: false, isAdobe: false, defaultFromCol: 6 },
+  { name: 'List Account 365 Family', productType: 'office365family', isFamily: true,  isAdobe: false, defaultFromCol: 9 },
+  { name: 'List Account Adobe CC',   productType: 'adobe',           isFamily: false, isAdobe: true,  defaultFromCol: -1 },
+];
+function _accountsStoreOn() {
+  return String(PropertiesService.getScriptProperties().getProperty('ACCOUNTS_STORE') || '').toLowerCase() === 'supabase';
+}
+function _accountsWrite(payload) {
+  const secret = PropertiesService.getScriptProperties().getProperty('AUTH_BRIDGE_SECRET') || '';
+  if (!secret) { Logger.log('_accountsWrite skip: AUTH_BRIDGE_SECRET kosong'); return { success:false }; }
+  try {
+    const res = UrlFetchApp.fetch(SUPABASE_URL_SRB + '/functions/v1/accounts-write', {
+      method: 'post', contentType: 'application/json',
+      headers: { 'Authorization': 'Bearer ' + SUPABASE_ANON_SRB, 'apikey': SUPABASE_ANON_SRB, 'x-bridge-secret': secret },
+      payload: JSON.stringify(payload), muteHttpExceptions: true,
+    });
+    const out = JSON.parse(res.getContentText() || '{}');
+    if (!out.success) Logger.log('_accountsWrite gagal: ' + res.getContentText());
+    return out;
+  } catch (e) { Logger.log('_accountsWrite error: ' + e.message); return { success:false, error:e.message }; }
+}
+// Baca satu sheet akun → baris ternormalisasi snake_case (bentuk tabel akun_inventory). Pakai findColIdx (drift-tolerant).
+// ponytail: email_pembeli & akun collapse (mail||email, officeAcc||msa) — cocok kolektif cukup utk pencarian.
+function _accountRowsForSheet(cfg) {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(cfg.name);
+  if (!sheet) return [];
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) return [];
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const col = cfg.isAdobe ? {
+    buyerName:    findColIdx(headers, ['buyer name', 'nama pembeli', 'nama buyer']),
+    emailActive:  findColIdx(headers, ['email active', 'email aktif']),
+    adobeAcc:     findColIdx(headers, ['adobe account', 'adobe acc', 'adobe email']),
+    startDate:    findColIdx(headers, ['invitation date', 'start date', 'creation date']),
+    endDate:      findColIdx(headers, ['end subs date', 'end subs', 'end date', 'masa berlaku']),
+    duration:     findColIdx(headers, ['duration', 'duration (month)']),
+    product:      findColIdx(headers, ['product', 'produk']),
+    from:         findColIdx(headers, ['from', 'source', 'platform']),
+  } : {
+    buyerName:    findColIdx(headers, ['buyer name', 'nama pembeli', 'nama buyer']),
+    mailActive:   findColIdx(headers, ['mailactive', '4reminder', 'mail active']),
+    emailActive:  findColIdx(headers, ['email active', 'email aktif']),
+    msa:          findColIdx(headers, ['msa']),
+    officeAcc:    findColIdx(headers, ['office account', 'office acc']),
+    wa:           findColIdx(headers, ['no whatsapp', 'no wa', 'whatsapp', 'no hp']),
+    endDate:      findColIdx(headers, ['end subs', 'end date', 'masa berlaku', 'expired date', 'end sub']),
+    startDate:    findColIdx(headers, ['creation date', 'start date', 'invitation date']),
+    status:       findColIdx(headers, ['status']),
+    duration:     findColIdx(headers, ['duration']),
+    subscription: findColIdx(headers, ['subscription']),
+    from:         findColIdx(headers, ['from', 'source', 'platform', 'sumber pembelian']),
+  };
+  const rows = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (cfg.isAdobe) {
+      const nama = getVal(row, col.buyerName), email = getVal(row, col.emailActive), akun = getVal(row, col.adobeAcc);
+      if (!nama && !email && !akun) continue;
+      rows.push({
+        source: cfg.name, product_type: 'adobe', row_ref: i,
+        nama: nama, email_pembeli: email, akun: akun, wa: '',
+        masa_berlaku: getDateVal(row, col.endDate), mulai_langganan: getDateVal(row, col.startDate),
+        status: 'Aktif', durasi: getVal(row, col.duration), tipe: '',
+        product_name: getVal(row, col.product) || 'Adobe Creative Cloud', pembelian_dari: getVal(row, col.from),
+      });
+    } else {
+      const fromCol = col.from !== -1 ? col.from : cfg.defaultFromCol;
+      const nama = getVal(row, col.buyerName);
+      const email = getVal(row, col.mailActive) || getVal(row, col.emailActive);
+      const akun = getVal(row, col.officeAcc) || getVal(row, col.msa);
+      const wa = getVal(row, col.wa);
+      if (!nama && !email && !akun && !wa) continue;
+      rows.push({
+        source: cfg.name, product_type: cfg.productType, row_ref: i,
+        nama: nama, email_pembeli: email, akun: akun, wa: wa,
+        masa_berlaku: getDateVal(row, col.endDate), mulai_langganan: getDateVal(row, col.startDate),
+        status: getVal(row, col.status) || 'Aktif', durasi: getVal(row, col.duration),
+        tipe: getVal(row, col.subscription) || (cfg.isFamily ? 'Family' : 'Personal'),
+        product_name: '', pembelian_dari: getVal(row, fromCol),
+      });
+    }
+  }
+  return rows;
+}
+// Baris snake_case (dari sheet ATAU Supabase) → bentuk output smartSearch (camelCase, sama utk frontend).
+function _accountRowToResult(r) {
+  const isAdobe = r.product_type === 'adobe';
+  const out = {
+    sumber: r.source, productType: r.product_type,
+    nama: r.nama || '', emailPembeli: r.email_pembeli || '',
+    masaBerlaku: r.masa_berlaku || '', mulaiLangganan: r.mulai_langganan || '',
+    status: r.status || 'Aktif', durasi: r.durasi || '', pembelianDari: r.pembelian_dari || '',
+  };
+  if (isAdobe) { out.adobeAccount = r.akun || ''; out.productName = r.product_name || 'Adobe Creative Cloud'; }
+  else { out.officeAccount = r.akun || ''; out.wa = r.wa || ''; out.tipe = r.tipe || (r.product_type === 'office365family' ? 'Family' : 'Personal'); }
+  return out;
+}
+// Backfill penuh (jalankan manual dari editor sekali): semua sheet → replace ke Supabase.
+function syncAccountsToSupabase() {
+  let total = 0;
+  ACCOUNT_SHEETS.forEach(cfg => {
+    const rows = _accountRowsForSheet(cfg);
+    const out = _accountsWrite({ action: 'replace', source: cfg.name, rows: rows });
+    Logger.log('sync ' + cfg.name + ': ' + rows.length + ' → ' + JSON.stringify(out));
+    total += rows.length;
+  });
+  Logger.log('syncAccountsToSupabase total=' + total);
+  return total;
+}
+// Handler installable onEdit: resync sheet yg diubah (replace-per-source). Best-effort, no-op saat flag off.
+// ponytail: replace seluruh sheet tiap edit — OK di volume akun & edit jarang; ganti row-diff kalau perlu.
+function onEditAccountSync(e) {
+  try {
+    if (!_accountsStoreOn() || !e || !e.range) return;
+    const name = e.range.getSheet().getName();
+    const cfg = ACCOUNT_SHEETS.find(c => c.name === name);
+    if (!cfg) return;
+    const rows = _accountRowsForSheet(cfg);
+    _accountsWrite({ action: 'replace', source: cfg.name, rows: rows });
+  } catch (err) { Logger.log('onEditAccountSync error: ' + err.message); }
+}
+// Pasang installable onEdit trigger sekali (jalankan manual dari editor). Idempotent.
+function setupAccountSyncTrigger() {
+  const exists = ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'onEditAccountSync');
+  if (exists) { Logger.log('trigger onEditAccountSync sudah ada'); return; }
+  ScriptApp.newTrigger('onEditAccountSync').forSpreadsheet(SPREADSHEET_ID).onEdit().create();
+  Logger.log('trigger onEditAccountSync dipasang');
 }
 
 // ── MIGRASI: impor semua user Users-web → Supabase Auth (one-time, jalankan dari editor GAS) ──
