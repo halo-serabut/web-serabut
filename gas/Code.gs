@@ -93,7 +93,8 @@ function doPost(e) {
     'confirmPayment','checkIPaymuOrderStatus','cancelOrder',
     'submitReview','getBuyerReviews','likeReview','editReview','deleteReview','sendReviewReminder',
   ];
-  if (USER_AUTH_ACTIONS.includes(action) && !validateSession(params.email, params.sessionToken)) {
+  // _requireAuth = JWT Supabase (eyJ...) ATAU session token sheet lama; validateSession saja tolak JWT.
+  if (USER_AUTH_ACTIONS.includes(action) && _requireAuth(params.email, params.sessionToken)) {
     return _jsonOut({ success: false, error: 'Sesi tidak valid. Silakan login ulang.' });
   }
 
