@@ -5235,10 +5235,79 @@ function toggleReview({ adminEmail, adminToken, reviewId, published }) {
 }
 
 // ── Quotation: kirim email dengan HTML invoice sebagai body ──
+// ── QUOTATIONS → Supabase (mirror; frontend tetap lewat GAS) ──
+// Aktif saat Script Property QUOTES_STORE='supabase'. Sheet tetap ditulis (dual-write) sampai flip.
+function _quotesStoreOn() {
+  return String(PropertiesService.getScriptProperties().getProperty('QUOTES_STORE') || '').toLowerCase() === 'supabase';
+}
+function _quotesWrite(payload) {
+  const secret = PropertiesService.getScriptProperties().getProperty('AUTH_BRIDGE_SECRET') || '';
+  if (!secret) { Logger.log('_quotesWrite skip: AUTH_BRIDGE_SECRET kosong'); return { success:false }; }
+  try {
+    const res = UrlFetchApp.fetch(SUPABASE_URL_SRB + '/functions/v1/quotations-write', {
+      method: 'post', contentType: 'application/json',
+      headers: { 'Authorization': 'Bearer ' + SUPABASE_ANON_SRB, 'apikey': SUPABASE_ANON_SRB, 'x-bridge-secret': secret },
+      payload: JSON.stringify(payload), muteHttpExceptions: true,
+    });
+    const out = JSON.parse(res.getContentText() || '{}');
+    if (!out.success) Logger.log('_quotesWrite gagal: ' + res.getContentText());
+    return out;
+  } catch (e) { Logger.log('_quotesWrite error: ' + e.message); return { success:false, error:e.message }; }
+}
+// Baris snake_case utk Supabase (dipakai saveQuotation + backfill).
+function _quoRowSupa(o) {
+  return {
+    quo_id: o.quoId, tanggal: _reviewTglISO(o.tanggal), nama: o.nama || '', email: o.email || '',
+    no_hp: o.noHP || '', total: Number(o.total) || 0, item_count: Number(o.itemCount) || 0,
+    status: o.status || 'draft', form_data: o.formDataJson || '',
+  };
+}
+// Mirror satu quotation ke Supabase (dipakai saveQuotation). Best-effort, no-op saat flag off.
+function _quoMirror(quoId, nama, email, noHP, total, itemCount, status, formDataJson) {
+  if (!_quotesStoreOn()) return;
+  _quotesWrite({ action: 'upsert', row: _quoRowSupa({ quoId, tanggal: new Date(), nama, email, noHP, total, itemCount, status, formDataJson }) });
+}
+// Backfill penuh (jalankan manual dari editor sekali): sheet Quotations → upsert ke Supabase.
+function migrateQuotationsToSupabase() {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Quotations');
+  if (!sheet) { Logger.log('migrateQuotations: sheet tak ada'); return 0; }
+  const data = sheet.getDataRange().getValues();
+  if (data.length < 2) { Logger.log('migrateQuotations: kosong'); return 0; }
+  const h = data[0], col = k => h.indexOf(k);
+  const idC=col('ID'), tglC=col('Tanggal'), namaC=col('Nama'), emailC=col('Email'), hpC=col('No HP'),
+        totC=col('Total'), itemC=col('Item Count'), statC=col('Status'), fdC=col('Form Data');
+  const rows = [];
+  for (let r = 1; r < data.length; r++) {
+    const row = data[r]; if (!row[idC]) continue;
+    rows.push(_quoRowSupa({
+      quoId: String(row[idC]), tanggal: row[tglC], nama: row[namaC], email: row[emailC], noHP: row[hpC],
+      total: row[totC], itemCount: row[itemC], status: row[statC], formDataJson: row[fdC],
+    }));
+  }
+  const out = _quotesWrite({ action: 'insert', rows: rows });
+  Logger.log('migrateQuotations: ' + rows.length + ' → ' + JSON.stringify(out));
+  return rows.length;
+}
+
 // ── Quotation: public endpoint — ambil formData by quoId (no auth) ──
 function getQuotations({ adminEmail, adminToken }) {
   const authErr = _requireAdmin(adminEmail, adminToken);
   if (authErr) return { success: false, error: authErr };
+  if (_quotesStoreOn()) {
+    const out = _quotesWrite({ action: 'list' });
+    if (out && out.success && Array.isArray(out.rows)) {
+      const rows = out.rows
+        .slice().sort((a, b) => String(b.tanggal || '').localeCompare(String(a.tanggal || ''))) // terbaru dulu
+        .map(r => ({
+          id: r.quo_id, nama: r.nama || '', email: r.email || '',
+          total: Number(r.total) || 0, status: r.status || '',
+          tgl: r.tanggal ? Utilities.formatDate(new Date(r.tanggal), 'Asia/Jakarta', 'yyyy-MM-dd') : '',
+          items: Number(r.item_count) || 0,
+        }));
+      return { success: true, data: rows };
+    }
+    // Edge gagal → fallback sheet
+  }
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName('Quotations');
   if (!sheet) return { success: true, data: [] };
@@ -5268,6 +5337,14 @@ function getQuotations({ adminEmail, adminToken }) {
 
 function getPublicQuo({ quoId }) {
   if (!quoId) return { success: false, error: 'quoId required' };
+  if (_quotesStoreOn()) {
+    const out = _quotesWrite({ action: 'get', quoId: String(quoId) });
+    if (out && out.success) {
+      if (!out.row) return { success: false, error: 'Quotation not found' };
+      return { success: true, quoId, nama: out.row.nama || '', formDataJson: out.row.form_data || '' };
+    }
+    // Edge gagal → fallback sheet
+  }
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName('Quotations');
   if (!sheet) return { success: false, error: 'Not found' };
@@ -5473,11 +5550,13 @@ function saveQuotation({ adminEmail, adminToken, quoId, nama, email, noHP, total
         Number(total||0), Number(itemCount||0), status||'draft', formDataJson||''
       ]]);
       SpreadsheetApp.flush();
+      _quoMirror(quoId, nama, email, noHP, total, itemCount, status, formDataJson);
       return { success: true, action: 'updated' };
     }
   }
   sheet.appendRow([quoId, new Date(), nama||'', email||'', noHP||'', Number(total||0), Number(itemCount||0), status||'draft', formDataJson||'']);
   SpreadsheetApp.flush();
+  _quoMirror(quoId, nama, email, noHP, total, itemCount, status, formDataJson);
   return { success: true, action: 'inserted' };
 }
 
