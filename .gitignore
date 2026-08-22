@@ -1,0 +1,24 @@
+# Backup & sampah lokal — jangan pernah masuk repo (apalagi repo publik)
+*.bak
+*.backup
+*-backup-*.html
+*.backup-*.html
+index-backup*.html
+index-preview.html
+og-gen.html
+Notes.txt
+preview-modifications.md
+gas/Code.gs.bak
+
+# Secret & kredensial (jaga-jaga, walau nilainya harusnya di Script Property / Supabase secret)
+.env
+.env.*
+*.key
+*.pem
+clasp.json.local
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

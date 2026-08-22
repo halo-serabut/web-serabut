@@ -1170,6 +1170,10 @@ function smartSearch(query) {
   if (!query || !String(query).trim()) return { success: false, error: 'Query kosong' };
 
   const q = String(query).toLowerCase().trim();
+  // [SEC] Min 4 char — cegah enumeration PII via query pendek (mis. "a" cocok semua baris).
+  if (q.length < 4) return { success: false, error: 'Masukkan minimal 4 karakter untuk pencarian' };
+  // [SEC] Rate limit per-query (GAS tak expose IP): 30 hit / 10 menit per string pencarian.
+  if (!_rateLimit('ss_' + q, 30, 600)) return { success: false, error: 'Terlalu banyak pencarian. Coba lagi sebentar.' };
 
   // Sumber baris ternormalisasi: Supabase (flag on, filter di Postgres) atau sheet langsung (fallback).
   let rows = null;
