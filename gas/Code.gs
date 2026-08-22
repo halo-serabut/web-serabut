@@ -129,7 +129,6 @@ function doPost(e) {
       case 'qrisClaimPaid':           result = qrisClaimPaid(params); break;
       case 'createGobizTransaction':  result = createGobizTransaction(params); break;
       case 'gobizCheckPaid':          result = gobizCheckPaid(params); break;
-      case 'notifPaid':               result = notifPaid(params); break;
       case 'cancelOrder':             result = cancelOrder(params); break;
       case 'requestDeleteAccount':    result = requestDeleteAccount(params); break;
       // CS
