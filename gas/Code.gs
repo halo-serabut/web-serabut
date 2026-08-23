@@ -5620,6 +5620,7 @@ function autoCancelExpiredOrders() {
   const now      = new Date();
   const LIMIT_MS = 24 * 60 * 60 * 1000; // 24 jam
   let   cancelled = 0;
+  const cancelledIds = {}; // orderId unik yg dibatalkan → mirror ke Supabase sekali per order (cart = multi-row)
 
   for (var i = 1; i < data.length; i++) {
     const row    = data[i];
@@ -5627,7 +5628,7 @@ function autoCancelExpiredOrders() {
     const status = String(row[stCol] || '').trim();
     if (status !== 'Pending') continue;
 
-    // Jika sudah ada paymentMethod (iPaymu/Xendit sudah dibayar tapi belum di-update) → skip
+    // Jika sudah ada paymentMethod (QRIS/Xendit dibayar/klaim tapi belum di-update) → skip
     if (pmCol >= 0 && String(row[pmCol] || '').trim()) continue;
 
     const rawDate = row[dateCol];
@@ -5638,11 +5639,14 @@ function autoCancelExpiredOrders() {
     if ((now - orderDate) >= LIMIT_MS) {
       sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan');
       cancelled++;
+      cancelledIds[String(row[0]).trim()] = true;
       Logger.log('Auto-cancel: ' + row[0] + ' (order: ' + orderDate + ')');
     }
   }
 
   if (cancelled > 0) SpreadsheetApp.flush();
+  // Sinkron status 'Dibatalkan' ke Supabase (sumber baca buyer & admin pasca-cutover) — no-op saat flag off.
+  Object.keys(cancelledIds).forEach(function (oid) { _ordersMirror(oid); });
   Logger.log('autoCancelExpiredOrders selesai — ' + cancelled + ' order dibatalkan');
   return cancelled;
 }
