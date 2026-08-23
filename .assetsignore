@@ -1,0 +1,15 @@
+# File yang TIDAK boleh disajikan publik oleh Cloudflare (gitignore syntax, relatif ke root).
+# Cegah kebocoran playbook & source backend (repo private, tapi situs publik).
+gas/
+supabase/
+tests/
+uat/
+workers/
+.github/
+node_modules/
+*.md
+*.gs
+.clasp.json
+.gitignore
+wrangler.toml
+.assetsignore

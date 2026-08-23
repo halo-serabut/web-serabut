@@ -1,0 +1,8 @@
+name = "web-serabut"
+compatibility_date = "2025-06-01"
+
+# Situs statis (SPA). Sajikan 404.html utk path tak dikenal (deep link /produk/*, /faq, dll
+# pakai mekanisme 404.html + pendingProductSlug — BUKAN single-page-application).
+[assets]
+directory = "."
+not_found_handling = "404-page"
