@@ -9136,7 +9136,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260823-1',
+        APP_VERSION:      '20260823-2',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -12782,6 +12782,10 @@ ANNOUNCE_ON:      false,
         _parseDescJS(raw){ const t=String(raw==null?'':raw).trim(); if(!t) return {benefits:[],descHtml:''}; if(t.charAt(0)==='['){ try{ const a=JSON.parse(t); if(Array.isArray(a)) return {benefits:a,descHtml:''}; }catch{} } return {benefits:[],descHtml:t}; },
         _parseImgsJS(raw){ const t=String(raw==null?'':raw).trim(); if(!t) return []; if(t.charAt(0)==='['){ try{ const a=JSON.parse(t); if(Array.isArray(a)) return a.filter(x=>x); }catch{} } return [t]; },
         async _supaEnsureAuth(){
+            // Admin sudah login via Supabase → pakai JWT-nya langsung (halo@serabut.id = satu-satunya role admin).
+            // Hindari prompt password terpisah yg rapuh + bisa nyasar ke akun non-admin (RLS diam-diam buang update).
+            const st = this.currentUser?.sessionToken || '';
+            if(this.USE_SUPABASE_AUTH && st.slice(0,3)==='eyJ' && st.split('.').length===3) return st;
             if(this._supaToken) return this._supaToken;
             const email = this.currentUser?.email;
             const pass = prompt(`Password Supabase untuk ${email} (sekali per sesi):`);
@@ -12945,7 +12949,10 @@ ANNOUNCE_ON:      false,
             try {
                 const row = this._supaProductRow();
                 if(this.adminEditProduct) {
-                    await this._supaWrite('PATCH', `catalog?id=eq.${this.adminEditProduct.rowIndex}`, row);
+                    const out = await this._supaWrite('PATCH', `catalog?id=eq.${this.adminEditProduct.rowIndex}`, row);
+                    // RLS bisa buang update diam-diam (200 + []) jika akun bukan admin → jangan tampil sukses palsu.
+                    if(Array.isArray(out) && out.length===0)
+                        throw new Error('Gagal simpan: akun ini bukan admin di Supabase (perubahan ditolak RLS). Login sebagai halo@serabut.id.');
                 } else {
                     await this._supaWrite('POST', 'catalog', row);
                 }
