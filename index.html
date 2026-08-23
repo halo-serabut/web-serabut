@@ -1301,11 +1301,12 @@
                                             <div class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
                                         </div>
                                     </template>
-                                    <!-- Non-member dengan flash sale: harga penuh + badge hemat -->
+                                    <!-- Non-member dengan flash sale: tampilkan harga Member (memancing) + label jujur -->
                                     <template x-if="!isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
                                         <div>
-                                            <div class="font-black text-brand-500 text-sm" x-text="formatPrice(product.harga)"></div>
-                                            <div class="text-[9px] text-brand-500 font-bold leading-tight" x-text="'Member hemat '+(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'%'"></div>
+                                            <div class="text-[10px] text-gray-400 line-through leading-none" x-text="formatPrice(product.harga)"></div>
+                                            <div class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
+                                            <div class="text-[9px] text-brand-600 font-bold leading-tight">Harga Member</div>
                                         </div>
                                     </template>
                                     <!-- Tidak ada flash sale -->
@@ -1394,11 +1395,12 @@
                                                 <div class="font-black text-brand-500 text-base" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
                                             </div>
                                         </template>
-                                        <!-- Non-member dengan flash sale: harga penuh + badge hemat -->
+                                        <!-- Non-member dengan flash sale: tampilkan harga Member (memancing) + label jujur -->
                                         <template x-if="!isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
                                             <div class="mb-2">
-                                                <div class="font-black text-brand-500 text-base" x-text="formatPrice(product.harga)"></div>
-                                                <div class="text-[9px] text-brand-500 font-bold leading-tight" x-text="'Member hemat '+(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'%'"></div>
+                                                <div class="text-xs text-gray-400 line-through leading-none" x-text="formatPrice(product.harga)"></div>
+                                                <div class="font-black text-brand-500 text-base" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
+                                                <div class="text-[9px] text-brand-600 font-bold leading-tight">Harga Member</div>
                                             </div>
                                         </template>
                                         <!-- Tidak ada flash sale -->
@@ -2423,17 +2425,29 @@
                                 <!-- Tamu -->
                                 <template x-if="!isMember">
                                     <div>
-                                        <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
-                                        <!-- Flash sale tersedia tapi belum login -->
+                                        <!-- Ada promo: tampilkan harga Member menonjol (memancing), harga normal dicoret -->
                                         <template x-if="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                            <button @click="openAuth('login')" class="mt-2 w-full flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-left hover:bg-red-100 active:scale-[0.98] transition-all">
-                                                <span class="text-base leading-none">⚡</span>
-                                                <div class="flex-1 min-w-0">
-                                                    <div class="text-xs font-black text-red-600">Flash Sale aktif!</div>
-                                                    <div class="text-[11px] text-red-500 leading-tight">Login untuk dapat harga <strong x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></strong></div>
+                                            <div>
+                                                <div class="text-sm text-gray-400 line-through leading-none mb-1.5" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                                <div class="flex items-center gap-2.5 flex-wrap">
+                                                    <span class="bg-red-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow-sm" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
+                                                    <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></div>
+                                                    <span class="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full flex-none">Harga Member</span>
                                                 </div>
-                                                <span class="text-[10px] font-black text-white bg-red-500 px-2 py-1 rounded-lg whitespace-nowrap flex-none">Login →</span>
-                                            </button>
+                                                <!-- Ajakan login (jujur: tanpa login = harga normal) -->
+                                                <button @click="openAuth('login')" class="mt-2.5 w-full flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-left hover:bg-red-100 active:scale-[0.98] transition-all">
+                                                    <span class="text-base leading-none">🔓</span>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="text-xs font-black text-red-600">Masuk dulu buat kunci harga ini</div>
+                                                        <div class="text-[11px] text-red-500 leading-tight">Gratis daftarnya. Lanjut tanpa masuk, harga normal yang dipakai.</div>
+                                                    </div>
+                                                    <span class="text-[10px] font-black text-white bg-red-500 px-2 py-1 rounded-lg whitespace-nowrap flex-none">Masuk →</span>
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <!-- Tak ada promo: harga normal saja -->
+                                        <template x-if="!flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                            <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
                                         </template>
                                     </div>
                                 </template>
@@ -9122,7 +9136,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260816-2',
+        APP_VERSION:      '20260823-1',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
