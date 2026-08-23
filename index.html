@@ -9136,7 +9136,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260823-3',
+        APP_VERSION:      '20260823-4',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -10582,7 +10582,13 @@ ANNOUNCE_ON:      false,
         getVariantDurations(group, varianName) {
             if(!group) return [];
             const filtered = varianName ? group.variants.filter(v=>v.varian===varianName) : group.variants;
-            return filtered.length>0 ? filtered : group.variants;
+            const list = filtered.length>0 ? filtered : group.variants;
+            // Urut durasi menaik: 1 Bulan → 6 Bulan → 1 Tahun (Perpetual/tak dikenal di akhir).
+            const mo = m => { const s=String(m||'').toLowerCase(); const n=parseFloat(s)||0;
+                if(/tahun|thn|year/.test(s)) return n*12;
+                if(/bulan|bln|month/.test(s)) return n;
+                return 9999; };
+            return [...list].sort((a,b)=> mo(a.masaAktif)-mo(b.masaAktif));
         },
         selectVariantByName(v) {
             const durations = this.getVariantDurations(this.selectedProductGroup, v);
