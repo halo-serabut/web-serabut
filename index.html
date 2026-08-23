@@ -2104,8 +2104,12 @@
                                             </template>
                                             <template x-if="!isMember && flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
                                                 <div>
-                                                    <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
-                                                    <span class="text-[9px] text-brand-500 font-bold mt-0.5 block">Member hemat <span x-text="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.diskon+'%'"></span></span>
+                                                    <div class="text-xs text-gray-400 line-through leading-none mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                                                    <div class="flex items-center gap-1 mt-0.5">
+                                                        <span class="text-[9px] font-black bg-red-500 text-white px-1 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.diskon+'%'"></span>
+                                                        <span class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.harga)"></span>
+                                                    </div>
+                                                    <span class="text-[9px] text-brand-600 font-bold mt-0.5 block">Harga Member</span>
                                                 </div>
                                             </template>
                                             <template x-if="!flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
@@ -9136,7 +9140,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260823-4',
+        APP_VERSION:      '20260823-5',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
