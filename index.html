@@ -9136,7 +9136,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260823-2',
+        APP_VERSION:      '20260823-3',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -12782,8 +12782,26 @@ ANNOUNCE_ON:      false,
         _parseDescJS(raw){ const t=String(raw==null?'':raw).trim(); if(!t) return {benefits:[],descHtml:''}; if(t.charAt(0)==='['){ try{ const a=JSON.parse(t); if(Array.isArray(a)) return {benefits:a,descHtml:''}; }catch{} } return {benefits:[],descHtml:t}; },
         _parseImgsJS(raw){ const t=String(raw==null?'':raw).trim(); if(!t) return []; if(t.charAt(0)==='['){ try{ const a=JSON.parse(t); if(Array.isArray(a)) return a.filter(x=>x); }catch{} } return [t]; },
         async _supaEnsureAuth(){
-            // Admin sudah login via Supabase → pakai JWT-nya langsung (halo@serabut.id = satu-satunya role admin).
-            // Hindari prompt password terpisah yg rapuh + bisa nyasar ke akun non-admin (RLS diam-diam buang update).
+            // Selalu tukar refresh_token → access_token SEGAR. Token kadaluarsa bikin PostgREST anggap request
+            // sbg anon → is_admin()=false → UPDATE 0 baris (ditolak diam-diam). Refresh dulu = fix root cause.
+            const rtok = this._supaRefresh || localStorage.getItem('srb_rtok') || '';
+            if(this.USE_SUPABASE_AUTH && rtok){
+                try{
+                    const res = await fetch(`${this.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+                        method:'POST', headers:{ apikey:this.SUPABASE_ANON, 'Content-Type':'application/json' },
+                        body: JSON.stringify({ refresh_token: rtok })
+                    });
+                    const j = await res.json();
+                    if(j.access_token){
+                        this._supaToken = j.access_token;
+                        if(j.refresh_token){ this._supaRefresh=j.refresh_token; localStorage.setItem('srb_rtok', j.refresh_token); }
+                        if(this.currentUser) this.currentUser.sessionToken = j.access_token;
+                        localStorage.setItem('srb_tok', j.access_token);
+                        return j.access_token;
+                    }
+                }catch(_){}
+            }
+            // Fallback: token sesi yg ada (mis. belum ada refresh_token tersimpan)
             const st = this.currentUser?.sessionToken || '';
             if(this.USE_SUPABASE_AUTH && st.slice(0,3)==='eyJ' && st.split('.').length===3) return st;
             if(this._supaToken) return this._supaToken;
@@ -12859,6 +12877,8 @@ ANNOUNCE_ON:      false,
         async _supaSetSession(session, greetMode){
             const prof = await this._supaLoadProfile(session.access_token) || {};
             this._supaToken = session.access_token; // reuse utk _supaWrite (admin)
+            // Simpan refresh_token → _supaEnsureAuth bisa selalu ambil access_token segar (cegah token kadaluarsa → RLS anggap anon → tulis ditolak diam-diam)
+            if(session.refresh_token){ this._supaRefresh = session.refresh_token; localStorage.setItem('srb_rtok', session.refresh_token); }
             this.currentUser = {
                 id:      prof.id || session.user?.id,
                 nama:    prof.nama || session.user?.user_metadata?.nama || '',
