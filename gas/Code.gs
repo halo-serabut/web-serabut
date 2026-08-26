@@ -377,18 +377,24 @@ function _verifyGoogleToken(idToken) {
 // Return: harga diskon (Number) atau null jika tidak ada campaign aktif yang cocok
 function _getActiveCampaignPrice(produk, varian, masaAktif) {
   try {
-    const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(TAB_SETTINGS);
-    if (!sheet) return null;
-    const data     = sheet.getDataRange().getValues();
+    // Sumber kebenaran = Supabase settings (admin tab Diskon tulis ke sana). Fallback sheet lama.
     const settings = {};
-    for (let i = 1; i < data.length; i++) {
-      const k = String(data[i][0] || '').trim();
-      const v = String(data[i][1] || '').trim();
-      if (k) settings[k] = v;
+    const supaRows = _supaRest('settings?select=key,value');
+    if (Array.isArray(supaRows)) {
+      supaRows.forEach(function (r) { if (r.key) settings[String(r.key).trim()] = String(r.value == null ? '' : r.value).trim(); });
+    } else {
+      const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_SETTINGS);
+      if (!sheet) return null;
+      const data = sheet.getDataRange().getValues();
+      for (let i = 1; i < data.length; i++) {
+        const k = String(data[i][0] || '').trim();
+        const v = String(data[i][1] || '').trim();
+        if (k) settings[k] = v;
+      }
     }
     const normStr = s => String(s || '').trim().toLowerCase();
     const now = new Date();
+    let best = null; // harga campaign terendah yg cocok (hindari mismatch dgn tampilan frontend)
 
     // Format baru: flashSale.campaigns (array of campaign objects)
     const campaigns = JSON.parse(settings['flashSale.campaigns'] || '[]');
@@ -410,7 +416,7 @@ function _getActiveCampaignPrice(produk, varian, masaAktif) {
         const matchSeparate = itemVarian === normStr(varian) && normStr(item.masaAktif || '') === normStr(masaAktif);
         if (matchCombined || matchSeparate) {
           const h = Number(item.harga);
-          if (h > 0) return h;
+          if (h > 0 && (best === null || h < best)) best = h;
         }
       }
     }
@@ -428,11 +434,12 @@ function _getActiveCampaignPrice(produk, varian, masaAktif) {
           const matchS = itemVarian === normStr(varian) && normStr(item.masaAktif || '') === normStr(masaAktif);
           if (matchC || matchS) {
             const h = Number(item.harga);
-            if (h > 0) return h;
+            if (h > 0 && (best === null || h < best)) best = h;
           }
         }
       }
     }
+    return best;
   } catch(e) {
     Logger.log('_getActiveCampaignPrice error: ' + e.message);
   }
@@ -441,10 +448,22 @@ function _getActiveCampaignPrice(produk, varian, masaAktif) {
 
 // [SEC] Lookup harga produk dari Catalog (untuk validasi server-side)
 function _getCatalogPrice(produk, varian, masaAktif) {
+  const normStr = s => String(s || '').trim().toLowerCase();
+  // Sumber kebenaran = Supabase (katalog sudah migrasi; sheet lama basi). Fallback ke sheet kalau Supabase gagal.
+  const rows = _supaRest('catalog?select=nama_produk,varian,masa_aktif,harga,aktif&aktif=eq.true');
+  if (Array.isArray(rows)) {
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      if (normStr(r.nama_produk) === normStr(produk) &&
+          normStr(r.varian) === normStr(varian) &&
+          normStr(r.masa_aktif) === normStr(masaAktif)) return Number(r.harga) || 0;
+    }
+    return null; // Supabase terjawab tapi produk tak ada → jangan fallback ke sheet basi
+  }
+  // Fallback sheet lama (Supabase tak terjangkau)
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_CATALOG);
   if (!sheet) return null;
   const data = sheet.getDataRange().getValues();
-  const normStr = s => String(s || '').trim().toLowerCase();
   for (let i = 1; i < data.length; i++) {
     const row   = data[i];
     const aktif = row[5];
@@ -3151,6 +3170,16 @@ function sendAuthEmail(params) {
 // sbg fallback sampai flip. Best-effort: kegagalan Supabase tak menggagalkan order (sheet aman).
 const SUPABASE_URL_SRB  = 'https://pmyuwaerzzpjwskdzxxw.supabase.co';
 const SUPABASE_ANON_SRB = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBteXV3YWVyenpwandza2R6eHh3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY3NDY3NjYsImV4cCI6MjEwMjMyMjc2Nn0.GwGn3FEQXroAPl7H6bql-g-QhYMcavaP4BwuVCVl-f8';
+// GET publik ke Supabase REST (anon, read-only). Utk validasi harga server-side dari sumber terkini.
+function _supaRest(path) {
+  try {
+    var res = UrlFetchApp.fetch(SUPABASE_URL_SRB + '/rest/v1/' + path, {
+      method: 'get', muteHttpExceptions: true,
+      headers: { apikey: SUPABASE_ANON_SRB, Authorization: 'Bearer ' + SUPABASE_ANON_SRB },
+    });
+    return JSON.parse(res.getContentText() || 'null');
+  } catch (e) { Logger.log('_supaRest error: ' + e.message); return null; }
+}
 function _ordersStoreOn() {
   return String(PropertiesService.getScriptProperties().getProperty('ORDERS_STORE') || '').toLowerCase() === 'supabase';
 }
