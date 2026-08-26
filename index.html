@@ -5608,7 +5608,7 @@
                                 <!-- Footer -->
                                 <div class="px-3.5 py-2 border-t flex items-center justify-between gap-2" :class="_orderCardFooter(g.status)">
                                     <div class="flex items-center gap-1.5 flex-wrap min-w-0">
-                                        <span class="text-[10px] text-gray-400" x-text="g.items.length+' item'"></span>
+                                        <span class="text-[10px] text-gray-400" x-text="g.items.length+' item'+(g.items.reduce((s,i)=>s+(Number(i.qty)||1),0)>g.items.length?' · '+g.items.reduce((s,i)=>s+(Number(i.qty)||1),0)+' pcs':'')"></span>
                                         <template x-if="g.items[0]?.paymentMethod">
                                             <span class="text-[10px] font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full truncate max-w-[80px]" x-text="g.items[0].paymentMethod"></span>
                                         </template>
@@ -9141,7 +9141,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260823-6',
+        APP_VERSION:      '20260823-7',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
