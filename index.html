@@ -3967,6 +3967,7 @@
                                                     <span x-show="item.varian && item.varian!=='-'" x-text="item.varian"></span>
                                                     <span x-show="item.masaAktif && item.masaAktif!=='-'" x-text="' · '+item.masaAktif"></span>
                                                 </span>
+                                                <span x-show="(item.qty||1) > 1" class="inline-block mt-1 text-[11px] font-black text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full" x-text="'Qty: '+(item.qty||1)+' × '+formatPrice((item.harga||0)/(item.qty||1))"></span>
                                             </div>
                                             <span class="text-sm font-black text-gray-800 flex-shrink-0" x-text="formatPrice(item.harga)"></span>
                                         </div>
@@ -9140,7 +9141,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260823-5',
+        APP_VERSION:      '20260823-6',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.

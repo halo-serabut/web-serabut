@@ -1704,7 +1704,7 @@ function googleLogin({ idToken, credential }) {
 // ────────────────────────────────────────────────────────
 //  CREATE ORDER — [SEC] validasi harga server-side
 // ────────────────────────────────────────────────────────
-function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk, varian, masaAktif, harga, msNama, username, microsoftEmail, emailAktif, emailReminder, imageUrl, env }) {
+function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk, varian, masaAktif, harga, qty, msNama, username, microsoftEmail, emailAktif, emailReminder, imageUrl, env }) {
   // Auth check — guest order masih diperbolehkan (tanpa session)
   const effectiveEmail = userEmail || email || '';
   if (!effectiveEmail || !produk) return { success: false, error: 'Data tidak lengkap' };
@@ -1726,6 +1726,10 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
       Logger.log('createOrder: member price applied — catalog=' + catalogPrice + ' campaign=' + campaignPrice);
     }
   }
+
+  // [SEC] Qty dari client (1–10) → total = harga satuan × qty (sebelumnya qty diabaikan → undercharge).
+  const qtyNum = Math.max(1, Math.min(10, Number(qty) || 1));
+  hargaNum = hargaNum * qtyNum;
 
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(TAB_ORDERS);
@@ -1755,7 +1759,7 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
   if (_ordersStoreOn()) {
     _ordersWrite({ action:'insert', rows:[ _orderRowSupa({
       orderId, userNama, userEmail, userWa, produk, varian, masaAktif,
-      harga: hargaNum, msNama, username, microsoftEmail, emailAktif, emailReminder,
+      harga: hargaNum, qty: qtyNum, msNama, username, microsoftEmail, emailAktif, emailReminder,
     }) ] });
   }
 
@@ -2220,7 +2224,7 @@ const supaRows      = []; // full move: baris utk Supabase orders
     ]);
     if (_ordersStoreOn()) supaRows.push(_orderRowSupa({
       orderId, userNama, userEmail, userWa, produk: it.produk, varian: it.varian,
-      masaAktif: it.masaAktif, harga: hargaNum, msNama: it.msNama, username: it.username,
+      masaAktif: it.masaAktif, harga: hargaNum, qty: Number(it.qty)||1, msNama: it.msNama, username: it.username,
       microsoftEmail: it.microsoftEmail, emailAktif: it.emailAktif,
     }));
 
@@ -3202,7 +3206,7 @@ function _orderRowSupa(o) {
   return {
     order_id: o.orderId, nama: o.userNama || '', email: o.userEmail || '', no_wa: o.userWa || '',
     produk: o.produk || '', varian: o.varian || '-', masa_aktif: o.masaAktif || '-',
-    harga: Number(o.harga) || 0, status: o.status || 'Pending',
+    harga: Number(o.harga) || 0, qty: Number(o.qty) || 1, status: o.status || 'Pending',
     nama_ms: o.msNama || '-', username: o.username || '-', email_ms: o.microsoftEmail || '-',
     email_aktif: o.emailAktif || '-', email_reminder: o.emailReminder || '-',
     payment_status: o.paymentStatus || 'UNPAID',
@@ -3284,6 +3288,7 @@ function _flatSupaOrders(rows) {
         varian:         String(r.varian || ''),
         masaAktif:      String(r.masa_aktif || ''),
         harga:          Number(r.harga) || 0,
+        qty:            Number(r.qty) || 1,
         status:         String(r.status || 'Pending'),
         paymentMethod:  String(r.payment_method || ''),
         paymentStatus:  String(r.payment_status || ''),
