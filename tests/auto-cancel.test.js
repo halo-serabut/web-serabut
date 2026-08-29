@@ -1,11 +1,11 @@
-// Uji autoCancelStaleOrders — ekstrak dari gas/Code.gs, jalankan dengan SpreadsheetApp palsu.
+// Uji autoCancelExpiredOrders — ekstrak dari gas/Code.gs, jalankan dengan SpreadsheetApp palsu.
 // Jalankan: node tests/auto-cancel.test.js
 const fs = require('fs');
 const assert = require('assert');
 
 const src = fs.readFileSync(__dirname + '/../gas/Code.gs', 'utf8');
-const m = src.match(/const ORDER_EXPIRY_MS[\s\S]*?\nfunction autoCancelStaleOrders\(\) \{[\s\S]*?\n\}\n/);
-assert(m, 'autoCancelStaleOrders tidak ditemukan di Code.gs');
+const m = src.match(/const ORDER_EXPIRY_MS[\s\S]*?\nfunction autoCancelExpiredOrders\(\) \{[\s\S]*?\n\}\n/);
+assert(m, 'autoCancelExpiredOrders tidak ditemukan di Code.gs');
 
 const HEAD = ['Order ID', 'Tanggal', 'Nama', 'Status', 'Payment Status'];
 const H = 25 * 3600 * 1000;
@@ -30,7 +30,7 @@ function run(rows) {
     }),
   };
   eval(m[0]);
-  return autoCancelStaleOrders();
+  return autoCancelExpiredOrders();
 }
 
 // 1. Pending > 24 jam, tanpa tanda bayar → dibatalkan
@@ -66,4 +66,4 @@ assert.strictEqual(run([
 // 7. Tanggal tak terbaca → jangan batalkan (fail-safe)
 assert.strictEqual(run([['SRB-7', '', 'A', 'Pending', '']]).cancelled, 0);
 
-console.log('OK autoCancelStaleOrders — batas 24 jam, tanda bayar, cart all-or-nothing');
+console.log('OK autoCancelExpiredOrders — batas 24 jam, tanda bayar, cart all-or-nothing');

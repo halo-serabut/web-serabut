@@ -2507,7 +2507,7 @@ const ORDER_EXPIRY_MS = 24 * 60 * 60 * 1000;
 // Tanda "jangan batalkan": sudah bayar, atau pembeli klaim bayar & menunggu admin.
 const PAID_MARKERS = ['Lunas', 'Berhasil', 'Menunggu Verifikasi'];
 
-function autoCancelStaleOrders() {
+function autoCancelExpiredOrders() {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
   if (!sheet) return { cancelled: 0 };
 
@@ -2552,15 +2552,6 @@ function autoCancelStaleOrders() {
     Logger.log('autoCancelStaleOrders: ' + cancelled.length + ' order dibatalkan → ' + cancelled.join(', '));
   }
   return { cancelled: cancelled.length, orderIds: cancelled };
-}
-
-// Jalankan SEKALI dari editor GAS untuk memasang trigger per jam.
-function setupAutoCancelTrigger() {
-  ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === 'autoCancelStaleOrders') ScriptApp.deleteTrigger(t);
-  });
-  ScriptApp.newTrigger('autoCancelStaleOrders').timeBased().everyHours(1).create();
-  Logger.log('Trigger autoCancelStaleOrders dipasang (tiap 1 jam)');
 }
 
 // ────────────────────────────────────────────────────────
@@ -5702,64 +5693,8 @@ function requestDeleteAccount({ email, nama }) {
   return { success: true };
 }
 
-// ────────────────────────────────────────────────────────
-//  AUTO-CANCEL EXPIRED PENDING ORDERS (>24 jam)
-//  Dijalankan via time-driven trigger setiap 1 jam.
-//  Install trigger: jalankan setupAutoCancelTrigger() SATU KALI dari GAS editor.
-// ────────────────────────────────────────────────────────
-function autoCancelExpiredOrders() {
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
-  if (!sheet) return;
-
-  const data    = sheet.getDataRange().getValues();
-  const headers = data[0].map(h => String(h).toLowerCase().trim());
-  const dateCol = (function() {
-    var idx = headers.indexOf('tanggal'); if (idx >= 0) return idx;
-    idx = headers.indexOf('date'); if (idx >= 0) return idx;
-    return 1; // fallback kolom B
-  })();
-  const stCol   = 9; // kolom J = Status (0-indexed)
-  const pmCol   = (function() {
-    var idx = headers.indexOf('payment method'); if (idx >= 0) return idx;
-    idx = headers.indexOf('payment_method'); if (idx >= 0) return idx;
-    return -1;
-  })();
-
-  const now      = new Date();
-  const LIMIT_MS = 24 * 60 * 60 * 1000; // 24 jam
-  let   cancelled = 0;
-  const cancelledIds = {}; // orderId unik yg dibatalkan → mirror ke Supabase sekali per order (cart = multi-row)
-
-  for (var i = 1; i < data.length; i++) {
-    const row    = data[i];
-    if (!row[0]) continue;                          // baris kosong
-    const status = String(row[stCol] || '').trim();
-    if (status !== 'Pending') continue;
-
-    // Jika sudah ada paymentMethod (QRIS/Xendit dibayar/klaim tapi belum di-update) → skip
-    if (pmCol >= 0 && String(row[pmCol] || '').trim()) continue;
-
-    const rawDate = row[dateCol];
-    if (!rawDate) continue;
-    const orderDate = rawDate instanceof Date ? rawDate : new Date(rawDate);
-    if (isNaN(orderDate)) continue;
-
-    if ((now - orderDate) >= LIMIT_MS) {
-      sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan');
-      cancelled++;
-      cancelledIds[String(row[0]).trim()] = true;
-      Logger.log('Auto-cancel: ' + row[0] + ' (order: ' + orderDate + ')');
-    }
-  }
-
-  if (cancelled > 0) SpreadsheetApp.flush();
-  // Sinkron status 'Dibatalkan' ke Supabase (sumber baca buyer & admin pasca-cutover) — no-op saat flag off.
-  Object.keys(cancelledIds).forEach(function (oid) { _ordersMirror(oid); });
-  Logger.log('autoCancelExpiredOrders selesai — ' + cancelled + ' order dibatalkan');
-  return cancelled;
-}
-
-// Jalankan SATU KALI dari GAS editor untuk install time-driven trigger setiap 1 jam
+// Jalankan SATU KALI dari GAS editor untuk install time-driven trigger setiap 1 jam.
+// Implementasi autoCancelExpiredOrders ada di bagian ORDERS (dekat cancelOrder).
 function setupAutoCancelTrigger() {
   // Hapus trigger lama jika ada
   ScriptApp.getProjectTriggers().forEach(function(t) {
