@@ -1,5 +1,9 @@
 # File yang TIDAK boleh disajikan publik oleh Cloudflare (gitignore syntax, relatif ke root).
 # Cegah kebocoran playbook & source backend (repo private, tapi situs publik).
+# .git/ WAJIB di sini: tanpa ini seluruh riwayat repo (termasuk gas/ yang diblok
+# di bawah) bisa diunduh publik lewat /.git/objects/*.
+.git/
+.wrangler/
 gas/
 supabase/
 tests/
