@@ -76,7 +76,8 @@ function _qrisUniqueCode(orderId) {
   return (h % 299) + 1;
 }
 
-// Cari total order (sum semua baris dengan orderId sama; cart = multi-row)
+// Cari total order (sum semua baris dengan orderId sama; cart = multi-row).
+// Baca sheet (order tetap dual-write sheet+Supabase, jadi sheet selalu sinkron utk order normal).
 function _qrisOrderTotal(orderId) {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
   if (!sheet) return { error: 'Sheet tidak ditemukan' };

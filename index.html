@@ -903,7 +903,7 @@
                     </div>
                 </div>
                 <template x-if="currentUser?.role?.toLowerCase()==='admin'">
-                    <button @click="adminOverlay=true; document.body.style.overflow='hidden'; adminTab='flashsale'; adminInitTab('flashsale'); _adminPrefetch()" :class="adminOverlay?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5">
+                    <button @click="adminOverlay=true; document.body.style.overflow='hidden'; adminTab='orders'; adminInitTab('orders'); _adminPrefetch()" :class="adminOverlay?'bg-white text-brand-600 shadow-sm font-semibold':'text-gray-500 hover:text-gray-800'" class="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                         Admin
                     </button>
@@ -7760,7 +7760,7 @@
         </template>
         <!-- Admin tab — hanya muncul jika role=admin -->
         <template x-if="currentUser?.role?.toLowerCase()==='admin'">
-            <button @click="profileOverlay=false; adminOverlay=true; currentSection=''; document.body.style.overflow='hidden'; adminTab='flashsale'; adminInitTab('flashsale'); _adminPrefetch()" :class="adminOverlay && !profileOverlay ?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center transition-colors active:scale-95">
+            <button @click="profileOverlay=false; adminOverlay=true; currentSection=''; document.body.style.overflow='hidden'; adminTab='orders'; adminInitTab('orders'); _adminPrefetch()" :class="adminOverlay && !profileOverlay ?'text-brand-500':'text-gray-400'" class="flex-1 flex flex-col items-center justify-center transition-colors active:scale-95">
                 <div :class="adminOverlay && !profileOverlay ? 'bg-brand-50 rounded-2xl px-3 py-1' : 'px-3 py-1'" class="flex flex-col items-center gap-0.5 transition-all duration-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <span class="text-[10px] font-semibold leading-none">Admin</span>
@@ -9159,7 +9159,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260823-8',
+        APP_VERSION:      '20260830-1',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -9437,7 +9437,7 @@ ANNOUNCE_ON:      false,
         settingsLoaded: false,
 
         // Admin
-        adminTab:        'flashsale',
+        adminTab:        'orders',
         adminSaving:     false,
         adminSaveMsg:    '',
         adminSidebarOpen: {konten:true, produk:true, transaksi:true, komunitas:true},
@@ -11807,7 +11807,7 @@ ANNOUNCE_ON:      false,
             }
             if(page!=='status')  this.statusResult=null;
             if(page==='profile') { this.profileTab = opts.tab || 'diri'; this.editMode=false; this.loadProfile(); }
-            if(page==='admin')   { this.adminTab='flashsale'; this.adminInitTab('flashsale'); this._adminPrefetch(); }
+            if(page==='admin')   { this.adminTab='orders'; this.adminInitTab('orders'); this._adminPrefetch(); }
 
             // Scroll ke section tertentu setelah halaman home render
             if (opts.scrollTo) {
@@ -11858,7 +11858,7 @@ ANNOUNCE_ON:      false,
                     this.$nextTick(() => { this.profileOverlay = true; document.body.style.overflow = 'hidden'; });
                 } else if (path === '/admin') {
                     history.replaceState({}, '', '/');
-                    this.$nextTick(() => { this.adminOverlay = true; document.body.style.overflow = 'hidden'; this.adminTab='flashsale'; this.adminInitTab('flashsale'); this._adminPrefetch(); });
+                    this.$nextTick(() => { this.adminOverlay = true; document.body.style.overflow = 'hidden'; this.adminTab='orders'; this.adminInitTab('orders'); this._adminPrefetch(); });
                 } else {
                     history.replaceState({}, '', '/');
                 }
@@ -12642,7 +12642,7 @@ ANNOUNCE_ON:      false,
                 if(_st3) localStorage.setItem('srb_tok', _st3);
                 this.closeAuthModal();
                 this._greetUser(data.user, 'login');
-                if(data.user.role==='admin') { this.adminOverlay=true; document.body.style.overflow='hidden'; this.adminTab='flashsale'; this.adminInitTab('flashsale'); this._adminPrefetch(); }
+                if(data.user.role==='admin') { this.adminOverlay=true; document.body.style.overflow='hidden'; this.adminTab='orders'; this.adminInitTab('orders'); this._adminPrefetch(); }
             } else {
                 this.authError = data.error || 'Gagal login dengan Google.';
             }

@@ -2498,6 +2498,72 @@ function checkIPaymuOrderStatus({ orderId, email }) {
 }
 
 // ────────────────────────────────────────────────────────
+//  AUTO-CANCEL — order Pending > 24 jam & belum ada tanda pembayaran
+//  Jalankan lewat trigger time-based per jam (setupAutoCancelTrigger).
+//  Sebelumnya pembatalan hanya kosmetik di frontend (orderMsLeft <= 0),
+//  status di sheet/Supabase tetap Pending selamanya.
+// ────────────────────────────────────────────────────────
+const ORDER_EXPIRY_MS = 24 * 60 * 60 * 1000;
+// Tanda "jangan batalkan": sudah bayar, atau pembeli klaim bayar & menunggu admin.
+const PAID_MARKERS = ['Lunas', 'Berhasil', 'Menunggu Verifikasi'];
+
+function autoCancelStaleOrders() {
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
+  if (!sheet) return { cancelled: 0 };
+
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).toLowerCase().trim());
+  const idCol   = headers.indexOf('order id');
+  const stCol   = headers.indexOf('status');
+  const psCol   = headers.indexOf('payment status');
+  const dtCol   = headers.indexOf('tanggal') >= 0 ? headers.indexOf('tanggal') : headers.indexOf('date');
+  if (idCol < 0 || stCol < 0 || dtCol < 0) return { cancelled: 0, error: 'Kolom tidak ditemukan' };
+
+  const now = Date.now();
+
+  // Kumpulkan per orderId dulu: satu order hanya dibatalkan kalau SEMUA barisnya
+  // memenuhi syarat (tidak ada satu pun baris yang sudah bertanda dibayar).
+  const byOrder = {};
+  for (let i = 1; i < data.length; i++) {
+    const oid = String(data[i][idCol] || '').trim();
+    if (!oid) continue;
+    (byOrder[oid] = byOrder[oid] || []).push(i);
+  }
+
+  const cancelled = [];
+  Object.keys(byOrder).forEach(function (oid) {
+    const rows = byOrder[oid];
+    const eligible = rows.every(function (i) {
+      if (String(data[i][stCol] || '').trim() !== 'Pending') return false;
+      if (psCol >= 0 && PAID_MARKERS.indexOf(String(data[i][psCol] || '').trim()) >= 0) return false;
+      const raw = data[i][dtCol];
+      const created = raw instanceof Date ? _fixDateSwap(raw) : new Date(String(raw || ''));
+      if (!created || isNaN(created.getTime())) return false; // tanggal tak terbaca → jangan batalkan
+      return now - created.getTime() > ORDER_EXPIRY_MS;
+    });
+    if (!eligible) return;
+    rows.forEach(function (i) { sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan'); });
+    cancelled.push(oid);
+  });
+
+  if (cancelled.length) {
+    SpreadsheetApp.flush();
+    cancelled.forEach(function (oid) { _ordersMirror(oid); });
+    Logger.log('autoCancelStaleOrders: ' + cancelled.length + ' order dibatalkan → ' + cancelled.join(', '));
+  }
+  return { cancelled: cancelled.length, orderIds: cancelled };
+}
+
+// Jalankan SEKALI dari editor GAS untuk memasang trigger per jam.
+function setupAutoCancelTrigger() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'autoCancelStaleOrders') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('autoCancelStaleOrders').timeBased().everyHours(1).create();
+  Logger.log('Trigger autoCancelStaleOrders dipasang (tiap 1 jam)');
+}
+
+// ────────────────────────────────────────────────────────
 //  CANCEL ORDER — user batalkan pesanan Pending miliknya
 // ────────────────────────────────────────────────────────
 function cancelOrder({ orderId, email }) {
@@ -3949,55 +4015,63 @@ function xenditCallback(params, e) {
 
   if (idCol < 0 || stCol < 0) return { success: false, error: 'Kolom tidak ditemukan' };
 
-  let found = false;
+  // Order cart = BANYAK baris dengan Order ID sama → semua harus ikut diupdate,
+  // bukan cuma baris pertama (dulu: break di akhir loop → sisa baris tetap Pending
+  // dan order tetap tampil "Belum Dibayar" walau WA konfirmasi sudah terkirim).
+  const rows = [];
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][idCol]).trim() !== extId) continue;
-    found = true;
-    const curStatus = String(data[i][stCol]).trim();
-    Logger.log('xenditCallback: orderId=' + extId + ' status=' + status + ' curStatus=' + curStatus);
+    if (String(data[i][idCol]).trim() === extId) rows.push(i);
+  }
+  const found = rows.length > 0;
 
-    if (status === 'PAID') {
-      // [SEC-04] Idempotency: skip jika order sudah bertanda Lunas
-      if (psCol >= 0 && String(data[i][psCol]).trim() === 'Lunas') {
-        Logger.log('xenditCallback: already paid (Lunas), skip: ' + extId);
-        break;
-      }
-      // Update status → Diproses jika masih Pending
-      if (curStatus === 'Pending' || curStatus === 'Dibatalkan') {
-        sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
-      }
-      if (pmCol >= 0) sheet.getRange(i + 1, pmCol + 1).setValue(method);
-      if (psCol >= 0) sheet.getRange(i + 1, psCol + 1).setValue('Lunas');
+  if (found && status === 'PAID') {
+    const first     = rows[0];
+    const curStatus = String(data[first][stCol]).trim();
+    Logger.log('xenditCallback: orderId=' + extId + ' status=PAID rows=' + rows.length + ' curStatus=' + curStatus);
+
+    // [SEC-04] Idempotency: skip jika order sudah bertanda Lunas
+    if (psCol >= 0 && String(data[first][psCol]).trim() === 'Lunas') {
+      Logger.log('xenditCallback: already paid (Lunas), skip: ' + extId);
+    } else {
+      rows.forEach(function (i) {
+        const st = String(data[i][stCol]).trim();
+        if (st === 'Pending' || st === 'Dibatalkan') sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
+        if (pmCol >= 0) sheet.getRange(i + 1, pmCol + 1).setValue(method);
+        if (psCol >= 0) sheet.getRange(i + 1, psCol + 1).setValue('Lunas');
+      });
       SpreadsheetApp.flush();
 
       // Hanya kirim notif jika baru bayar (was Pending)
       if (curStatus === 'Pending') {
-        const buyerNama  = String(data[i][headers.indexOf('nama')] || '');
-        const buyerEmail = String(data[i][headers.indexOf('email')] || '');
-        const buyerWa    = String(data[i][headers.indexOf('no wa')] || '');
-        const produk     = String(data[i][headers.indexOf('produk')] || '');
-        const varian     = String(data[i][headers.indexOf('varian')] || '-');
-        const masaAktif  = String(data[i][headers.indexOf('masa aktif')] || '-');
-        const harga      = data[i][headers.indexOf('harga')] || 0;
-        const tanggal    = String(data[i][headers.indexOf('tanggal')] || '-');
+        const buyerNama  = String(data[first][headers.indexOf('nama')] || '');
+        const buyerEmail = String(data[first][headers.indexOf('email')] || '');
+        const buyerWa    = String(data[first][headers.indexOf('no wa')] || '');
+        const produk     = String(data[first][headers.indexOf('produk')] || '');
+        const varian     = String(data[first][headers.indexOf('varian')] || '-');
+        const masaAktif  = String(data[first][headers.indexOf('masa aktif')] || '-');
+        const tanggal    = String(data[first][headers.indexOf('tanggal')] || '-');
+        const hrgCol     = headers.indexOf('harga');
+        const harga      = rows.reduce(function (s, i) { return s + (Number(data[i][hrgCol]) || 0); }, 0);
+        const produkStr  = produk + (rows.length > 1 ? ' +' + (rows.length - 1) + ' item lain' : '');
 
         // WA group notif
-        const groupMsg = `✅ *PEMBAYARAN DITERIMA*\nOrder ID: *${extId}*\nProduk: ${produk} ${varian!=='-'?'- '+varian:''} ${masaAktif!=='-'?'('+masaAktif+')':''}\nPembeli: ${buyerNama}\nMetode: ${method}\nTotal: Rp ${Number(harga).toLocaleString('id-ID')}\nTanggal: ${tanggal}`;
+        const groupMsg = `✅ *PEMBAYARAN DITERIMA*\nOrder ID: *${extId}*\nProduk: ${produkStr} ${varian!=='-'?'- '+varian:''} ${masaAktif!=='-'?'('+masaAktif+')':''}\nPembeli: ${buyerNama}\nMetode: ${method}\nTotal: Rp ${Number(harga).toLocaleString('id-ID')}\nTanggal: ${tanggal}`;
         sendWAToGroup(groupMsg);
 
         // WA + email ke buyer
-        sendBuyerOrderConfirmed(buyerNama, buyerEmail, buyerWa ? _normalizeWA(buyerWa) : '', extId, produk, varian, masaAktif, harga, method, tanggal);
+        sendBuyerOrderConfirmed(buyerNama, buyerEmail, buyerWa ? _normalizeWA(buyerWa) : '', extId, produkStr, varian, masaAktif, harga, method, tanggal);
       }
       _ordersMirror(extId);
-    } else if (status === 'EXPIRED') {
-      if (curStatus === 'Pending') {
-        sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan');
-        if (psCol >= 0) sheet.getRange(i + 1, psCol + 1).setValue('Expired');
-        SpreadsheetApp.flush();
-        _ordersMirror(extId);
-      }
     }
-    break;
+  } else if (found && status === 'EXPIRED') {
+    let changed = false;
+    rows.forEach(function (i) {
+      if (String(data[i][stCol]).trim() !== 'Pending') return;
+      sheet.getRange(i + 1, stCol + 1).setValue('Dibatalkan');
+      if (psCol >= 0) sheet.getRange(i + 1, psCol + 1).setValue('Expired');
+      changed = true;
+    });
+    if (changed) { SpreadsheetApp.flush(); _ordersMirror(extId); }
   }
 
   if (!found) Logger.log('xenditCallback: order tidak ditemukan: ' + extId);

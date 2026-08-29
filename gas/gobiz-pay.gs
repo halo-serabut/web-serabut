@@ -191,22 +191,35 @@ function _gobizMarkPaid(orderId, method) {
   var pmCol = headers.indexOf('payment method'), psCol = headers.indexOf('payment status');
   if (idCol < 0 || stCol < 0) return;
 
+  // Order cart = banyak baris ber-Order ID sama → update SEMUA baris, bukan hanya yang pertama.
+  var rows = [];
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][idCol]).trim() !== orderId) continue;
-    var curStatus = String(data[i][stCol]).trim();
-    // Idempotency: skip jika sudah Lunas/Berhasil
-    if (psCol >= 0 && ['Lunas', 'Berhasil'].indexOf(String(data[i][psCol]).trim()) >= 0) return;
+    if (String(data[i][idCol]).trim() === orderId) rows.push(i);
+  }
+  if (!rows.length) return;
 
-    if (curStatus === 'Pending' || curStatus === 'Dibatalkan') sheet.getRange(i + 1, stCol + 1).setValue('Diproses');
-    if (pmCol >= 0) sheet.getRange(i + 1, pmCol + 1).setValue(method);
-    if (psCol >= 0) sheet.getRange(i + 1, psCol + 1).setValue('Lunas');
+  {
+    var first = rows[0];
+    var curStatus = String(data[first][stCol]).trim();
+    // Idempotency: skip jika sudah Lunas/Berhasil
+    if (psCol >= 0 && ['Lunas', 'Berhasil'].indexOf(String(data[first][psCol]).trim()) >= 0) return;
+
+    rows.forEach(function (r) {
+      var st = String(data[r][stCol]).trim();
+      if (st === 'Pending' || st === 'Dibatalkan') sheet.getRange(r + 1, stCol + 1).setValue('Diproses');
+      if (pmCol >= 0) sheet.getRange(r + 1, pmCol + 1).setValue(method);
+      if (psCol >= 0) sheet.getRange(r + 1, psCol + 1).setValue('Lunas');
+    });
     SpreadsheetApp.flush();
 
     if (curStatus === 'Pending') {
-      var g = function (name) { var c = headers.indexOf(name); return c >= 0 ? data[i][c] : ''; };
+      var g = function (name) { var c = headers.indexOf(name); return c >= 0 ? data[first][c] : ''; };
       var buyerNama = String(g('nama') || ''), buyerEmail = String(g('email') || ''), buyerWa = String(g('no wa') || '');
       var produk = String(g('produk') || ''), varian = String(g('varian') || '-');
-      var masaAktif = String(g('masa aktif') || '-'), harga = g('harga') || 0, tanggal = String(g('tanggal') || '-');
+      var masaAktif = String(g('masa aktif') || '-'), tanggal = String(g('tanggal') || '-');
+      var hrgCol = headers.indexOf('harga');
+      var harga = rows.reduce(function (s, r) { return s + (Number(data[r][hrgCol]) || 0); }, 0);
+      if (rows.length > 1) produk = produk + ' +' + (rows.length - 1) + ' item lain';
       sendWAToGroup(
         '💰 *Pembayaran masuk — order siap diproses*\n\n' +
         'Order *' + orderId + '*\n' +
