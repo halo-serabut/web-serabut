@@ -1994,16 +1994,11 @@
     <section>
         <template x-if="selectedProductGroup">
             <div>
-                <!-- ── Hero Banner ── -->
-                <div class="relative overflow-hidden" :class="getCategoryHeroBg(selectedProductGroup.category)">
-                    <!-- Decorative blobs -->
-                    <div class="absolute -top-12 -right-12 w-56 h-56 rounded-full opacity-25 blur-3xl" :class="getCategoryBg(selectedProductGroup.category)"></div>
-                    <div class="absolute -bottom-8 -left-8 w-40 h-40 rounded-full opacity-15 blur-2xl bg-black"></div>
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full opacity-10 blur-3xl bg-white"></div>
-
-                    <div class="max-w-5xl mx-auto px-4 md:px-6 pt-4 pb-5">
+                <!-- ── Bar navigasi (tipis; hero gradien + blob dihapus, isinya cuma tombol kembali) ── -->
+                <div class="bg-white border-b border-gray-100">
+                    <div class="max-w-6xl mx-auto px-4 md:px-6 py-1.5">
                         <!-- Bar atas: kembali + aksi (aksi hanya mobile; desktop ada di baris meta) -->
-                        <div class="flex items-center gap-2 mb-4">
+                        <div class="flex items-center gap-2">
                             <button @click="closeProductDetail()"
                                     class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors active:opacity-60 -ml-1 px-2 py-2 rounded-xl hover:bg-black/5">
                                 <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
@@ -2013,7 +2008,7 @@
                                 <a x-show="selectedVariant?.linkProduk && selectedVariant?.linkProduk!=='#'"
                                    :href="selectedVariant?.linkProduk" target="_blank" rel="noopener"
                                    title="Beli produk ini di Shopee" aria-label="Beli produk ini di Shopee"
-                                   class="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-black/5 active:scale-90 transition-all">
+                                   class="w-11 h-11 flex items-center justify-center rounded-xl hover:bg-black/5 active:scale-90 transition-all -my-1">
                                     <svg class="w-5 h-5 flex-none" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M3.7 7.4h16.6l-.85 11.9A2.6 2.6 0 0116.86 21.7H7.14a2.6 2.6 0 01-2.59-2.4z" fill="#EE4D2D"/>
                                     <path d="M8.6 7.2V6.3a3.4 3.4 0 016.8 0v.9" fill="none" stroke="#EE4D2D" stroke-width="1.5" stroke-linecap="round"/>
@@ -2021,7 +2016,7 @@
                                 </svg>
                                 </a>
                                 <button @click="shareCurrentProduct($el)" aria-label="Bagikan produk ini"
-                                        class="w-11 h-11 flex items-center justify-center rounded-xl text-gray-500 hover:text-gray-800 hover:bg-black/5 active:scale-90 transition-all">
+                                        class="w-11 h-11 flex items-center justify-center rounded-xl text-gray-500 hover:text-gray-800 hover:bg-black/5 active:scale-90 transition-all -my-1">
                                     <svg class="w-5 h-5 flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                                 </button>
                             </div>
@@ -9145,7 +9140,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260830-20',
+        APP_VERSION:      '20260830-22',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -10443,10 +10438,6 @@ ANNOUNCE_ON:      false,
         getCategoryBg(cat) {
             const m={'Office 365':'bg-blue-100','Adobe':'bg-red-100','Windows':'bg-sky-100','Windows Server':'bg-slate-100','Office':'bg-orange-100','Google':'bg-green-100','CorelDRAW':'bg-yellow-100','Project':'bg-purple-100','Visio':'bg-indigo-100'};
             return m[cat]||'bg-gray-100';
-        },
-        getCategoryHeroBg(cat) {
-            const m={'Office 365':'from-blue-100 to-blue-50','Adobe':'from-red-100 to-red-50','Windows':'from-sky-100 to-sky-50','Windows Server':'from-slate-100 to-slate-50','Office':'from-orange-100 to-orange-50','Google':'from-green-100 to-green-50','CorelDRAW':'from-yellow-100 to-yellow-50','Project':'from-purple-100 to-purple-50','Visio':'from-indigo-100 to-indigo-50'};
-            return 'bg-gradient-to-br ' + (m[cat]||'from-gray-100 to-gray-50');
         },
         getCategoryIcon(cat) {
             const m={'Office 365':'📧','Adobe':'🎨','Windows':'🪟','Office':'💼','Google':'☁️','CorelDRAW':'✏️','Project':'📊','Visio':'📐','Windows Server':'🖥️'};
