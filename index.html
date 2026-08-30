@@ -2009,108 +2009,187 @@
                             <span class="text-sm font-semibold">Kembali ke Katalog</span>
                         </button>
 
-                        <!-- Product identity: logo + info -->
-                        <div class="flex items-start gap-4 md:gap-5">
-                            <!-- Logo pill — glassmorphism -->
-                            <div class="flex-none w-20 h-20 md:w-24 md:h-24 rounded-2xl bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-xl ring-1 ring-white/60 overflow-hidden" style="box-shadow:0 8px 32px rgba(0,0,0,0.14)">
-                                <img :src="getProductImage(selectedVariant || selectedProductGroup) || getProductLogo(selectedProductGroup.category)" :alt="selectedProductGroup.nama" fetchpriority="high"
-                                     :class="getProductImage(selectedVariant || selectedProductGroup) ? 'w-full h-full object-cover' : 'w-14 h-14 md:w-16 md:h-16 object-contain'"
-                                     onerror="this.style.display='none'">
-                            </div>
-                            <div class="flex-1 min-w-0 pt-1">
-                                <!-- Category badge -->
-                                <span class="inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-lg mb-2 tracking-wide" :class="getCategoryColor(selectedProductGroup.category)" x-text="selectedProductGroup.category"></span>
-                                <!-- Title -->
-                                <h2 class="font-black text-gray-900 text-xl md:text-2xl leading-tight mb-3" x-text="selectedProductGroup.nama"></h2>
-                                <!-- Chips row -->
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <!-- Rating -->
-                                    <div class="inline-flex items-center gap-1 bg-white/75 backdrop-blur-sm px-2.5 py-1.5 rounded-full shadow-sm border border-white/50">
-                                        <svg class="w-3.5 h-3.5 fill-yellow-400 flex-none" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                        <span class="text-xs font-bold text-gray-800" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></span>
-                                        <span x-show="productReviews.length > 0" class="text-[11px] text-gray-500" x-text="'('+productReviews.length+')'"></span>
-                                    </div>
-                                    <!-- Terjual -->
-                                    <template x-if="selectedProductGroup.variants?.some(v=>v.terjual>0)">
-                                        <div class="inline-flex items-center gap-1 bg-white/75 backdrop-blur-sm px-2.5 py-1.5 rounded-full shadow-sm border border-white/50">
-                                            <svg class="w-3.5 h-3.5 text-gray-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                                            <span class="text-xs font-semibold text-gray-700" x-text="formatTerjual(selectedProductGroup.variants?.reduce((s,v)=>s+(v.terjual||0),0)||0)+' Terjual'"></span>
-                                        </div>
-                                    </template>
-                                    <!-- Stok -->
-                                    <div class="inline-flex items-center gap-1.5 bg-green-500/20 backdrop-blur-sm px-2.5 py-1.5 rounded-full border border-green-400/30">
-                                        <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse flex-none"></div>
-                                        <span class="text-xs font-semibold text-green-700">Stok tersedia</span>
-                                    </div>
-                                    <!-- Share -->
-                                    <button @click="shareCurrentProduct($el)"
-                                            class="inline-flex items-center gap-1.5 bg-white/70 backdrop-blur-sm px-2.5 py-1.5 rounded-full border border-white/50 text-gray-500 hover:text-gray-700 transition-all active:scale-95 shadow-sm">
-                                        <svg class="w-3 h-3 flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                                        <span class="text-xs font-semibold">Bagikan</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
-                <!-- ── Main layout: 1-col mobile, 2-col desktop ── -->
-                <div class="max-w-5xl mx-auto px-4 py-4 md:flex md:gap-6 md:items-start md:py-6">
+                <!-- ── Blok beli: galeri 1:1 kiri, info+CTA kanan (pola marketplace) ── -->
+                <div class="max-w-6xl mx-auto px-4 pt-4">
+                    <div class="bg-white rounded-2xl border border-gray-100 p-4 md:p-5">
+                        <div class="md:grid md:grid-cols-[420px_minmax(0,1fr)] md:gap-7 md:items-start">
 
-                    <!-- LEFT: selectors + tabs -->
-                    <div class="flex-1 min-w-0 flex flex-col gap-3">
-
-                        <!-- Varian selector -->
-                        <template x-if="getUniqueVariants(selectedProductGroup).length > 1">
-                            <div class="bg-white rounded-2xl border border-gray-100 px-4 py-3.5">
-                                <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Pilih Varian</div>
-                                <div class="flex flex-wrap gap-2">
-                                    <template x-for="v in getUniqueVariants(selectedProductGroup)" :key="v">
-                                        <button @click="selectVariantByName(v)" :class="selectedVariant?.varian===v?'border-brand-500 bg-brand-50 text-brand-600 shadow-sm':'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'" class="px-4 py-2 rounded-xl border text-sm font-semibold transition-all" x-text="v"></button>
-                                    </template>
-                                </div>
+                        <!-- Galeri -->
+                        <div>
+                            <div class="aspect-square rounded-2xl overflow-hidden border border-gray-100 flex items-center justify-center" :class="getCategoryBg(selectedProductGroup.category)">
+                                <img :src="getProductImages(selectedVariant || selectedProductGroup)[pdImgIdx] || getProductImage(selectedVariant || selectedProductGroup) || getProductLogo(selectedProductGroup.category)"
+                                     :alt="selectedProductGroup.nama" fetchpriority="high"
+                                     :class="getProductImages(selectedVariant || selectedProductGroup).length ? 'w-full h-full object-cover' : 'w-1/2 h-1/2 object-contain'"
+                                     onerror="this.style.display='none'">
                             </div>
-                        </template>
-
-                        <!-- Durasi selector -->
-                        <template x-if="getVariantDurations(selectedProductGroup, selectedVariant?.varian).length > 1">
-                            <div class="bg-white rounded-2xl border border-gray-100 px-4 py-3.5">
-                                <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2.5">Pilih Durasi</div>
-                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                    <template x-for="opt in getVariantDurations(selectedProductGroup, selectedVariant?.varian)" :key="opt.masaAktif+opt.harga">
-                                        <button @click="selectedVariant=opt" :class="selectedVariant?.masaAktif===opt.masaAktif&&selectedVariant?.harga===opt.harga?'border-brand-500 bg-brand-50 shadow-sm':'border-gray-200 hover:border-gray-300 bg-white'" class="p-3 rounded-xl border text-left transition-all relative">
-                                            <!-- badge terlaris untuk 1 Tahun -->
-                                            <template x-if="opt.masaAktif==='1 Tahun'">
-                                                <span class="absolute -top-2 left-2 text-[9px] font-black bg-amber-400 text-white px-1.5 py-0.5 rounded-full">TERLARIS</span>
-                                            </template>
-                                            <div class="text-xs text-gray-500 font-medium" x-text="opt.masaAktif!=='-'?opt.masaAktif:'Seumur Hidup'"></div>
-                                            <template x-if="isMember && flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
-                                                <div>
-                                                    <div class="text-xs text-gray-400 line-through leading-none mt-0.5" x-text="formatPrice(opt.harga)"></div>
-                                                    <div class="flex items-center gap-1 mt-0.5">
-                                                        <span class="text-[9px] font-black bg-red-500 text-white px-1 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.diskon+'%'"></span>
-                                                        <span class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.harga)"></span>
-                                                    </div>
-                                                </div>
-                                            </template>
-                                            <template x-if="!isMember && flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
-                                                <div>
-                                                    <div class="text-xs text-gray-400 line-through leading-none mt-0.5" x-text="formatPrice(opt.harga)"></div>
-                                                    <div class="flex items-center gap-1 mt-0.5">
-                                                        <span class="text-[9px] font-black bg-red-500 text-white px-1 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.diskon+'%'"></span>
-                                                        <span class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.harga)"></span>
-                                                    </div>
-                                                    <span class="text-[9px] text-brand-600 font-bold mt-0.5 block">Harga Member</span>
-                                                </div>
-                                            </template>
-                                            <template x-if="!flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
-                                                <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
-                                            </template>
+                            <template x-if="getProductImages(selectedVariant || selectedProductGroup).length > 1">
+                                <div class="flex gap-2 mt-2.5 overflow-x-auto pb-1">
+                                    <template x-for="(img, i) in getProductImages(selectedVariant || selectedProductGroup)" :key="img + i">
+                                        <button @click="pdImgIdx=i" :aria-label="'Lihat gambar '+(i+1)"
+                                                :class="pdImgIdx===i ? 'border-brand-500 ring-1 ring-brand-300' : 'border-gray-200 hover:border-gray-300'"
+                                                class="w-16 h-16 rounded-xl border overflow-hidden flex-none transition-all">
+                                            <img :src="img" alt="" loading="lazy" class="w-full h-full object-cover">
                                         </button>
                                     </template>
                                 </div>
+                            </template>
+                        </div>
+
+                        <!-- Info + pilihan + CTA -->
+                        <div class="mt-5 md:mt-0 min-w-0">
+                            <span class="inline-flex items-center text-[11px] font-bold px-2.5 py-1 rounded-lg mb-2 tracking-wide" :class="getCategoryColor(selectedProductGroup.category)" x-text="selectedProductGroup.category"></span>
+                            <h2 class="font-black text-gray-900 text-xl md:text-2xl leading-tight mb-2.5" x-text="selectedProductGroup.nama"></h2>
+
+                            <!-- Rating · terjual · stok · bagikan -->
+                            <div class="flex items-center gap-3 flex-wrap text-sm pb-3 border-b border-gray-100">
+                                <div class="inline-flex items-center gap-1">
+                                    <svg class="w-4 h-4 fill-yellow-400 flex-none" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    <span class="font-bold text-gray-800" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></span>
+                                    <button @click="pdTab='ulasan'; $el.closest('div').parentElement.parentElement.querySelector('#pdUlasan')?.scrollIntoView({behavior:'smooth'})" class="text-xs text-gray-400 hover:text-brand-500 hover:underline" x-text="productReviews.length ? productReviews.length+' ulasan' : 'belum ada ulasan'"></button>
+                                </div>
+                                <template x-if="selectedProductGroup.variants?.some(v=>v.terjual>0)">
+                                    <span class="text-xs text-gray-500 border-l border-gray-200 pl-3" x-text="formatTerjual(selectedProductGroup.variants?.reduce((s,v)=>s+(v.terjual||0),0)||0)"></span>
+                                </template>
+                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-green-700 border-l border-gray-200 pl-3">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-green-500 flex-none"></span> Stok tersedia
+                                </span>
+                                <button @click="shareCurrentProduct($el)" class="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors active:scale-95">
+                                    <svg class="w-3.5 h-3.5 flex-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                    Bagikan
+                                </button>
                             </div>
-                        </template>
+
+                            <!-- Harga -->
+                            <div class="bg-gray-50 rounded-2xl px-4 py-3.5 my-3.5">
+                                <template x-if="isMember && flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                    <div>
+                                        <div class="text-sm text-gray-400 line-through leading-none mb-1.5" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                        <div class="flex items-center gap-2.5 flex-wrap">
+                                            <span class="bg-red-500 text-white text-xs font-black px-2.5 py-1 rounded-full" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
+                                            <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template x-if="isMember && !flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                    <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                </template>
+                                <template x-if="!isMember">
+                                    <div>
+                                        <template x-if="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                            <div>
+                                                <div class="text-sm text-gray-400 line-through leading-none mb-1.5" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                                <div class="flex items-center gap-2.5 flex-wrap">
+                                                    <span class="bg-red-500 text-white text-xs font-black px-2.5 py-1 rounded-full" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
+                                                    <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></div>
+                                                    <span class="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full flex-none">Harga Member</span>
+                                                </div>
+                                                <button @click="openAuth('login')" class="mt-2.5 w-full flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-left hover:bg-red-100 active:scale-[0.98] transition-all">
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="text-xs font-black text-red-600">Masuk dulu buat kunci harga ini</div>
+                                                        <div class="text-[11px] text-red-500 leading-tight">Gratis daftarnya. Lanjut tanpa masuk, harga normal yang dipakai.</div>
+                                                    </div>
+                                                    <span class="text-[10px] font-black text-white bg-red-500 px-2 py-1 rounded-lg whitespace-nowrap flex-none">Masuk →</span>
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <template x-if="!flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                            <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Pilih varian -->
+                            <template x-if="getUniqueVariants(selectedProductGroup).length > 1">
+                                <div class="mb-3.5">
+                                    <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Varian</div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="v in getUniqueVariants(selectedProductGroup)" :key="v">
+                                            <button @click="selectVariantByName(v); pdImgIdx=0" :class="selectedVariant?.varian===v?'border-brand-500 bg-brand-50 text-brand-600':'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'" class="px-4 py-2 rounded-xl border text-sm font-semibold transition-all" x-text="v"></button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Pilih durasi -->
+                            <template x-if="getVariantDurations(selectedProductGroup, selectedVariant?.varian).length > 1">
+                                <div class="mb-4">
+                                    <div class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Masa Aktif</div>
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                        <template x-for="opt in getVariantDurations(selectedProductGroup, selectedVariant?.varian)" :key="opt.masaAktif+opt.harga">
+                                            <button @click="selectedVariant=opt" :class="selectedVariant?.masaAktif===opt.masaAktif&&selectedVariant?.harga===opt.harga?'border-brand-500 bg-brand-50':'border-gray-200 hover:border-gray-300 bg-white'" class="p-3 rounded-xl border text-left transition-all relative">
+                                                <template x-if="opt.masaAktif==='1 Tahun'">
+                                                    <span class="absolute -top-2 left-2 text-[9px] font-black bg-amber-400 text-white px-1.5 py-0.5 rounded-full">TERLARIS</span>
+                                                </template>
+                                                <div class="text-xs text-gray-500 font-medium" x-text="opt.masaAktif!=='-'?opt.masaAktif:'Seumur Hidup'"></div>
+                                                <template x-if="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
+                                                    <div>
+                                                        <div class="text-xs text-gray-400 line-through leading-none mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                                                        <div class="flex items-center gap-1 mt-0.5">
+                                                            <span class="text-[9px] font-black bg-red-500 text-white px-1 py-0.5 rounded-full leading-none" x-text="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.diskon+'%'"></span>
+                                                            <span class="font-black text-brand-500 text-sm" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.harga)"></span>
+                                                        </div>
+                                                        <span x-show="!isMember" class="text-[9px] text-brand-600 font-bold mt-0.5 block">Harga Member</span>
+                                                    </div>
+                                                </template>
+                                                <template x-if="!flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
+                                                    <div class="font-black text-brand-500 text-sm mt-0.5" x-text="formatPrice(opt.harga)"></div>
+                                                </template>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- CTA (desktop; mobile pakai bar bawah) -->
+                            <div class="hidden md:block">
+                                <template x-if="selectedVariant?.stok===0">
+                                    <div class="w-full bg-gray-100 text-gray-400 font-black py-3.5 rounded-2xl text-sm text-center">Stok Habis</div>
+                                </template>
+                                <template x-if="selectedVariant?.stok!==0">
+                                    <div class="flex gap-2.5">
+                                        <button @click="addToCart(selectedProductGroup, selectedVariant)" class="flex-1 bg-white border-2 border-brand-400 text-brand-500 font-black py-3 rounded-2xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 hover:bg-brand-50">
+                                            <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                            Tambah ke Keranjang
+                                        </button>
+                                        <button @click="handlePesan()" class="flex-1 gradient-card text-white font-black py-3.5 rounded-2xl text-sm transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
+                                            <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
+                                            Pesan Sekarang
+                                        </button>
+                                    </div>
+                                </template>
+                            <!-- Jaminan + beli di Shopee — satu baris di bawah CTA -->
+                            <div class="hidden md:flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-500 mt-4 pt-3.5 border-t border-gray-100">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-green-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                    Aktivasi <strong class="text-gray-700 font-bold">5–30 menit</strong>
+                                </span>
+                                <span class="inline-flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-blue-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                    <span class="text-gray-700 font-bold">Bergaransi penuh</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-brand-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                    <button data-chat-open @click.prevent="openSera()" class="text-brand-500 font-bold hover:underline">Chat Sera →</button>
+                                </span>
+                                <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener"
+                                   class="md:ml-auto inline-flex items-center gap-1.5 text-gray-400 hover:text-orange-500 transition-colors">
+                                    Beli di Shopee →
+                                </a>
+                            </div>
+                            </div>
+                        </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ── Detail: deskripsi, spesifikasi, ulasan (lebar penuh) ── -->
+                <div class="max-w-6xl mx-auto px-4 py-4 md:py-5">
+                    <div class="min-w-0 flex flex-col gap-3">
 
                         <!-- ── Tab navigation ── -->
                         <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
@@ -2120,11 +2199,6 @@
                                     :class="pdTab==='deskripsi' ? 'bg-white text-gray-900 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'"
                                     class="flex-1 py-2 px-1 text-xs text-center rounded-xl transition-all duration-200 font-medium">
                                     Deskripsi
-                                </button>
-                                <button @click="pdTab='skema'"
-                                    :class="pdTab==='skema' ? 'bg-white text-gray-900 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'"
-                                    class="flex-1 py-2 px-1 text-xs text-center rounded-xl transition-all duration-200 font-medium whitespace-nowrap">
-                                    Skema Harga
                                 </button>
                                 <button @click="pdTab='ulasan'"
                                     :class="pdTab==='ulasan' ? 'bg-white text-gray-900 shadow-sm font-bold' : 'text-gray-500 hover:text-gray-700'"
@@ -2136,21 +2210,6 @@
 
                             <!-- Tab: Deskripsi -->
                             <div x-show="pdTab==='deskripsi'" class="p-4 space-y-4">
-                                <!-- Gambar produk (galeri) -->
-                                <template x-if="getProductImages(selectedVariant || selectedProductGroup).length">
-                                    <div>
-                                        <div class="rounded-2xl overflow-hidden border border-gray-100">
-                                            <img :src="getProductImages(selectedVariant || selectedProductGroup)[0]" alt="Gambar produk" class="w-full object-cover" loading="lazy">
-                                        </div>
-                                        <template x-if="getProductImages(selectedVariant || selectedProductGroup).length > 1">
-                                            <div class="flex gap-2 mt-2 overflow-x-auto pb-1">
-                                                <template x-for="(img, i) in getProductImages(selectedVariant || selectedProductGroup)" :key="img + i">
-                                                    <img :src="img" alt="Gambar produk" loading="lazy" class="w-16 h-16 object-cover rounded-xl border border-gray-100 flex-none">
-                                                </template>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </template>
                                 <!-- Deskripsi / Benefits -->
                                 <div>
                                     <div class="text-sm font-bold text-gray-700 mb-3">Yang kamu dapat</div>
@@ -2208,58 +2267,6 @@
                                         </div>
                                     </div>
                                 </template>
-                            </div>
-
-                            <!-- Tab: Skema Harga -->
-                            <div x-show="pdTab==='skema'" class="p-4">
-                                <div class="text-sm font-bold text-gray-700 mb-3">Perbandingan Paket</div>
-                                <div class="overflow-x-auto -mx-1">
-                                    <table class="w-full text-sm min-w-[280px]">
-                                        <thead>
-                                            <tr class="border-b border-gray-100">
-                                                <th class="text-left py-2 px-2 text-xs font-bold text-gray-500">Durasi</th>
-                                                <th class="text-right py-2 px-2 text-xs font-bold text-gray-500">Harga</th>
-                                                <th class="text-right py-2 px-2 text-xs font-bold text-gray-500">Member</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <template x-for="opt in getVariantDurations(selectedProductGroup, selectedVariant?.varian)" :key="opt.masaAktif+opt.harga">
-                                                <tr :class="selectedVariant?.masaAktif===opt.masaAktif&&selectedVariant?.harga===opt.harga?'bg-brand-50':'hover:bg-gray-50'" class="border-b border-gray-50 cursor-pointer transition-colors rounded-xl" @click="selectedVariant=opt">
-                                                    <td class="py-3 px-2">
-                                                        <div class="flex items-center gap-1.5">
-                                                            <span class="font-semibold text-gray-700" x-text="opt.masaAktif!=='-'?opt.masaAktif:'Seumur Hidup'"></span>
-                                                            <template x-if="opt.masaAktif==='1 Tahun'"><span class="text-[9px] bg-amber-400 text-white font-bold px-1.5 py-0.5 rounded-full">TERLARIS</span></template>
-                                                            <template x-if="selectedVariant?.masaAktif===opt.masaAktif&&selectedVariant?.harga===opt.harga"><svg class="w-3.5 h-3.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg></template>
-                                                        </div>
-                                                    </td>
-                                                    <td class="py-3 px-2 text-right font-semibold text-gray-700" x-text="formatPrice(opt.harga)"></td>
-                                                    <td class="py-3 px-2 text-right">
-                                                        <template x-if="flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
-                                                            <span class="font-black text-brand-500" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)?.harga)"></span>
-                                                        </template>
-                                                        <template x-if="!flashSaleItem(selectedProductGroup.nama, opt.varian, opt.masaAktif)">
-                                                            <span class="text-gray-400 text-xs">—</span>
-                                                        </template>
-                                                    </td>
-                                                </tr>
-                                            </template>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <!-- Keterangan -->
-                                <div class="mt-4 bg-blue-50 border border-blue-100 rounded-xl p-3 flex gap-2">
-                                    <svg class="w-4 h-4 text-blue-500 flex-none mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                    <p class="text-xs text-blue-700 leading-relaxed">Harga <strong>Member</strong> hanya berlaku saat ada kampanye diskon aktif. <button @click="showAuthModal=true; authTab='register'" class="underline font-bold">Daftar gratis</button> untuk dapat harga terbaik.</p>
-                                </div>
-                                <!-- Cara bayar -->
-                                <div class="mt-3" x-show="paymentMethods.length>0">
-                                    <div class="text-xs font-bold text-gray-500 mb-2">Metode Pembayaran</div>
-                                    <div class="flex flex-wrap gap-2">
-                                        <template x-for="pm in paymentMethods" :key="pm">
-                                            <span class="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium" x-text="pm"></span>
-                                        </template>
-                                    </div>
-                                </div>
                             </div>
 
                             <!-- Tab: Ulasan -->
@@ -2398,177 +2405,50 @@
                     <!-- end LEFT -->
 
                     <!-- RIGHT: Sticky price panel (desktop) -->
-                    <div class="hidden md:block w-80 flex-none sticky top-20">
-                        <div class="bg-white rounded-2xl border border-gray-100 shadow-lg overflow-hidden">
-                            <!-- Price area -->
-                            <div class="px-5 pt-5 pb-4 border-b border-gray-100 bg-gradient-to-br from-gray-50 to-white">
-                                <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Harga</div>
-                                <!-- Member + flash sale -->
-                                <template x-if="isMember && flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                    <div>
-                                        <div class="text-sm text-gray-400 line-through leading-none mb-1.5" x-text="formatPrice(selectedVariant?.harga)"></div>
-                                        <div class="flex items-center gap-2.5 flex-wrap">
-                                            <span class="bg-red-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow-sm" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
-                                            <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></div>
-                                        </div>
-                                    </div>
-                                </template>
-                                <!-- Member tanpa flash sale -->
-                                <template x-if="isMember && !flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                    <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
-                                </template>
-                                <!-- Tamu -->
-                                <template x-if="!isMember">
-                                    <div>
-                                        <!-- Ada promo: tampilkan harga Member menonjol (memancing), harga normal dicoret -->
-                                        <template x-if="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                            <div>
-                                                <div class="text-sm text-gray-400 line-through leading-none mb-1.5" x-text="formatPrice(selectedVariant?.harga)"></div>
-                                                <div class="flex items-center gap-2.5 flex-wrap">
-                                                    <span class="bg-red-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow-sm" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
-                                                    <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></div>
-                                                    <span class="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full flex-none">Harga Member</span>
-                                                </div>
-                                                <!-- Ajakan login (jujur: tanpa login = harga normal) -->
-                                                <button @click="openAuth('login')" class="mt-2.5 w-full flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-left hover:bg-red-100 active:scale-[0.98] transition-all">
-                                                    <span class="text-base leading-none">🔓</span>
-                                                    <div class="flex-1 min-w-0">
-                                                        <div class="text-xs font-black text-red-600">Masuk dulu buat kunci harga ini</div>
-                                                        <div class="text-[11px] text-red-500 leading-tight">Gratis daftarnya. Lanjut tanpa masuk, harga normal yang dipakai.</div>
-                                                    </div>
-                                                    <span class="text-[10px] font-black text-white bg-red-500 px-2 py-1 rounded-lg whitespace-nowrap flex-none">Masuk →</span>
-                                                </button>
-                                            </div>
-                                        </template>
-                                        <!-- Tak ada promo: harga normal saja -->
-                                        <template x-if="!flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                            <div class="font-black text-brand-500 text-3xl leading-none" x-text="formatPrice(selectedVariant?.harga)"></div>
-                                        </template>
-                                    </div>
-                                </template>
-                                <div x-show="selectedVariant?.masaAktif&&selectedVariant?.masaAktif!=='-'" class="mt-1.5">
-                                    <span class="text-xs text-gray-400">Durasi: </span>
-                                    <span class="text-xs font-bold text-gray-600" x-text="selectedVariant?.masaAktif"></span>
-                                </div>
-                            </div>
-                            <!-- CTAs -->
-                            <div class="p-4 space-y-2.5">
-                                <template x-if="selectedVariant?.stok===0">
-                                    <div class="w-full bg-gray-100 text-gray-400 font-black py-3.5 rounded-2xl text-sm text-center">Stok Habis</div>
-                                </template>
-                                <template x-if="selectedVariant?.stok!==0">
-                                    <div class="space-y-2.5">
-                                        <button @click="handlePesan()" class="w-full gradient-card text-white font-black py-3.5 rounded-2xl text-sm transition-all active:scale-95 shadow-md flex items-center justify-center gap-2">
-                                            <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
-                                            Pesan Sekarang
-                                        </button>
-                                        <button @click="addToCart(selectedProductGroup, selectedVariant)" class="w-full bg-white border-2 border-brand-400 text-brand-500 font-black py-3 rounded-2xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2 hover:bg-brand-50">
-                                            <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                                            Tambah ke Keranjang
-                                        </button>
-                                    </div>
-                                </template>
-                                <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener" class="block w-full text-center text-gray-400 text-xs py-1 hover:text-orange-500 transition-colors">
-                                    Atau beli di Shopee →
-                                </a>
-                            </div>
-                            <!-- Info singkat -->
-                            <div class="px-4 pb-4 pt-1 border-t border-gray-50 space-y-2">
-                                <div class="flex items-center gap-2 text-xs text-gray-500">
-                                    <svg class="w-3.5 h-3.5 text-green-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                    Pengiriman <strong class="text-gray-700">5–30 menit</strong>
-                                </div>
-                                <div class="flex items-center gap-2 text-xs text-gray-500">
-                                    <svg class="w-3.5 h-3.5 text-blue-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                    Bergaransi penuh
-                                </div>
-                                <div class="flex items-center gap-2 text-xs text-gray-500">
-                                    <svg class="w-3.5 h-3.5 text-brand-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                    <span>Butuh bantuan? <button data-chat-open @click.prevent="openSera()" class="text-brand-500 font-semibold hover:underline">Chat Sera →</button></span>
-                                </div>
-                            </div>
-                            <!-- Rating mini -->
-                            <div class="border-t border-gray-100 px-4 py-3 flex items-center gap-3">
-                                <div class="flex text-yellow-400">
-                                    <template x-for="i in 5" :key="i"><svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></template>
-                                </div>
-                                <div>
-                                    <span class="text-sm font-black text-gray-800" x-text="productReviews.length ? (productReviews.reduce((s,r)=>s+(r.rating||5),0)/productReviews.length).toFixed(1) : '—'"></span>
-                                    <span class="text-xs text-gray-400 ml-1" x-text="productReviews.length ? 'dari '+productReviews.length+' ulasan' : 'belum ada ulasan'"></span>
-                                </div>
-                                <button @click="pdTab='ulasan'" class="ml-auto text-xs text-brand-500 font-semibold hover:underline">Lihat →</button>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- end RIGHT -->
 
                 </div>
                 <!-- end 2-col layout -->
 
                 <!-- ── Sticky bottom bar (mobile only) ── -->
                 <div class="md:hidden fixed left-0 right-0 z-40" style="bottom: calc(64px + env(safe-area-inset-bottom, 0px));">
-                    <!-- Frosted glass container -->
-                    <div class="mx-3 mb-2 bg-white/96 backdrop-blur-2xl rounded-2xl shadow-[0_-2px_20px_rgba(0,0,0,0.12),0_8px_32px_rgba(0,0,0,0.08)] border border-white/80 overflow-hidden">
-                        <!-- Price row -->
-                        <div class="px-4 pt-3.5 pb-2.5 flex items-center justify-between">
-                            <div>
-                                <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mb-0.5">Total Harga</div>
-                                <!-- Member + flash sale -->
-                                <template x-if="isMember && flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                    <div class="flex items-center gap-2 mt-0.5">
-                                        <span class="text-xs text-gray-400 line-through" x-text="formatPrice(selectedVariant?.harga)"></span>
-                                        <span class="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'% OFF'"></span>
-                                        <span class="font-black text-brand-500 text-xl leading-none" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></span>
+                    <!-- Bar ringkas: harga kiri, aksi kanan (satu baris) -->
+                    <div class="mx-3 mb-2 bg-white/96 backdrop-blur-2xl rounded-2xl shadow-[0_-2px_20px_rgba(0,0,0,0.12),0_8px_32px_rgba(0,0,0,0.08)] border border-white/80 px-3 py-2.5 flex items-center gap-2.5">
+                        <!-- Harga -->
+                        <div class="min-w-0 flex-1">
+                            <template x-if="flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                <div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-[11px] text-gray-400 line-through" x-text="formatPrice(selectedVariant?.harga)"></span>
+                                        <span class="bg-red-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full leading-none" x-text="(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.diskon||0)+'%'"></span>
                                     </div>
-                                </template>
-                                <!-- Tamu tanpa flash sale -->
-                                <template x-if="!isMember && !flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                    <div class="font-black text-brand-500 text-xl leading-none mt-0.5" x-text="formatPrice(selectedVariant?.harga)"></div>
-                                </template>
-                                <!-- Member tanpa flash sale -->
-                                <template x-if="isMember && !flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                    <div class="font-black text-brand-500 text-xl leading-none mt-0.5" x-text="formatPrice(selectedVariant?.harga)"></div>
-                                </template>
-                                <!-- Tamu + flash sale aktif — hint login -->
-                                <template x-if="!isMember && flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
-                                    <div>
-                                        <div class="font-black text-brand-500 text-xl leading-none mt-0.5" x-text="formatPrice(selectedVariant?.harga)"></div>
-                                        <button @click="openAuth('login')" class="mt-1.5 flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-2 py-1.5 text-left active:scale-[0.98] transition-all">
-                                            <span class="text-xs leading-none">⚡</span>
-                                            <span class="text-[10px] font-bold text-red-600 leading-tight">Login → Flash Sale <strong x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></strong></span>
-                                        </button>
-                                    </div>
-                                </template>
-                            </div>
-                            <div x-show="selectedVariant?.masaAktif && selectedVariant?.masaAktif!=='-'" class="text-right">
-                                <div class="text-[10px] text-gray-400">Durasi</div>
-                                <div class="text-xs font-bold text-gray-600" x-text="selectedVariant?.masaAktif"></div>
-                            </div>
-                        </div>
-                        <!-- CTA buttons row -->
-                        <div class="px-3 pb-3 flex gap-2.5">
-                            <!-- Keranjang icon button -->
-                            <button @click="addToCart(selectedProductGroup, selectedVariant)"
-                                    class="w-12 h-12 flex-none rounded-xl border-2 border-brand-400 bg-white text-brand-500 flex items-center justify-center transition-all active:scale-90 hover:bg-brand-50 shadow-sm">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                            </button>
-                            <!-- Pesan / Stok Habis -->
-                            <template x-if="selectedVariant?.stok===0">
-                                <div class="flex-1 h-12 bg-gray-100 text-gray-400 font-bold rounded-xl text-sm flex items-center justify-center">Stok Habis</div>
+                                    <div class="font-black text-brand-500 text-xl leading-tight" x-text="formatPrice(flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)?.harga)"></div>
+                                    <div x-show="!isMember" class="text-[10px] font-bold text-brand-600 leading-tight">Harga member</div>
+                                </div>
                             </template>
-                            <template x-if="selectedVariant?.stok!==0">
-                                <button @click="handlePesan()"
-                                        class="flex-1 h-12 gradient-card text-white font-black rounded-xl text-sm transition-all active:scale-[0.97] shadow-lg flex items-center justify-center gap-2"
-                                        style="box-shadow: 0 4px 16px rgba(220,38,38,0.35)">
-                                    <svg class="w-4 h-4 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
-                                    Pesan Sekarang
+                            <template x-if="!flashSaleItem(selectedProductGroup.nama, selectedVariant?.varian, selectedVariant?.masaAktif)">
+                                <div class="font-black text-brand-500 text-xl leading-tight" x-text="formatPrice(selectedVariant?.harga)"></div>
+                            </template>
+                            <div x-show="selectedVariant?.masaAktif && selectedVariant?.masaAktif!=='-'" class="text-[10px] text-gray-400 truncate" x-text="selectedVariant?.masaAktif"></div>
+                        </div>
+                        <!-- Aksi -->
+                        <template x-if="selectedVariant?.stok===0">
+                            <div class="flex-none h-11 px-5 bg-gray-100 text-gray-400 font-bold rounded-xl text-sm flex items-center">Stok Habis</div>
+                        </template>
+                        <template x-if="selectedVariant?.stok!==0">
+                            <div class="flex-none flex items-center gap-2">
+                                <button @click="addToCart(selectedProductGroup, selectedVariant)" aria-label="Tambah ke keranjang"
+                                        class="w-11 h-11 flex-none rounded-xl border border-brand-300 bg-white text-brand-500 flex items-center justify-center transition-all active:scale-90">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                 </button>
-                            </template>
-                        </div>
+                                <button @click="handlePesan()" class="h-11 px-5 gradient-card text-white font-black rounded-xl text-sm transition-all active:scale-[0.97] whitespace-nowrap">
+                                    Pesan
+                                </button>
+                            </div>
+                        </template>
                     </div>
                 </div>
                 <!-- extra padding for sticky bar + bottom nav on mobile -->
-                <div class="md:hidden" style="height: calc(240px + env(safe-area-inset-bottom, 0px))"></div>
+                <div class="md:hidden" style="height: calc(170px + env(safe-area-inset-bottom, 0px))"></div>
 
             </div>
         </template>
@@ -9259,7 +9139,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260830-6',
+        APP_VERSION:      '20260830-12',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -9328,6 +9208,7 @@ ANNOUNCE_ON:      false,
         // Product detail
         selectedProductGroup: null,
         pdTab: 'deskripsi',
+        pdImgIdx: 0,
         selectedVariant:      null,
         pendingProductSlug:   null,
         orderDetailId:        null,
