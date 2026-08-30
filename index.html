@@ -1354,76 +1354,67 @@
                 </template>
             </nav>
             <div class="md:flex-1 md:min-w-0">
-            <div x-show="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                <template x-for="i in 8"><div class="bg-white rounded-2xl p-4 border border-gray-100 space-y-3"><div class="skeleton h-20 w-full rounded-xl mb-2"></div><div class="skeleton h-5 w-16 rounded-lg"></div><div class="skeleton h-4 w-full rounded"></div><div class="skeleton h-4 w-2/3 rounded"></div><div class="skeleton h-6 w-24 rounded"></div><div class="skeleton h-10 w-full rounded-xl"></div></div></template>
+            <div x-show="loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                <template x-for="i in 10"><div class="bg-white rounded-3xl overflow-hidden border border-gray-100"><div class="skeleton aspect-square w-full"></div><div class="p-3 space-y-2"><div class="skeleton h-4 w-full rounded"></div><div class="skeleton h-3 w-2/3 rounded"></div><div class="skeleton h-5 w-24 rounded"></div><div class="skeleton h-3 w-20 rounded"></div></div></div></template>
             </div>
-            <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div x-show="!loading" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                 <template x-for="product in filteredProducts" :key="product.nama+'|'+product.varian+'|'+product.masaAktif">
                     <div @click="product.stok!==0 && goToProductDetail(product)"
                          :class="product.stok===0?'opacity-70 cursor-not-allowed':'cursor-pointer hover:shadow-xl hover:-translate-y-1'"
                          class="bg-white rounded-3xl overflow-hidden shadow-md transition-all duration-200 group flex flex-col">
-                        <!-- Header: logo hero -->
-                        <div class="relative flex flex-col items-center pt-4 pb-3 px-4" :class="getCategoryBg(product.category)">
-                            <span class="absolute top-2.5 left-2.5 text-[11px] font-bold px-2 py-1 rounded-lg" :class="getCategoryColor(product.category)" x-text="product.category"></span>
+                        <!-- Thumbnail 1:1 -->
+                        <div class="relative aspect-square flex items-center justify-center overflow-hidden" :class="getCategoryBg(product.category)">
+                            <span class="absolute top-2 left-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-white/90 backdrop-blur-sm" :class="getCategoryColor(product.category)" x-text="product.category"></span>
                             <span x-show="product.stok===0"
-                                  class="absolute top-2.5 right-2.5 bg-gray-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">Habis</span>
+                                  class="absolute top-2 right-2 z-10 bg-gray-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">Habis</span>
                             <span x-show="isMember && product.stok!==0 && flashSaleItem(product.nama, product.varian, product.masaAktif)"
-                                  class="absolute top-2.5 right-2.5 bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full"
+                                  class="absolute top-2 right-2 z-10 bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full"
                                   x-text="(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'% OFF'"></span>
-                            <img :src="getProductThumb(product)" :alt="product.nama" loading="lazy"
-                                 :class="[getProductImage(product) ? 'w-full h-16 object-cover rounded-xl mt-2' : 'w-14 h-14 object-contain mt-5', product.stok===0?'grayscale opacity-50':'']"
+                            <img :src="getProductThumb(product)" :alt="product.nama" loading="lazy" width="300" height="300"
+                                 :class="[getProductImage(product) ? 'w-full h-full object-cover' : 'w-2/5 h-2/5 object-contain', product.stok===0?'grayscale opacity-50':'']"
                                  onerror="this.style.display='none'">
                         </div>
                         <!-- Body -->
-                        <div class="p-3.5 flex-1 flex flex-col">
-                            <h3 class="font-bold text-gray-800 text-sm leading-snug mb-0.5 line-clamp-2 group-hover:text-brand-600 transition-colors" x-text="product.nama"></h3>
-                            <p class="text-xs text-gray-500 truncate mb-1" x-text="product.varian"></p>
-                            <span x-show="product.masaAktif&&product.masaAktif!=='-'" class="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full self-start mb-2">
-                                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                <span x-text="product.masaAktif"></span>
-                            </span>
-                            <div class="mt-auto pt-2">
+                        <div class="p-3 flex-1 flex flex-col">
+                            <h3 class="font-bold text-gray-800 text-[13px] leading-snug line-clamp-2 min-h-[2.4em] group-hover:text-brand-600 transition-colors" x-text="product.nama"></h3>
+                            <p class="text-[11px] text-gray-400 truncate mt-0.5 mb-2"
+                               x-text="[product.varian, (product.masaAktif&&product.masaAktif!=='-')?product.masaAktif:''].filter(Boolean).join(' · ')"></p>
+                            <div class="mt-auto">
                                 <template x-if="product.stok===0">
-                                    <div class="w-full text-center bg-gray-100 text-gray-400 text-sm font-bold py-2.5 rounded-2xl">Stok Habis</div>
+                                    <div class="w-full text-center bg-gray-100 text-gray-400 text-xs font-bold py-2 rounded-xl">Stok Habis</div>
                                 </template>
                                 <template x-if="product.stok!==0">
                                     <div>
-                                        <!-- Member: harga flash sale -->
-                                        <template x-if="isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
-                                            <div class="mb-2">
-                                                <div class="text-xs text-gray-400 line-through leading-none" x-text="formatPrice(product.harga)"></div>
-                                                <div class="font-black text-brand-500 text-base" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
-                                            </div>
-                                        </template>
-                                        <!-- Non-member dengan flash sale: tampilkan harga Member (memancing) + label jujur -->
-                                        <template x-if="!isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
-                                            <div class="mb-2">
-                                                <div class="text-xs text-gray-400 line-through leading-none" x-text="formatPrice(product.harga)"></div>
-                                                <div class="font-black text-brand-500 text-base" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
-                                                <div class="text-[9px] text-brand-600 font-bold leading-tight">Harga Member</div>
-                                            </div>
-                                        </template>
-                                        <!-- Tidak ada flash sale -->
-                                        <template x-if="!flashSaleItem(product.nama, product.varian, product.masaAktif)">
-                                            <div class="font-black text-brand-500 text-base mb-2" x-text="formatPrice(product.harga)"></div>
-                                        </template>
-                                        <!-- Rating + Terjual -->
-                                        <div class="flex items-center justify-between mb-2">
-                                            <div class="flex items-center gap-1">
-                                                <svg class="w-3 h-3 text-yellow-400 fill-current flex-none" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                                                <span class="text-[11px] font-bold text-gray-700" x-text="getProductRating(product.nama)"></span>
-                                                <span class="text-[10px] text-gray-400" x-text="'('+getProductReviewCount(product.nama)+')'"></span>
-                                            </div>
-                                            <div class="text-[10px] text-gray-400 font-medium flex items-center gap-0.5">
-                                                <svg class="w-3 h-3 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 11H4L5 9z"/></svg>
-                                                <span x-text="formatTerjual(product.terjual||0)"></span>
+                                        <!-- Harga (tombol keranjang ada di gambar, agar harga panjang tidak tertabrak) -->
+                                        <div class="mb-1.5">
+                                            <div class="min-w-0">
+                                                <!-- Member: harga flash sale -->
+                                                <template x-if="isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                                    <div>
+                                                        <div class="font-black text-brand-500 text-[15px] leading-tight" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
+                                                        <div class="text-[10px] text-gray-400 line-through leading-tight" x-text="formatPrice(product.harga)"></div>
+                                                    </div>
+                                                </template>
+                                                <!-- Non-member dengan flash sale: tampilkan harga Member (memancing) + label jujur -->
+                                                <template x-if="!isMember && flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                                    <div>
+                                                        <div class="font-black text-brand-500 text-[15px] leading-tight" x-text="formatPrice(flashSaleItem(product.nama, product.varian, product.masaAktif)?.harga)"></div>
+                                                        <div class="text-[10px] text-gray-400 line-through leading-tight" x-text="formatPrice(product.harga)"></div>
+                                                        <div class="text-[9px] text-brand-600 font-bold leading-tight">Harga Member</div>
+                                                    </div>
+                                                </template>
+                                                <!-- Tidak ada flash sale -->
+                                                <template x-if="!flashSaleItem(product.nama, product.varian, product.masaAktif)">
+                                                    <div class="font-black text-brand-500 text-[15px] leading-tight" x-text="formatPrice(product.harga)"></div>
+                                                </template>
                                             </div>
                                         </div>
-                                        <div class="flex gap-1.5">
-                                            <button @click.stop="addToCart(product, product)" class="flex-none w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-gray-500 hover:text-brand-500 hover:border-brand-300 active:scale-95 transition-all">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                                            </button>
-                                            <div class="flex-1 flex items-center justify-center gradient-card text-white text-xs font-bold py-2.5 rounded-xl">Detail →</div>
+                                        <!-- Rating · Terjual -->
+                                        <div class="flex items-center gap-1 text-[11px] text-gray-500">
+                                            <svg class="w-3 h-3 text-yellow-400 fill-current flex-none" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                            <span class="font-bold text-gray-700" x-text="getProductRating(product.nama)"></span>
+                                            <span class="text-gray-300" x-show="formatTerjual(product.terjual||0)">·</span>
+                                            <span class="truncate" x-text="formatTerjual(product.terjual||0)"></span>
                                         </div>
                                     </div>
                                 </template>
@@ -4998,63 +4989,32 @@
             <div x-show="adminTab==='produk'">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="font-bold text-gray-900">Manajemen Produk</h2>
-                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,stok:'',iconUrl:'',kategori:'',descHtml:'',gambar:[]}; adminBenefitItems=[]; adminBenefitNewItem=''; $nextTick(()=>adminInitDescEditor())" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
+                    <button @click="adminAddMode=true; adminEditProduct=null; adminNewProduct={nama:'',varian:'',masaAktif:'',harga:'',linkProduk:'',aktif:true,stok:'',iconUrl:'',kategori:'',descHtml:'',gambar:[],specs:[],varians:[{id:null,varian:'',masaAktif:'',harga:'',stok:'',aktif:true}]}; adminVarianDeleted=[]; adminBenefitItems=[]; adminBenefitNewItem=''; $nextTick(()=>adminInitDescEditor())" class="gradient-card text-white text-xs font-bold px-4 py-2 rounded-xl">+ Produk Baru</button>
                 </div>
 
-                <!-- Form tambah/edit produk -->
-                <div id="adminProdukForm" x-show="adminAddMode || adminEditProduct" x-transition class="bg-white rounded-2xl border border-brand-100 p-5 shadow-sm mb-4">
-                    <h3 class="font-bold text-gray-800 mb-4" x-text="adminEditProduct ? 'Edit Produk' : 'Tambah Produk Baru'"></h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Produk *</label>
-                            <input x-model="adminFormProduct.nama" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                <!-- Form tambah/edit produk — layar penuh, tutup lewat Update / Batal -->
+                <div x-show="adminAddMode || adminEditProduct" x-transition.opacity
+                     class="fixed inset-0 z-[95] bg-gray-900/50 flex items-stretch md:items-center justify-center md:p-6">
+                <div id="adminProdukForm" class="bg-white w-full md:max-w-4xl md:rounded-2xl shadow-2xl flex flex-col h-full md:h-auto md:max-h-[90vh] overflow-hidden">
+                    <!-- Header tetap -->
+                    <div class="flex items-start justify-between gap-3 px-4 md:px-5 py-3.5 md:py-4 border-b border-gray-100 flex-none">
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-gray-800" x-text="adminEditProduct ? 'Edit Produk' : 'Tambah Produk Baru'"></h3>
+                            <p class="text-xs text-gray-400 mt-0.5">Satu produk bisa punya banyak varian. Gambar, kategori, spesifikasi, dan deskripsi berlaku untuk semua varian.</p>
                         </div>
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 mb-1 block">Varian *</label>
-                            <input x-model="adminFormProduct.varian" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 mb-1 block">Masa Aktif</label>
-                            <input x-model="adminFormProduct.masaAktif" type="text" placeholder="1 Tahun" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 mb-1 block">Harga (Rp)</label>
-                            <input x-model="adminFormProduct.harga" type="number" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 mb-1 block">
-                                Stok
-                                <span class="text-gray-400 font-normal">(kosong = tidak terbatas, 0 = habis)</span>
-                            </label>
-                            <input x-model="adminFormProduct.stok" type="number" min="0" placeholder="Kosongkan jika tidak terbatas" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 mb-1 block">Link Shopee</label>
-                            <input x-model="adminFormProduct.linkProduk" type="text" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 mb-1 block">Icon URL (opsional)</label>
-                            <input x-model="adminFormProduct.iconUrl" type="text" placeholder="https://..." class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                        </div>
-                        <div>
-                            <label class="text-xs font-bold text-gray-500 mb-1 block">Kategori</label>
-                            <input x-model="adminFormProduct.kategori" type="text" list="adminKategoriList" placeholder="cth: Office 365, Adobe, Windows..." class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
-                            <datalist id="adminKategoriList">
-                                <template x-for="k in [...new Set(adminProducts.map(p=>p.category).filter(Boolean))].sort()" :key="k">
-                                    <option :value="k"></option>
-                                </template>
-                            </datalist>
-                        </div>
+                        <button @click="adminCloseProductForm()" type="button" aria-label="Tutup form"
+                                class="flex-none w-9 h-9 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 flex items-center justify-center">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
                     </div>
-                    <label class="flex items-center gap-2 mt-3 cursor-pointer">
-                        <input x-model="adminFormProduct.aktif" type="checkbox" class="w-4 h-4 rounded accent-brand-500">
-                        <span class="text-sm text-gray-700 font-medium">Produk Aktif (tampil di katalog)</span>
-                    </label>
+                    <!-- Isi form (scroll). min-h-0 wajib: tanpa itu isi mendorong panel melebihi layar
+                         dan header ikut terdorong keluar viewport. -->
+                    <div class="flex-1 min-h-0 overflow-y-auto px-4 md:px-5 py-4">
 
-                    <!-- Gambar Produk -->
-                    <div class="mt-5 border-t border-gray-100 pt-4">
+                    <!-- ── 1. Gambar Produk ── -->
+                    <div class="pt-0">
                         <div class="flex items-center justify-between mb-2">
-                            <div class="text-sm font-bold text-gray-800">Gambar Produk</div>
+                            <div class="text-sm font-bold text-gray-800">1. Gambar Produk</div>
                             <div class="text-xs text-gray-400" x-text="(adminNewProduct.gambar?.length || 0) + '/10'"></div>
                         </div>
                         <div class="text-xs text-gray-400 mb-3">Upload sampai 10 foto (JPG/PNG, otomatis dikompres). Tersimpan di Google Drive.</div>
@@ -5097,14 +5057,69 @@
                         </p>
                     </div>
 
-                    <!-- Deskripsi Produk (rich text) -->
+                    <!-- ── 2. Informasi Produk ── -->
+                    <div class="mt-5 border-t border-gray-100 pt-4">
+                        <div class="text-sm font-bold text-gray-800 mb-3">2. Informasi Produk</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Produk *</label>
+                                <input x-model="adminFormProduct.nama" type="text" placeholder="cth: Microsoft 365 Family Plan" class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 mb-1 block">Kategori</label>
+                                <input x-model="adminFormProduct.kategori" type="text" list="adminKategoriList" placeholder="cth: Microsoft 365, Adobe, Windows..." class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                                <datalist id="adminKategoriList">
+                                    <template x-for="k in [...new Set(adminProducts.map(p=>p.category).filter(Boolean))].sort()" :key="k">
+                                        <option :value="k"></option>
+                                    </template>
+                                </datalist>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 mb-1 block">Link Shopee <span class="text-gray-400 font-normal">(opsional)</span></label>
+                                <input x-model="adminFormProduct.linkProduk" type="text" placeholder="https://shopee.co.id/..." class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 mb-1 block">Icon URL <span class="text-gray-400 font-normal">(opsional)</span></label>
+                                <input x-model="adminFormProduct.iconUrl" type="text" placeholder="https://..." class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── 3. Spesifikasi ── -->
+                    <div class="mt-5 border-t border-gray-100 pt-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="text-sm font-bold text-gray-800">3. Spesifikasi</div>
+                            <button @click="adminSpecAdd()" type="button" class="text-xs font-bold text-brand-600 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50">+ Tambah baris</button>
+                        </div>
+                        <div class="text-xs text-gray-400 mb-3">Tampil sebagai tabel di halaman produk. Kosongkan kalau tidak perlu.</div>
+                        <div class="space-y-2">
+                            <template x-for="(s, i) in adminFormProduct.specs" :key="'spec'+i">
+                                <div class="flex gap-2 items-center">
+                                    <input x-model="s.label" type="text" list="adminSpecLabels" placeholder="Merek" class="w-1/3 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                                    <input x-model="s.value" type="text" placeholder="Microsoft" class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                                    <button @click="adminFormProduct.specs.splice(i,1)" type="button" aria-label="Hapus baris spesifikasi" class="flex-none w-8 h-8 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+                                    </button>
+                                </div>
+                            </template>
+                            <datalist id="adminSpecLabels">
+                                <option value="Merek"></option><option value="Tipe Software"></option>
+                                <option value="Jenis Garansi"></option><option value="Masa Garansi"></option>
+                                <option value="Sistem Operasi"></option><option value="Jumlah Perangkat"></option>
+                                <option value="Kapasitas Cloud"></option>
+                            </datalist>
+                            <p x-show="!adminFormProduct.specs?.length" class="text-xs text-gray-400 italic">Belum ada spesifikasi.</p>
+                        </div>
+                    </div>
+
+                    <!-- ── 4. Deskripsi Produk (rich text) ── -->
                     <div class="mt-5 border-t border-gray-100 pt-4">
                         <div class="flex items-center justify-between mb-2">
                             <div>
-                                <div class="text-sm font-bold text-gray-800">Deskripsi Produk</div>
+                                <div class="text-sm font-bold text-gray-800">4. Deskripsi Produk</div>
                                 <div class="text-xs text-gray-400 mt-0.5">
-                                    Deskripsi untuk:
-                                    <span class="font-semibold text-brand-500" x-text="(adminNewProduct.nama || '(produk baru)') + (adminNewProduct.varian ? ' · ' + adminNewProduct.varian : '')"></span>
+                                    Berlaku untuk semua varian
+                                    <span class="font-semibold text-brand-500" x-text="adminNewProduct.nama || '(produk baru)'"></span>
                                 </div>
                             </div>
                         </div>
@@ -5134,15 +5149,86 @@
                              class="rt-editor prose-mini w-full min-h-[140px] max-h-[340px] overflow-y-auto border border-gray-200 rounded-b-xl px-3 py-2.5 text-sm text-gray-700 focus:outline-none focus:border-brand-400 bg-white"></div>
                     </div>
 
-                    <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                        <button @click="adminSaveProduct()" :disabled="!!(adminSaving || adminImageUploading)" class="gradient-card text-white font-bold px-5 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all flex items-center gap-2">
+                    <!-- ── 5. Varian & Harga ── -->
+                    <div class="mt-5 border-t border-gray-100 pt-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="text-sm font-bold text-gray-800">5. Varian &amp; Harga</div>
+                            <button @click="adminVarianAdd()" type="button" class="text-xs font-bold text-brand-600 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50">+ Tambah varian</button>
+                        </div>
+                        <div class="text-xs text-gray-400 mb-3">Tiap baris jadi satu kartu di katalog. Stok kosong = tidak terbatas, 0 = habis.</div>
+
+                        <!-- Desktop: tabel -->
+                        <div class="hidden md:block overflow-x-auto rounded-xl border border-gray-200">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 text-[11px] uppercase tracking-wide text-gray-500">
+                                    <tr>
+                                        <th class="text-left font-bold px-3 py-2">Varian *</th>
+                                        <th class="text-left font-bold px-3 py-2 w-32">Durasi</th>
+                                        <th class="text-left font-bold px-3 py-2 w-36">Harga (Rp)</th>
+                                        <th class="text-left font-bold px-3 py-2 w-24">Stok</th>
+                                        <th class="text-center font-bold px-3 py-2 w-16">Aktif</th>
+                                        <th class="px-2 py-2 w-10"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(v, i) in adminFormProduct.varians" :key="'var'+(v.id||'new'+i)">
+                                        <tr class="border-t border-gray-100">
+                                            <td class="px-2 py-1.5"><input x-model="v.varian" type="text" placeholder="Office 365 Family" class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400"></td>
+                                            <td class="px-2 py-1.5"><input x-model="v.masaAktif" type="text" placeholder="1 Tahun" class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400"></td>
+                                            <td class="px-2 py-1.5"><input x-model="v.harga" type="number" min="0" placeholder="285000" class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400"></td>
+                                            <td class="px-2 py-1.5"><input x-model="v.stok" type="number" min="0" placeholder="∞" class="w-full px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400"></td>
+                                            <td class="px-2 py-1.5 text-center"><input x-model="v.aktif" type="checkbox" class="w-4 h-4 rounded accent-brand-500"></td>
+                                            <td class="px-2 py-1.5">
+                                                <button @click="adminVarianRemove(i)" type="button" aria-label="Hapus varian" class="w-8 h-8 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Mobile: kartu per varian -->
+                        <div class="md:hidden space-y-3">
+                            <template x-for="(v, i) in adminFormProduct.varians" :key="'mvar'+(v.id||'new'+i)">
+                                <div class="border border-gray-200 rounded-xl p-3">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-[11px] font-bold text-gray-400" x-text="'Varian '+(i+1)"></span>
+                                        <div class="flex items-center gap-3">
+                                            <label class="flex items-center gap-1.5 text-xs text-gray-600 font-medium">
+                                                <input x-model="v.aktif" type="checkbox" class="w-4 h-4 rounded accent-brand-500"> Aktif
+                                            </label>
+                                            <button @click="adminVarianRemove(i)" type="button" aria-label="Hapus varian" class="text-gray-400 hover:text-red-600">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3"/></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <input x-model="v.varian" type="text" placeholder="Varian *" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-2 focus:outline-none focus:border-brand-400">
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <input x-model="v.masaAktif" type="text" placeholder="1 Tahun" class="px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400">
+                                        <input x-model="v.harga" type="number" min="0" placeholder="Harga" class="px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400">
+                                        <input x-model="v.stok" type="number" min="0" placeholder="Stok" class="px-2 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-400">
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <p x-show="!adminFormProduct.varians?.length" class="text-xs text-red-500 font-semibold mt-2">Minimal satu varian.</p>
+                    </div>
+
+                    </div><!-- end isi form scroll -->
+
+                    <!-- Footer sticky -->
+                    <div class="flex gap-2 px-4 md:px-5 py-3.5 md:py-4 pb-[max(0.875rem,env(safe-area-inset-bottom))] border-t border-gray-100 bg-white md:rounded-b-2xl flex-none">
+                        <button @click="adminSaveProduct()" :disabled="!!(adminSaving || adminImageUploading)" class="gradient-card text-white font-bold flex-1 md:flex-none px-5 py-2.5 rounded-xl text-sm disabled:opacity-60 active:scale-95 transition-all flex items-center justify-center gap-2">
                             <svg x-show="adminSaving" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                             <span x-show="!adminSaving" x-text="adminEditProduct ? 'Update Produk' : 'Simpan Produk'"></span>
                             <span x-show="adminSaving">Menyimpan...</span>
                         </button>
-                        <button @click="adminAddMode=false; adminEditProduct=null" class="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all">Batal</button>
+                        <button @click="adminCloseProductForm()" class="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all">Batal</button>
                     </div>
                 </div>
+                </div><!-- end overlay form produk -->
 
                 <!-- Search produk -->
                 <div x-show="!adminProductsLoading" class="relative mb-3">
@@ -7867,6 +7953,20 @@
                 </template>
             </div>
         </template>
+        <!-- Spesifikasi -->
+        <template x-if="getProductSpecs(selectedVariant || selectedProductGroup).length">
+            <div class="bg-gray-50 mx-5 rounded-2xl p-4 mb-4">
+                <div class="text-sm font-bold text-gray-700 mb-3">Spesifikasi</div>
+                <dl class="divide-y divide-gray-200">
+                    <template x-for="s in getProductSpecs(selectedVariant || selectedProductGroup)" :key="s.label">
+                        <div class="flex gap-3 py-2">
+                            <dt class="w-32 flex-none text-xs text-gray-500" x-text="s.label"></dt>
+                            <dd class="text-sm text-gray-700 font-medium" x-text="s.value"></dd>
+                        </div>
+                    </template>
+                </dl>
+            </div>
+        </template>
         <!-- Deskripsi / Benefits -->
         <div class="bg-gray-50 mx-5 rounded-2xl p-4 mb-4">
             <div class="text-sm font-bold text-gray-700 mb-3">Yang kamu dapat</div>
@@ -9159,7 +9259,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260830-1',
+        APP_VERSION:      '20260830-6',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -9462,7 +9562,8 @@ ANNOUNCE_ON:      false,
         adminOrdersPerPage: 10,
         adminEditProduct: null,
         adminAddMode:    false,
-        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, stok:'', iconUrl:'', kategori:'', descHtml:'', gambar:[] },
+        adminNewProduct: { nama:'', varian:'', masaAktif:'', harga:'', linkProduk:'', aktif:true, stok:'', iconUrl:'', kategori:'', descHtml:'', gambar:[], specs:[], varians:[] },
+        adminVarianDeleted: [],
         adminEditFlash:    {},
         adminFlashCampaigns: [],
         adminFlashCampIdx: -1,
@@ -10309,6 +10410,7 @@ ANNOUNCE_ON:      false,
                         category:   String(r.kategori||'').trim(),
                         benefits:   d.benefits,
                         descHtml:   d.descHtml,
+                        spesifikasi: this._parseSpecsJS(r.spesifikasi),
                         gambar:     _parseImgs(r.gambar),
                         terjual:    Number(r.terjual)||0,
                     };
@@ -10472,6 +10574,17 @@ ANNOUNCE_ON:      false,
                 if(match?.descHtml) return match.descHtml;
             }
             return '';
+        },
+        getProductSpecs(prod) {
+            const p = prod || this.selectedVariant || this.selectedProductGroup;
+            if(!p || typeof p !== 'object') return [];
+            if(Array.isArray(p.spesifikasi) && p.spesifikasi.length) return p.spesifikasi;
+            // selectedProductGroup tidak bawa spesifikasi → cari baris aslinya
+            if(p.nama) {
+                const m = this.products.find(x => x.nama === p.nama && (!p.varian || x.varian === p.varian) && x.spesifikasi?.length);
+                if(m) return m.spesifikasi;
+            }
+            return [];
         },
         getProductImages(prod) {
             const p = prod || this.selectedVariant || this.selectedProductGroup;
@@ -12924,20 +13037,40 @@ ANNOUNCE_ON:      false,
             if(greetMode) this._greetUser(this.currentUser, greetMode);
             if(this.productModal) setTimeout(()=>{ this.orderModal=true; },200);
         },
-        _supaProductRow(){
+        // Satu baris catalog = satu varian. Field bersama (gambar/kategori/deskripsi/spek)
+        // disalin ke SETIAP baris varian agar tiap kartu katalog berdiri sendiri.
+        _supaProductRow(v){
             const p = this.adminNewProduct;
             return {
                 nama_produk: p.nama,
-                varian:      p.varian,
-                masa_aktif:  p.masaAktif,
-                harga:       Number(p.harga)||0,
+                varian:      v.varian,
+                masa_aktif:  v.masaAktif || '-',
+                harga:       Number(v.harga)||0,
                 link_produk: p.linkProduk||'',
-                aktif:       (String(p.aktif)==='true'||p.aktif===true),
-                stok:        (p.stok===''||p.stok==null)?null:Number(p.stok),
+                aktif:       v.aktif===true || String(v.aktif)==='true',
+                stok:        (v.stok===''||v.stok==null)?null:Number(v.stok),
                 kategori:    p.kategori||'',
                 deskripsi:   p.descHtml||'',
+                spesifikasi: JSON.stringify((p.specs||[]).filter(s=>String(s.label||'').trim() && String(s.value||'').trim())),
                 gambar:      JSON.stringify(Array.isArray(p.gambar)?p.gambar.filter(u=>!String(u).startsWith('data:')):[]),
             };
+        },
+        _parseSpecsJS(raw){
+            if(Array.isArray(raw)) return raw;
+            const s = String(raw||'').trim();
+            if(!s.startsWith('[')) return [];
+            try { const a = JSON.parse(s); return Array.isArray(a) ? a.filter(x=>x&&x.label) : []; } catch { return []; }
+        },
+        adminCloseProductForm(){
+            if(this.adminImageUploading && !confirm('Masih ada gambar yang sedang diunggah. Tutup form dan batalkan?')) return;
+            this.adminAddMode=false; this.adminEditProduct=null; this.adminVarianDeleted=[];
+        },
+        adminSpecAdd(){ (this.adminFormProduct.specs ||= []).push({ label:'', value:'' }); },
+        adminVarianAdd(){ (this.adminFormProduct.varians ||= []).push({ id:null, varian:'', masaAktif:'', harga:'', stok:'', aktif:true }); },
+        adminVarianRemove(i){
+            const v = this.adminFormProduct.varians[i];
+            if(v?.id) this.adminVarianDeleted.push(v.id); // baris lama → hapus di server saat Update
+            this.adminFormProduct.varians.splice(i,1);
         },
         async adminLoadProducts() {
             this.adminProductsLoading=true;
@@ -12960,6 +13093,7 @@ ANNOUNCE_ON:      false,
                         category:  String(r.kategori||'').trim(),
                         benefits:  d.benefits,
                         descHtml:  d.descHtml,
+                        spesifikasi: this._parseSpecsJS(r.spesifikasi),
                         gambar:    this._parseImgsJS(r.gambar),
                     };
                 }) : [];
@@ -12977,45 +13111,44 @@ ANNOUNCE_ON:      false,
                 descHtml = '<ul>' + p.benefits.map(b => '<li>' + this._escapeHtml(String(b)) + '</li>').join('') + '</ul>';
             }
             const gambarArr = Array.isArray(p.gambar) ? [...p.gambar] : (p.gambar ? [p.gambar] : []);
-            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'', kategori:p.category||'', descHtml:descHtml, gambar:gambarArr };
+            // Semua baris dengan nama produk sama = varian dari satu produk (pola Seller Center)
+            const varians = this.adminProducts
+                .filter(r => r.nama === p.nama)
+                .map(r => ({ id:r.rowIndex, varian:r.varian, masaAktif:r.masaAktif==='-'?'':r.masaAktif,
+                             harga:r.harga, stok:(r.stok===null||r.stok===undefined)?'':r.stok, aktif:r.aktif===true }));
+            this.adminVarianDeleted = [];
+            this.adminNewProduct  = { nama:p.nama, varian:p.varian, masaAktif:p.masaAktif, harga:p.harga, linkProduk:p.linkProduk, aktif:p.aktif, stok:(p.stok===null||p.stok===undefined)?'':p.stok, iconUrl:p.iconUrl||'', kategori:p.category||'', descHtml:descHtml, gambar:gambarArr, specs:this._parseSpecsJS(p.spesifikasi), varians:varians.length?varians:[{ id:p.rowIndex, varian:p.varian, masaAktif:p.masaAktif==='-'?'':p.masaAktif, harga:p.harga, stok:'', aktif:p.aktif===true }] };
             this.adminBenefitCat  = p.category || this.getCategory(p.nama);
             this.adminBenefitItems = Array.isArray(p.benefits) ? [...p.benefits] : [];
             this.adminBenefitNewItem = '';
             // Scroll ke form + isi editor (hanya setelah render selesai)
-            this.$nextTick(() => {
-                this.adminInitDescEditor();
-                document.getElementById('adminProdukForm')?.scrollIntoView({ behavior:'smooth', block:'start' });
-            });
+            this.$nextTick(() => this.adminInitDescEditor()); // form kini overlay layar penuh, tak perlu scroll
         },
         async adminSaveProduct() {
-            if(!this.adminNewProduct.nama||!this.adminNewProduct.varian) {
-                this._adminShowMsg('Nama dan varian wajib diisi'); return;
-            }
+            const p = this.adminNewProduct;
+            const varians = (p.varians||[]).filter(v => String(v.varian||'').trim());
+            if(!String(p.nama||'').trim()) { this._adminShowMsg('Nama produk wajib diisi'); return; }
+            if(!varians.length)            { this._adminShowMsg('Minimal satu varian dengan nama varian terisi'); return; }
             // ponytail: jangan pernah simpan preview lokal (dataURL) ke sheet
-            if(Array.isArray(this.adminNewProduct.gambar))
-                this.adminNewProduct.gambar = this.adminNewProduct.gambar.filter(u => !String(u).startsWith('data:'));
+            if(Array.isArray(p.gambar)) p.gambar = p.gambar.filter(u => !String(u).startsWith('data:'));
             this.adminSaving=true;
             try {
-                const row = this._supaProductRow();
-                if(this.adminEditProduct) {
-                    const out = await this._supaWrite('PATCH', `catalog?id=eq.${this.adminEditProduct.rowIndex}`, row);
-                    // RLS bisa buang update diam-diam (200 + []) jika akun bukan admin → jangan tampil sukses palsu.
-                    if(Array.isArray(out) && out.length===0)
-                        throw new Error('Gagal simpan: akun ini bukan admin di Supabase (perubahan ditolak RLS). Login sebagai halo@serabut.id.');
-                } else {
-                    await this._supaWrite('POST', 'catalog', row);
-                }
-                // Update local state untuk produk yang diedit
-                if(this.adminEditProduct) {
-                    const savedDesc = this.adminNewProduct.descHtml||'';
-                    const savedGbr  = Array.isArray(this.adminNewProduct.gambar) ? [...this.adminNewProduct.gambar] : [];
-                    const idx = this.products.findIndex(p => p.rowIndex == this.adminEditProduct.rowIndex);
-                    if(idx >= 0) {
-                        this.products[idx] = { ...this.products[idx], descHtml: savedDesc, gambar: savedGbr, benefits: [] };
-                        this.products = [...this.products];
+                // Hapus varian yang dibuang admin
+                for(const id of this.adminVarianDeleted) await this._supaWrite('DELETE', `catalog?id=eq.${id}`);
+                // Update varian lama, tambah varian baru
+                for(const v of varians) {
+                    const row = this._supaProductRow(v);
+                    if(v.id) {
+                        const out = await this._supaWrite('PATCH', `catalog?id=eq.${v.id}`, row);
+                        // RLS bisa buang update diam-diam (200 + []) jika akun bukan admin → jangan tampil sukses palsu.
+                        if(Array.isArray(out) && out.length===0)
+                            throw new Error('Gagal simpan: akun ini bukan admin di Supabase (perubahan ditolak RLS). Login sebagai halo@serabut.id.');
+                    } else {
+                        await this._supaWrite('POST', 'catalog', row);
                     }
                 }
-                this._adminShowMsg(this.adminEditProduct ? 'Produk & deskripsi diupdate ✓' : 'Produk ditambahkan ✓');
+                this.adminVarianDeleted = [];
+                this._adminShowMsg(this.adminEditProduct ? `Produk diupdate ✓ (${varians.length} varian)` : `Produk ditambahkan ✓ (${varians.length} varian)`);
                 this.adminEditProduct=null; this.adminAddMode=false;
                 await this.adminLoadProducts();
                 await this.fetchProducts();
