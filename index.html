@@ -2161,23 +2161,14 @@
                                         </button>
                                     </div>
                                 </template>
-                            <!-- Jaminan + beli di Shopee — satu baris di bawah CTA -->
-                            <div class="hidden md:flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-500 mt-auto pt-3.5 border-t border-gray-100">
-                                <span class="inline-flex items-center gap-1.5">
-                                    <svg class="w-4 h-4 text-green-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                                    Aktivasi <strong class="text-gray-700 font-bold">5–30 menit</strong>
-                                </span>
-                                <span class="inline-flex items-center gap-1.5">
-                                    <svg class="w-4 h-4 text-blue-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                    <span class="text-gray-700 font-bold">Bergaransi penuh</span>
-                                </span>
-                                <span class="inline-flex items-center gap-1.5">
-                                    <svg class="w-4 h-4 text-brand-500 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                                    <button data-chat-open @click.prevent="openSera()" class="text-brand-500 font-bold hover:underline">Chat Sera →</button>
-                                </span>
-                                <a x-show="selectedVariant?.linkProduk&&selectedVariant?.linkProduk!=='#'" :href="selectedVariant?.linkProduk" target="_blank" rel="noopener"
-                                   class="md:ml-auto inline-flex items-center gap-1.5 text-gray-400 hover:text-orange-500 transition-colors">
-                                    Beli di Shopee →
+                            <!-- Opsi beli di Shopee (jaminan sudah tampil di kartu bawah — jangan diulang) -->
+                            <div x-show="selectedVariant?.linkProduk && selectedVariant?.linkProduk!=='#'"
+                                 class="hidden md:flex items-center gap-3 mt-auto pt-3.5 border-t border-gray-100">
+                                <span class="text-xs text-gray-400">Lebih suka lewat marketplace?</span>
+                                <a :href="selectedVariant?.linkProduk" target="_blank" rel="noopener"
+                                   class="inline-flex items-center gap-1.5 text-xs font-bold text-orange-600 border border-orange-200 bg-orange-50 hover:bg-orange-100 rounded-xl px-3 py-2 transition-colors active:scale-95">
+                                    Beli di Shopee
+                                    <svg class="w-3.5 h-3.5 flex-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                                 </a>
                             </div>
                             </div>
@@ -9139,7 +9130,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260830-13',
+        APP_VERSION:      '20260830-14',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
