@@ -2507,7 +2507,27 @@ const ORDER_EXPIRY_MS = 24 * 60 * 60 * 1000;
 // Tanda "jangan batalkan": sudah bayar, atau pembeli klaim bayar & menunggu admin.
 const PAID_MARKERS = ['Lunas', 'Berhasil', 'Menunggu Verifikasi'];
 
+// Trigger yang pernah dipasang manual tapi salah sasaran:
+//  - setupAutoCancelTrigger: fungsi PEMASANG trigger, bukan pekerjaannya. Kalau dijadwalkan,
+//    tiap jam dia hapus-pasang ulang trigger auto-cancel.
+//  - autoExpireOrders: fungsinya tidak ada di kode → gagal terus (error rate 100%) + kirim email error.
+// Daftar eksplisit, bukan "hapus yang tidak dikenal", supaya onEditAccountSync dll aman.
+const STALE_TRIGGERS = ['setupAutoCancelTrigger', 'autoExpireOrders'];
+
+function _cleanupStaleTriggers() {
+  try {
+    ScriptApp.getProjectTriggers().forEach(function (t) {
+      if (STALE_TRIGGERS.indexOf(t.getHandlerFunction()) >= 0) {
+        ScriptApp.deleteTrigger(t);
+        Logger.log('Trigger sampah dihapus: ' + t.getHandlerFunction());
+      }
+    });
+  } catch (e) { Logger.log('_cleanupStaleTriggers error: ' + e.message); }
+}
+
 function autoCancelExpiredOrders() {
+  _cleanupStaleTriggers(); // idempotent: no-op setelah bersih
+
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_ORDERS);
   if (!sheet) return { cancelled: 0 };
 
