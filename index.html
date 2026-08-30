@@ -1361,14 +1361,13 @@
                 <template x-for="product in filteredProducts" :key="product.nama+'|'+product.varian+'|'+product.masaAktif">
                     <div @click="product.stok!==0 && goToProductDetail(product)"
                          :class="product.stok===0?'opacity-70 cursor-not-allowed':'cursor-pointer hover:shadow-xl hover:-translate-y-1'"
-                         class="bg-white rounded-3xl overflow-hidden shadow-md transition-all duration-200 group flex flex-col">
-                        <!-- Thumbnail 1:1 -->
+                         class="bg-white rounded-b-3xl overflow-hidden shadow-md transition-all duration-200 group flex flex-col">
+                        <!-- Thumbnail 1:1 — badge di kaki gambar, label kategori dihilangkan (sudah ada filter kategori) -->
                         <div class="relative aspect-square flex items-center justify-center overflow-hidden" :class="getCategoryBg(product.category)">
-                            <span class="absolute top-2 left-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-lg bg-white/90 backdrop-blur-sm" :class="getCategoryColor(product.category)" x-text="product.category"></span>
                             <span x-show="product.stok===0"
-                                  class="absolute top-2 right-2 z-10 bg-gray-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full">Habis</span>
+                                  class="absolute bottom-2 left-2 z-10 bg-gray-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">Habis</span>
                             <span x-show="isMember && product.stok!==0 && flashSaleItem(product.nama, product.varian, product.masaAktif)"
-                                  class="absolute top-2 right-2 z-10 bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full"
+                                  class="absolute bottom-2 left-2 z-10 bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm"
                                   x-text="(flashSaleItem(product.nama, product.varian, product.masaAktif)?.diskon||0)+'% OFF'"></span>
                             <img :src="getProductThumb(product)" :alt="product.nama" loading="lazy" width="300" height="300"
                                  :class="[getProductImage(product) ? 'w-full h-full object-cover' : 'w-2/5 h-2/5 object-contain', product.stok===0?'grayscale opacity-50':'']"
@@ -9140,7 +9139,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260830-22',
+        APP_VERSION:      '20260830-23',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
