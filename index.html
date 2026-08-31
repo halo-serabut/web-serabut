@@ -1253,7 +1253,7 @@
                          :class="product.stok===0?'opacity-60 cursor-not-allowed':'cursor-pointer hover:shadow-lg hover:border-brand-200 hover:-translate-y-0.5 active:scale-[0.99]'"
                          class="bg-white rounded-2xl border border-gray-100 shadow-sm transition-all duration-200 flex items-center gap-3 px-3.5 py-3">
                         <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-none relative" :class="getCategoryBg(product.category)">
-                            <img :src="getProductLogo(product.category)" :alt="product.category" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
+                            <img :src="getProductThumb(product)" :alt="product.nama" :class="getProductImage(product) ? 'w-full h-full object-cover rounded-2xl' : 'w-8 h-8 object-contain'" onerror="this.style.display='none'">
                             <div x-show="product.stok===0" class="absolute inset-0 bg-gray-900/40 rounded-2xl flex items-center justify-center">
                                 <span class="text-white text-[8px] font-black">HABIS</span>
                             </div>
@@ -3195,7 +3195,7 @@
                                 <template x-for="(item, idx) in order.items.slice(0,2)" :key="idx">
                                     <div class="flex items-center justify-between gap-3 pt-2">
                                         <div class="flex items-center gap-2 min-w-0 flex-1">
-                                            <img :src="getProductLogo(item.produk)" :alt="item.produk"
+                                            <img :src="getThumbByName(item.produk, item.varian)" :alt="item.produk"
                                                  class="w-7 h-7 rounded-lg object-cover flex-none"
                                                  @error="$el.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2UyZThmMCIgZD0iTTAgMGgyNHYyNEgweiIvPjwvc3ZnPg=='">
                                             <div class="min-w-0">
@@ -3412,7 +3412,7 @@
                                 <div class="bg-gray-50 rounded-xl px-4 py-3">
                                     <div class="flex items-start justify-between gap-3">
                                         <div class="flex items-center gap-3 min-w-0 flex-1">
-                                            <img :src="getProductLogo(item.produk)" :alt="item.produk" class="w-9 h-9 rounded-xl object-cover flex-none"
+                                            <img :src="getThumbByName(item.produk, item.varian)" :alt="item.produk" :class="isPhotoByName(item.produk, item.varian) ? 'object-cover' : 'object-contain'" class="w-9 h-9 rounded-xl flex-none"
                                                  @error="$el.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0iI2UyZThmMCIgZD0iTTAgMGgyNHYyNEgweiIvPjwvc3ZnPg=='">
                                             <div class="min-w-0">
                                                 <div class="text-sm font-bold text-gray-800" x-text="item.produk"></div>
@@ -3835,7 +3835,7 @@
                             <div class="bg-gray-50 rounded-2xl px-4 py-3">
                                 <div class="flex items-start gap-3">
                                     <!-- Product logo -->
-                                    <img :src="getProductLogo(item.produk)" class="w-9 h-9 rounded-xl object-contain flex-shrink-0 bg-white p-0.5 shadow-sm border border-gray-100"
+                                    <img :src="getThumbByName(item.produk, item.varian)" alt="" :class="isPhotoByName(item.produk, item.varian) ? 'object-cover' : 'object-contain'" class="w-9 h-9 rounded-xl flex-shrink-0 bg-white p-0.5 shadow-sm border border-gray-100"
                                          :alt="item.produk" @error="$el.src='https://via.placeholder.com/36'">
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-start justify-between gap-2">
@@ -4269,7 +4269,7 @@
                         <template x-for="(item, idx) in orderDetailData.items" :key="item.produk+item.varian+idx">
                             <div class="flex items-center gap-3 py-3.5" :class="idx>0?'border-t border-gray-50':''">
                                 <div class="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center flex-none">
-                                    <img :src="getProductLogo(item.produk)" class="w-7 h-7 object-contain">
+                                    <img :src="getThumbByName(item.produk, item.varian)" alt="" :class="isPhotoByName(item.produk, item.varian) ? 'object-cover rounded-lg' : 'object-contain'" class="w-7 h-7">
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-bold text-gray-900 leading-snug truncate" x-text="item.produk"></p>
@@ -6999,7 +6999,7 @@
         <template x-for="item in cart" :key="item.id">
             <div class="flex gap-2.5 p-2.5 rounded-xl hover:bg-gray-50 transition-colors group">
                 <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none" :class="getCategoryBg(item.product.category)">
-                    <img :src="getProductLogo(item.product.category)" class="w-7 h-7 object-contain" onerror="this.style.display='none'">
+                    <img :src="getProductThumb(item.product)" alt="" :class="getProductImage(item.product) ? 'w-full h-full object-cover rounded-xl' : 'w-7 h-7 object-contain'" onerror="this.style.display='none'">
                 </div>
                 <div class="flex-1 min-w-0">
                     <div class="font-semibold text-gray-800 text-sm leading-snug line-clamp-1" x-text="item.product.nama"></div>
@@ -7092,7 +7092,7 @@
             <template x-for="item in cart" :key="item.id">
                 <div class="bg-gray-50 rounded-2xl p-3.5 flex gap-3">
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center flex-none" :class="getCategoryBg(item.product.category)">
-                        <img :src="getProductLogo(item.product.category)" loading="lazy" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
+                        <img :src="getProductThumb(item.product)" alt="" loading="lazy" :class="getProductImage(item.product) ? 'w-full h-full object-cover rounded-xl' : 'w-8 h-8 object-contain'" class="object-contain" onerror="this.style.display='none'">
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="font-bold text-gray-800 text-sm leading-snug line-clamp-2" x-text="item.product.nama"></div>
@@ -7322,7 +7322,7 @@
                         <template x-for="item in cart" :key="item.id">
                             <div class="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
                                 <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-none" :class="getCategoryBg(item.product.category)">
-                                    <img :src="getProductLogo(item.product.category)" class="w-7 h-7 object-contain" onerror="this.style.display='none'">
+                                    <img :src="getProductThumb(item.product)" alt="" :class="getProductImage(item.product) ? 'w-full h-full object-cover rounded-xl' : 'w-7 h-7 object-contain'" onerror="this.style.display='none'">
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="font-semibold text-gray-800 text-sm leading-snug line-clamp-1" x-text="item.product.nama"></div>
@@ -9128,7 +9128,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260830-25',
+        APP_VERSION:      '20260830-26',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -10422,6 +10422,24 @@ ANNOUNCE_ON:      false,
         // Gambar produk kalau ada, kalau kosong pakai logo kategori
         getProductThumb(p) {
             return this.getProductImage(p) || this.getProductLogo(p?.category);
+        },
+        // Pesanan/keranjang hanya menyimpan NAMA produk, bukan objeknya → cari dulu ke katalog
+        // supaya gambar utama yang diupload admin ikut tampil di sana.
+        _prodByName(nama, varian) {
+            if (!nama) return null;
+            const n = String(nama).trim();
+            return this.products.find(p => p.nama === n && varian && varian !== '-' && p.varian === varian)
+                || this.products.find(p => p.nama === n)
+                || null;
+        },
+        getThumbByName(nama, varian) {
+            const p = this._prodByName(nama, varian);
+            return p ? this.getProductThumb(p) : this.getProductLogo(this.getCategory(nama));
+        },
+        // true kalau yang tampil foto produk (butuh object-cover), false kalau logo kategori (object-contain)
+        isPhotoByName(nama, varian) {
+            const p = this._prodByName(nama, varian);
+            return !!(p && this.getProductImage(p));
         },
         getCategoryBg(cat) {
             const m={'Office 365':'bg-blue-100','Adobe':'bg-red-100','Windows':'bg-sky-100','Windows Server':'bg-slate-100','Office':'bg-orange-100','Google':'bg-green-100','CorelDRAW':'bg-yellow-100','Project':'bg-purple-100','Visio':'bg-indigo-100'};
