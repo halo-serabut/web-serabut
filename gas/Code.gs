@@ -1777,10 +1777,7 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
 
   // Sisipkan nominal QRIS (total + kode unik deterministik) agar admin bisa
   // cocokkan pembayaran di app Dana walau buyer tidak menekan tombol klaim
-  try {
-    const qrisNominal = hargaNum + _qrisUniqueCode(orderId);
-    groupMsg = groupMsg.replace('\nStatus: *UNPAID*', `\nNominal QRIS: *Rp ${qrisNominal.toLocaleString('id-ID')}*\nStatus: *UNPAID*`);
-  } catch (e) {}
+  groupMsg = groupMsg.replace('\nStatus: *UNPAID*', _nominalLines(orderId, hargaNum) + '\nStatus: *UNPAID*');
 
   // Kirim notif WAG + mirror Supabase serentak (paralel) agar buyer tidak menunggu dua kali
   _fetchAllQuiet([supaReq, _waGroupReq(groupMsg)]);
@@ -2254,7 +2251,7 @@ const supaRows      = []; // full move: baris utk Supabase orders
                       firstProduk.toLowerCase().includes('adobe') ? `ORDER ADOBE: ${firstProduk}` :
                       items.length > 1 ? `ORDER BARU (${items.length} item)` : `ORDER BARU: ${firstProduk}`;
   let qrisCartLine = '';
-  try { qrisCartLine = `\nNominal QRIS: *Rp ${(totalHarga + _qrisUniqueCode(orderId)).toLocaleString('id-ID')}*`; } catch (e) {}
+  qrisCartLine = _nominalLines(orderId, totalHarga);
   const cartGroupMsg = `*${cartTitle}*\nOrder ID: *${orderId}*\nPembeli: ${userNama}\n────────────────────\n${waLines.join('\n')}\n────────────────────\nTotal: Rp ${totalHarga.toLocaleString('id-ID')}${qrisCartLine}\nStatus: *UNPAID*`;
   _fetchAllQuiet([supaCartReq, _waGroupReq(cartGroupMsg)]);
 
@@ -3876,6 +3873,20 @@ const XENDIT_VA_BANKS = ['BNI', 'BRI', 'BSI', 'CIMB', 'MANDIRI', 'PERMATA'];
 // PPN 11% (Rp 440) ditanggung merchant — keputusan owner 2026-07-16.
 // Override via Settings sheet key 'xendit.vafee' (angka rupiah).
 // ponytail: flat semua bank; ganti ke map per-bank kalau rate kontrak ternyata beda
+// Notif WAG dikirim SEBELUM buyer memilih metode, jadi nominal finalnya belum pasti.
+// Tampilkan keduanya supaya admin bisa mencocokkan pembayaran yang masuk lewat jalur mana pun:
+//  - QRIS langsung di serabut.id: total + kode unik, tanpa fee
+//  - Xendit (VA / metode lain)  : total + fee admin
+function _nominalLines(orderId, total) {
+  let out = '';
+  try { out += `\nNominal QRIS: *Rp ${(total + _qrisUniqueCode(orderId)).toLocaleString('id-ID')}*`; } catch (e) {}
+  try {
+    const fee = _xenditVAFee();
+    if (fee > 0) out += `\nNominal Xendit: *Rp ${(total + fee).toLocaleString('id-ID')}* (termasuk biaya admin Rp ${fee.toLocaleString('id-ID')})`;
+  } catch (e) {}
+  return out;
+}
+
 function _xenditVAFee() {
   try {
     const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(TAB_SETTINGS);
