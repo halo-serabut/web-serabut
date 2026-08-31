@@ -1755,13 +1755,11 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
     msNama || '-', username || '-', microsoftEmail || '-', emailAktif || '-', emailReminder || '-'
   ]);
 
-  // Full move: mirror ke Supabase (best-effort, tak menggagalkan order)
-  if (_ordersStoreOn()) {
-    _ordersWrite({ action:'insert', rows:[ _orderRowSupa({
-      orderId, userNama, userEmail, userWa, produk, varian, masaAktif,
-      harga: hargaNum, qty: qtyNum, msNama, username, microsoftEmail, emailAktif, emailReminder,
-    }) ] });
-  }
+  // Mirror Supabase + notif WA grup dikirim serentak di bawah (lihat _fetchAllQuiet)
+  const supaReq = _ordersStoreOn() ? _ordersWriteReq({ action:'insert', rows:[ _orderRowSupa({
+    orderId, userNama, userEmail, userWa, produk, varian, masaAktif,
+    harga: hargaNum, qty: qtyNum, msNama, username, microsoftEmail, emailAktif, emailReminder,
+  }) ] }) : null;
 
   const varLower    = (varian || '').toLowerCase();
   const isFamily    = varLower.includes('family');
@@ -1784,8 +1782,8 @@ function createOrder({ email, sessionToken, userNama, userEmail, userWa, produk,
     groupMsg = groupMsg.replace('\nStatus: *UNPAID*', `\nNominal QRIS: *Rp ${qrisNominal.toLocaleString('id-ID')}*\nStatus: *UNPAID*`);
   } catch (e) {}
 
-  // Kirim notif WAG segera saat order dibuat
-  sendWAToGroup(groupMsg);
+  // Kirim notif WAG + mirror Supabase serentak (paralel) agar buyer tidak menunggu dua kali
+  _fetchAllQuiet([supaReq, _waGroupReq(groupMsg)]);
 
   // WA + email ke buyer dikirim setelah pembayaran berhasil (xenditCallback / syncOrders)
 
@@ -2245,8 +2243,8 @@ const supaRows      = []; // full move: baris utk Supabase orders
     computedItems.push({ produk: it.produk, varian: it.varian||'-', masaAktif: it.masaAktif||'-', harga: hargaNum, qty: Number(it.qty)||1 });
   }
 
-  // Full move: mirror semua item ke Supabase sekali (best-effort)
-  if (_ordersStoreOn() && supaRows.length) _ordersWrite({ action:'insert', rows: supaRows });
+  // Mirror Supabase disiapkan di sini, dikirim serentak dengan notif WA grup di bawah
+  const supaCartReq = (_ordersStoreOn() && supaRows.length) ? _ordersWriteReq({ action:'insert', rows: supaRows }) : null;
 
   // Kirim notif WAG segera saat order dibuat
   const firstVar    = (items[0]?.varian || '').toLowerCase();
@@ -2258,7 +2256,7 @@ const supaRows      = []; // full move: baris utk Supabase orders
   let qrisCartLine = '';
   try { qrisCartLine = `\nNominal QRIS: *Rp ${(totalHarga + _qrisUniqueCode(orderId)).toLocaleString('id-ID')}*`; } catch (e) {}
   const cartGroupMsg = `*${cartTitle}*\nOrder ID: *${orderId}*\nPembeli: ${userNama}\n────────────────────\n${waLines.join('\n')}\n────────────────────\nTotal: Rp ${totalHarga.toLocaleString('id-ID')}${qrisCartLine}\nStatus: *UNPAID*`;
-  sendWAToGroup(cartGroupMsg);
+  _fetchAllQuiet([supaCartReq, _waGroupReq(cartGroupMsg)]);
 
   // WA + email ke buyer dikirim setelah pembayaran berhasil (xenditCallback / syncOrders)
 
@@ -3056,6 +3054,38 @@ function sendWANotification(message) {
   } catch (e) { Logger.log('WA notif error: ' + e.message); }
 }
 
+// Order baru memanggil dua HTTPS berurutan (mirror Supabase lalu notif WA grup);
+// masing-masing ~1-2 detik, jadi buyer menunggu keduanya. fetchAll() menjalankannya
+// serentak sehingga tinggal selama yang paling lambat.
+// ponytail: hanya untuk jalur order; helper tunggalnya tetap dipakai di tempat lain.
+function _ordersWriteReq(payload) {
+  const secret = PropertiesService.getScriptProperties().getProperty('AUTH_BRIDGE_SECRET') || '';
+  if (!secret) return null;
+  return {
+    url: SUPABASE_URL_SRB + '/functions/v1/orders-write',
+    method: 'post', contentType: 'application/json',
+    headers: { 'Authorization': 'Bearer ' + SUPABASE_ANON_SRB, 'apikey': SUPABASE_ANON_SRB, 'x-bridge-secret': secret },
+    payload: JSON.stringify(payload), muteHttpExceptions: true,
+  };
+}
+function _waGroupReq(message) {
+  if (!FONNTE_TOKEN || !WA_GROUP_ESCALATION) return null;
+  return {
+    url: 'https://api.fonnte.com/send',
+    method: 'post',
+    headers: { 'Authorization': FONNTE_TOKEN },
+    payload: { target: WA_GROUP_ESCALATION, message: message },
+    muteHttpExceptions: true,
+  };
+}
+// Best-effort: kegagalan notif/mirror tidak boleh menggagalkan order yang sudah masuk sheet.
+function _fetchAllQuiet(reqs) {
+  const list = (reqs || []).filter(Boolean);
+  if (!list.length) return;
+  try { UrlFetchApp.fetchAll(list); }
+  catch (e) { Logger.log('_fetchAllQuiet error: ' + e.message); }
+}
+
 function sendWAToGroup(message) {
   if (!FONNTE_TOKEN || !WA_GROUP_ESCALATION) {
     Logger.log('sendWAToGroup: TOKEN atau GROUP_ID kosong');
@@ -3828,7 +3858,12 @@ function createXenditInvoiceForOrder({ orderId }) {
   }
   if (!items.length) return { success: false, error: 'Order tidak ditemukan' };
   if (total <= 0)     return { success: false, error: 'Nominal order tidak valid' };
-  return createXenditInvoice({ orderId: id, items: items, buyerName: nama, buyerEmail: email, buyerPhone: wa, total: total });
+  // Semua jalur Xendit (VA maupun halaman checkout) dibebani fee yang sama.
+  // Dulu hanya createXenditVA yang menambahkan fee, jadi buyer yang memilih
+  // "Other methods" membayar tanpa fee dan merchant menanggung selisihnya.
+  const fee = _xenditVAFee();
+  if (fee > 0) items.push({ produk: 'Biaya admin', varian: '-', masaAktif: '-', harga: fee, qty: 1 });
+  return createXenditInvoice({ orderId: id, items: items, buyerName: nama, buyerEmail: email, buyerPhone: wa, total: total + fee });
 }
 
 // ────────────────────────────────────────────────────────
