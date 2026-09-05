@@ -9131,7 +9131,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260830-27',
+        APP_VERSION:      '20260905-1',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
@@ -10087,6 +10087,23 @@ ANNOUNCE_ON:      false,
 
         // ── Refresh role dari GAS (sesi lama) ─────────
         async refreshUserRole() {
+            // Sesi Supabase: sessionToken = JWT, TIDAK ada di sheet Users-web → getProfile GAS
+            // selalu gagal → logout() tiap buka web. Perpanjang lewat refresh_token saja.
+            if(this.USE_SUPABASE_AUTH){
+                const rtok = this._supaRefresh || localStorage.getItem('srb_rtok') || '';
+                if(!rtok) return; // tanpa refresh_token: pakai token lama apa adanya, jangan prompt password
+                try{
+                    const tok = await this._supaEnsureAuth();
+                    const prof = await this._supaLoadProfile(tok);
+                    if(prof){
+                        this.currentUser = { ...this.currentUser, nama:prof.nama||this.currentUser.nama, email:prof.email||this.currentUser.email, wa:prof.no_hp||this.currentUser.wa, role:prof.role||'buyer', sessionToken:tok, loginAt:new Date().toISOString() };
+                        const { sessionToken:_s, ...pub } = this.currentUser;
+                        localStorage.setItem('serabutUser', JSON.stringify(pub));
+                        localStorage.setItem('srb_tok', tok);
+                    }
+                }catch(_){ /* offline/refresh gagal: biarkan sesi lama, jangan logout */ }
+                return;
+            }
             try {
                 const data = await this.gasPost({ action:'getProfile', email:this.currentUser.email, sessionToken:this.currentUser.sessionToken });
                 if(data.success && data.profile?.role) {
