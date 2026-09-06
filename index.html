@@ -5352,12 +5352,14 @@
                             <template x-for="(step, si) in adminNewGuide.steps" :key="si">
                                 <div class="flex gap-2 mb-2">
                                     <span class="w-6 h-6 gradient-card text-white rounded-full flex items-center justify-center text-xs font-bold flex-none mt-2" x-text="si+1"></span>
-                                    <input x-model="adminNewGuide.steps[si]" type="text" :placeholder="'Langkah '+(si+1)"
+                                    <textarea x-model="adminNewGuide.steps[si]" rows="1" :placeholder="'Langkah '+(si+1)+' — boleh multi-baris, ```perintah``` untuk blok'"
+                                           @input="$el.style.height='auto'; $el.style.height=$el.scrollHeight+'px'"
+                                           x-init="$nextTick(()=>{ $el.style.height='auto'; $el.style.height=$el.scrollHeight+'px'; })"
                                            @keydown.ctrl.b.prevent="applyGuideFormat($event, 'steps', si)"
                                            @keydown.ctrl.i.prevent="applyGuideFormat($event, 'steps', si, true)"
                                            @keydown.meta.b.prevent="applyGuideFormat($event, 'steps', si)"
                                            @keydown.meta.i.prevent="applyGuideFormat($event, 'steps', si, true)"
-                                           class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400">
+                                           class="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-400 resize-y leading-relaxed"></textarea>
                                     <button x-show="adminNewGuide.steps.length>1" @click="adminNewGuide.steps.splice(si,1)" class="text-red-400 mt-1 flex-none">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                                     </button>
@@ -9141,7 +9143,7 @@ function serabutStore() {
         USE_SUPABASE_AUTH: true, // true = login/register/OTP/forgot lewat Supabase; false = GAS. FLIPPED 2026-08-16 (cutover Orders+Auth). Rollback: set false + ORDERS_STORE off.
         WA_NUMBER:        '8881500555',
         GOOGLE_CLIENT_ID: '174228273794-dhbn970erdha53jtqqiqpc356ep8ntfb.apps.googleusercontent.com', // Isi Client ID dari Google Cloud Console untuk aktifkan SSO Google
-        APP_VERSION:      '20260905-2',
+        APP_VERSION:      '20260905-3',
 
         // Banner pengumuman — default lokal; dioverride Settings GAS (announce.*) via tab admin Pengumuman
         // Default false: banner baru muncul kalau Settings GAS bilang aktif.
